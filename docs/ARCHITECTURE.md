@@ -72,19 +72,21 @@ metadata:
   civic.human-review: advisory-only
   civic.maintainer: "City of X, Department of Building Safety"
   civic.contact: "digital@cityofx.gov"
+  civic.affiliation: government          # who maintains it
+  civic.deployment: organization         # widest scope at which it has ACTUALLY run
+  civic.deployed-at: "City of X, Department of Building Safety"
+  civic.deployed-in: "US-MA / Boston"    # ISO country, optional subdivision, optional locality
+  civic.deployed-since: "2026-03"        # optional, YYYY or YYYY-MM
 ```
 
-The `civic.` prefix keeps registry fields from colliding with anything a tool vendor adds to `metadata` later.
+### Provenance
 
-### Handling non-spec fields
+The `deployment` fields are self-reported and published as such. One rule lives in
+`validate.py` rather than the schema, because the error message matters: a claim
+other than `none` must name both `deployed-at` and `deployed-in`.
 
-Some agent tools accept fields beyond the six — roughly twenty in one popular implementation. Rejecting those would reject otherwise-working skills. **Quarantine them into `metadata` rather than failing the build**, and record what was moved in the PR comment so the contributor knows.
-
-### Portability notes
-
-- `license` is free text in the spec, not SPDX-constrained. We require an SPDX identifier by convention, but it is machine-*present*, not machine-*verifiable*. License checking stays a human step.
-- `allowed-tools` is marked **experimental** in the spec and its semantics are under active dispute upstream. Re-verify before implementing against it.
-- Install paths differ across tools (`.claude/skills/`, `.agents/skills/`, others). Do not hardcode one in generated install instructions.
+Provenance plays no part in deriving tier. It is context for a human deciding
+whether to adopt a skill, not a security signal.
 
 ---
 
@@ -150,6 +152,16 @@ An index entry:
   "jurisdiction": "us-local",
   "data_sensitivity": "none",
   "human_review": "advisory-only",
+  "provenance": {
+    "self_reported": true,
+    "affiliation": "government",
+    "deployment": "organization",
+    "deployed_at": "City of X, Department of Building Safety",
+    "deployed_in": "US-MA / Boston",
+    "deployed_since": "2026-03",
+    "contact_domain": "government",
+    "verified": { "scope": "organization", "by": "alice-gov", "date": "2026-09-12" }
+  },
   "tier": "reviewed",
   "sha": "a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92",
   "reviewed": { "date": "2026-09-14", "expires": "2027-09-14",

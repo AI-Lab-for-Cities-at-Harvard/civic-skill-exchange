@@ -1,8 +1,8 @@
 # Reviewer guide
 
-This is the checklist for admitting a skill into the **Reviewed** tier. It is bounded to roughly fifteen minutes per skill by design — an unbounded review job is one that stops getting done.
+This is the checklist for admitting a skill into the **Reviewed** tier. It is bounded to roughly fifteen minutes per skill by design.
 
-Automation has already run. Its job was to reject; yours is to admit. A clean automated result tells you nothing is *mechanically* wrong. It does not tell you the skill is safe, and it cannot tell you whether the skill is appropriate for civic use — no scanner evaluates that, and it is the part only you can do.
+The manual review determines if the skill supports civic/ public benefit.
 
 ## Before you start
 
@@ -11,6 +11,17 @@ You need, on one screen: the scanner findings, the full diff of every file under
 Two reviewers work independently, from **different organizations**. Don't discuss the skill until both have finished. Two people who talked first are one reviewer.
 
 You may decline a review at any point, without completing the checklist and without giving a reason. Review capacity is the scarcest resource this registry has.
+
+---
+
+## Deployment evidence
+
+Skills carry self-reported provenance: who maintains it, whether it has actually
+been used, and at what scale. Real operational history is useful context — it is
+evidence a skill *works*, which is hard to get by reading.
+
+It is not evidence a skill is *safe*. Every item below applies the same way
+regardless of who submitted it.
 
 ---
 
@@ -98,4 +109,4 @@ Comment on the original issue and open a PR removing the attestation. You do not
 
 ## When you find something bad
 
-Don't comment publicly on the PR. Follow [SECURITY.md](SECURITY.md) — email the security address. A public comment tells the author exactly which check caught them.
+Don't comment publicly on the PR. Follow [SECURITY.md](SECURITY.md) — open a private advisory. A public comment tells the author exactly which check caught them.

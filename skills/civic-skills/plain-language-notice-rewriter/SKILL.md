@@ -17,6 +17,8 @@ metadata:
   civic.human-review: advisory-only
   civic.maintainer: "Civic Skills Registry maintainers"
   civic.contact: "security@civic-skill-exchange.example"
+  civic.affiliation: academic
+  civic.deployment: none
 ---
 
 # Plain Language Notice Rewriter

@@ -65,6 +65,22 @@ def read_frontmatter(skill_md: Path) -> dict | None:
     return front if isinstance(front, dict) else None
 
 
+def build_provenance(meta: dict) -> dict:
+    """Self-reported deployment context, published as such.
+
+    Useful for someone deciding whether to adopt a skill. Not a security signal —
+    it plays no part in deriving tier.
+    """
+    return {
+        "self_reported": True,
+        "affiliation": meta.get("civic.affiliation"),
+        "deployment": meta.get("civic.deployment"),
+        "deployed_at": meta.get("civic.deployed-at"),
+        "deployed_in": meta.get("civic.deployed-in"),
+        "deployed_since": meta.get("civic.deployed-since"),
+    }
+
+
 def normalize_tools(value) -> list[str]:
     if value is None:
         return []
@@ -152,6 +168,7 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "download": f"{REPO_URL}/tree/main/skills/{namespace}/{name}",
     }
 
+    entry["provenance"] = build_provenance(meta)
     entry.update(resolve_tier(skill_id, sha, attestations.get(skill_id)))
 
     scan = scans.get(skill_id)

@@ -52,6 +52,50 @@ SPEC_FIELDS = {"name", "description", "license", "compatibility", "allowed-tools
 # needs maintainer approval, which is a stronger control than a username match.
 RESERVED_NAMESPACES = {"civic-skills"}
 
+# Deployment provenance. The enums live in the schema; these are the cross-field
+# rules, which belong here because the error messages are better.
+#
+# ISO 3166 country, optional subdivision, optional locality: "US-MA / Boston".
+DEPLOYED_IN_RE = re.compile(r"^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$")
+DEPLOYED_SINCE_RE = re.compile(r"^\d{4}(-(0[1-9]|1[0-2]))?$")
+DEPLOYMENT_DETAILS = ("civic.deployed-at", "civic.deployed-in")
+
+
+def check_provenance(meta: dict) -> list[str]:
+    """A deployment claim must say where, and a non-claim must not imply one."""
+    errors: list[str] = []
+    deployment = meta.get("civic.deployment")
+
+    if deployment == "none":
+        for field in DEPLOYMENT_DETAILS:
+            if meta.get(field):
+                errors.append(
+                    f"{field} is set, but civic.deployment: none says the skill has "
+                    f"never been used. Remove {field}, or state where it was used."
+                )
+    elif deployment in ("personal", "team", "organization"):
+        for field in DEPLOYMENT_DETAILS:
+            if not meta.get(field):
+                errors.append(
+                    f"{field} is required when civic.deployment is '{deployment}'. "
+                    f"A deployment claim has to name where."
+                )
+
+    deployed_in = meta.get("civic.deployed-in")
+    if deployed_in and not DEPLOYED_IN_RE.match(deployed_in):
+        errors.append(
+            f"civic.deployed-in '{deployed_in}' is not in the expected form: an "
+            f"ISO 3166 country code, optionally a subdivision, optionally ' / ' and "
+            f"a locality. For example 'US-MA / Boston', 'GB', 'CA-ON / Toronto'."
+        )
+
+    since = meta.get("civic.deployed-since")
+    if since and not DEPLOYED_SINCE_RE.match(since):
+        errors.append(f"civic.deployed-since '{since}' is not YYYY or YYYY-MM.")
+
+    return errors
+
+
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 
 
@@ -248,6 +292,8 @@ def validate_skill(
         errors.append(
             f"name '{front.get('name')}' does not match the directory '{skill_name}'"
         )
+
+    errors.extend(check_provenance(front.get("metadata") or {}))
 
     category = (front.get("metadata") or {}).get("civic.category")
     if category and category not in categories:
