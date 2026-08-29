@@ -48,6 +48,11 @@ metadata:
   civic.human-review: advisory-only
   civic.maintainer: "City of X, Department of Building Safety"
   civic.contact: "digital@cityofx.gov"
+  civic.affiliation: government
+  civic.deployment: organization
+  civic.deployed-at: "City of X, Department of Building Safety"
+  civic.deployed-in: "US-MA / Boston"
+  civic.deployed-since: "2026-03"
 ---
 
 # Permit Status Explainer
@@ -77,8 +82,22 @@ metadata:
 | `civic.human-review` | `none`, `advisory-only`, `decision-support` | Whether output affects a person's rights, benefits, or legal standing. |
 | `civic.maintainer` | free text | Organization or individual accountable for the skill. |
 | `civic.contact` | free text | A working address for security reports. |
+| `civic.affiliation` | `government`, `nonprofit`, `academic`, `vendor`, `individual` | Affiliation of the party in `civic.maintainer`. |
+| `civic.deployment` | `none`, `personal`, `team`, `organization` | The widest scope at which the skill has **actually** run. |
+| `civic.deployed-at` | free text | The organization where it ran. Required unless `deployment: none` — and forbidden when it is. |
+| `civic.deployed-in` | e.g. `US-MA / Boston`, `GB` | Where that organization operates. Same rule. |
+| `civic.deployed-since` | `YYYY` or `YYYY-MM` | Optional. Duration carries more weight than any other part of the claim. |
 
 `civic.data-sensitivity` and `civic.human-review` exist because they are the first two questions any government IT reviewer asks, and neither is answerable from reading the code. Answer them honestly — an understated declaration that contradicts the code is grounds for rejection, and it's the kind of thing a reviewer notices.
+
+### Deployment provenance
+
+`civic.deployment` says whether the skill has actually been used and at what scale.
+It is useful context for anyone deciding whether to adopt it, and `none` is a
+perfectly good answer — plenty of good skills have never run in production.
+
+If you claim anything other than `none`, name where: `civic.deployed-at` and
+`civic.deployed-in` are then required, because an unattributed claim isn't context.
 
 ### Two warnings that are not boilerplate
 
