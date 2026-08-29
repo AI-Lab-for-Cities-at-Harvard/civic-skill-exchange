@@ -65,6 +65,55 @@ def read_frontmatter(skill_md: Path) -> dict | None:
     return front if isinstance(front, dict) else None
 
 
+# Suffixes that only a government or academic body can hold. Matched on the full
+# registrable suffix so a lookalike like "cityofx.gov.attacker.com" does not pass.
+GOVERNMENT_SUFFIXES = (
+    ".gov", ".mil", ".gov.uk", ".gc.ca", ".gov.au", ".govt.nz", ".gov.ie",
+    ".gov.za", ".gov.sg", ".gov.in", ".go.jp", ".gouv.fr", ".bund.de",
+)
+ACADEMIC_SUFFIXES = (".edu", ".ac.uk", ".edu.au", ".ac.jp", ".edu.sg")
+
+
+def classify_contact_domain(contact: str | None) -> str:
+    """A weak positive signal for reviewers — never verification.
+
+    Anyone can type an address they do not control, so this classifies the domain
+    and nothing more. It is published so a reviewer can see it at a glance; it must
+    never be presented to a reader as confirmation of anything.
+    """
+    if not contact or "@" not in contact:
+        return "unclassified"
+    domain = contact.rsplit("@", 1)[1].strip().lower().rstrip(".")
+    if not domain:
+        return "unclassified"
+    if domain.endswith(GOVERNMENT_SUFFIXES):
+        return "government"
+    if domain.endswith(ACADEMIC_SUFFIXES):
+        return "academic"
+    return "unclassified"
+
+
+def build_provenance(meta: dict, attestation: dict | None) -> dict:
+    """Self-reported deployment evidence, plus any reviewer verification of it.
+
+    Everything the submitter wrote is marked self_reported. `verified` is populated
+    only from the attestation ledger, which only reviewers can write — so a
+    submitter can never mark their own claim as confirmed.
+    """
+    deployment = meta.get("civic.deployment")
+    return {
+        "self_reported": True,
+        "affiliation": meta.get("civic.affiliation"),
+        "deployment": deployment,
+        "deployed_at": meta.get("civic.deployed-at"),
+        "deployed_in": meta.get("civic.deployed-in"),
+        "deployed_since": meta.get("civic.deployed-since"),
+        # The class of the contact domain. The address itself is never published.
+        "contact_domain": classify_contact_domain(meta.get("civic.contact")),
+        "verified": (attestation or {}).get("provenance_verified"),
+    }
+
+
 def normalize_tools(value) -> list[str]:
     if value is None:
         return []
@@ -152,7 +201,14 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "download": f"{REPO_URL}/tree/main/skills/{namespace}/{name}",
     }
 
-    entry.update(resolve_tier(skill_id, sha, attestations.get(skill_id)))
+    attestation = attestations.get(skill_id)
+
+    # Deployment evidence is evidence of FUNCTION, never of safety. It is published
+    # alongside the tier and deliberately plays no part in deriving it: a
+    # compromised account at a real agency ships malware from a real agency.
+    entry["provenance"] = build_provenance(meta, attestation)
+
+    entry.update(resolve_tier(skill_id, sha, attestation))
 
     scan = scans.get(skill_id)
     entry["scan"] = {

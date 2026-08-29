@@ -48,6 +48,11 @@ metadata:
   civic.human-review: advisory-only
   civic.maintainer: "City of X, Department of Building Safety"
   civic.contact: "digital@cityofx.gov"
+  civic.affiliation: government
+  civic.deployment: organization
+  civic.deployed-at: "City of X, Department of Building Safety"
+  civic.deployed-in: "US-MA / Boston"
+  civic.deployed-since: "2026-03"
 ---
 
 # Permit Status Explainer
@@ -77,8 +82,42 @@ metadata:
 | `civic.human-review` | `none`, `advisory-only`, `decision-support` | Whether output affects a person's rights, benefits, or legal standing. |
 | `civic.maintainer` | free text | Organization or individual accountable for the skill. |
 | `civic.contact` | free text | A working address for security reports. |
+| `civic.affiliation` | `government`, `nonprofit`, `academic`, `vendor`, `individual` | Affiliation of the party in `civic.maintainer`. |
+| `civic.deployment` | `none`, `personal`, `team`, `organization` | The widest scope at which the skill has **actually** run. |
+| `civic.deployed-at` | free text | The organization where it ran. Required unless `deployment: none` — and forbidden when it is. |
+| `civic.deployed-in` | e.g. `US-MA / Boston`, `GB` | Where that organization operates. Same rule. |
+| `civic.deployed-since` | `YYYY` or `YYYY-MM` | Optional. Duration carries more weight than any other part of the claim. |
 
 `civic.data-sensitivity` and `civic.human-review` exist because they are the first two questions any government IT reviewer asks, and neither is answerable from reading the code. Answer them honestly — an understated declaration that contradicts the code is grounds for rejection, and it's the kind of thing a reviewer notices.
+
+### Deployment provenance — worth filling in properly
+
+`civic.deployment` and the fields under it are the most useful thing you can give
+a reviewer. A skill that has run across an agency for six months has been tested by
+reality in a way nobody can reproduce by reading it, and that shortens the wait
+before we review it:
+
+| Your claim | Wait before Reviewed-tier consideration |
+|---|---|
+| `none` or `personal` | 30 days |
+| `team` | 21 days |
+| `organization`, once a reviewer confirms it | 7 days |
+
+Two things to be clear about.
+
+**It does not shorten the security review.** Every item on the reviewer checklist
+applies identically no matter who you are. Deployment says a skill *works*; it says
+nothing about whether it is *safe*, and we would be doing you no favours by
+pretending otherwise.
+
+**`none` is a fine answer.** Plenty of good skills have never run in production.
+Claiming otherwise is the one thing here that will actually cost you — a claim a
+reviewer cannot confirm just sits there unverified, and one they discover is false
+ends the review.
+
+Your claim stays labelled *self-reported* on the site until a reviewer confirms it
+with a human at the organization you named. You cannot mark your own claim verified,
+and neither can we on your say-so.
 
 ### Two warnings that are not boilerplate
 

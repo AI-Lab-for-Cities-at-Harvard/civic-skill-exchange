@@ -72,7 +72,29 @@ metadata:
   civic.human-review: advisory-only
   civic.maintainer: "City of X, Department of Building Safety"
   civic.contact: "digital@cityofx.gov"
+  civic.affiliation: government          # who maintains it
+  civic.deployment: organization         # widest scope at which it has ACTUALLY run
+  civic.deployed-at: "City of X, Department of Building Safety"
+  civic.deployed-in: "US-MA / Boston"    # ISO country, optional subdivision, optional locality
+  civic.deployed-since: "2026-03"        # optional, YYYY or YYYY-MM
 ```
+
+### Provenance
+
+The `deployment` fields are self-reported and always published as such. Two rules
+enforced in `validate.py` rather than the schema, because the error messages matter:
+a claim other than `none` must name both `deployed-at` and `deployed-in`, and a claim
+of `none` must name neither — a contradictory claim reads as evidence on the site
+while the author has said the skill was never used.
+
+`build_index.py` also classifies the contact's domain as `government`, `academic`,
+or `unclassified`. The class is published; the address never is. It is a hint for
+reviewers, not verification — anyone can type an address they do not control.
+
+Verification lives in `registry/reviewed.yml` under `provenance_verified`, which
+only reviewers write. Provenance plays no part in deriving tier: it is evidence of
+function, not of safety. What it changes is the waiting period before review — see
+[TIERS.md](TIERS.md).
 
 The `civic.` prefix keeps registry fields from colliding with anything a tool vendor adds to `metadata` later.
 
@@ -150,6 +172,16 @@ An index entry:
   "jurisdiction": "us-local",
   "data_sensitivity": "none",
   "human_review": "advisory-only",
+  "provenance": {
+    "self_reported": true,
+    "affiliation": "government",
+    "deployment": "organization",
+    "deployed_at": "City of X, Department of Building Safety",
+    "deployed_in": "US-MA / Boston",
+    "deployed_since": "2026-03",
+    "contact_domain": "government",
+    "verified": { "scope": "organization", "by": "alice-gov", "date": "2026-09-12" }
+  },
   "tier": "reviewed",
   "sha": "a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92",
   "reviewed": { "date": "2026-09-14", "expires": "2027-09-14",

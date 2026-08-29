@@ -108,6 +108,99 @@ body:
     validations:
       required: true
 
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### Where has this been used?
+
+        This section is the most useful thing you can give a reviewer. A skill that
+        has run in a real agency for months has been tested by reality in a way
+        nobody can reproduce by reading it — and that evidence can shorten the wait
+        before we review it.
+
+        **It does not shorten the security review.** Deployment tells us a skill
+        works, never that it is safe. Answer honestly: "never used in production"
+        is a perfectly good answer and costs you nothing.
+
+  - type: dropdown
+    id: affiliation
+    attributes:
+      label: Who maintains this skill?
+      description: The affiliation of the organization or person named above.
+      options:
+        - "government — a public agency at any level"
+        - "nonprofit"
+        - "academic"
+        - "vendor — a company serving public agencies"
+        - "individual"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Have you used this skill, and at what scale?
+      description: The widest scope at which it has actually run — not where you hope it could run.
+      options:
+        - "none — not used in production anywhere yet"
+        - "personal — I have used it myself"
+        - "team — a team uses it"
+        - "organization — used across an organization"
+    validations:
+      required: true
+
+  - type: input
+    id: deployed-at
+    attributes:
+      label: Which organization?
+      description: >
+        Required unless you answered "none". Name the agency, department, or
+        organization. Be specific enough that a reviewer could check.
+      placeholder: "City of Boston, Department of Innovation and Technology"
+
+  - type: input
+    id: deployed-in
+    attributes:
+      label: Where does that organization operate?
+      description: >
+        Required unless you answered "none". ISO country code, then optionally a
+        state or province, then optionally a city.
+      placeholder: "US-MA / Boston   ·   GB   ·   CA-ON / Toronto"
+
+  - type: input
+    id: deployed-since
+    attributes:
+      label: Roughly since when? (optional)
+      description: >
+        YYYY or YYYY-MM. Duration is the part of a deployment claim that carries
+        the most weight — six months of real use says more than any description.
+      placeholder: "2026-03"
+
+  - type: textarea
+    id: use-when
+    attributes:
+      label: When is this skill useful? (optional)
+      description: >
+        The concrete situations where it earns its place. This becomes a
+        "When to use this skill" section in the skill body.
+      placeholder: >
+        When a resident asks why their permit is stuck and the status codes in the
+        system mean nothing to them.
+
+  - type: textarea
+    id: avoid-when
+    attributes:
+      label: When is it NOT useful? (optional)
+      description: >
+        Where it falls down, what it should not be pointed at, what it gets wrong.
+        **This is the highest-value optional field on the form.** Nobody else can
+        tell us this, and a skill honest about its limits gets adopted faster than
+        one that claims none.
+      placeholder: >
+        Not for filled notices containing a specific person's data. Not a substitute
+        for legal review of whether required elements are present.
+
   - type: textarea
     id: skill-body
     attributes:
