@@ -24,3 +24,6 @@
 # Maintainer-seeded skills. Reserved namespace — needs maintainer approval,
 # which is why scripts/validate.py skips the author check for it.
 /skills/civic-skills/  @AI-Lab-for-Cities-at-Harvard/maintainers
+
+# Tests for the tooling. A scanner nobody tested is a scanner nobody can trust.
+/tests/    @AI-Lab-for-Cities-at-Harvard/maintainers

@@ -73,6 +73,7 @@ You can also open a [skill submission issue](../../issues/new?template=submit-sk
 | [docs/REVIEW.md](docs/REVIEW.md) | The reviewer checklist and process |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threat model, scan layers, CI hardening, how to report a problem |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Build sequence and current phase |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Working on the registry itself — branching, TDD, test conventions |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Why the registry is built this way, and where that reasoning is thin |
 
 ## License
