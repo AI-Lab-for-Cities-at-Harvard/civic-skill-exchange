@@ -8,7 +8,7 @@ Every listing sits in exactly one tier. The split exists so the registry can acc
 
 **What it does not mean:** that it is safe, correct, useful, or appropriate for your jurisdiction.
 
-Automated checks can only ever say *no*. A pass is the absence of a specific set of known-bad signals, not the presence of safety. Static signatures are triage — their own authors present them that way, and published bypass rates against open-source skill scanners run from 11.6% to 33.5%.
+Automated checks can only ever say *no*. A pass is the absence of a specific set of known-bad signals, not the presence of safety. Signature scanning is triage, and evasion is well documented — see [SECURITY.md](SECURITY.md).
 
 - Merged without human sign-off once L0–L2 pass.
 - Listed with an explicit disclaimer on the card, on the detail page, and in the merge comment.
@@ -55,7 +55,7 @@ The SHA pin makes that attack fail closed. A reviewer attests to a content hash,
 
 This is cheap to implement and it is the single highest-value mechanism in the design.
 
-**Note:** this pattern is our own construction. It follows from the threat model, but no source describes an existing skill registry doing it. See [DECISIONS.md](DECISIONS.md).
+**Note:** this pattern is our own construction rather than an established convention, so treat it as the part of the design most worth testing early.
 
 ---
 
@@ -98,4 +98,4 @@ Removal delists; it does not recall. Anyone who already cloned the skill still h
 
 Ship Community-only and say so on the front page. That is a coherent, defensible registry, and several successful registries operate exactly this way.
 
-A Reviewed tier with a stale queue is worse than no Reviewed tier at all. It converts the registry's best asset — a credible signal — into its largest liability, because people act on the badge while the process behind it has quietly stopped running. Open this tier when reviewers have committed real hours, and not before. See [ROADMAP.md](ROADMAP.md).
+A Reviewed tier with a stale queue is worse than no Reviewed tier at all. It converts the registry's best asset — a credible signal — into its largest liability, because people act on the badge while the process behind it has quietly stopped running. Open this tier when reviewers have committed real hours, and not before.

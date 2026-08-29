@@ -46,3 +46,7 @@ Thumbs.db
 .env.*
 *.pem
 *.key
+
+# Internal working material — research provenance, planning, outreach.
+# Kept locally; not part of what makes the exchange useful to anyone else.
+/internal/

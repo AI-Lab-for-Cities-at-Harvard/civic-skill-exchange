@@ -76,6 +76,8 @@ You can also open a [skill submission issue](../../issues/new?template=submit-sk
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Working on the registry itself — branching, TDD, test conventions |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Why the registry is built this way, and where that reasoning is thin |
 
+What we're building next is on the [project board](https://github.com/orgs/AI-Lab-for-Cities-at-Harvard/projects).
+
 ## License
 
 Registry infrastructure is licensed under [LICENSE](LICENSE). Each skill carries its own license in its frontmatter and remains the property of its authors.
