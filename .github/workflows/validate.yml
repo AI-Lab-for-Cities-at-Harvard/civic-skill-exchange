@@ -1,0 +1,89 @@
+# Runs against untrusted, contributor-authored content. It therefore holds NOTHING:
+# no secrets, no write scope, no credentials persisted from checkout.
+#
+# Anything that needs a token lives in report.yml, which runs afterwards on
+# workflow_run and never reads skill content. Do not merge these two files.
+#
+# See docs/SECURITY.md — "CI hardening".
+
+name: Validate
+
+on:
+  pull_request:
+    paths:
+      - "skills/**"
+
+# Least privilege. This job reads attacker-controlled text for a living.
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Structure, ownership, and signatures
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the pull request head
+        # TODO: pin to a commit SHA before enabling this workflow. Tags move.
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --require-hashes -r requirements.txt || pip install pyyaml jsonschema
+
+      # Untrusted values reach the shell through the environment, never through
+      # ${{ }} expansion into a command string. github.head_ref in particular is
+      # attacker-controlled. This is the same discipline that keeps event text out
+      # of model prompts.
+      - name: List changed files
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
+          echo "Changed paths:"
+          cat changed.txt
+
+      - name: L0 + L1 — structure and namespace ownership
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          python scripts/validate.py --changed changed.txt --author "$PR_AUTHOR"
+
+      - name: L2 + L3 — signature scan
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          python scripts/scan.py --changed changed.txt --out findings.json --pr "$PR_NUMBER"
+
+      # L4 — a purpose-built skill scanner belongs here. General-purpose LLM
+      # security products do not cover this artifact type; use a dedicated tool.
+      # - name: L4 — skill scanner
+      #   run: uvx skillspector scan skills/ --format json --out l4.json
+
+      - name: Record the PR number for the reporting job
+        if: always()
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: echo "$PR_NUMBER" > pr-number.txt
+
+      - name: Upload findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: findings
+          path: |
+            findings.json
+            pr-number.txt
+          retention-days: 7

@@ -1,0 +1,84 @@
+# Civic Skill Exchange
+
+An open catalog of agent skills for civic use — government, public-sector, and nonprofit work.
+
+A **skill** is a small, portable bundle of instructions (and sometimes scripts) that teaches an AI coding agent how to do one job well: explain a permit status in plain language, check a benefits application against eligibility rules, turn a budget spreadsheet into a published open-data file. Skills follow the [Agent Skills open standard](https://agentskills.io/specification), so they work across tools rather than locking you into one vendor.
+
+This registry exists so that a city that solves a problem once can hand the solution to the next hundred cities.
+
+---
+
+## Two tiers
+
+Every listing sits in exactly one tier, and the difference matters.
+
+| | **Community** | **Reviewed** |
+|---|---|---|
+| Automated checks | Yes | Yes |
+| Human review | No | Two named reviewers |
+| Pinned to a commit | No | Yes — attestation covers one exact content hash |
+| Size | Unbounded | Deliberately small |
+| What a listing means | It is well-formed and nothing mechanical is wrong with it | Named people read every line and put their names on it |
+
+**A Community listing is not an endorsement.** It means the skill passed automated structural and security checks. Automated checks can only ever say *no* — a pass is never a statement that a skill is safe. Read anything from this tier before you run it, exactly as you would read any code you found on the internet.
+
+See [docs/TIERS.md](docs/TIERS.md) for how tiers work and how a skill moves between them.
+
+---
+
+## Explore
+
+Browse the catalog at **[ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/)** — filter by category, jurisdiction, data sensitivity, and tier.
+
+The site is generated from this repository. If you'd rather work with the data directly, the build publishes a static JSON API:
+
+```
+/index.json                              all skills, with tier and scan status
+/categories.json                         the category vocabulary
+/skills/{namespace}/{skill}.json         one skill's metadata
+```
+
+## Download
+
+Skills are plain directories. Take one however you like:
+
+```bash
+# A single skill, without cloning the whole registry
+npx degit AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/skills/{namespace}/{skill-name} ./{skill-name}
+
+# Or clone everything and copy what you need
+git clone https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange.git
+cp -r civic-skill-exchange/skills/{namespace}/{skill-name} ~/.claude/skills/
+```
+
+Install paths differ across agent tools — `.claude/skills/`, `.agents/skills/`, and others. Check your tool's documentation for where it looks.
+
+**Before you run any skill from this registry:** read its `SKILL.md`, read anything under `scripts/`, and check the `allowed-tools` field. That field grants an agent tool access *without prompting you for approval*. This is true of every skill from every source, not just this one.
+
+## Submit
+
+Open a pull request adding your skill under `skills/{your-github-username}/{skill-name}/`. Automated checks run on the PR and report back in a comment. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contract and a worked example.
+
+You can also open a [skill submission issue](../../issues/new?template=submit-skill.yml) if you'd rather not work in git directly.
+
+---
+
+## Documentation
+
+| Document | What's in it |
+|---|---|
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to write and submit a skill; the frontmatter contract |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Repository layout, schema, category vocabulary, index build |
+| [docs/TIERS.md](docs/TIERS.md) | Tier definitions, the attestation ledger, promotion and demotion |
+| [docs/REVIEW.md](docs/REVIEW.md) | The reviewer checklist and process |
+| [docs/SECURITY.md](docs/SECURITY.md) | Threat model, scan layers, CI hardening, how to report a problem |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | Build sequence and current phase |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Why the registry is built this way, and where that reasoning is thin |
+
+## License
+
+Registry infrastructure is licensed under [LICENSE](LICENSE). Each skill carries its own license in its frontmatter and remains the property of its authors.
+
+## Disclaimer
+
+Inclusion in this registry does not constitute endorsement, verification, or any guarantee regarding a skill's quality, functionality, security, or fitness for any purpose. Skills in the Reviewed tier have been read by named people against a published checklist; that is a statement about a specific commit, not a warranty. You are responsible for what you run.

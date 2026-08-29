@@ -1,0 +1,159 @@
+name: Submit a skill
+description: Propose a skill for the registry without working in git directly.
+title: "Skill submission: "
+labels: ["submission"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing your work.
+
+        If you're comfortable with git, opening a pull request is faster — see
+        [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md). This form is for everyone else;
+        a maintainer will help turn it into a pull request.
+
+        **Everything you submit lands in the Community tier**, which means it passed
+        automated checks — not that anyone reviewed it. See
+        [docs/TIERS.md](../blob/main/docs/TIERS.md).
+
+  - type: input
+    id: name
+    attributes:
+      label: Skill name
+      description: Lowercase, hyphens, no spaces. This becomes the directory name.
+      placeholder: permit-status-explainer
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: >
+        How an agent decides whether to run this skill. Describe what it actually
+        does, not what you hope it will do — a description broader than the
+        behaviour makes the skill fire in situations you never handled.
+      placeholder: >
+        Explains the status of a municipal building permit in plain language, given
+        a permit record. Read-only; does not submit or modify applications.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - constituent-services
+        - benefits-eligibility
+        - permitting-licensing
+        - procurement-contracting
+        - budget-finance
+        - public-records-foia
+        - open-data-publishing
+        - policy-legislative
+        - grants-development
+        - emergency-public-safety
+        - plain-language-accessibility
+        - language-access
+    validations:
+      required: true
+
+  - type: dropdown
+    id: jurisdiction
+    attributes:
+      label: Jurisdiction
+      description: "'Generic' means it makes no jurisdiction-specific assumptions."
+      options: [us-local, us-state, us-federal, intl, generic]
+    validations:
+      required: true
+
+  - type: dropdown
+    id: sensitivity
+    attributes:
+      label: What data does this skill touch?
+      description: >
+        'Protected' covers health, benefits, immigration, criminal justice, and
+        anything else under a statutory regime.
+      options:
+        - "none — no personal data"
+        - "pii — personally identifiable information"
+        - "protected — a statutory regime applies"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: human-review
+    attributes:
+      label: Does the output affect anyone's rights, benefits, or legal standing?
+      description: >
+        This is the question a reviewer cannot answer from your code, and the one
+        that matters most. Answer it honestly.
+      options:
+        - "none — no effect on any individual's situation"
+        - "advisory-only — informs a person, does not determine anything"
+        - "decision-support — feeds a determination a person acts on"
+    validations:
+      required: true
+
+  - type: textarea
+    id: tools
+    attributes:
+      label: What tools does the skill need?
+      description: >
+        Least privilege. This grant applies **without a permission prompt**, so
+        request the narrowest set that works. Wildcard Bash grants are rejected.
+      placeholder: "Read, Grep"
+    validations:
+      required: true
+
+  - type: textarea
+    id: skill-body
+    attributes:
+      label: The skill itself
+      description: Paste your SKILL.md, or link to where it lives.
+      render: markdown
+    validations:
+      required: true
+
+  - type: input
+    id: license
+    attributes:
+      label: License
+      placeholder: MIT
+    validations:
+      required: true
+
+  - type: input
+    id: maintainer
+    attributes:
+      label: Maintainer
+      description: The organization or person accountable for this skill.
+      placeholder: "City of X, Department of Building Safety"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else
+      description: >
+        Has this been used in production? Anything a reviewer should look at
+        closely? Anything you were unsure about?
+
+  - type: checkboxes
+    id: acknowledgements
+    attributes:
+      label: Before you submit
+      options:
+        - label: I have the right to share this under the license above.
+          required: true
+        - label: >
+            This skill contains no credentials, no internal URLs, and no
+            constituent data.
+          required: true
+        - label: >
+            I understand a Community listing is not a review, and that inclusion
+            is not an endorsement.
+          required: true

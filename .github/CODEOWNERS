@@ -1,0 +1,26 @@
+# Everything is maintainer-owned by default. Contributor namespaces under skills/
+# are the single exception — a PR confined to skills/{your-username}/ needs no
+# CODEOWNER approval, which is what keeps submission cheap.
+#
+# CODEOWNERS is last-match-wins, so order matters here.
+
+* @AI-Lab-for-Cities-at-Harvard/maintainers
+
+# Contributor namespaces — no owner, so no CODEOWNER review required.
+/skills/
+
+# These are the levers. A PR touching any of them changes what the registry checks,
+# what it publishes, or who it trusts, and always needs maintainer review.
+/schema/            @AI-Lab-for-Cities-at-Harvard/maintainers
+/scripts/           @AI-Lab-for-Cities-at-Harvard/maintainers
+/registry/          @AI-Lab-for-Cities-at-Harvard/maintainers
+/.github/           @AI-Lab-for-Cities-at-Harvard/maintainers
+/docs/SECURITY.md   @AI-Lab-for-Cities-at-Harvard/maintainers
+/docs/REVIEW.md     @AI-Lab-for-Cities-at-Harvard/maintainers
+
+# The attestation ledger is the Reviewed tier. Only reviewers write here.
+/registry/reviewed.yml  @AI-Lab-for-Cities-at-Harvard/reviewers
+
+# Maintainer-seeded skills. Reserved namespace — needs maintainer approval,
+# which is why scripts/validate.py skips the author check for it.
+/skills/civic-skills/  @AI-Lab-for-Cities-at-Harvard/maintainers

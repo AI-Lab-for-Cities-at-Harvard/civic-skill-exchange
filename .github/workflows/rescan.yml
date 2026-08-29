@@ -1,0 +1,86 @@
+# Layer L6 — the standing re-scan.
+#
+# Everything else in this pipeline is a SUBMISSION-TIME gate, and submission-time
+# gates do nothing about the dominant failure mode in this ecosystem: a legitimate
+# contributor whose account is compromised months after their skill was merged.
+#
+# This workflow is ten lines of scheduling and it covers a gap the rest of the
+# pipeline structurally cannot. Turn it on the same day you open submissions, not
+# later. See docs/SECURITY.md.
+
+name: Weekly re-scan
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"     # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  rescan:
+    name: Re-scan the whole tree
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: pin to commit SHAs before enabling.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install pyyaml jsonschema
+
+      - name: Validate
+        id: validate
+        continue-on-error: true
+        run: python scripts/validate.py all 2>&1 | tee validate.log
+
+      - name: Scan
+        id: scan
+        continue-on-error: true
+        run: python scripts/scan.py all --out findings.json 2>&1 | tee scan.log
+
+      # Detects attestations whose sha no longer matches the skill's current tree.
+      # Those skills are already demoted by the build; this is how a human hears
+      # about it.
+      - name: Check attestation drift
+        id: drift
+        continue-on-error: true
+        run: python scripts/build_index.py --out /tmp/index --findings findings.json | tee drift.log
+
+      - name: Open an issue on new findings
+        if: steps.validate.outcome == 'failure' || steps.scan.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const read = (p) => fs.existsSync(p)
+              ? fs.readFileSync(p, 'utf8').slice(0, 8000)
+              : '(no output)';
+
+            const today = new Date().toISOString().slice(0, 10);
+            const body = [
+              `The weekly re-scan found something that was not there at submission time.`,
+              ``,
+              `This is expected behaviour, not an emergency — it is the layer that`,
+              `catches an already-merged skill going bad. Triage against`,
+              `docs/SECURITY.md, and demote or delist per docs/TIERS.md.`,
+              ``,
+              `### Validation`, '```', read('validate.log'), '```',
+              `### Signatures`, '```', read('scan.log'), '```',
+              `### Attestation drift`, '```', read('drift.log'), '```',
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Weekly re-scan findings — ${today}`,
+              body,
+              labels: ['security', 'rescan'],
+            });

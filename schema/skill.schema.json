@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://civic-skills.example/schema/skill.schema.json",
+  "title": "Civic Skills Registry — SKILL.md frontmatter",
+  "description": "The six fields of the Agent Skills specification, plus required civic.* metadata. Fields outside this set are quarantined into metadata by scripts/validate.py rather than rejected, so that skills using vendor extensions still validate.",
+
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "description", "license", "metadata"],
+
+  "properties": {
+    "name": {
+      "type": "string",
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Lowercase alphanumeric and hyphens. Must match the parent directory name."
+    },
+
+    "description": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 1024,
+      "description": "How an agent decides to invoke this skill. Must describe actual behavior, not aspiration. A description broader than the behavior is a security finding, not a style issue."
+    },
+
+    "license": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 64,
+      "description": "Optional in the Agent Skills spec; required here. SPDX identifier by convention — the spec does not constrain this field, so it is machine-present but not machine-verifiable. License applicability is a human review step."
+    },
+
+    "compatibility": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Network, credential, and platform requirements, stated plainly."
+    },
+
+    "allowed-tools": {
+      "description": "Least privilege. This grant applies without a permission prompt and is not gated by workspace trust. Marked EXPERIMENTAL in the Agent Skills spec — re-verify semantics before relying on it. Wildcard Bash grants are rejected by scripts/scan.py at layer L2.",
+      "oneOf": [
+        { "type": "string", "maxLength": 500 },
+        {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "type": "string", "maxLength": 100 }
+        }
+      ]
+    },
+
+    "metadata": {
+      "type": "object",
+      "description": "String map, per the Agent Skills spec. Registry fields are namespaced civic.* so they cannot collide with vendor extensions.",
+      "required": [
+        "civic.category",
+        "civic.jurisdiction",
+        "civic.data-sensitivity",
+        "civic.human-review",
+        "civic.maintainer",
+        "civic.contact"
+      ],
+      "additionalProperties": { "type": "string", "maxLength": 500 },
+
+      "properties": {
+        "civic.category": {
+          "type": "string",
+          "$comment": "The permitted values live in registry/categories.yml and are enforced at runtime by scripts/validate.py, so the vocabulary has exactly one source of truth.",
+          "maxLength": 64
+        },
+
+        "civic.jurisdiction": {
+          "type": "string",
+          "enum": ["us-local", "us-state", "us-federal", "intl", "generic"],
+          "description": "Who the skill is shaped for. 'generic' means it makes no jurisdiction assumptions."
+        },
+
+        "civic.data-sensitivity": {
+          "type": "string",
+          "enum": ["none", "pii", "protected"],
+          "description": "What the skill is expected to touch. 'protected' covers health, benefits, immigration, criminal justice, and anything else under a statutory regime."
+        },
+
+        "civic.human-review": {
+          "type": "string",
+          "enum": ["none", "advisory-only", "decision-support"],
+          "description": "Whether output affects a person's rights, benefits, or legal standing. Anything other than 'none' must also be stated in the skill's own output, not only here."
+        },
+
+        "civic.maintainer": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 200,
+          "description": "Organization or individual accountable for the skill."
+        },
+
+        "civic.contact": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 200,
+          "description": "A working address for security reports. A contact that bounces disqualifies a skill from the Reviewed tier."
+        }
+      }
+    }
+  }
+}

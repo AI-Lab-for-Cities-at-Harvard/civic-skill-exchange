@@ -1,0 +1,30 @@
+# Review attestations — the ONLY place tier is recorded.
+#
+# Skills do not declare their own tier. scripts/build_index.py derives it:
+#
+#     tier = "reviewed"  if an unexpired attestation exists here
+#                        AND its sha matches the skill directory's current commit
+#            "community" otherwise
+#
+# The sha pin is the point. A reviewer attests to one exact content hash, not to
+# a skill name and not to a person. When the content changes the attestation stops
+# applying automatically, and the skill drops back to Community without anyone
+# having to notice. That is what makes this survive a contributor's account being
+# compromised months after review.
+#
+# See docs/TIERS.md for promotion and demotion, docs/REVIEW.md for the checklist.
+#
+# ---------------------------------------------------------------------------
+# Shape of an entry:
+#
+# - skill: "{namespace}/{skill-name}"
+#   sha: "<40-char commit SHA of the tree that was reviewed>"
+#   reviewers: [github-handle, github-handle]   # two, from different organizations
+#   reviewed: YYYY-MM-DD
+#   expires: YYYY-MM-DD                         # one year; re-review or demote
+#   notes: >
+#     For the next reviewer, a year from now, with no memory of this conversation.
+#     What did you check closely? What would you look at first if it went wrong?
+# ---------------------------------------------------------------------------
+
+attestations: []

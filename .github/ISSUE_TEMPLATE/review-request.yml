@@ -1,0 +1,87 @@
+name: Request Reviewed-tier consideration
+description: Ask for a skill already listed in Community to be reviewed for promotion.
+title: "Review request: "
+labels: ["review-request"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The Reviewed tier means two named people from different organizations read
+        every line of one specific commit and put their names on it.
+
+        It is deliberately small — its entire value is its scarcity. Reviewers may
+        decline without completing the checklist and without giving a reason.
+        Review capacity is the scarcest resource this registry has.
+
+        Read [docs/REVIEW.md](../blob/main/docs/REVIEW.md) before opening this.
+        Working the checklist against your own skill first is the fastest way to
+        write something that passes it.
+
+  - type: input
+    id: skill
+    attributes:
+      label: Skill ID
+      placeholder: cityofx/permit-status-explainer
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: eligibility
+    attributes:
+      label: Eligibility
+      options:
+        - label: Listed in the Community tier for at least 30 days.
+          required: true
+        - label: Clean automated results — no blocking signatures.
+          required: true
+        - label: The maintainer contact in the frontmatter is monitored and works.
+          required: true
+
+  - type: textarea
+    id: self-review
+    attributes:
+      label: Your own pass through the checklist
+      description: >
+        Walk items 1-9 of docs/REVIEW.md and say what you found. This is not a
+        formality — a submitter who has genuinely done this saves a reviewer most
+        of their fifteen minutes, and it is the single strongest signal that a
+        request is worth taking up.
+      placeholder: |
+        1. Description matches behaviour — ...
+        2. Every line of scripts/ read — ...
+        3. allowed-tools justified — ...
+        4. Network destinations — ...
+        5. Credential/env access — ...
+        6. No suppression language — ...
+        7. Civic appropriateness — ...
+        8. License applicable — ...
+        9. Portable beyond one jurisdiction — ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: deployment
+    attributes:
+      label: Where has this been used?
+      description: >
+        Real deployment is not required, but it is the strongest evidence a skill
+        does what it says. Name jurisdictions or organizations if you can.
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: What would you look at first if something went wrong?
+      description: >
+        Answer as the author. This goes into the attestation notes for the next
+        reviewer, a year from now, who has no memory of this conversation.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        **If you have found a security problem in a listed skill, do not use this
+        form.** Follow [docs/SECURITY.md](../blob/main/docs/SECURITY.md) — a public
+        issue tells the author exactly which check caught them.
