@@ -14,30 +14,14 @@ You may decline a review at any point, without completing the checklist and with
 
 ---
 
-## Deployment evidence, and what it does not buy
+## Deployment evidence
 
-Every skill carries self-reported provenance: who maintains it, whether it has
-actually been used, at what scale, where, and since when.
+Skills carry self-reported provenance: who maintains it, whether it has actually
+been used, and at what scale. Real operational history is useful context — it is
+evidence a skill *works*, which is hard to get by reading.
 
-**What it substitutes for.** Real operational history is evidence you cannot get
-by reading. A skill that has run across an agency for six months has been tested
-by reality — it works on messy inputs, it survived staff turnover, it did not
-quietly break. That is checklist item 9 answered, and much of the "does this
-actually function" question with it.
-
-**What it never substitutes for.** Items 1 through 7 stand unchanged regardless of
-provenance. A compromised account at a real agency ships malware from a real
-agency, and a wildcard Bash grant is not safer because a city uses it. Deployment
-is evidence of **function**, never of **safety**.
-
-If you ever find yourself reading `scripts/` less carefully because the submitter
-is a government agency, stop. That is the exact substitution this section exists
-to prevent, and it is the one an attacker would most like you to make.
-
-**The contact-domain signal.** The index classifies the maintainer contact's
-domain — `government`, `academic`, `unclassified`. It is a hint, not verification:
-anyone can type an address they do not control. Treat it as a reason to check, not
-as the check.
+It is not evidence a skill is *safe*. Every item below applies the same way
+regardless of who submitted it.
 
 ---
 
@@ -100,15 +84,6 @@ The spec field is free text, not SPDX-constrained — machine-*present*, not mac
 
 Not a rejection — a quality bar. Hardcoded field names, form numbers, and internal URLs are what make a skill useless to the next city, which is the entire point of the registry. If it's tightly bound to one jurisdiction, ask the author to move the specifics into `references/` before you sign off.
 
-### 10. Does the provenance claim hold up?
-
-Only for skills claiming `team` or `organization` deployment, and only at
-promotion time.
-
-We will use a legitimate email address from a person at a government agency as proof of provenance. We may contact the submitter to validate that the person is affiliated with that organization. 
-
-
-
 ---
 
 ## Signing off
@@ -122,14 +97,6 @@ Both reviewers comment on the review-request issue with the SHA they reviewed an
   reviewed: 2026-09-14
   expires: 2027-09-14
   notes: "Read-only. No network egress. No PII handling."
-
-  # Only if you confirmed the deployment claim with a human. Omit otherwise —
-  # the site then shows the claim as self-reported, which is the honest default.
-  provenance_verified:
-    scope: organization
-    method: "Reply from the named contact on the agency's .gov domain, 2026-09-12"
-    by: alice-gov
-    date: 2026-09-12
 ```
 
 **The SHA is the attestation.** You are signing off on one exact content hash, not on a skill name and not on a person. If the content changes, your attestation stops applying automatically and the skill drops back to Community. That is the mechanism working — you do not need to monitor anything.

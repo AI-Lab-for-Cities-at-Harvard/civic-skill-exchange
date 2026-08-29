@@ -81,32 +81,12 @@ metadata:
 
 ### Provenance
 
-The `deployment` fields are self-reported and always published as such. Two rules
-enforced in `validate.py` rather than the schema, because the error messages matter:
-a claim other than `none` must name both `deployed-at` and `deployed-in`, and a claim
-of `none` must name neither — a contradictory claim reads as evidence on the site
-while the author has said the skill was never used.
+The `deployment` fields are self-reported and published as such. One rule lives in
+`validate.py` rather than the schema, because the error message matters: a claim
+other than `none` must name both `deployed-at` and `deployed-in`.
 
-`build_index.py` also classifies the contact's domain as `government`, `academic`,
-or `unclassified`. The class is published; the address never is. It is a hint for
-reviewers, not verification — anyone can type an address they do not control.
-
-Verification lives in `registry/reviewed.yml` under `provenance_verified`, which
-only reviewers write. Provenance plays no part in deriving tier: it is evidence of
-function, not of safety. What it changes is the waiting period before review — see
-[TIERS.md](TIERS.md).
-
-The `civic.` prefix keeps registry fields from colliding with anything a tool vendor adds to `metadata` later.
-
-### Handling non-spec fields
-
-Some agent tools accept fields beyond the six — roughly twenty in one popular implementation. Rejecting those would reject otherwise-working skills. **Quarantine them into `metadata` rather than failing the build**, and record what was moved in the PR comment so the contributor knows.
-
-### Portability notes
-
-- `license` is free text in the spec, not SPDX-constrained. We require an SPDX identifier by convention, but it is machine-*present*, not machine-*verifiable*. License checking stays a human step.
-- `allowed-tools` is marked **experimental** in the spec and its semantics are under active dispute upstream. Re-verify before implementing against it.
-- Install paths differ across tools (`.claude/skills/`, `.agents/skills/`, others). Do not hardcode one in generated install instructions.
+Provenance plays no part in deriving tier. It is context for a human deciding
+whether to adopt a skill, not a security signal.
 
 ---
 

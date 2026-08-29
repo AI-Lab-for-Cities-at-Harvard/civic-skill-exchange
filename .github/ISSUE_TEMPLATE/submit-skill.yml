@@ -114,14 +114,8 @@ body:
         ---
         ### Where has this been used?
 
-        This section is the most useful thing you can give a reviewer. A skill that
-        has run in a real agency for months has been tested by reality in a way
-        nobody can reproduce by reading it — and that evidence can shorten the wait
-        before we review it.
-
-        **It does not shorten the security review.** Deployment tells us a skill
-        works, never that it is safe. Answer honestly: "never used in production"
-        is a perfectly good answer and costs you nothing.
+        Useful context for anyone deciding whether to adopt it. "Never used in
+        production" is a perfectly good answer.
 
   - type: dropdown
     id: affiliation
@@ -155,8 +149,7 @@ body:
     attributes:
       label: Which organization?
       description: >
-        Required unless you answered "none". Name the agency, department, or
-        organization. Be specific enough that a reviewer could check.
+        Required unless you answered "none".
       placeholder: "City of Boston, Department of Innovation and Technology"
 
   - type: input
@@ -172,9 +165,7 @@ body:
     id: deployed-since
     attributes:
       label: Roughly since when? (optional)
-      description: >
-        YYYY or YYYY-MM. Duration is the part of a deployment claim that carries
-        the most weight — six months of real use says more than any description.
+      description: "YYYY or YYYY-MM."
       placeholder: "2026-03"
 
   - type: textarea
@@ -194,9 +185,7 @@ body:
       label: When is it NOT useful? (optional)
       description: >
         Where it falls down, what it should not be pointed at, what it gets wrong.
-        **This is the highest-value optional field on the form.** Nobody else can
-        tell us this, and a skill honest about its limits gets adopted faster than
-        one that claims none.
+        Worth filling in — nobody else can tell us this.
       placeholder: >
         Not for filled notices containing a specific person's data. Not a substitute
         for legal review of whether required elements are present.

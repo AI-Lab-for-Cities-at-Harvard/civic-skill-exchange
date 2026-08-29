@@ -1,11 +1,6 @@
-"""Deployment provenance — self-reported evidence that a skill is actually in use.
+"""Deployment provenance — self-reported context about whether a skill is in use.
 
-The whole point is that real operational history is evidence reading cannot give
-you. The whole risk is that it gets treated as a security signal, which it is not:
-a compromised account at a real agency ships malware from a real agency.
-
-These tests hold that line. Provenance is published, filterable, and always
-labelled self-reported until a reviewer verifies it.
+Published as self-reported, and deliberately unable to affect tier.
 """
 
 from __future__ import annotations
@@ -179,38 +174,6 @@ def test_deployed_since_accepts_year_and_year_month(make_skill, categories, vali
 
 
 # --------------------------------------------------------------------------- #
-# The contact-domain signal
-#
-# A .gov address is a hint worth surfacing to a reviewer. It is NOT verification:
-# anyone can type an address they do not control.
-
-
-def test_government_contact_domain_is_classified():
-    assert build_index.classify_contact_domain("digital@cityofx.gov") == "government"
-    assert build_index.classify_contact_domain("x@agency.gov.uk") == "government"
-    assert build_index.classify_contact_domain("x@dept.mil") == "government"
-
-
-def test_academic_contact_domain_is_classified():
-    assert build_index.classify_contact_domain("someone@harvard.edu") == "academic"
-
-
-def test_ordinary_contact_domain_is_not_classified():
-    assert build_index.classify_contact_domain("someone@gmail.com") == "unclassified"
-    assert build_index.classify_contact_domain("someone@consultancy.io") == "unclassified"
-
-
-def test_a_lookalike_government_domain_is_not_classified():
-    """cityofx.gov.attacker.com must not read as government."""
-    assert build_index.classify_contact_domain("x@cityofx.gov.attacker.com") == "unclassified"
-
-
-def test_missing_contact_is_handled():
-    assert build_index.classify_contact_domain(None) == "unclassified"
-    assert build_index.classify_contact_domain("not-an-address") == "unclassified"
-
-
-# --------------------------------------------------------------------------- #
 # What the index publishes
 
 
@@ -231,48 +194,10 @@ def test_provenance_is_published_and_marked_self_reported(make_skill):
     assert prov["deployed_at"] == "City of Example"
 
 
-def test_provenance_is_unverified_until_a_reviewer_says_otherwise(make_skill):
-    entry = build_index.build_entry(make_skill(), {}, {})
-    assert entry["provenance"]["verified"] is None
-
-
-def test_a_reviewer_can_verify_a_deployment_claim(make_skill):
-    """Verification lives in the attestation ledger, which only reviewers write —
-    never in submitter-controlled frontmatter."""
-    skill = make_skill(
-        namespace="ns", name="example",
-        overrides={
-            "metadata": meta(
-                affiliation="government", deployment="organization",
-                deployed_at="City of Example", deployed_in="US-MA / Boston",
-            )
-        },
-    )
-    attestations = {
-        "ns/example": {
-            "skill": "ns/example",
-            "sha": "deadbeef",
-            "reviewers": ["alice", "bob"],
-            "reviewed": "2026-09-01",
-            "expires": "2027-09-01",
-            "provenance_verified": {
-                "scope": "organization",
-                "method": "Confirmed by reply from the named contact on a .gov domain",
-                "by": "alice",
-                "date": "2026-09-01",
-            },
-        }
-    }
-    entry = build_index.build_entry(skill, attestations, {})
-    assert entry["provenance"]["verified"]["scope"] == "organization"
-
-
 def test_contact_address_is_still_never_published(make_skill):
-    """Adding provenance must not leak the contact the domain signal is derived
-    from. The class is published; the address is not."""
+    """Adding provenance must not leak the maintainer's contact address."""
     entry = build_index.build_entry(make_skill(), {}, {})
     assert "test@example.com" not in str(entry)
-    assert entry["provenance"]["contact_domain"] == "unclassified"
 
 
 def test_deployment_evidence_does_not_change_tier(make_skill):

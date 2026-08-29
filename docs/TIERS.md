@@ -38,14 +38,6 @@ This is the tier a city IT director can act on. Protect it accordingly.
   reviewed: 2026-09-14
   expires: 2027-09-14
   notes: "Read-only. No network egress. No PII handling."
-
-  # Optional. Present only when a reviewer confirmed the deployment claim with a
-  # human at the named organization. Never written by a submitter.
-  provenance_verified:
-    scope: organization
-    method: "Reply from the named contact on the agency's .gov domain, 2026-09-12"
-    by: alice-gov
-    date: 2026-09-12
 ```
 
 The build joins this ledger against the current tree and derives tier:
@@ -67,38 +59,10 @@ This is cheap to implement and it is the single highest-value mechanism in the d
 
 ---
 
-## Provenance is a separate axis from tier
-
-Every skill carries self-reported provenance: maintainer affiliation, whether it
-has been used, at what scale, where, and since when. It is published in the index
-and filterable on the site, because "deployed organization-wide at a peer agency"
-is one of the most useful things a city IT director can filter on.
-
-**Provenance never moves a skill between tiers on its own.** It is evidence of
-function, not of safety — a compromised account at a real agency ships malware
-from a real agency. What it can do is shorten the waiting period before review,
-because a skill with real operational history has been tested by reality in a way
-the waiting period is only crudely approximating.
-
-Claims stay labelled **self-reported** until a reviewer confirms one with a human
-at the named organization, at which point the confirmation is recorded in
-`reviewed.yml` — reviewer-signed, like everything else that carries weight here.
-A submitter can never mark their own claim verified.
-
----
-
 ## Promotion
 
 1. Anyone opens a `review-request` issue naming the skill. Authors may request review of their own work.
-2. A maintainer confirms the skill is in scope, has clean L0–L4 results, and has served its waiting period in Community. The wait is deliberate: it lets the weekly re-scan run several times and gives the ecosystem time to surface problems.
-
-   | Deployment claim | Wait |
-   |---|---|
-   | `none` or `personal` | 30 days |
-   | `team` | 21 days |
-   | `organization`, verified by a reviewer | 7 days |
-
-   Real operational history is evidence the waiting period is a poor substitute for. An unverified `organization` claim gets the `team` wait — the discount is for the verification, not the assertion.
+2. A maintainer confirms the skill is in scope, has clean L0–L4 results, and has been listed in Community for at least 30 days. The waiting period is deliberate: it lets the weekly re-scan run several times and gives the ecosystem time to surface problems.
 3. Two reviewers from **different organizations** work the checklist in [REVIEW.md](REVIEW.md) independently.
 4. Both sign off in the issue. A PR adds the attestation to `reviewed.yml` with the skill's current SHA.
 5. The build promotes it on the next run.

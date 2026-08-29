@@ -53,8 +53,7 @@ SPEC_FIELDS = {"name", "description", "license", "compatibility", "allowed-tools
 RESERVED_NAMESPACES = {"civic-skills"}
 
 # Deployment provenance. The enums live in the schema; these are the cross-field
-# rules, which belong here because they produce a far better error message than a
-# nested JSON Schema if/then would.
+# rules, which belong here because the error messages are better.
 #
 # ISO 3166 country, optional subdivision, optional locality: "US-MA / Boston".
 DEPLOYED_IN_RE = re.compile(r"^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$")
@@ -63,13 +62,7 @@ DEPLOYMENT_DETAILS = ("civic.deployed-at", "civic.deployed-in")
 
 
 def check_provenance(meta: dict) -> list[str]:
-    """A deployment claim must say where, and a non-claim must not imply one.
-
-    Provenance is evidence a skill has real operational history, which is exactly
-    what a reviewer cannot get from reading it. That only holds if the claim is
-    specific enough to check — 'used organization-wide' with no organization named
-    is not evidence, it is a mood.
-    """
+    """A deployment claim must say where, and a non-claim must not imply one."""
     errors: list[str] = []
     deployment = meta.get("civic.deployment")
 
@@ -101,6 +94,7 @@ def check_provenance(meta: dict) -> list[str]:
         errors.append(f"civic.deployed-since '{since}' is not YYYY or YYYY-MM.")
 
     return errors
+
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 

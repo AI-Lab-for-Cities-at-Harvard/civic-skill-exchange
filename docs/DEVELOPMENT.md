@@ -33,10 +33,6 @@ have been found by reading harder.
 **Small commits.** One reviewable idea each. A commit that changes a signature and
 refactors the loader is two commits.
 
-**Provenance is not a security signal.** If you touch `build_index.py` or
-`REVIEW.md`, keep the line: deployment evidence substitutes for functional testing,
-never for a security check. `test_deployment_evidence_does_not_change_tier` pins it.
-
 **Every behaviour change needs a test.** New signature, new schema field, new tier
 rule — a test that fails without the change. If it can't be tested, say why in the
 pull request.
