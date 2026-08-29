@@ -61,6 +61,30 @@ DEPLOYED_SINCE_RE = re.compile(r"^\d{4}(-(0[1-9]|1[0-2]))?$")
 DEPLOYMENT_DETAILS = ("civic.deployed-at", "civic.deployed-in")
 
 
+# A generalized skill has had its jurisdiction specifics lifted out, so it cannot
+# also be shaped for one named jurisdiction. These two are compatible with it:
+# 'generic' means no assumptions, 'intl' says nothing about which jurisdiction.
+GENERALIZED_OK_JURISDICTIONS = {"generic", "intl"}
+
+
+def check_localization(meta: dict) -> list[str]:
+    """Catch the one contradiction an adopter cannot resolve on their own."""
+    localization = meta.get("civic.localization")
+    jurisdiction = meta.get("civic.jurisdiction")
+
+    if (
+        localization == "generalized"
+        and jurisdiction
+        and jurisdiction not in GENERALIZED_OK_JURISDICTIONS
+    ):
+        return [
+            f"civic.localization: generalized contradicts civic.jurisdiction: "
+            f"{jurisdiction}. A generalized skill has had its jurisdiction specifics "
+            f"lifted out, so use 'generic' (or 'intl'), or mark the skill 'localized'."
+        ]
+    return []
+
+
 def check_provenance(meta: dict) -> list[str]:
     """A deployment claim must say where, and a non-claim must not imply one."""
     errors: list[str] = []
@@ -294,6 +318,7 @@ def validate_skill(
         )
 
     errors.extend(check_provenance(front.get("metadata") or {}))
+    errors.extend(check_localization(front.get("metadata") or {}))
 
     category = (front.get("metadata") or {}).get("civic.category")
     if category and category not in categories:

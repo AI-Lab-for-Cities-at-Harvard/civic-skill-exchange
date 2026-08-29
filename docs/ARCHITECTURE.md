@@ -79,6 +79,15 @@ metadata:
   civic.deployed-since: "2026-03"        # optional, YYYY or YYYY-MM
 ```
 
+### Localization
+
+`civic.localization` is optional and records whether a skill carries one
+jurisdiction's specifics (`localized`) or has had them lifted out into a context an
+adopter fills in (`generalized`). Skills with no jurisdiction-specific content omit
+it. `validate.py` rejects the one contradiction an adopter cannot resolve —
+`generalized` alongside a named jurisdiction like `us-state`. See
+[LOCALIZATION.md](LOCALIZATION.md).
+
 ### Provenance
 
 The `deployment` fields are self-reported and published as such. One rule lives in

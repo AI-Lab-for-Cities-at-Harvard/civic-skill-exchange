@@ -87,6 +87,7 @@ metadata:
 | `civic.deployed-at` | free text | The organization where it ran. Required unless `deployment: none` — and forbidden when it is. |
 | `civic.deployed-in` | e.g. `US-MA / Boston`, `GB` | Where that organization operates. Same rule. |
 | `civic.deployed-since` | `YYYY` or `YYYY-MM` | Optional. Duration carries more weight than any other part of the claim. |
+| `civic.localization` | `generalized`, `localized` | Optional. Where the skill sits on the jurisdiction axis — see [docs/LOCALIZATION.md](docs/LOCALIZATION.md). Omit it if the skill has no jurisdiction-specific content. |
 
 `civic.data-sensitivity` and `civic.human-review` exist because they are the first two questions any government IT reviewer asks, and neither is answerable from reading the code. Answer them honestly — an understated declaration that contradicts the code is grounds for rejection, and it's the kind of thing a reviewer notices.
 
