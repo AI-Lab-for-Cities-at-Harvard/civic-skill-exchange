@@ -93,3 +93,43 @@ Before touching a workflow, re-read the CI hardening section of
 - [ ] New behaviour has a test that fails without the change
 - [ ] Docs updated if you changed the contract contributors rely on
 - [ ] Security-sensitive changes flagged in the description
+
+## The site
+
+React + Vite + TypeScript under `site/`, deployed to Pages by `build.yml`.
+
+```bash
+cd site
+npm install
+npm run dev       # localhost:5173
+npm run test      # vitest
+npm run build     # → site/dist
+```
+
+`build_index.py --out site/public/data` writes the catalog into Vite's `public/`,
+which Vite copies verbatim into `dist/data/`. That directory is generated, so it
+is gitignored — run the build script once before `npm run dev` or the page will
+show its load error.
+
+### Design tokens
+
+`src/styles/tokens.css` follows the HBS web design system: semantic `--c-*`
+colors redefined per theme on the root element, fluid `clamp()` spacing, their
+breakpoints.
+
+Two rules when working in it:
+
+**The brand accent is one variable.** `--brand-accent` is the only place the
+crimson appears. This project is affiliated with HBS but not yet approved to
+carry the brand, so de-identifying the site has to stay a one-line change.
+Never hardcode `#a41034` anywhere else, and never add the HBS logo, wordmark,
+shield, or name.
+
+**No HBS typefaces.** Graphik and Tiempos are commercially licensed and cannot
+be redistributed. Inter and Source Serif 4 hold the same pairing.
+
+### Testing the front end
+
+Logic lives in `src/lib/` as pure functions so it can be unit-tested without a
+DOM — `filter.ts` is the pattern. Components stay thin enough that a rendering
+bug is visible rather than subtle. Accessibility checks arrive with issue #6.

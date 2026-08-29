@@ -14,6 +14,7 @@ on:
       - "registry/**"
       - "tests/**"
       - "pytest.ini"
+      - "site/**"
       - ".github/workflows/test.yml"
   push:
     branches: [main]
@@ -49,3 +50,34 @@ jobs:
         run: |
           python scripts/validate.py all
           python scripts/scan.py all
+
+  site:
+    name: site
+    runs-on: ubuntu-latest
+    steps:
+      # TODO: pin to commit SHAs before relying on this in branch protection.
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install
+        working-directory: site
+        run: npm ci
+
+      - name: Typecheck
+        working-directory: site
+        run: npx tsc -b
+
+      - name: Test
+        working-directory: site
+        run: npm run test
+
+      - name: Build
+        working-directory: site
+        run: npx vite build
