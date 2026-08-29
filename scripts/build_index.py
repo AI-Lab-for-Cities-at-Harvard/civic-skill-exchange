@@ -40,7 +40,9 @@ def head_sha(path: Path) -> str | None:
             ["git", "log", "-1", "--format=%H", "--", str(path.relative_to(ROOT))],
             cwd=ROOT, capture_output=True, text=True, check=True,
         )
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError):
+        # ValueError: the path is outside the repository, so git cannot tell us
+        # anything about it. Callers must treat None as "unverifiable".
         return None
     return out.stdout.strip() or None
 
@@ -82,7 +84,17 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
     if expires and expires < date.today():
         return {"tier": "community", "reason": f"attestation expired {expires.isoformat()}"}
 
-    if sha and attestation.get("sha") != sha:
+    # Fail closed. If we cannot resolve the skill's current commit we cannot confirm
+    # the attestation still applies, and an unverifiable Reviewed badge is worse
+    # than no badge — people act on it.
+    if sha is None:
+        return {
+            "tier": "community",
+            "reason": "cannot resolve the skill's current commit, so the attestation "
+                      "cannot be verified",
+        }
+
+    if attestation.get("sha") != sha:
         return {
             "tier": "community",
             "reason": "content changed since review — attestation covers "
