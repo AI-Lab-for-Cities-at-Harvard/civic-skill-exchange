@@ -8,44 +8,34 @@ Tell us the skill ID, what it does, and how you found it. We aim to acknowledge 
 
 ---
 
-## Threat model
+## What a skill can do
 
-Five things we are actually defending against. Everything in this document exists to address one of them.
+Five properties of agent skills that everything below is designed around. If you contribute or review here, these are the facts to hold onto.
 
-**1. A skill is an executable bundle, not a prompt file.** Skills bundle scripts in any language that the agent *runs* rather than reads. Reviewing the prose is not reviewing the skill.
+**1. A skill is an executable bundle, not a prompt file.** Skills can ship scripts in any language that the agent *runs* rather than reads. Reviewing the prose is not reviewing the skill.
 
-**2. `allowed-tools` grants tool access with no permission prompt.** The grant applies when the skill is invoked, without an approval dialog, and it is not gated by workspace trust. A skill committed to a repository can grant itself broad tool access before anyone has agreed to anything. A working reverse shell via a wildcard Bash grant has been publicly demonstrated, with the user shown nothing.
+**2. `allowed-tools` grants tool access with no permission prompt.** The grant applies when the skill is invoked, without an approval dialog, and it is not gated by workspace trust. A skill committed to a repository can grant itself broad tool access before anyone has agreed to anything.
 
-**3. Dynamic-context commands execute before any model reads the file.** Commands in backtick-bang syntax run on the host during preprocessing. Researchers exfiltrated a GitHub token this way while a frontier model, reading the same skill at maximum reasoning, correctly identified it as malicious and refused to run it. **This is why an LLM cannot be our safety gate.** Model-level judgment sits downstream of code that has already executed.
+**3. Dynamic-context commands execute before any model reads the file.** Commands in backtick-bang syntax run on the host during preprocessing. **This is why an LLM cannot be our safety gate** — model-level judgment sits downstream of code that has already executed.
 
-**4. Skills load without being installed.** Agents pick them up from `.claude/skills/` directories nested anywhere below the working directory, from home directories, from plugins, and from added directories. A cloned repository introduces skills into a trusted session without anyone installing anything. Our registry is one distribution channel among several; delisting a skill does not un-ship it.
+**4. Skills load without being installed.** Agents pick them up from `.claude/skills/` directories nested anywhere below the working directory, from home directories, from plugins, and from added directories. A cloned repository introduces skills into a trusted session without anyone installing anything. This registry is one distribution channel among several: **delisting a skill does not un-ship it.**
 
-**5. Our own CI is a target.** Prompt injection from attacker-authored PR text into a privileged GitHub Action is a consummated attack, not a hypothesis. It has extracted secrets from a major vendor's own shipped Action and — via an injected issue *title* — stolen an npm publish token and published a malicious release. One study of 13,392 workflows confirmed 496 of 519 candidates exploitable.
-
-Point 5 is worse for us than for an ordinary repository, because SKILL.md bodies are *natively instruction-shaped prose that needs no disguise*, and our pipeline's stated purpose is to read them.
-
-### Base rates
-
-An audit of 3,984 skills across two unmoderated community marketplaces found 36.8% with at least one security flaw, 13.4% with at least one critical issue, and 76 human-confirmed malicious payloads.
-
-Read that carefully. **"At least one security flaw" is a broad bucket** spanning injection patterns and exposed secrets — it must never be restated as a malware rate. The 76 confirmed payloads are a floor under one vendor's lens, not an ecosystem total; another team found a substantially higher rate on a smaller sample. The figures are self-reported by vendors who sell scanning, corroborated by independent parties, and the snapshot is from February 2026.
-
-The honest summary: unmoderated skill marketplaces accumulate a meaningful baseline of unsafe content, and the order of magnitude is well-corroborated even where the exact figures aren't.
+**5. Our own CI is a target.** A pipeline that reads contributor-authored text and also holds a token is an exfiltration path. This is worse for a skill registry than for an ordinary repository, because SKILL.md bodies are natively instruction-shaped prose that needs no disguise, and our pipeline's stated purpose is to read them.
 
 ---
 
 ## The scan layers
 
-Cheapest first. L0–L2 fail the build. L3–L4 flag for a human. L5 is the human gate. L6 is the layer most registries skip.
+Cheapest first. L0–L2 fail the build. L3–L4 flag for a human. L5 is the human gate. L6 runs on a schedule.
 
 ### L0 — Structure
-Schema validation, `name` matches directory, category in the closed vocabulary, size caps, no symlinks, no binaries, no nested `.git`, YAML node-count limit as a billion-laughs defense. **Blocks.**
+Schema validation, `name` matches directory, category in the closed vocabulary, size caps, no symlinks, no binaries, no nested `.git`, YAML alias rejection as a billion-laughs defense. **Blocks.**
 
 ### L1 — Ownership
 PR author's login matches the touched namespace. PR touches nothing outside `skills/{that-user}/`. Anything else routes to CODEOWNERS. **Blocks.**
 
 ### L2 — Hard signatures
-High precision. Safe to fail a build on.
+High precision. Safe to fail a build on. Implemented in `scripts/scan.py`.
 
 ```bash
 # Dynamic-context commands invoking network or credential tools
@@ -63,17 +53,17 @@ grep -rE '(os\.environ|getenv|process\.env|printenv|\$AWS_|\.ssh/)' skills/
 ### L3 — Soft signatures
 Noisy by nature. These route to a human; they do not block.
 
-- External URLs in skill bodies — a bare URL regex fires on virtually any skill citing documentation, which makes it near-useless as an auto-blocker and genuinely useful as a triage signal
+- External URLs in skill bodies — fires on virtually any skill citing documentation, which makes it useless as an auto-blocker and genuinely useful as a triage signal
 - Network calls anywhere under `scripts/`
 - `eval`, `exec`, dynamic imports
-- Base64 or hex blobs above a length threshold
-- Unicode homoglyphs and bidirectional control characters
+- Encoded blobs above a length threshold
+- Bidirectional and invisible control characters
 - Instructions to disregard prior instructions, conceal an action, or omit something from a summary
 
 ### L4 — Scanners
-A dedicated skill scanner (SkillSpector, SkillScan, ClawVet, or successors) plus generic static analysis over `scripts/`. Findings attach to the PR and publish into the index. **Flags.**
+A dedicated skill scanner plus generic static analysis over `scripts/`. Findings attach to the PR and publish into the index. **Flags.**
 
-Note that general-purpose LLM-security products do not cover this artifact type — one widely cited code scanner is scoped to data-flow analysis over application source and names no skill or manifest format. Use a purpose-built tool.
+General-purpose LLM-security products do not cover this artifact type — most are scoped to data-flow analysis over application source and name no skill or manifest format. Use a purpose-built tool.
 
 ### L5 — Human gate
 Two named reviewers against [REVIEW.md](REVIEW.md). Required only for the Reviewed tier. **Admits.**
@@ -81,11 +71,15 @@ Two named reviewers against [REVIEW.md](REVIEW.md). Required only for the Review
 ### L6 — Standing re-scan
 Weekly re-run of L0–L4 across the whole tree, plus SHA-drift detection against `registry/reviewed.yml`. Opens an issue on any new finding.
 
-This layer exists because everything above it is a *submission-time* gate, and submission-time gates do nothing about the dominant failure mode: a legitimate contributor whose account is compromised months later. It is ten lines of scheduling and it covers a gap the rest of the pipeline structurally cannot.
+This layer exists because everything above it is a *submission-time* gate, and submission-time gates do nothing about the dominant failure mode: a contributor whose account is compromised months after their skill merged.
+
+### Signature scanning is triage, not a gate
+
+Published bypass rates against open-source skill scanners are substantial, via payloads hidden in archive formats and code examples. **A clean scan means no known-bad signal matched. It does not mean a skill is safe.** Automated checks can only ever say *no*.
 
 ### What is deliberately absent
 
-**Sandboxed detonation.** It is the logical layer between L4 and L5, and we are not claiming it. No verified source describes a working pattern for detonating skill packages in CI, its cost, or its false-negative rate. Do not promise it in documentation until someone has built and measured it.
+**Sandboxed detonation.** It is the logical layer between L4 and L5, and we are not claiming it. Do not promise it in documentation until someone has built and measured it here.
 
 ---
 
@@ -101,17 +95,13 @@ permissions:
   contents: read              # no write, no secrets, no packages
 jobs:
   validate:
-    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@<sha>          # pin actions by SHA, not tag
         with:
           persist-credentials: false
-      - run: python scripts/validate.py --changed-only
-      - run: python scripts/scan.py --out findings.json
+      - run: python scripts/validate.py --changed changed.txt --author "$PR_AUTHOR"
+      - run: python scripts/scan.py --changed changed.txt --out findings.json
       - uses: actions/upload-artifact@<sha>
-        with:
-          name: findings
-          path: findings.json
 ```
 
 ### `report.yml` — trusted, never touches skill content
@@ -119,7 +109,7 @@ jobs:
 ```yaml
 on:
   workflow_run:               # separate privileged job reads the artifact
-    workflows: [validate]
+    workflows: [Validate]
     types: [completed]
 permissions:
   pull-requests: write
@@ -129,25 +119,24 @@ Download `findings.json` and render a comment from **structured fields only**. N
 
 ### The rules that matter
 
-1. **`pull_request`, never `pull_request_target`,** for anything that runs on untrusted content. `pull_request_target` executes in the trusted base-branch context with access to secrets — that is the classic pwn-request surface.
+1. **`pull_request`, never `pull_request_target`,** for anything that runs on untrusted content. `pull_request_target` executes in the trusted base-branch context with access to secrets — the classic pwn-request surface.
 2. **No secrets in any job that reads skill content.** Split privileged work into a separate `workflow_run` job.
-3. **Never `${{ }}`-interpolate event text into a model prompt.** If a model ever enters this pipeline, it must read untrusted text from a file or an environment variable. Template expansion into a prompt is the exact pattern that leaked secrets from a major vendor's own shipped Action.
+3. **Never `${{ }}`-interpolate event text into a model prompt.** If a model ever enters this pipeline, it must read untrusted text from a file or an environment variable.
 4. **Pin actions by commit SHA,** not by tag. Tags move.
 5. **`persist-credentials: false`** on checkout.
 6. **CODEOWNER approval** for anything outside `skills/`, and for promotion into the Reviewed tier.
 
 ### Repository settings
 
-- Branch protection on `main`: require the validate checks, require review for CODEOWNER paths.
-- Require 2FA for all organization members.
-- Require signed commits from maintainers.
-- Disable Actions on forks; scope the `GITHUB_TOKEN` to read by default at the organization level.
-- Never store a publish or deploy token in a workflow that reads `skills/`.
+- Branch protection on `main`: require the validate checks, require review for CODEOWNER paths
+- Require 2FA for all organization members
+- Require signed commits from maintainers
+- Never store a publish or deploy token in a workflow that reads `skills/`
 
 ---
 
 ## Advisories
 
-When a skill is removed for a security reason, publish an advisory in `docs/advisories/` covering: what the skill did, which versions and commit range were affected, how it was found, when it was delisted, and what someone who installed it should do.
+When a skill is removed for a security reason, publish an advisory in `docs/advisories/` covering: what the skill did, which commit range was affected, how it was found, when it was delisted, and what someone who installed it should do.
 
-Say clearly that delisting is not recall. Anyone who cloned the skill still has it, and telling them exactly what to look for on their own machine is the only remediation the registry can actually offer.
+Say clearly that delisting is not recall. Anyone who cloned the skill still has it, and telling them exactly what to look for on their own machine is the only remediation the registry can offer.

@@ -8,8 +8,6 @@ Git supplies, for free, the primitives a registry needs to make any safety claim
 
 The tradeoff, taken deliberately: because we host the artifacts rather than pointers to them, we cannot delegate malware scanning to an upstream package registry the way a pointer-based registry can. We own the scanning. See [SECURITY.md](SECURITY.md).
 
-See [DECISIONS.md](DECISIONS.md) for what this choice was and wasn't weighed against.
-
 ---
 
 ## Repository layout
