@@ -70,6 +70,19 @@ body:
       required: true
 
   - type: dropdown
+    id: localization
+    attributes:
+      label: Is this skill tied to one jurisdiction?
+      description: >
+        Leave as "not applicable" if the skill has no jurisdiction-specific
+        content — plenty don't. See
+        [docs/LOCALIZATION.md](../blob/main/docs/LOCALIZATION.md).
+      options:
+        - "not applicable — no jurisdiction-specific content"
+        - "localized — carries one jurisdiction's citations, forms, deadlines"
+        - "generalized — those have been lifted out into a context to fill in"
+
+  - type: dropdown
     id: sensitivity
     attributes:
       label: What data does this skill touch?

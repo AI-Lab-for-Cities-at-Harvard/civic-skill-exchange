@@ -152,6 +152,14 @@
           "type": "string",
           "maxLength": 7,
           "description": "YYYY or YYYY-MM. Optional. Duration of real use is the part of a deployment claim that carries the most weight."
+        },
+        "civic.localization": {
+          "type": "string",
+          "enum": [
+            "generalized",
+            "localized"
+          ],
+          "description": "Where the skill sits on the jurisdiction axis. 'localized' carries one jurisdiction's specifics; 'generalized' has had them lifted out into a context an adopter fills in. Optional \u2014 omit it when the skill has no jurisdiction-specific content either way. See docs/LOCALIZATION.md."
         }
       }
     }

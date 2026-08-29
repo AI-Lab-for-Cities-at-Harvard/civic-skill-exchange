@@ -30,6 +30,8 @@ See [docs/TIERS.md](docs/TIERS.md) for how tiers work and how a skill moves betw
 
 Browse the catalog at **[ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/)** — filter by category, jurisdiction, data sensitivity, and tier.
 
+Skills are marked **generalized** or **localized**: a localized skill carries one jurisdiction's statute citations, form numbers, and deadlines, while a generalized one has had those lifted out into a context you fill in. If you're adopting rather than browsing, that's the field to filter on — see [docs/LOCALIZATION.md](docs/LOCALIZATION.md).
+
 The site is generated from this repository. If you'd rather work with the data directly, the build publishes a static JSON API:
 
 ```
@@ -70,6 +72,7 @@ You can also open a [skill submission issue](../../issues/new?template=submit-sk
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to write and submit a skill; the frontmatter contract |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Repository layout, schema, category vocabulary, index build |
 | [docs/TIERS.md](docs/TIERS.md) | Tier definitions, the attestation ledger, promotion and demotion |
+| [docs/LOCALIZATION.md](docs/LOCALIZATION.md) | Generalized vs localized skills, and how to move between them |
 | [docs/REVIEW.md](docs/REVIEW.md) | The reviewer checklist and process |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threat model, scan layers, CI hardening, how to report a problem |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Working on the registry itself — branching, TDD, test conventions |

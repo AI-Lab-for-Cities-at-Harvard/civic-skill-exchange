@@ -154,6 +154,7 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "allowed_tools": normalize_tools(front.get("allowed-tools")),
         "category": meta.get("civic.category"),
         "jurisdiction": meta.get("civic.jurisdiction"),
+        "localization": meta.get("civic.localization"),
         "data_sensitivity": meta.get("civic.data-sensitivity"),
         "human_review": meta.get("civic.human-review"),
         "maintainer": meta.get("civic.maintainer"),
