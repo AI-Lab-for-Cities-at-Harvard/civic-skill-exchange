@@ -59,9 +59,9 @@ a:hover { color: var(--c-spot); }
 .topper__statement { padding-top: var(--space-md); max-width: 46rem; }
 .topper__title {
   margin: 0 0 var(--gap-4);
-  font-family: var(--f-serif); font-weight: 400;
-  font-size: var(--t-3xl); line-height: 1.04;
-  letter-spacing: -0.02em; text-wrap: balance;
+  font-family: var(--f-sans); font-weight: 700;
+  font-size: var(--t-3xl); line-height: 1.08;
+  letter-spacing: var(--track-display); text-wrap: balance;
 }
 .topper__lede {
   margin: 0 0 var(--gap-5); font-size: var(--t-lg);
@@ -165,8 +165,8 @@ a:hover { color: var(--c-spot); }
 }
 .card__badges { display: flex; flex-wrap: wrap; gap: var(--gap-2); }
 .card__title {
-  margin: 0; font-family: var(--f-serif); font-weight: 600;
-  font-size: var(--t-xl); line-height: 1.2; letter-spacing: -0.01em;
+  margin: 0; font-family: var(--f-sans); font-weight: 600;
+  font-size: var(--t-xl); line-height: 1.2; letter-spacing: var(--track-heading);
 }
 .card__title a { text-decoration: none; }
 .card__title a:hover { text-decoration: underline; }
@@ -249,11 +249,14 @@ a:hover { color: var(--c-spot); }
 }
 .h2 {
   margin: 0 0 var(--gap-4);
-  font-family: var(--f-serif); font-weight: 400;
-  font-size: var(--t-2xl); line-height: 1.12; letter-spacing: -0.018em;
+  font-family: var(--f-sans); font-weight: 700;
+  font-size: var(--t-2xl); line-height: 1.15; letter-spacing: var(--track-heading);
   text-wrap: balance;
 }
-.h3 { margin: 0 0 var(--gap-2); font-size: var(--t-base); font-weight: 700; }
+.h3 {
+  margin: 0 0 var(--gap-2); font-size: var(--t-base);
+  font-weight: 600; letter-spacing: var(--track-tight);
+}
 .prose p { margin: 0 0 var(--gap-4); max-width: 66ch; line-height: 1.65; }
 .prose p:last-child { margin-bottom: 0; }
 .prose .lede { font-size: var(--t-lg); color: var(--c-text-light); }

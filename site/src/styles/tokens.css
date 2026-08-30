@@ -63,10 +63,25 @@
   --gap-5: 1.5rem;
   --gap-6: 2rem;
 
-  /* ---- Type ------------------------------------------------------------- */
+  /* ---- Type -------------------------------------------------------------
+   * The system is sans-serif throughout — headings included. Graphik carries
+   * 348 declarations in the reference CSS against Tiempos' 32, and every
+   * topper and title in it is Graphik. The serif is an editorial accent
+   * reserved for pull quotes, blockquotes, date displays and bios.
+   *
+   * Nothing here uses it yet, so its webfont is deliberately not requested.
+   * If you add a pull quote, add the face to the font link in index.html at
+   * the same time — otherwise it falls back to Georgia and reads off-system.
+   */
   --f-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --f-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-serif: Georgia, "Times New Roman", serif;
   --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Headings run tight. The reference CSS clusters at -.02em to -.04em, with
+     the largest display type taking the most negative tracking. */
+  --track-display: -0.04em;
+  --track-heading: -0.03em;
+  --track-tight: -0.02em;
 
   --t-xs: 0.75rem;
   --t-sm: 0.875rem;
