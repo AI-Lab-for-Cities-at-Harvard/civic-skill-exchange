@@ -8,7 +8,14 @@ The manual review determines if the skill supports civic/ public benefit.
 
 You need, on one screen: the scanner findings, the full diff of every file under `scripts/`, the rendered `SKILL.md`, and this list.
 
-Two reviewers work independently, from **different organizations**. Don't discuss the skill until both have finished. Two people who talked first are one reviewer.
+**One reader: the AI Lab for Cities at Harvard.** The rule this replaces asked for two people from separate organizations, working independently and not comparing notes until both had finished — a rule about independence *between* reviewers, which has nothing left to say when there is one. [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) records what that gives up.
+
+The checklist below is unchanged. What changed is who works it and what the badge may therefore claim, and the honest way to hold the difference is to work the list more carefully rather than faster. There is no second pass behind this one.
+
+Two consequences worth naming before you start:
+
+- **The attestation PR is not a check on the review.** `CODEOWNERS` gates `registry/reviewed.yml` to the reviewers team, and that team is one person across two accounts. The gate stays so the mechanism is correct when a second reviewer exists; approving your own attestation is not a second pair of eyes and must never be written up as one.
+- **The Lab reviews skills it wrote**, in the reserved `civic-skills` namespace. Item 7 is where that costs the most — you are judging the civic appropriateness of your own work. Say so in `notes`, and treat a close call as a decline.
 
 You may decline a review at any point, without completing the checklist and without giving a reason. Review capacity is the scarcest resource this registry has.
 
@@ -88,12 +95,12 @@ Not a rejection — a quality bar. Hardcoded field names, form numbers, and inte
 
 ## Signing off
 
-Both reviewers comment on the review-request issue with the SHA they reviewed and any conditions. Then open a PR adding to `registry/reviewed.yml`:
+Comment on the review-request issue with the SHA you reviewed and any conditions. Then open a PR adding to `registry/reviewed.yml`:
 
 ```yaml
 - skill: cityofx/permit-status-explainer
   sha: a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92
-  reviewers: [alice-gov, bob-nonprofit]
+  reviewers: ["AI Lab for Cities at Harvard"]
   reviewed: 2026-09-14
   expires: 2027-09-14
   notes: "Read-only. No network egress. No PII handling."
@@ -101,7 +108,7 @@ Both reviewers comment on the review-request issue with the SHA they reviewed an
 
 **The SHA is the attestation.** You are signing off on one exact content hash, not on a skill name and not on a person. If the content changes, your attestation stops applying automatically and the skill drops back to Community. That is the mechanism working — you do not need to monitor anything.
 
-Write `notes` for the next reviewer, a year from now, who has to re-review this and has no memory of the conversation. What did you check especially closely? What would you look at first if something went wrong?
+Write `notes` for the next reviewer, a year from now, who has to re-review this and has no memory of the conversation. What did you check especially closely? What would you look at first if something went wrong? If the Lab wrote the skill, say that here too — the site discloses it on the listing, and the note is where the next reader learns what you were careful about because of it.
 
 ## Withdrawing a sign-off
 

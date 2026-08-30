@@ -37,9 +37,10 @@ export function TierBand({ counts }: { counts: Counts }) {
           <div className="band__col">
             <h3 className="band__term">Reviewed</h3>
             <p>
-              Two named people from different organizations read every line of
-              one specific commit and put their names on it. Pinned to a content
-              hash, so any change drops it back to Community.
+              The AI Lab for Cities read every line of one specific commit
+              against a published checklist and put its name on it. One reader,
+              not an independent audit. Pinned to a content hash, so any change
+              drops it back to Community.
             </p>
           </div>
         </div>

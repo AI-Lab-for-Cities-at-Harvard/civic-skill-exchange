@@ -5,14 +5,27 @@ import type { Skill } from "../lib/types";
 
 /** Tier is the most consequential thing on a card, so it reads as a status
  *  chip rather than brand chrome — and Community says what it means, because
- *  "Community" alone invites people to assume it was checked. */
-export function TierBadge({ tier }: { tier: Skill["tier"] }) {
-  const reviewed = tier === "reviewed";
+ *  "Community" alone invites people to assume it was checked.
+ *
+ *  The Reviewed note is rendered from the attestation, never written here. It
+ *  used to hardcode a reviewer count, which is the exact way a claim outlives
+ *  the rule it came from: true only until the rule changed, and then false on
+ *  every card at once (ADR 0001, ruling 4). A note derived from the ledger
+ *  cannot drift from it. */
+export function TierBadge(
+  { tier, reviewed }: { tier: Skill["tier"]; reviewed?: Skill["reviewed"] },
+) {
+  const isReviewed = tier === "reviewed";
+  const reviewers = reviewed?.reviewers ?? [];
   return (
-    <span className={`badge ${reviewed ? "badge--ok" : "badge--warn"}`}>
+    <span className={`badge ${isReviewed ? "badge--ok" : "badge--warn"}`}>
       {label(TIER_LABELS, tier)}
       <span className="badge__note">
-        {reviewed ? "two reviewers signed off" : "automated checks only"}
+        {!isReviewed ? "automated checks only"
+          // No names in the ledger is a malformed attestation, not a stronger
+          // claim. Say the least that is still true rather than nothing.
+          : reviewers.length === 0 ? "read against the published checklist"
+          : `${reviewers.join(" and ")} read this commit`}
       </span>
     </span>
   );

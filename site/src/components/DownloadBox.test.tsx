@@ -54,3 +54,37 @@ describe("DownloadBox — the no-tooling path", () => {
     expect(screen.getByText(/npx degit/)).toBeInTheDocument();
   });
 });
+
+/** ADR 0001, ruling 2: the Lab may review its own skills, with disclosure.
+ *
+ *  The marker is derived, not declared — `civic-skills` is already a reserved
+ *  namespace in the validator, so nobody has to remember to set a field. The
+ *  disclosure belongs on the review claim itself, which is the sentence that
+ *  would otherwise have the Lab vouching for the Lab without saying so. */
+describe("DownloadBox discloses self-review", () => {
+  const attested = {
+    date: "2026-08-30", expires: "2027-08-30",
+    reviewers: ["AI Lab for Cities at Harvard"], notes: "",
+  };
+
+  it("says so when the Lab reviewed a skill the Lab wrote", () => {
+    render(<DownloadBox skill={detail({
+      tier: "reviewed", namespace: "civic-skills", reviewed: attested,
+    })} />);
+    expect(screen.getByText(/by its own author/i)).toBeInTheDocument();
+    expect(screen.getByText(/wrote and reviewed this skill/i)).toBeInTheDocument();
+  });
+
+  it("stays silent on a Reviewed skill somebody else wrote", () => {
+    render(<DownloadBox skill={detail({ tier: "reviewed", reviewed: attested })} />);
+    expect(screen.queryByText(/by its own author/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/read this exact commit/)).toBeInTheDocument();
+  });
+
+  it("still names the attesting party rather than a count", () => {
+    render(<DownloadBox skill={detail({ tier: "reviewed", reviewed: attested })} />);
+    expect(screen.getByText(/AI Lab for Cities at Harvard read this exact commit/))
+      .toBeInTheDocument();
+    expect(screen.queryByText(/two reviewers/i)).not.toBeInTheDocument();
+  });
+});

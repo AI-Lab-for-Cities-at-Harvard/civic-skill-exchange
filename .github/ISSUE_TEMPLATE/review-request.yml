@@ -7,10 +7,11 @@ body:
   - type: markdown
     attributes:
       value: |
-        The Reviewed tier means two named people from different organizations read
-        every line of one specific commit and put their names on it.
+        The Reviewed tier means the AI Lab for Cities at Harvard read every line
+        of one specific commit and put its name on it. One reader — not an
+        independent audit, and not a second opinion.
 
-        It is deliberately small — its entire value is its scarcity. Reviewers may
+        It is deliberately small — its entire value is its scarcity. The Lab may
         decline without completing the checklist and without giving a reason.
         Review capacity is the scarcest resource this registry has.
 

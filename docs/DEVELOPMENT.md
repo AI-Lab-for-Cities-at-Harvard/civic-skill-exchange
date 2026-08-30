@@ -164,9 +164,14 @@ So a pull request touching only `site/` gets a green Skills check that says
 ## Security-sensitive changes
 
 Changes to `scan.py` signatures, ownership logic in `validator/`, tier derivation in
-`build_index.py`, or anything in `.github/workflows/` need a second reviewer and an
-explicit note in the pull request about what the change makes possible that wasn't
-before.
+`build_index.py`, or anything in `.github/workflows/` need an explicit note in the
+pull request about what the change makes possible that wasn't before — written out,
+not implied by the diff.
+
+This asked for a second reviewer until [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md),
+which recorded that there is not a second person to ask. Keep the note anyway. Its
+value was never only the other reader; writing down what a change newly permits is
+what makes the omission visible to the person writing it.
 
 Before touching a workflow, re-read the CI hardening section of
 [SECURITY.md](SECURITY.md). The two rules that matter most:

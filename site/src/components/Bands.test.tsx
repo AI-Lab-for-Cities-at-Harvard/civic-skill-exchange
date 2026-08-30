@@ -22,6 +22,15 @@ describe("TierBand", () => {
     expect(screen.getByRole("heading", { name: "Reviewed" })).toBeInTheDocument();
   });
 
+  /** ADR 0001: the band explained Reviewed as two named people from different
+   *  organizations. It is the first thing a reader meets above the catalogue,
+   *  so it is the first place the registry would have lied. */
+  it("says who actually reads a Reviewed commit", () => {
+    render(<TierBand counts={MIXED} />);
+    expect(screen.getByText(/AI Lab for Cities/)).toBeInTheDocument();
+    expect(screen.queryByText(/different organizations/i)).not.toBeInTheDocument();
+  });
+
   it("carries the standing notice, counted from the catalogue", () => {
     render(<TierBand counts={MIXED} />);
     expect(screen.getByText(/8 of the 10 skills here are Community listings\./))

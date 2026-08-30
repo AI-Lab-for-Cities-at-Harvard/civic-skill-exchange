@@ -19,7 +19,7 @@
 #
 # - skill: "{namespace}/{skill-name}"
 #   sha: "<40-char commit SHA of the tree that was reviewed>"
-#   reviewers: [github-handle, github-handle]   # two, from different organizations
+#   reviewers: ["AI Lab for Cities at Harvard"] # the attesting party
 #   reviewed: YYYY-MM-DD
 #   expires: YYYY-MM-DD                         # one year; re-review or demote
 #   notes: >

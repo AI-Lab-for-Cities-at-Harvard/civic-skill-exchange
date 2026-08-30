@@ -66,7 +66,7 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
 
       <header className="detail__head">
         <div className="card__badges">
-          <TierBadge tier={detail.tier} />
+          <TierBadge tier={detail.tier} reviewed={detail.reviewed} />
           <LocalizationBadge value={detail.localization} />
           <DeploymentBadge provenance={detail.provenance} detail />
         </div>
