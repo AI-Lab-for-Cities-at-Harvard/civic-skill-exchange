@@ -34,6 +34,11 @@ Schema validation, `name` matches directory, category in the closed vocabulary, 
 ### L1 — Ownership
 PR author's login matches the touched namespace. PR touches nothing outside `skills/{that-user}/`. Anything else routes to CODEOWNERS. **Blocks.**
 
+L0 and L1 are implemented in `validator/`, and the submission page runs the same
+module in the browser so a contributor is not told "valid" by the site and then
+rejected here. **The browser result is advisory.** CI re-runs the module and is
+the authority; nothing trusts a client-supplied result.
+
 ### L2 — Hard signatures
 High precision. Safe to fail a build on. Implemented in `scripts/scan.py`.
 
@@ -99,7 +104,7 @@ jobs:
       - uses: actions/checkout@<sha>          # pin actions by SHA, not tag
         with:
           persist-credentials: false
-      - run: python scripts/validate.py --changed changed.txt --author "$PR_AUTHOR"
+      - run: npx tsx validator/src/cli.ts --changed changed.txt --author "$PR_AUTHOR"
       - run: python scripts/scan.py --changed changed.txt --out findings.json
       - uses: actions/upload-artifact@<sha>
 ```

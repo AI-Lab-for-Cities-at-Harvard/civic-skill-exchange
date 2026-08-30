@@ -63,7 +63,7 @@ jobs:
 
       - name: Install
         if: steps.changes.outputs.tooling == 'true'
-        run: pip install pyyaml jsonschema pytest
+        run: pip install pyyaml pytest
 
       - name: Test
         if: steps.changes.outputs.tooling == 'true'

@@ -4,12 +4,31 @@ Conventions for changing the registry's own tooling — the schema, scripts,
 workflows, and site. Contributing a *skill* is a different and much lighter
 process; that's [CONTRIBUTING.md](../CONTRIBUTING.md).
 
+## Two languages, and which owns what
+
+The repository runs TypeScript and Python side by side. That is deliberate, and
+the split is not arbitrary:
+
+| | Language | Why |
+|---|---|---|
+| **Frontmatter validation** — `validator/` | TypeScript | The submission page has to tell someone their frontmatter is valid *before* they open a pull request. Two validators that must agree will drift, and a site that says "valid" before CI says otherwise is worse than no browser validation at all. So there is one module, run in both places. |
+| **Security scanning** — `scripts/scan.py` | Python | The browser never scans a submitter's scripts, so there is nothing to share. Porting these regexes would reimplement the code most expensive to get subtly wrong — lookbehind support, `\b` against unicode, `re.IGNORECASE` versus `/i` on non-ASCII — for no gain. |
+| **Index build** — `scripts/build_index.py` | Python | Build-time only, and it shells out to git. |
+
+**Browser validation is UX, never a gate.** CI re-runs the identical module and
+stays the authority. Do not add a code path that trusts a client-supplied result.
+
 ## Setup
 
 ```bash
+npm install                       # workspace root: installs validator/ and site/
 python -m venv .venv && source .venv/bin/activate
 pip install pyyaml jsonschema pytest
-pytest
+```
+
+```bash
+npm run test --workspaces         # validator + site
+pytest                            # scan.py and build_index.py
 ```
 
 ## How we work
@@ -40,12 +59,38 @@ pull request.
 ## Running things
 
 ```bash
-pytest                                    # the tooling's own tests
-pytest tests/test_scan.py -k wildcard     # one thing
-python scripts/validate.py all            # L0 + L1 over every committed skill
+npx tsx validator/src/cli.ts all          # L0 + L1 over every committed skill
 python scripts/scan.py all                # L2 + L3 over every committed skill
-python scripts/build_index.py --out site/data
+python scripts/build_index.py --out site/public/data
+
+npm run test -w @civic-skill-exchange/validator
+pytest tests/test_scan.py -k wildcard     # one thing
 ```
+
+## The validator workspace
+
+`validator/` is an npm workspace, not a directory inside `site/` — the Skills CI
+gate should not need the React app installed to validate a YAML file.
+
+```
+validator/src/
+├── rules.ts        pure frontmatter validation — runs in BOTH runtimes
+├── structure.ts    symlinks, size caps, file types, YAML aliases — Node only
+├── skill.ts        reads a skill directory, applies both layers
+└── cli.ts          what CI invokes
+```
+
+`rules.ts` must stay free of filesystem access and Node built-ins. Anything that
+needs a directory goes in `structure.ts`, which the browser never imports. If you
+find yourself reaching for `node:fs` in `rules.ts`, the check belongs in the
+other file.
+
+Findings are structured — `{ where, message }` — so the submission form can put
+an error next to the field it belongs to rather than dumping a list.
+
+The category vocabulary comes from `registry/categories.yml` in Node and from the
+published `data/categories.json` in the browser. Both derive from the same file,
+so the vocabulary cannot drift either.
 
 ## Testing conventions
 
@@ -79,7 +124,7 @@ when it has nothing to do.
 
 | Gate | Covers | Runs when |
 |---|---|---|
-| **Skills** | `validate.py`, `scan.py` over submitted skills | `skills/**` changed |
+| **Skills** | `validator/` and `scan.py` over submitted skills | `skills/**` changed |
 | **Tooling — pytest** | the registry's own scripts and schema | `scripts/`, `schema/`, `registry/`, `tests/`, `skills/` changed |
 | **Site — lint, typecheck, test, build** | the React app | `site/**` changed |
 
@@ -94,7 +139,7 @@ So a pull request touching only `site/` gets a green Skills check that says
 
 ## Security-sensitive changes
 
-Changes to `scan.py` signatures, `validate.py` ownership logic, tier derivation in
+Changes to `scan.py` signatures, ownership logic in `validator/`, tier derivation in
 `build_index.py`, or anything in `.github/workflows/` need a second reviewer and an
 explicit note in the pull request about what the change makes possible that wasn't
 before.
@@ -109,7 +154,7 @@ Before touching a workflow, re-read the CI hardening section of
 ## Before opening a pull request
 
 - [ ] `pytest` passes
-- [ ] `python scripts/validate.py all` and `python scripts/scan.py all` pass
+- [ ] `npx tsx validator/src/cli.ts all` and `python scripts/scan.py all` pass
 - [ ] New behaviour has a test that fails without the change
 - [ ] Docs updated if you changed the contract contributors rely on
 - [ ] Security-sensitive changes flagged in the description
