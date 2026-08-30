@@ -166,7 +166,8 @@ export function About() {
             functionality, security, or fitness for any purpose. Skills in the
             Reviewed tier have been read by the AI Lab for Cities at Harvard
             against a published checklist; that is a statement about a specific
-            commit, not a warranty, and not an independent assessment. <strong>You are responsible for what you run.</strong>
+            commit, not a warranty, and not an independent assessment.{" "}
+            <strong>You are responsible for what you run.</strong>
           </p>
           <p>
             Registry infrastructure is MIT licensed. Each skill carries its own
