@@ -27,11 +27,29 @@ export interface Skill {
   provenance: Provenance;
   tier: Tier;
   reason: string;
+  /** Present only on Reviewed listings — who attested, and to which commit. */
+  reviewed?: { date: string; expires: string; reviewers: string[]; notes: string };
+  /** Set when a Reviewed attestation no longer matches the current commit. */
+  drift?: boolean;
   sha: string | null;
   has_scripts: boolean;
   script_files: string[];
   path: string;
   download: string;
+}
+
+export interface SkillFile {
+  path: string;
+  size: number;
+  /** Under scripts/ — run by the agent, not read by the model. */
+  executed: boolean;
+}
+
+/** Structure only. The skill body and file contents are deliberately not
+ *  published — rendering submitter-authored content on our origin would be a
+ *  stored XSS surface, and describing a skill does not require it. */
+export interface SkillDetail extends Skill {
+  files: SkillFile[];
 }
 
 export interface Index {

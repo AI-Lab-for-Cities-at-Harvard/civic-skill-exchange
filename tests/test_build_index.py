@@ -115,3 +115,57 @@ def test_entry_carries_the_fields_the_site_filters_on(make_skill):
 
 def test_skill_without_frontmatter_is_skipped_not_fatal(make_skill):
     assert build_index.build_entry(make_skill(raw="# nothing\n"), {}, {}) is None
+
+
+# --------------------------------------------------------------------------- #
+# Detail payload — structure only
+
+
+def test_detail_lists_bundled_files(make_skill):
+    skill = make_skill(files={"scripts/helper.py": "import os\n"})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    assert any(f["path"] == "scripts/helper.py" for f in detail["files"])
+
+
+def test_detail_includes_skill_md_in_the_structure(make_skill):
+    """The page shows what the skill is made of, and SKILL.md is part of that."""
+    detail = build_index.build_detail(make_skill(), build_index.build_entry(make_skill(), {}, {}))
+    assert any(f["path"] == "SKILL.md" for f in detail["files"])
+
+
+def test_detail_marks_which_files_are_executed(make_skill):
+    """Anything under scripts/ is run by the agent, not read by the model. The
+    page has to be able to say so."""
+    skill = make_skill(files={
+        "scripts/helper.py": "x = 1\n",
+        "references/notes.md": "# Notes\n",
+    })
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    executed = {f["path"]: f["executed"] for f in detail["files"]}
+    assert executed["scripts/helper.py"] is True
+    assert executed["references/notes.md"] is False
+
+
+def test_detail_reports_file_sizes(make_skill):
+    skill = make_skill(files={"scripts/helper.py": "x" * 128})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    assert next(f for f in detail["files"] if f["path"].endswith("helper.py"))["size"] == 128
+
+
+def test_detail_files_are_sorted(make_skill):
+    skill = make_skill(files={"scripts/b.py": "b\n", "scripts/a.py": "a\n"})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    paths = [f["path"] for f in detail["files"]]
+    assert paths == sorted(paths)
+
+
+def test_detail_carries_no_file_contents(make_skill):
+    """The load-bearing one. Rendering submitter-authored content on our origin
+    is a stored XSS surface, so the payload must not carry any of it — a future
+    change that starts shipping content would be caught here."""
+    skill = make_skill(files={"scripts/helper.py": "SENTINEL_STRING\n"})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    assert "SENTINEL_STRING" not in str(detail)
+    assert "body" not in detail
+    for f in detail["files"]:
+        assert "content" not in f

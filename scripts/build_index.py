@@ -33,6 +33,8 @@ FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 REPO_URL = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange"
 
 
+
+
 def head_sha(path: Path) -> str | None:
     """The commit that last touched this directory."""
     try:
@@ -185,6 +187,31 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
     return entry
 
 
+def build_detail(skill_dir: Path, entry: dict) -> dict:
+    """The per-skill payload the landing page reads.
+
+    Structure only — the file tree with sizes, and which files the agent
+    executes rather than reads. Deliberately NOT the skill body or any file
+    contents: rendering submitter-authored markdown on our origin is a stored
+    XSS surface, and the page does not need it to describe a skill. Anyone
+    reading the actual code should read it on GitHub, where they get the real
+    thing rather than our rendering of it.
+    """
+    files = []
+    for path in sorted(skill_dir.rglob("*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        rel = path.relative_to(skill_dir).as_posix()
+        files.append({
+            "path": rel,
+            "size": path.stat().st_size,
+            # Anything under scripts/ is run, not read. The page says so.
+            "executed": rel.startswith("scripts/"),
+        })
+
+    return {**entry, "files": files}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=ROOT / "site" / "data")
@@ -238,7 +265,8 @@ def main() -> int:
     for entry in entries:
         path = out / "skills" / entry["namespace"]
         path.mkdir(parents=True, exist_ok=True)
-        (path / f"{entry['name']}.json").write_text(json.dumps(entry, indent=2) + "\n",
+        detail = build_detail(SKILLS_DIR / entry["namespace"] / entry["name"], entry)
+        (path / f"{entry['name']}.json").write_text(json.dumps(detail, indent=2) + "\n",
                                                     encoding="utf-8")
 
     print(f"Wrote {len(entries)} skills to {out} "

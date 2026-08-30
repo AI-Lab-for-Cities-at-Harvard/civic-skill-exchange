@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { About } from "./components/About";
+import { SkillDetail } from "./components/SkillDetail";
 import { Facet } from "./components/Facets";
 import { SkillCard } from "./components/SkillCard";
 import { applyFilters } from "./lib/filter";
@@ -77,10 +78,10 @@ export default function App() {
           <div className="topper__bar">
             <a className="topper__mark" href="#/">Civic Skill&nbsp;Exchange</a>
             <nav className="nav" aria-label="Main">
-              <a href="#/" aria-current={route === "browse" ? "page" : undefined}>
+              <a href="#/" aria-current={route.page === "browse" ? "page" : undefined}>
                 Browse
               </a>
-              <a href="#/about" aria-current={route === "about" ? "page" : undefined}>
+              <a href="#/about" aria-current={route.page === "about" ? "page" : undefined}>
                 About
               </a>
               <a href="https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange">
@@ -117,9 +118,13 @@ export default function App() {
         </div>
       </header>
 
-      {route === "about" ? (
+      {route.page === "about" ? (
         <main id="results" className="page">
           <About />
+        </main>
+      ) : route.page === "skill" ? (
+        <main id="results">
+          <SkillDetail namespace={route.namespace} name={route.name} />
         </main>
       ) : (
       <main className="layout">

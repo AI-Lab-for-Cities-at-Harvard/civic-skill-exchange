@@ -1,5 +1,6 @@
 import { TierBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
 import { label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS } from "../lib/labels";
+import { skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
 
 export function SkillCard({ skill }: { skill: Skill }) {
@@ -12,7 +13,7 @@ export function SkillCard({ skill }: { skill: Skill }) {
       </div>
 
       <h2 className="card__title">
-        <a href={skill.download}>{skill.name}</a>
+        <a href={skillHref(skill.namespace, skill.name)}>{skill.name}</a>
       </h2>
       <p className="card__ns">{skill.namespace}</p>
       <p className="card__desc">{skill.description}</p>
