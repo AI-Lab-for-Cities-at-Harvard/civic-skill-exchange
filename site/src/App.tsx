@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { About } from "./components/About";
 import { Facet } from "./components/Facets";
 import { SkillCard } from "./components/SkillCard";
 import { applyFilters } from "./lib/filter";
@@ -6,6 +7,7 @@ import {
   CATEGORY_LABELS, JURISDICTION_LABELS, LOCALIZATION_LABELS,
   SENSITIVITY_LABELS, TIER_LABELS,
 } from "./lib/labels";
+import { parseRoute, type Route } from "./lib/route";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
 
 type Theme = "light" | "dark";
@@ -25,6 +27,16 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
+
+  useEffect(() => {
+    const onHash = () => {
+      setRoute(parseRoute(window.location.hash));
+      window.scrollTo(0, 0);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -56,30 +68,60 @@ export default function App() {
 
   return (
     <>
-      <a className="skip-link" href="#results">Skip to results</a>
+      <a className="skip-link" href="#results">Skip to content</a>
 
-      <header className="masthead">
-        <div className="masthead__inner">
-          <div>
-            <p className="masthead__eyebrow">Civic Skill Exchange</p>
-            <h1 className="masthead__title">
+      {/* A full-bleed section carrying its own theme is the system's signature
+          move — the palette belongs to the block, not to the page. */}
+      <header className="topper" data-theme="crimson">
+        <div className="topper__inner">
+          <div className="topper__bar">
+            <a className="topper__mark" href="#/">Civic Skill&nbsp;Exchange</a>
+            <nav className="nav" aria-label="Main">
+              <a href="#/" aria-current={route === "browse" ? "page" : undefined}>
+                Browse
+              </a>
+              <a href="#/about" aria-current={route === "about" ? "page" : undefined}>
+                About
+              </a>
+              <a href="https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange">
+                GitHub
+              </a>
+              <button
+                className="theme-toggle"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+              >
+                {theme === "dark" ? "Light" : "Dark"}
+              </button>
+            </nav>
+          </div>
+
+          <div className="topper__statement">
+            <h1 className="topper__title">
               Agent skills for government, public-sector and nonprofit work
             </h1>
-            <p className="masthead__lede">
+            <p className="topper__lede">
               A city that solves a problem once should be able to hand the
               solution to the next hundred cities.
             </p>
+            {index && (
+              <p className="topper__stats">
+                <strong>{index.counts.total}</strong> skill{index.counts.total === 1 ? "" : "s"}
+                <span className="topper__dot" aria-hidden="true">·</span>
+                <strong>{index.counts.reviewed}</strong> reviewed
+                <span className="topper__dot" aria-hidden="true">·</span>
+                <strong>{index.counts.community}</strong> community
+              </p>
+            )}
           </div>
-          <button
-            className="theme-toggle"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-          >
-            {theme === "dark" ? "Light" : "Dark"}
-          </button>
         </div>
       </header>
 
+      {route === "about" ? (
+        <main id="results" className="page">
+          <About />
+        </main>
+      ) : (
       <main className="layout">
         <aside className="filters" aria-label="Filter skills">
           <div className="search">
@@ -142,6 +184,7 @@ export default function App() {
           )}
         </section>
       </main>
+      )}
 
       <footer className="footer">
         <p>
@@ -151,7 +194,8 @@ export default function App() {
         {index && (
           <p className="footer__meta">
             Catalog generated {new Date(index.generated).toLocaleDateString()} ·{" "}
-            <a href={index.repo}>Source and submissions on GitHub</a>
+            <a href={index.repo}>Source and submissions on GitHub</a> ·{" "}
+            <a href="#/about">About this project</a>
           </p>
         )}
       </footer>
