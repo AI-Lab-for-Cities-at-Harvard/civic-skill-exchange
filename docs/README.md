@@ -18,6 +18,16 @@
 
 Contributing a skill is [CONTRIBUTING.md](../CONTRIBUTING.md), one level up.
 
+## Decisions
+
+Architecture decision records, numbered. An ADR states what was decided, what it
+gives up, and when to revisit — it is not revised when the world changes; it is
+superseded by a later one.
+
+| | |
+|---|---|
+| [0001](adr/0001-reviewed-is-a-lab-attestation.md) | Reviewed means the Lab read it — single reviewer, self-review with disclosure |
+
 ## Spikes
 
 Written analyses of questions that were not obvious. Each ends in numbered
@@ -30,7 +40,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
-| [reviewed-tier-definition.md](spikes/reviewed-tier-definition.md) | Should Reviewed mean one maintainer rather than two independent reviewers? — [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38), awaiting rulings |
+| [reviewed-tier-definition.md](spikes/reviewed-tier-definition.md) | Should Reviewed mean one maintainer rather than two independent reviewers? — [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38), ruled; see [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) |
 
 ## Archive
 

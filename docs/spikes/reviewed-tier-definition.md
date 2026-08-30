@@ -1,6 +1,12 @@
 # Spike: what should a Reviewed listing mean?
 
-**Status:** analysis, awaiting rulings. Issue [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38).
+**Status:** ruled. Issue [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38) · encoded in [ADR 0001](../adr/0001-reviewed-is-a-lab-attestation.md).
+
+> The owner ruled for **option D** — one reviewer, the Lab — with the
+> recommendation for option C on the table. Self-review is permitted with
+> disclosure. This document is kept as the analysis behind that decision, not as
+> a description of current behaviour; [ADR 0001](../adr/0001-reviewed-is-a-lab-attestation.md)
+> is what the registry does.
 
 The proposal is to change the Reviewed tier from **two named people from
 different organizations** to **one reviewer drawn from the project maintainers**.
