@@ -120,7 +120,7 @@ SOFT: list[Signature] = [
 SCANNABLE_SUFFIXES = {
     ".md", ".txt", ".yml", ".yaml", ".json", ".toml", ".csv", ".tsv",
     ".py", ".sh", ".bash", ".js", ".mjs", ".ts", ".sql", ".jinja", ".j2",
-    ".html", ".css", ".xml", ".ini", ".cfg",
+    ".html", ".css", ".xml", ".xsd", ".ini", ".cfg",
 }
 
 

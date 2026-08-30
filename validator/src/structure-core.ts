@@ -18,17 +18,37 @@
 
 import type { Finding } from "./types";
 
-/** Caps. A skill is instructions and small helpers; anything larger is a project. */
-export const MAX_FILE_BYTES = 100 * 1024;
-export const MAX_SKILL_BYTES = 1024 * 1024;
+/**
+ * Caps. A skill is instructions and small helpers; anything larger is a project.
+ *
+ * Derived from measurement, not intuition. Against the twenty skills in
+ * anthropics/skills, the original numbers refused seven — and the three
+ * document skills each broke three caps at once, so relaxing any single one
+ * would have changed nothing. These accept seventeen. The three still refused
+ * carry fonts, a PDF and a gzip, and fail on type rather than size.
+ */
+export const MAX_FILE_BYTES = 256 * 1024;   // no skill in the corpus exceeds this
+export const MAX_SKILL_BYTES = 2 * 1024 * 1024;
 export const MAX_FRONTMATTER_BYTES = 16 * 1024;
-export const MAX_FILES_PER_SKILL = 60;
 
-/** Allowlist, not a denylist. A denylist of binary types is always incomplete. */
+/**
+ * Not our ceiling. GitHub's multi-file upload interface hard-fails above a
+ * hundred files, so any submission path that goes through it inherits this
+ * limit — a higher cap here would be a promise the submission flow cannot keep.
+ */
+export const MAX_FILES_PER_SKILL = 100;
+
+/**
+ * Allowlist, not a denylist. A denylist of binary types is always incomplete.
+ *
+ * Every entry is text a reviewer can read and a diff can show. That is what
+ * makes "somebody read every line" a claim the Reviewed tier can actually make,
+ * and it is why no image, archive or document format appears here.
+ */
 export const ALLOWED_SUFFIXES = new Set([
   ".md", ".txt", ".yml", ".yaml", ".json", ".toml", ".csv", ".tsv",
   ".py", ".sh", ".bash", ".js", ".mjs", ".ts", ".sql", ".jinja", ".j2",
-  ".html", ".css", ".xml", ".ini", ".cfg",
+  ".html", ".css", ".xml", ".xsd", ".ini", ".cfg",
 ]);
 
 export type Entry =
