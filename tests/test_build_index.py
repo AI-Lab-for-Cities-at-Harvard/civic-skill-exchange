@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 import build_index
+from conftest import VALID_FRONTMATTER
 
 SHA = "a" * 40
 OTHER_SHA = "b" * 40
@@ -111,6 +112,28 @@ def test_entry_carries_the_fields_the_site_filters_on(make_skill):
     entry = build_index.build_entry(make_skill(), {}, {})
     for field in ("category", "jurisdiction", "data_sensitivity", "human_review", "tier"):
         assert entry[field] is not None, field
+
+
+def test_entry_carries_fit_guidance_when_declared(make_skill):
+    """The landing page stopped rendering the skill body, so use-when and
+    avoid-when reach a reader only if the index carries them."""
+    front = dict(VALID_FRONTMATTER)
+    front["metadata"] = {
+        **VALID_FRONTMATTER["metadata"],
+        "civic.use-when": "A resident asks why their permit is stuck.",
+        "civic.avoid-when": "Notices already filled with a specific person's data.",
+    }
+    entry = build_index.build_entry(make_skill(front=front), {}, {})
+    assert entry["use_when"] == "A resident asks why their permit is stuck."
+    assert entry["avoid_when"] == "Notices already filled with a specific person's data."
+
+
+def test_entry_carries_fit_guidance_keys_even_when_absent(make_skill):
+    """Both are optional. The site reads the keys either way, so they are always
+    present and simply null — never missing."""
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["use_when"] is None
+    assert entry["avoid_when"] is None
 
 
 def test_skill_without_frontmatter_is_skipped_not_fatal(make_skill):

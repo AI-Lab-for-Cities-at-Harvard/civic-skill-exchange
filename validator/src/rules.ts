@@ -43,6 +43,20 @@ const DEPLOYED_SINCE_RE = /^\d{4}(-(0[1-9]|1[0-2]))?$/;
 
 const DEPLOYMENT_DETAILS = ["civic.deployed-at", "civic.deployed-in"] as const;
 
+/** Cap on the two fit fields. Exported so schema.test.ts can hold the published
+ *  schema to the same number rather than repeating it. */
+export const FIT_MAX_LENGTH = 500;
+
+/** When a skill earns its place, and when it does not. Both optional, both plain
+ *  text — never markdown. The site renders them on the landing page, and after
+ *  #27 that page publishes no submitter-authored markup at all. Keeping these
+ *  plain is what lets them be shown without reopening that surface.
+ *
+ *  civic.avoid-when is the higher-value half: nobody but the author can supply
+ *  it. The submission form pushes for it. It stays optional here on purpose —
+ *  a blocking check would only buy a sentence written to satisfy the check. */
+const FIT_FIELDS = ["civic.use-when", "civic.avoid-when"] as const;
+
 const REQUIRED_METADATA = [
   "civic.category", "civic.jurisdiction", "civic.data-sensitivity",
   "civic.human-review", "civic.maintainer", "civic.contact",
@@ -123,6 +137,21 @@ export function checkLocalization(meta: Record<string, unknown>): Finding[] {
   }
 
   return [];
+}
+
+/** Length only. There is deliberately no rule relating the two fields to each
+ *  other, and none requiring either. */
+export function checkFit(meta: Record<string, unknown>): Finding[] {
+  const findings: Finding[] = [];
+  for (const field of FIT_FIELDS) {
+    const value = str(meta[field]);
+    if (value && value.length > FIT_MAX_LENGTH) {
+      findings.push(finding(field,
+        `${field} must be ${FIT_MAX_LENGTH} characters or fewer. It is a short ` +
+        `note on fit, not a second description.`));
+    }
+  }
+  return findings;
 }
 
 /** Move non-spec top-level fields into metadata instead of rejecting them.
@@ -216,6 +245,7 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   findings.push(...checkEnum(metadata, "civic.deployment", DEPLOYMENTS));
   findings.push(...checkProvenance(metadata));
   findings.push(...checkLocalization(metadata));
+  findings.push(...checkFit(metadata));
 
   return findings;
 }

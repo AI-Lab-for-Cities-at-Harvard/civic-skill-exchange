@@ -249,6 +249,41 @@ describe("checkLocalization", () => {
   });
 });
 
+describe("checkFrontmatter — fit", () => {
+  const LIMIT = 500;
+
+  it("accepts a skill that declares neither", () => {
+    expect(checkFrontmatter(front(), ctx())).toEqual([]);
+  });
+
+  it("accepts both within the limit", () => {
+    const m = meta({
+      "civic.use-when": "A resident asks why their permit is stuck.",
+      "civic.avoid-when": "Notices already filled with a specific person's data.",
+    });
+    expect(checkFrontmatter(front({ metadata: m }), ctx())).toEqual([]);
+  });
+
+  it.each(["civic.use-when", "civic.avoid-when"])("accepts %s at exactly the limit", (field) => {
+    const m = meta({ [field]: "a".repeat(LIMIT) });
+    expect(checkFrontmatter(front({ metadata: m }), ctx())).toEqual([]);
+  });
+
+  it.each(["civic.use-when", "civic.avoid-when"])("rejects %s over the limit", (field) => {
+    const m = meta({ [field]: "a".repeat(LIMIT + 1) });
+    const findings = checkFrontmatter(front({ metadata: m }), ctx());
+    expect(findings.map((f) => f.where)).toContain(field);
+    expect(messages(findings)).toMatch(/500 characters/);
+  });
+
+  it("does not invent a cross-field rule between the two", () => {
+    // use-when alone is fine. avoid-when is the one worth pushing for, but the
+    // prompt for it belongs in the submission form, not in a blocking check.
+    const m = meta({ "civic.use-when": "Only this one is set." });
+    expect(checkFrontmatter(front({ metadata: m }), ctx())).toEqual([]);
+  });
+});
+
 describe("quarantineExtensions", () => {
   it("moves non-spec fields into metadata rather than rejecting them", () => {
     const { frontmatter, moved } = quarantineExtensions({

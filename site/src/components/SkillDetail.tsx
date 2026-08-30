@@ -82,6 +82,30 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
 
       <div className="detail__grid">
         <div className="detail__main">
+          {(detail.use_when || detail.avoid_when) && (
+            <section aria-labelledby="fit-heading" className="detail__section">
+              <h2 className="h2" id="fit-heading">When to use this</h2>
+              <p>
+                Written by whoever submitted the skill, about their own work.
+                Nobody has checked it against what the skill actually does.
+              </p>
+              <dl className="fit">
+                {detail.use_when && (
+                  <div className="fit__item">
+                    <dt>Use it when</dt>
+                    <dd>{detail.use_when}</dd>
+                  </div>
+                )}
+                {detail.avoid_when && (
+                  <div className="fit__item fit__item--avoid">
+                    <dt>Don&rsquo;t use it when</dt>
+                    <dd>{detail.avoid_when}</dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+          )}
+
           <section aria-labelledby="tools-heading" className="detail__section">
             <h2 className="h2" id="tools-heading">What it can do</h2>
             <p>

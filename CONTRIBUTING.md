@@ -46,6 +46,12 @@ metadata:
   civic.jurisdiction: us-local
   civic.data-sensitivity: none
   civic.human-review: advisory-only
+  civic.use-when: >
+    A resident asks why their permit is stuck and the status codes in the system
+    mean nothing to them.
+  civic.avoid-when: >
+    Not for appeals or variance questions — it explains a status, it does not
+    advise on what to do about one.
   civic.maintainer: "City of X, Department of Building Safety"
   civic.contact: "digital@cityofx.gov"
   civic.affiliation: government
@@ -80,6 +86,8 @@ metadata:
 | `civic.jurisdiction` | `us-local`, `us-state`, `us-federal`, `intl`, `generic` | Who this is shaped for. `generic` means no jurisdiction assumptions. |
 | `civic.data-sensitivity` | `none`, `pii`, `protected` | What the skill is expected to touch. `protected` covers health, benefits, immigration, criminal justice, and anything else with a statutory regime. |
 | `civic.human-review` | `none`, `advisory-only`, `decision-support` | Whether output affects a person's rights, benefits, or legal standing. |
+| `civic.use-when` | free text, ≤500 | Optional. When the skill earns its place. Plain text — the site renders it as text, never as markdown. |
+| `civic.avoid-when` | free text, ≤500 | Optional, and **the one worth writing.** Where it falls down and what it should not be pointed at. Same plain-text rule. |
 | `civic.maintainer` | free text | Organization or individual accountable for the skill. |
 | `civic.contact` | free text | A working address for security reports. |
 | `civic.affiliation` | `government`, `nonprofit`, `academic`, `vendor`, `individual` | Affiliation of the party in `civic.maintainer`. |
@@ -88,6 +96,22 @@ metadata:
 | `civic.deployed-in` | e.g. `US-MA / Boston`, `GB` | Where that organization operates. Same rule. |
 | `civic.deployed-since` | `YYYY` or `YYYY-MM` | Optional. Duration carries more weight than any other part of the claim. |
 | `civic.localization` | `generalized`, `localized` | Optional. Where the skill sits on the jurisdiction axis — see [docs/LOCALIZATION.md](docs/LOCALIZATION.md). Omit it if the skill has no jurisdiction-specific content. |
+
+### When your skill fits, and when it doesn't
+
+`civic.use-when` and `civic.avoid-when` are how the catalogue answers the question
+an adopter actually has: is this for my situation? Both are optional. Both are
+worth the two minutes.
+
+`civic.avoid-when` is the one to spend the time on. Anyone can guess at what a
+skill is for from its description; nobody but you knows where it breaks down,
+what it should not be pointed at, or what it gets subtly wrong. A skill that is
+honest about its limits gets adopted by the people it actually helps, instead of
+by people who find out the hard way.
+
+Keep both to a couple of sentences. They are a note on fit, not a second
+description — and they are rendered as plain text, so markdown in them will show
+up as literal asterisks.
 
 `civic.data-sensitivity` and `civic.human-review` exist because they are the first two questions any government IT reviewer asks, and neither is answerable from reading the code. Answer them honestly — an understated declaration that contradicts the code is grounds for rejection, and it's the kind of thing a reviewer notices.
 
@@ -123,6 +147,13 @@ The actual procedure.
 ## Adapting this to your jurisdiction
 What a user has to change. Point at files under references/.
 ```
+
+These two body sections overlap with `civic.use-when` and `civic.avoid-when`, and
+that is deliberate — they serve different readers. The frontmatter fields are a
+sentence or two for a person browsing the catalogue, who cannot see the body at
+all. The body sections are the operating detail the agent reads at runtime, and
+can be as long as the job needs. Write the short version in frontmatter and the
+full version here.
 
 If your skill produces anything affecting someone's rights, benefits, or legal standing, **say so in the skill's own output**, not just in the frontmatter. The person reading the result is not the person who read your metadata.
 

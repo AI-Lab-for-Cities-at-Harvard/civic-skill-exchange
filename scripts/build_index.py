@@ -159,6 +159,12 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "localization": meta.get("civic.localization"),
         "data_sensitivity": meta.get("civic.data-sensitivity"),
         "human_review": meta.get("civic.human-review"),
+        # Plain text, never rendered as markdown. The detail page stopped
+        # publishing the skill body, so these two are the only way it can tell
+        # a reader whether a skill fits their situation. Always present, null
+        # when the author did not answer — the site reads the keys either way.
+        "use_when": meta.get("civic.use-when"),
+        "avoid_when": meta.get("civic.avoid-when"),
         "maintainer": meta.get("civic.maintainer"),
         "sha": sha,
         "has_scripts": (skill_dir / "scripts").is_dir(),

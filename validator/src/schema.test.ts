@@ -13,7 +13,7 @@ import { dirname, join, resolve } from "node:path";
 import { parse } from "yaml";
 import {
   AFFILIATIONS, DEPLOYMENTS, HUMAN_REVIEW, JURISDICTIONS,
-  LOCALIZATIONS, SENSITIVITIES, SPEC_FIELDS,
+  FIT_MAX_LENGTH, LOCALIZATIONS, SENSITIVITIES, SPEC_FIELDS,
 } from "./rules";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -23,7 +23,7 @@ interface Schema {
   properties: {
     metadata: {
       required: string[];
-      properties: Record<string, { enum?: string[] }>;
+      properties: Record<string, { enum?: string[]; maxLength?: number }>;
     };
   } & Record<string, unknown>;
 }
@@ -58,6 +58,13 @@ describe("the published schema agrees with rules.ts", () => {
   it("declares only the six Agent Skills spec fields", () => {
     expect(Object.keys(schema.properties).sort()).toEqual([...SPEC_FIELDS].sort());
   });
+
+  it.each(["civic.use-when", "civic.avoid-when"])(
+    "%s is declared, optional, and capped at the same length as rules.ts", (field) => {
+      expect(metaProps[field]).toBeDefined();
+      expect(metaProps[field]?.maxLength).toBe(FIT_MAX_LENGTH);
+      expect(schema.properties.metadata.required).not.toContain(field);
+    });
 
   it("leaves civic.category to the vocabulary file rather than hardcoding it", () => {
     // One source of truth: registry/categories.yml. A frozen enum here would

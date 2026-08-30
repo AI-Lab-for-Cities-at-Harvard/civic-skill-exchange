@@ -360,6 +360,28 @@ a:hover { color: var(--c-spot); }
 }
 .detail__section > p { font-size: var(--t-sm); color: var(--c-text-light); }
 
+/* Fit — the submitter's own account of when the skill helps and when it does
+   not. Rendered as text, never as markdown: the detail page publishes no
+   submitter-authored markup, and these two fields do not change that. */
+.fit { margin: 0; display: grid; gap: var(--gap-4); }
+.fit__item {
+  display: grid; gap: var(--gap-2);
+  padding: var(--gap-4) var(--gap-5);
+  background: var(--c-bg-raised);
+  border: 1px solid var(--c-border-light);
+  border-left: 3px solid var(--c-border);
+  border-radius: var(--radius);
+}
+.fit__item--avoid { border-left-color: var(--c-warn); }
+.fit dt {
+  font-size: var(--t-xs); text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--c-text-lighter);
+}
+.fit dd {
+  margin: 0; font-size: var(--t-base);
+  line-height: 1.6; max-width: 62ch;
+}
+
 .tree { list-style: none; padding: 0; margin: 0 0 var(--gap-4); display: grid; gap: 1px; }
 .tree__item {
   display: flex; align-items: baseline; gap: var(--gap-3);

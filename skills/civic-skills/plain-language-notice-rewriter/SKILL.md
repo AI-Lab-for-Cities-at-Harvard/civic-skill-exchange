@@ -15,6 +15,16 @@ metadata:
   civic.jurisdiction: generic
   civic.data-sensitivity: none
   civic.human-review: advisory-only
+  civic.use-when: >
+    Rewriting a notice, letter, or form-instruction template for readability, or
+    auditing an existing template against a target reading level. Also worth
+    running before translation — plain English translates better and cheaper
+    than bureaucratic English.
+  civic.avoid-when: >
+    Not for filled notices containing a real person's name, case number, or
+    determination — templates only. Not a substitute for legal review: it
+    preserves the required elements you list, but cannot tell you what those
+    elements are.
   civic.maintainer: "Civic Skills Registry maintainers"
   civic.contact: "security@civic-skill-exchange.example"
   civic.affiliation: academic
