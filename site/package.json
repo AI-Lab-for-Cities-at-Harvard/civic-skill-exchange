@@ -12,9 +12,10 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@civic-skill-exchange/validator": "*",
+    "marked": "^18.0.11",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "@civic-skill-exchange/validator": "*"
+    "react-dom": "^19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
