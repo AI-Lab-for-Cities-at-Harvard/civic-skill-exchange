@@ -36,29 +36,10 @@ export function LabBadge({ namespace }: { namespace: Skill["namespace"] }) {
  *  every card at once (ADR 0001, ruling 4). A note derived from the ledger
  *  cannot drift from it. */
 export function TierBadge(
-  { tier, reviewed, namespace }: {
-    tier: Skill["tier"];
-    reviewed?: Skill["reviewed"];
-    namespace?: Skill["namespace"];
-  },
+  { tier, reviewed }: { tier: Skill["tier"]; reviewed?: Skill["reviewed"] },
 ) {
   const isReviewed = tier === "reviewed";
   const reviewers = reviewed?.reviewers ?? [];
-
-  // Owner's ruling on #51: a Lab-authored listing does not carry the Community
-  // chip, which read as redundant on a registry the Lab runs.
-  //
-  // It narrows a warning rather than removing a duplicate, so it is worth being
-  // exact about what is left. "Community" says nobody reviewed the skill, and
-  // that stays true of a Lab skill — writing something is not reviewing it, and
-  // a Lab skill clears the same automated checks as anyone else's, no more.
-  // What remains is DownloadBox, which says it in full at the point of
-  // download. The card says nothing.
-  //
-  // Reviewed is untouched. There the two chips make different claims — who
-  // wrote it, who read it — and dropping either would lose a fact.
-  const labAuthored = !!namespace && RESERVED_NAMESPACES.has(namespace.toLowerCase());
-  if (!isReviewed && labAuthored) return null;
   return (
     <span className={`badge ${isReviewed ? "badge--ok" : "badge--warn"}`}>
       {label(TIER_LABELS, tier)}

@@ -196,32 +196,33 @@ describe("the Lab badge stands at both tiers", () => {
   });
 });
 
-/** Owner's ruling on #51: a Lab-authored skill does not carry the Community
- *  chip. The Lab runs the registry, and the two chips together were read as
- *  redundant on its own listings.
+/** Ruling 2 on #53 reverses what #52 built.
  *
- *  Recorded plainly because it narrows a warning: the Community chip says
- *  nobody reviewed the skill, which stays true of a Lab skill — the Lab writing
- *  something is not the Lab reviewing it. What carries the warning instead is
- *  DownloadBox, at the point of download, and these tests pin that it is still
- *  there. The Reviewed chip is untouched: a Lab skill that reaches Reviewed
- *  still shows both, because there the two chips make genuinely different
- *  claims. */
+ *  #52 dropped the Community chip from Lab listings as redundant. It is not a
+ *  provenance label: it is the only card-level statement that nobody has read
+ *  the skill, and a Lab skill clears the same automated checks as any other and
+ *  no more. Both chips show, and the note stays (ruling 3). */
 describe("the Community chip on a Lab-authored listing", () => {
-  it("gives way to the Lab chip", () => {
+  it("shows beside the Lab chip", () => {
     render(<SkillCard skill={makeSkill({
       namespace: "civic-skills", tier: "community",
     })} />);
     expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
-    expect(screen.queryByText(/automated checks only/)).not.toBeInTheDocument();
-  });
-
-  it("stays on everybody else's Community listing", () => {
-    render(<SkillCard skill={makeSkill({ namespace: "cityofx", tier: "community" })} />);
     expect(screen.getByText("automated checks only")).toBeInTheDocument();
   });
 
-  it("does not touch a Lab skill that reached Reviewed", () => {
+  it("keeps its note, which is why the chip works", () => {
+    render(<TierBadge tier="community" />);
+    expect(screen.getByText("automated checks only")).toBeInTheDocument();
+  });
+
+  it("is unchanged on everybody else's Community listing", () => {
+    render(<SkillCard skill={makeSkill({ namespace: "cityofx", tier: "community" })} />);
+    expect(screen.getByText("automated checks only")).toBeInTheDocument();
+    expect(screen.queryByText(/Written by the AI Lab/)).not.toBeInTheDocument();
+  });
+
+  it("leaves a Lab skill that reached Reviewed alone", () => {
     render(<SkillCard skill={makeSkill({
       namespace: "civic-skills", tier: "reviewed",
       reviewed: {
