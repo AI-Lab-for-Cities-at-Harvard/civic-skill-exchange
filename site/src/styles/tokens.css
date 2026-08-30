@@ -63,10 +63,25 @@
   --gap-5: 1.5rem;
   --gap-6: 2rem;
 
-  /* ---- Type ------------------------------------------------------------- */
+  /* ---- Type -------------------------------------------------------------
+   * The system is sans-serif throughout — headings included. Graphik carries
+   * 348 declarations in the reference CSS against Tiempos' 32, and every
+   * topper and title in it is Graphik. The serif is an editorial accent
+   * reserved for pull quotes, blockquotes, date displays and bios.
+   *
+   * Nothing here uses it yet, so its webfont is deliberately not requested.
+   * If you add a pull quote, add the face to the font link in index.html at
+   * the same time — otherwise it falls back to Georgia and reads off-system.
+   */
   --f-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --f-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-serif: Georgia, "Times New Roman", serif;
   --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Headings run tight. The reference CSS clusters at -.02em to -.04em, with
+     the largest display type taking the most negative tracking. */
+  --track-display: -0.04em;
+  --track-heading: -0.03em;
+  --track-tight: -0.02em;
 
   --t-xs: 0.75rem;
   --t-sm: 0.875rem;
@@ -109,4 +124,44 @@
   --c-warn-bg: #2a2114;
   --c-info: #8fb8dd;
   --c-info-bg: #16242f;
+}
+
+/* ---- Scoped themes -----------------------------------------------------
+ * The system's signature move is a full-bleed section that carries its own
+ * theme, rather than a page with one palette. Any element can take
+ * data-theme and everything inside it resolves against that palette.
+ * Written as [data-theme] rather than :root[data-theme] so it nests.
+ */
+
+[data-theme="crimson"] {
+  --c-bg: var(--brand-accent);
+  --c-bg-raised: var(--brand-accent);
+  --c-solid: #f6f4f2;
+  --c-solid-inverse: #000000;
+  --c-spot: #ffffff;
+  --c-text: #ffffff;
+  --c-text-light: rgba(255, 255, 255, 0.85);
+  --c-text-lighter: rgba(255, 255, 255, 0.75);
+  --c-text-link: #ffffff;
+  --c-border: rgba(255, 255, 255, 0.34);
+  --c-border-light: rgba(255, 255, 255, 0.18);
+  --c-button-bg: transparent;
+  --c-button-bg-subtle: rgba(0, 0, 0, 0.12);
+  --c-outline: #ffffff;
+}
+
+[data-theme="plain-dark"] {
+  --c-bg: #222222;
+  --c-bg-raised: #2b2b2b;
+  --c-solid: #ffffff;
+  --c-spot: #ffffff;
+  --c-text: #ffffff;
+  --c-text-light: rgba(255, 255, 255, 0.82);
+  --c-text-lighter: rgba(255, 255, 255, 0.7);
+  --c-text-link: #ffffff;
+  --c-border: rgba(255, 255, 255, 0.34);
+  --c-border-light: rgba(255, 255, 255, 0.15);
+  --c-button-bg: transparent;
+  --c-button-bg-subtle: rgba(255, 255, 255, 0.12);
+  --c-outline: #ffffff;
 }

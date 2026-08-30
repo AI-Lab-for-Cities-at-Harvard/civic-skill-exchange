@@ -15,7 +15,7 @@ name: Report
 
 on:
   workflow_run:
-    workflows: [Validate]
+    workflows: [Skills]
     types: [completed]
 
 permissions:
