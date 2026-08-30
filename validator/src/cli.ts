@@ -17,7 +17,7 @@
  */
 
 import { fileURLToPath } from "node:url";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import { loadCategories, validateSkill, discoverAll, discoverChanged } from "./skill";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
