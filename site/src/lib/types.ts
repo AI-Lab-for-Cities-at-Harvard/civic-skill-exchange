@@ -54,6 +54,10 @@ export interface SkillFile {
  *  stored XSS surface, and describing a skill does not require it. */
 export interface SkillDetail extends Skill {
   files: SkillFile[];
+  /** The downloadable archive, written by the index build. Optional so the page
+   *  degrades to the command-line paths rather than rendering a broken link if
+   *  it is ever absent. */
+  archive?: { path: string; size: number };
 }
 
 export interface Index {

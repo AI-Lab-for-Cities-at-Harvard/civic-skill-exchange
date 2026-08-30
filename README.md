@@ -44,6 +44,12 @@ The site is generated from this repository. If you'd rather work with the data d
 
 Skills are plain directories. Take one however you like:
 
+**No tooling.** Every skill has a download link on its page — a zip of the
+skill folder. Upload it wherever your agent tool takes skills. No git, no Node,
+no account.
+
+**With a terminal:**
+
 ```bash
 # A single skill, without cloning the whole registry
 npx degit AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/skills/{namespace}/{skill-name} ./{skill-name}

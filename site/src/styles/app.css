@@ -494,6 +494,18 @@ a:hover { color: var(--c-spot); }
 .download__warn { background: var(--c-warn-bg); color: var(--c-warn); }
 .download__ok { background: var(--c-ok-bg); color: var(--c-ok); }
 
+/* The archive leads the box. It is the only option that needs no tooling, so
+   it gets the solid button and the command lines get the quiet treatment. */
+.download__archive {
+  display: grid; gap: var(--gap-2);
+  margin: 0 0 var(--gap-5); padding-bottom: var(--gap-5);
+  border-bottom: 1px solid var(--c-border-light);
+}
+.download__get { justify-self: start; text-decoration: none; }
+.download__archive span {
+  font-size: var(--t-xs); color: var(--c-text-lighter); line-height: 1.5;
+}
+
 .download__cmd { display: grid; gap: var(--gap-2); margin-bottom: var(--gap-4); }
 .download__cmd-label {
   font-size: var(--t-xs); text-transform: uppercase;
