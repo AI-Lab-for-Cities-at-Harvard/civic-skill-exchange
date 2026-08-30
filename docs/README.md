@@ -40,6 +40,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
+| [lab-as-a-tier.md](spikes/lab-as-a-tier.md) | Should Lab be a third tier? — [#53](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/53), awaiting rulings |
 | [reviewed-tier-definition.md](spikes/reviewed-tier-definition.md) | What should a Reviewed listing mean? — [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38), ruled; see [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) |
 
 ## Archive
