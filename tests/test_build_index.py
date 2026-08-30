@@ -290,3 +290,49 @@ def test_archive_skips_symlinks_like_the_detail_payload_does(make_skill, tmp_pat
 
     with zipfile.ZipFile(out / "skills" / entry["namespace"] / f"{entry['name']}.zip") as z:
         assert not any(n.endswith("evil.md") for n in z.namelist())
+
+
+# --------------------------------------------------------------------------- #
+# The documented payload
+#
+# docs/ARCHITECTURE.md prints a worked index entry. It drifted badly once —
+# showing provenance fields that never existed and missing several that did —
+# because nothing checked it. Now something does.
+
+
+def _documented_entry() -> dict:
+    """The JSON block under 'An index entry' in docs/ARCHITECTURE.md."""
+    import json
+    import re
+
+    doc = (build_index.ROOT / "docs" / "ARCHITECTURE.md").read_text(encoding="utf-8")
+    after = doc.split("An index entry", 1)[1]
+    block = re.search(r"```json\n(.*?)```", after, re.DOTALL)
+    assert block, "no JSON block found under 'An index entry'"
+    # The example uses a typographic ellipsis inside strings, which is fine JSON.
+    return json.loads(block.group(1))
+
+
+def test_the_documented_index_entry_shows_every_field_the_build_emits(make_skill):
+    real = build_index.build_entry(make_skill(), {}, {})
+    documented = _documented_entry()
+
+    # 'reviewed' only appears on a Reviewed listing, and the example is one.
+    missing = set(real) - set(documented)
+    assert not missing, f"docs/ARCHITECTURE.md omits emitted fields: {sorted(missing)}"
+
+
+def test_the_documented_index_entry_invents_nothing(make_skill):
+    real = build_index.build_entry(make_skill(), {}, {})
+    documented = _documented_entry()
+
+    # Fields only a Reviewed listing carries. Everything else must be real.
+    tier_only = {"reviewed", "drift"}
+    invented = set(documented) - set(real) - tier_only
+    assert not invented, f"docs/ARCHITECTURE.md shows fields the build never emits: {sorted(invented)}"
+
+
+def test_the_documented_provenance_block_matches(make_skill):
+    real = build_index.build_entry(make_skill(), {}, {})
+    documented = _documented_entry()
+    assert set(documented["provenance"]) == set(real["provenance"])
