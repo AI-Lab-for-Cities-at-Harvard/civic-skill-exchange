@@ -18,14 +18,17 @@ Automated checks can only ever say *no*. A pass is the absence of a specific set
 
 ## Reviewed
 
-**What it means:** two named people from different organizations read every line of this specific commit against a published checklist and put their names on it.
+**What it means:** the AI Lab for Cities at Harvard read every line of this specific commit against a published checklist and put its name on it.
+
+**What it does not mean:** that anyone outside the Lab looked. This is an attestation by one party, not an independent audit, and not a second opinion. See [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) for what that gives up and why it was accepted.
 
 - Everything in Community, plus sign-off against [REVIEW.md](REVIEW.md).
 - **Pinned to a commit SHA.** The attestation covers one exact content hash.
 - Attestations expire after one year.
 - Deliberately small. Its entire value is its scarcity — a tier that admits everything communicates nothing.
+- **The Lab may review skills it wrote itself**, in the reserved `civic-skills` namespace. Those listings disclose it: the site derives Lab authorship from the namespace and says so on the review claim.
 
-This is the tier a city IT director can act on. Protect it accordingly.
+This is the tier a city IT director can act on. It is a smaller claim than two readers from separate organizations would have been, and it is one that can actually be made — which is why the SHA pin below carries proportionally more of the tier's weight than it did.
 
 ---
 
@@ -36,7 +39,7 @@ This is the tier a city IT director can act on. Protect it accordingly.
 ```yaml
 - skill: cityofx/permit-status-explainer
   sha: a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92   # exact reviewed tree
-  reviewers: [alice-gov, bob-nonprofit]           # two, different organizations
+  reviewers: ["AI Lab for Cities at Harvard"]     # the attesting party
   reviewed: 2026-09-14
   expires: 2027-09-14
   notes: "Read-only. No network egress. No PII handling."
@@ -65,8 +68,10 @@ This is cheap to implement and it is the single highest-value mechanism in the d
 
 1. Anyone opens a `review-request` issue naming the skill. Authors may request review of their own work.
 2. A maintainer confirms the skill is in scope, has clean L0–L4 results, and has been listed in Community for at least 30 days. The waiting period is deliberate: it lets the weekly re-scan run several times and gives the ecosystem time to surface problems.
-3. Two reviewers from **different organizations** work the checklist in [REVIEW.md](REVIEW.md) independently.
-4. Both sign off in the issue. A PR adds the attestation to `reviewed.yml` with the skill's current SHA.
+3. The Lab works the checklist in [REVIEW.md](REVIEW.md).
+4. The result is written up in the issue. A PR adds the attestation to `reviewed.yml` with the skill's current SHA.
+
+   `CODEOWNERS` gates that file to the reviewers team, and the team currently holds one person across two accounts. That is the mechanism being right in advance of a second reviewer existing — it is **not** two-person control, and nothing here should be read as a second pair of eyes.
 5. The build promotes it on the next run.
 
 Reviewers may decline without a full checklist pass and without justification. Review capacity is the scarcest resource here; nobody should feel obliged to spend it on a marginal submission.
@@ -78,7 +83,7 @@ A skill leaves Reviewed when any of these happen. The first is automatic:
 - **Content changes.** SHA drift is detected by the build, which demotes the skill and opens an issue. The author may request re-review.
 - **The attestation expires** at one year.
 - **A new scan finding appears** at L2, or at L3–L4 with maintainer judgment.
-- **A reviewer withdraws** their sign-off, for any reason.
+- **The Lab withdraws** its sign-off, for any reason.
 - **The maintainer contact goes stale.** A `civic.contact` that bounces means there is nobody to reach about a security report, which is disqualifying on its own.
 
 Demotion is not a punishment and should not be written up as one. It is the mechanism working. The issue template for demotion should say so plainly, because a registry where demotion feels like an accusation is a registry where maintainers avoid demoting.
@@ -116,4 +121,4 @@ that does not recover.
 
 Ship Community-only and say so on the front page. That is a coherent, defensible registry, and several successful registries operate exactly this way.
 
-A Reviewed tier with a stale queue is worse than no Reviewed tier at all. It converts the registry's best asset — a credible signal — into its largest liability, because people act on the badge while the process behind it has quietly stopped running. Open this tier when reviewers have committed real hours, and not before.
+A Reviewed tier with a stale queue is worse than no Reviewed tier at all. It converts the registry's best asset — a credible signal — into its largest liability, because people act on the badge while the process behind it has quietly stopped running. Open this tier when the Lab has committed real hours, and not before.

@@ -71,7 +71,9 @@ A dedicated skill scanner plus generic static analysis over `scripts/`. Findings
 General-purpose LLM-security products do not cover this artifact type — most are scoped to data-flow analysis over application source and name no skill or manifest format. Use a purpose-built tool.
 
 ### L5 — Human gate
-Two named reviewers against [REVIEW.md](REVIEW.md). Required only for the Reviewed tier. **Admits.**
+The AI Lab for Cities at Harvard against [REVIEW.md](REVIEW.md). Required only for the Reviewed tier. **Admits.**
+
+One reader, and where the skill is Lab-authored the reader is also the author — disclosed on the listing. This layer used to be specified as two people from separate organizations, and dropping to one removes the property that mattered most here: no single account, including a compromised reviewer's, can confer the badge. Nothing structural catches that now, which is why L6 and the SHA pin carry proportionally more weight than they did. [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) sets out the trade in full.
 
 ### L6 — Standing re-scan
 Weekly re-run of L0–L4 across the whole tree, plus SHA-drift detection against `registry/reviewed.yml`. Opens an issue on any new finding.

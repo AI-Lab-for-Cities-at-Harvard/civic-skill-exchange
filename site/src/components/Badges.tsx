@@ -7,11 +7,11 @@ import type { Skill } from "../lib/types";
  *  chip rather than brand chrome — and Community says what it means, because
  *  "Community" alone invites people to assume it was checked.
  *
- *  The Reviewed note is rendered from the attestation, never written here.
- *  It used to read "two reviewers signed off" as a literal, which is the exact
- *  way a claim outlives the rule it came from — it stayed true only as long as
- *  nobody changed the rule, and then it was a lie on every card at once
- *  (ADR 0001, ruling 4). A note derived from the ledger cannot drift from it. */
+ *  The Reviewed note is rendered from the attestation, never written here. It
+ *  used to hardcode a reviewer count, which is the exact way a claim outlives
+ *  the rule it came from: true only until the rule changed, and then false on
+ *  every card at once (ADR 0001, ruling 4). A note derived from the ledger
+ *  cannot drift from it. */
 export function TierBadge(
   { tier, reviewed }: { tier: Skill["tier"]; reviewed?: Skill["reviewed"] },
 ) {

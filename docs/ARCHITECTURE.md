@@ -244,7 +244,7 @@ An index entry, with every field the build actually emits:
   "tier": "reviewed",
   "reason": "attestation matches current content",
   "reviewed": { "date": "2026-09-14", "expires": "2027-09-14",
-                "reviewers": ["alice-gov", "bob-nonprofit"], "notes": "Read-only." },
+                "reviewers": ["AI Lab for Cities at Harvard"], "notes": "Read-only." },
   "sha": "a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92",
   "has_scripts": false,
   "script_files": [],

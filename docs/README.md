@@ -40,7 +40,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
-| [reviewed-tier-definition.md](spikes/reviewed-tier-definition.md) | Should Reviewed mean one maintainer rather than two independent reviewers? — [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38), ruled; see [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) |
+| [reviewed-tier-definition.md](spikes/reviewed-tier-definition.md) | What should a Reviewed listing mean? — [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38), ruled; see [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) |
 
 ## Archive
 
