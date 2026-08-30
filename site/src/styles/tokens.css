@@ -94,6 +94,19 @@
   /* ---- Layout (HBS breakpoints and 16-column grid) ----------------------- */
   --bp-tablet: 600px;
   --bp-desktop: 1024px;
+
+  /* The system lays out on 16 columns. Content takes named spans off that grid
+     rather than its own max-width, so a lede, a card grid and a themed band all
+     line up on the same edges instead of three approximations of centred.
+       center 8 — reading measure, prose and editorial blocks
+       wide  12 — the catalogue, and anything with a sidebar
+       full  16 — themed bands, which run the full canvas */
+  --w-page: 78rem;
+  --grid-cols: 16;
+  --grid-gutter: var(--gap-5);
+
+  /* Retained: the detail page's aside and a couple of prose measures still read
+     better as a plain width than as a span. */
   --w-center: 62rem;
   --w-wide: 78rem;
   --radius: 2px;
@@ -164,4 +177,45 @@
   --c-button-bg: transparent;
   --c-button-bg-subtle: rgba(255, 255, 255, 0.12);
   --c-outline: #ffffff;
+}
+
+/* A band whose job is to interrupt the page.
+ *
+ * plain-dark and crimson are absolute: they look the same whatever the reader
+ * has chosen. That is right for the topper, which should always be crimson, and
+ * for About's terms block. It is wrong for a band that exists to separate one
+ * part of a page from another — a dark block on a dark page separates nothing.
+ *
+ * This one is relative. Dark on a light page, light on a dark one.
+ */
+[data-theme="contrast"] {
+  --c-bg: #222222;
+  --c-bg-raised: #2b2b2b;
+  --c-solid: #ffffff;
+  --c-spot: #ffffff;
+  --c-text: rgba(255, 255, 255, 0.95);
+  --c-text-light: rgba(255, 255, 255, 0.82);
+  --c-text-lighter: rgba(255, 255, 255, 0.7);
+  --c-text-link: #ffffff;
+  --c-border: rgba(255, 255, 255, 0.34);
+  --c-border-light: rgba(255, 255, 255, 0.18);
+  --c-button-bg: transparent;
+  --c-button-bg-subtle: rgba(255, 255, 255, 0.12);
+  --c-outline: #ffffff;
+}
+
+:root[data-theme="dark"] [data-theme="contrast"] {
+  --c-bg: #f6f4f2;
+  --c-bg-raised: #ffffff;
+  --c-solid: #000000;
+  --c-spot: var(--brand-accent);
+  --c-text: rgba(0, 0, 0, 0.85);
+  --c-text-light: rgba(0, 0, 0, 0.66);
+  --c-text-lighter: rgba(0, 0, 0, 0.55);
+  --c-text-link: #000000;
+  --c-border: rgba(0, 0, 0, 0.34);
+  --c-border-light: rgba(0, 0, 0, 0.12);
+  --c-button-bg: transparent;
+  --c-button-bg-subtle: rgba(0, 0, 0, 0.06);
+  --c-outline: var(--brand-accent);
 }

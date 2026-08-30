@@ -83,49 +83,111 @@ a:hover { color: var(--c-spot); }
 }
 .theme-toggle:hover { border-color: var(--c-border); }
 
-/* ---- layout ---- */
+/* ---- the canvas ---------------------------------------------------------
+ * One 16-column grid, and named spans off it. Everything that used to pick its
+ * own max-width now takes a span, so a themed band, a card grid and a column of
+ * prose share the same edges instead of three near-misses.
+ */
+.canvas {
+  max-width: var(--w-page); margin-inline: auto;
+  padding-inline: var(--gap-5);
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols), minmax(0, 1fr));
+  column-gap: var(--grid-gutter);
+}
+.span-center { grid-column: 5 / span 8; }
+.span-wide   { grid-column: 3 / span 12; }
+.span-full   { grid-column: 1 / -1; }
+
+/* Below the desktop breakpoint the column grid stops earning its keep — eight
+   of sixteen columns on a phone is four words a line. One column, full width. */
+@media (max-width: 1023px) {
+  .canvas { grid-template-columns: minmax(0, 1fr); }
+  .span-center, .span-wide, .span-full { grid-column: 1 / -1; }
+}
+
+/* ---- layout ----
+ * Browse sits on the canvas: filters take 4 columns, results the remaining 12.
+ */
 .layout {
-  max-width: var(--w-wide); margin: 0 auto;
-  padding: var(--gap-6) var(--gap-5) var(--space-lg);
-  display: grid; gap: var(--gap-6);
-  grid-template-columns: minmax(0, 15rem) minmax(0, 1fr);
+  padding-block: var(--gap-6) var(--space-lg);
+  row-gap: var(--gap-6);
   align-items: start;
 }
-@media (max-width: 1023px) { .layout { grid-template-columns: 1fr; } }
+.layout > .filters { grid-column: 1 / span 4; }
+.layout > .results { grid-column: 5 / -1; }
+@media (max-width: 1023px) {
+  .layout > .filters, .layout > .results { grid-column: 1 / -1; }
+}
 
 /* ---- filters ---- */
 .filters { display: grid; gap: var(--gap-5); position: sticky; top: var(--gap-4); }
 @media (max-width: 1023px) { .filters { position: static; } }
 
-.search__label {
-  display: block; margin-bottom: var(--gap-2);
+/* The filter rail was the last piece of the page still wearing the operating
+   system's own controls — blue radio dots on a crimson-toppered page. The
+   label treatment is shared with the facet legends so the whole rail reads as
+   one set of controls. */
+.search__label, .facet__legend {
+  display: block; padding: 0; margin: 0 0 var(--gap-2);
   font-size: var(--t-xs); letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--c-text-lighter); font-weight: 600;
 }
 .search__input {
-  width: 100%; padding: var(--gap-2) var(--gap-3);
-  font: inherit; color: var(--c-text);
+  width: 100%; padding: var(--gap-3);
+  font: inherit; font-size: var(--t-sm); color: var(--c-text);
   background: var(--c-bg-raised);
-  border: 1px solid var(--c-border); border-radius: var(--radius);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  transition: border-color 120ms ease;
 }
+.search__input::placeholder { color: var(--c-text-lighter); }
+.search__input:hover { border-color: var(--c-border-dark); }
+/* The search affordance is the border, not a magnifier glyph — and the native
+   clear button is left alone so keyboard and screen-reader users keep it. */
 
 .facet { border: 0; padding: 0; margin: 0; }
-.facet__legend {
-  padding: 0; margin-bottom: var(--gap-2);
-  font-size: var(--t-xs); letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--c-text-lighter); font-weight: 600;
-}
 .facet__note {
   margin: 0 0 var(--gap-2);
   font-size: var(--t-xs); color: var(--c-text-lighter); line-height: 1.4;
 }
-.facet__options { display: grid; gap: 1px; }
+.facet__options { display: grid; }
+
+/* Each option is a full-width row, so the hit area is the row rather than the
+   dot. The control itself is drawn from tokens: appearance:none and a ring
+   that fills with the spot colour when chosen. */
 .facet__option {
-  display: flex; align-items: center; gap: var(--gap-2);
+  display: flex; align-items: center; gap: var(--gap-3);
   font-size: var(--t-sm); cursor: pointer;
-  padding: var(--gap-1) 0;
+  padding: var(--gap-2) var(--gap-2) var(--gap-2) var(--gap-1);
+  border-radius: var(--radius);
+  transition: background-color 120ms ease;
 }
+.facet__option:hover { background: var(--c-button-bg-subtle); }
 .facet__option span:first-of-type { flex: 1; }
+
+.facet__option input[type="radio"] {
+  appearance: none; -webkit-appearance: none;
+  margin: 0; flex: 0 0 auto;
+  width: 0.875rem; height: 0.875rem;
+  border: 1px solid var(--c-border); border-radius: var(--radius-pill);
+  background: var(--c-bg-raised);
+  display: grid; place-content: center;
+  transition: border-color 120ms ease;
+}
+.facet__option input[type="radio"]:hover { border-color: var(--c-border-dark); }
+.facet__option input[type="radio"]::before {
+  content: ""; width: 0.5rem; height: 0.5rem;
+  border-radius: var(--radius-pill);
+  transform: scale(0); transition: transform 120ms ease;
+  background: var(--c-spot);
+}
+.facet__option input[type="radio"]:checked { border-color: var(--c-spot); }
+.facet__option input[type="radio"]:checked::before { transform: scale(1); }
+/* A checked row carries a little more weight than its siblings, so the current
+   filter is legible without reading every dot. */
+.facet__option:has(input:checked) { font-weight: 600; }
+
 .facet__count {
   font-variant-numeric: tabular-nums;
   color: var(--c-text-lighter); font-size: var(--t-xs);
@@ -153,7 +215,9 @@ a:hover { color: var(--c-spot); }
 }
 .grid {
   display: grid; gap: var(--gap-4);
-  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  /* Sized so three cards fit the results' twelve columns at desktop. The tease
+     got shorter, not fewer-per-screen — density was not part of the brief. */
+  grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
 }
 
 .card {
@@ -162,11 +226,20 @@ a:hover { color: var(--c-spot); }
   border-radius: var(--radius);
   padding: var(--gap-5);
   display: flex; flex-direction: column; gap: var(--gap-3);
+  min-height: 100%;
 }
-.card__badges { display: flex; flex-wrap: wrap; gap: var(--gap-2); }
+.card__badges {
+  display: flex; flex-wrap: wrap; gap: var(--gap-2);
+  /* Reserve two rows. Cards whose badges wrap further would otherwise push
+     their titles out of line with every neighbour in the row. */
+  min-height: 1.5rem;
+}
 .card__title {
   margin: 0; font-family: var(--f-sans); font-weight: 600;
-  font-size: var(--t-xl); line-height: 1.2; letter-spacing: var(--track-heading);
+  font-size: var(--t-lg); line-height: 1.25; letter-spacing: var(--track-tight);
+  /* Skill names are hyphenated compounds. Left to itself the browser breaks
+     them mid-word — "federal-grant-fit-" / "check" — so wrap on the hyphens. */
+  overflow-wrap: anywhere; text-wrap: pretty;
 }
 .card__title a { text-decoration: none; }
 .card__title a:hover { text-decoration: underline; }
@@ -176,23 +249,19 @@ a:hover { color: var(--c-spot); }
 }
 .card__desc { margin: 0; color: var(--c-text-light); font-size: var(--t-sm); }
 
+/* One line, not a four-row table. The description carries the meaning; this
+   just says roughly where the skill belongs. margin-top:auto pins it and the
+   call to action to the foot so cards of different description lengths still
+   line their bottoms up across a row. */
 .card__meta {
-  margin: 0; display: grid; gap: var(--gap-2);
-  border-top: 1px solid var(--c-border-light); padding-top: var(--gap-3);
+  margin: auto 0 0; padding-top: var(--gap-3);
+  border-top: 1px solid var(--c-border-light);
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-2);
+  font-size: var(--t-xs); color: var(--c-text-lighter);
 }
-.card__meta > div { display: grid; grid-template-columns: 6.5rem 1fr; gap: var(--gap-3); }
-.card__meta dt {
-  font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--c-text-lighter);
-}
-.card__meta dd { margin: 0; font-size: var(--t-sm); }
+.card__dot { opacity: 0.5; }
+.card__cta { margin: 0; }
 .mono { font-family: var(--f-mono); font-size: var(--t-xs); }
-
-.card__disclaimer {
-  margin: 0; font-size: var(--t-xs); line-height: 1.45;
-  color: var(--c-text-lighter);
-  border-left: 2px solid var(--c-warn); padding-left: var(--gap-3);
-}
 
 /* ---- badges ---- */
 .badge {
@@ -460,3 +529,46 @@ a:hover { color: var(--c-spot); }
   letter-spacing: 0.08em; color: var(--c-text-lighter);
 }
 .facts dd { margin: 0; font-size: var(--t-sm); line-height: 1.45; }
+
+/* ---- themed bands -------------------------------------------------------
+ * Full-bleed sections that carry their own palette. Until now this was an
+ * About-page device and browse ran one flat field from topper to footer.
+ * The band paints edge to edge; its inner takes a span off the canvas so the
+ * text lines up with the grid rather than the viewport.
+ */
+.band {
+  background: var(--c-bg); color: var(--c-text);
+  padding-block: var(--space-md);
+}
+.band__heading { margin: 0 0 var(--gap-4); color: var(--c-text); }
+
+.band__cols {
+  display: grid; gap: var(--gap-6);
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+}
+.band__term {
+  margin: 0 0 var(--gap-2);
+  font-size: var(--t-sm); font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--c-spot);
+}
+.band__col p {
+  margin: 0; font-size: var(--t-sm);
+  color: var(--c-text-light); line-height: 1.6;
+}
+
+/* The standing Community notice. It replaced a paragraph repeated on every
+   card, so it can afford the weight that the repeated one could not. */
+.band__notice {
+  margin: var(--gap-5) 0 0; padding-top: var(--gap-4);
+  border-top: 1px solid var(--c-border-light);
+  font-size: var(--t-sm); line-height: 1.6; max-width: 68ch;
+  color: var(--c-text-light);
+}
+.band__notice strong { color: var(--c-text); }
+
+.band__lede {
+  margin: 0 0 var(--gap-4); font-size: var(--t-base);
+  line-height: 1.6; max-width: 56ch; color: var(--c-text-light);
+}
+.band__links { margin: 0; display: flex; flex-wrap: wrap; gap: var(--gap-5); }

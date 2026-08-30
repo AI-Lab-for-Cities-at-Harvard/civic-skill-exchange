@@ -1,39 +1,52 @@
-import { TierBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
-import { label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS } from "../lib/labels";
+import {
+  TierBadge, LocalizationBadge, DeploymentBadge, SensitivityBadge,
+} from "./Badges";
+import { label, CATEGORY_LABELS, JURISDICTION_LABELS } from "../lib/labels";
 import { skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
 
+/** A tease, not a summary.
+ *
+ * It used to carry a four-row table — category, jurisdiction, data, tools — on
+ * every card, which at ten skills is forty rows of small grey text competing
+ * with the titles for a reader who is still deciding what to open. What stays
+ * is what helps someone choose: who vouched for it, what it is called, what it
+ * does, and roughly where it belongs.
+ *
+ * `allowed-tools` deliberately moved to the detail page. It is the most
+ * security-relevant field, which is exactly why it belongs beside the warning
+ * that the grant applies without prompting — not stranded on a card as four
+ * words of monospace.
+ */
 export function SkillCard({ skill }: { skill: Skill }) {
+  const href = skillHref(skill.namespace, skill.name);
+
   return (
     <article className="card">
       <div className="card__badges">
         <TierBadge tier={skill.tier} />
+        <SensitivityBadge value={skill.data_sensitivity} />
         <LocalizationBadge value={skill.localization} />
         <DeploymentBadge provenance={skill.provenance} />
       </div>
 
       <h2 className="card__title">
-        <a href={skillHref(skill.namespace, skill.name)}>{skill.name}</a>
+        <a href={href}>{skill.name}</a>
       </h2>
       <p className="card__ns">{skill.namespace}</p>
       <p className="card__desc">{skill.description}</p>
 
-      <dl className="card__meta">
-        <div><dt>Category</dt><dd>{label(CATEGORY_LABELS, skill.category)}</dd></div>
-        <div><dt>Jurisdiction</dt><dd>{label(JURISDICTION_LABELS, skill.jurisdiction)}</dd></div>
-        <div><dt>Data</dt><dd>{label(SENSITIVITY_LABELS, skill.data_sensitivity)}</dd></div>
-        <div>
-          <dt>Tools</dt>
-          <dd className="mono">{skill.allowed_tools.join(", ") || "none declared"}</dd>
-        </div>
-      </dl>
+      <p className="card__meta" data-testid="card-meta">
+        <span>{label(CATEGORY_LABELS, skill.category)}</span>
+        <span className="card__dot" aria-hidden="true">·</span>
+        <span>{label(JURISDICTION_LABELS, skill.jurisdiction)}</span>
+      </p>
 
-      {skill.tier === "community" && (
-        <p className="card__disclaimer">
-          Passed automated checks. Nobody reviewed it — read the skill and its
-          scripts before you run it.
-        </p>
-      )}
+      <p className="card__cta">
+        <a className="arrow-link" href={href} data-testid="card-cta">
+          View this skill <span aria-hidden="true">&rarr;</span>
+        </a>
+      </p>
     </article>
   );
 }
