@@ -28,7 +28,9 @@ civic-skills/
 ├── validator/                          npm workspace — L0 + L1, TypeScript
 │   └── src/
 │       ├── rules.ts                    pure frontmatter rules — browser AND CI
-│       ├── structure.ts                filesystem checks — Node only
+│       ├── structure-core.ts           pure structural rules — browser AND CI
+│       ├── yaml-safety.ts              frontmatter size and aliases — both
+│       ├── structure.ts                walks a directory into entries — Node only
 │       └── cli.ts                       what CI invokes
 ├── scripts/
 │   ├── scan.py                         signature layers, emits JSON findings

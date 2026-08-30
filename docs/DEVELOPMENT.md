@@ -74,16 +74,28 @@ gate should not need the React app installed to validate a YAML file.
 
 ```
 validator/src/
-├── rules.ts        pure frontmatter validation — runs in BOTH runtimes
-├── structure.ts    symlinks, size caps, file types, YAML aliases — Node only
-├── skill.ts        reads a skill directory, applies both layers
-└── cli.ts          what CI invokes
+├── rules.ts           pure frontmatter validation — runs in BOTH runtimes
+├── structure-core.ts  size caps, file types, symlinks, path safety — BOTH
+├── yaml-safety.ts     frontmatter size and alias rules — BOTH
+├── structure.ts       walks a directory into entries — Node ONLY
+├── skill.ts           reads a skill directory, applies both layers
+└── cli.ts             what CI invokes
 ```
 
-`rules.ts` must stay free of filesystem access and Node built-ins. Anything that
-needs a directory goes in `structure.ts`, which the browser never imports. If you
-find yourself reaching for `node:fs` in `rules.ts`, the check belongs in the
-other file.
+The line is **pure versus entry-producing**, not "frontmatter versus structure".
+Every rule lives in a module that runs in either runtime; only the walk needs
+Node. `structure-core.ts` takes a kind-tagged entry list — file, directory or
+symlink — so even the symlink rule is shared rather than reimplemented by
+whoever assembles entries some other way.
+
+A caller that builds entries from something other than a filesystem must also
+run `checkPathSafety`. A directory walk cannot produce a `..` segment, an
+absolute path or a duplicate; a list of names chosen by somebody else can.
+
+Nothing reachable from the package entry point may import `node:`.
+`validator/src/purity.test.ts` enforces that by reading the source. Typechecking
+does not catch it — `@types/node` is hoisted in the workspace, so an explicit
+`import from "node:fs"` compiles cleanly even where it must never run.
 
 Findings are structured — `{ where, message }` — so the submission form can put
 an error next to the field it belongs to rather than dumping a list.

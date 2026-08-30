@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   checkStructure, checkYamlSafety, splitFrontmatter,
-  MAX_FILE_BYTES, MAX_FRONTMATTER_BYTES,
+  MAX_FILE_BYTES, MAX_FRONTMATTER_BYTES, MAX_FILES_PER_SKILL, MAX_SKILL_BYTES,
 } from "./structure";
 
 let dir: string;
@@ -63,6 +63,81 @@ describe("checkStructure", () => {
     mkdirSync(join(skill, "references"), { recursive: true });
     writeFileSync(join(skill, "scripts", "helper.py"), "print('hi')\n");
     writeFileSync(join(skill, "references", "notes.md"), "# Notes\n");
+    expect(checkStructure(skill)).toEqual([]);
+  });
+});
+
+/**
+ * Characterization tests, written before the pure/filesystem split in #41.
+ *
+ * These pin behaviour the refactor must preserve exactly. The order test is the
+ * one that matters most: it is what catches a seam that splits the walk into
+ * two passes and silently reshuffles what CI reports.
+ */
+describe("checkStructure — behaviour the split must preserve", () => {
+  it("reports findings in one sorted pass over the tree", () => {
+    writeFileSync(join(dir, "outside.txt"), "secrets");
+    mkdirSync(join(skill, ".git"));
+    symlinkSync(join(dir, "outside.txt"), join(skill, "a-link.md"));
+    writeFileSync(join(skill, "b-big.md"), "x".repeat(MAX_FILE_BYTES + 1));
+    writeFileSync(join(skill, "c-bad.md"), Buffer.from([0xff, 0xfe, 0x00, 0x80]));
+    writeFileSync(join(skill, "d-payload.exe"), "MZ");
+
+    // Asserting the array, not a regex over the joined string: a bad seam
+    // reorders these without changing which findings appear.
+    expect(checkStructure(skill).map((f) => f.where)).toEqual([
+      ".git",
+      "a-link.md",
+      "b-big.md",
+      "c-bad.md",
+      "d-payload.exe",
+    ]);
+  });
+
+  it("counts a disallowed file toward the totals before rejecting its type", () => {
+    // The `total +=` sits above the `continue`, so a rejected file still
+    // consumes budget. Pinning it: a naive port would count only the files it
+    // finished checking.
+    writeFileSync(join(skill, "payload.exe"), "x".repeat(2048));
+    const findings = checkStructure(skill);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toMatch(/not an allowed file type/);
+  });
+
+  it("rejects more files than the cap allows", () => {
+    for (let i = 0; i <= MAX_FILES_PER_SKILL; i += 1) {
+      writeFileSync(join(skill, `note-${i}.md`), "x\n");
+    }
+    expect(messages(checkStructure(skill))).toMatch(/over the 60-file cap/);
+  });
+
+  it("accepts exactly the cap", () => {
+    // SKILL.md already exists, so add one fewer.
+    for (let i = 0; i < MAX_FILES_PER_SKILL - 1; i += 1) {
+      writeFileSync(join(skill, `note-${i}.md`), "x\n");
+    }
+    expect(checkStructure(skill)).toEqual([]);
+  });
+
+  it("rejects a directory over the total-bytes cap", () => {
+    // Under the per-file cap individually, over the directory cap together.
+    const per = MAX_FILE_BYTES - 1;
+    for (let i = 0; i < Math.ceil(MAX_SKILL_BYTES / per) + 1; i += 1) {
+      writeFileSync(join(skill, `bulk-${i}.md`), "x".repeat(per));
+    }
+    expect(messages(checkStructure(skill))).toMatch(/over the 1048576-byte cap/);
+  });
+
+  it("rejects an extension-less file, naming the path when there is no suffix", () => {
+    writeFileSync(join(skill, ".gitignore"), "node_modules\n");
+    const findings = checkStructure(skill);
+    expect(findings).toHaveLength(1);
+    // extname(".gitignore") is "" in Node, so the message falls back to the path.
+    expect(findings[0]?.message).toMatch(/'\.gitignore' is not an allowed file type/);
+  });
+
+  it("matches the extension case-insensitively", () => {
+    writeFileSync(join(skill, "NOTES.MD"), "# Notes\n");
     expect(checkStructure(skill)).toEqual([]);
   });
 });
