@@ -57,6 +57,12 @@ jobs:
         if: steps.changes.outputs.skills != 'true'
         run: echo "This pull request touches no skills/, so there is nothing to validate."
 
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.skills == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+
       - uses: actions/setup-python@v5
         if: steps.changes.outputs.skills == 'true'
         with:
@@ -64,13 +70,18 @@ jobs:
 
       - name: Install dependencies
         if: steps.changes.outputs.skills == 'true'
-        run: pip install pyyaml jsonschema
+        run: |
+          npm ci --workspace @civic-skill-exchange/validator
+          pip install pyyaml          # scan.py only; validation is TypeScript now
 
+      # L0 and L1 run the same module the submission form runs in the browser,
+      # so a contributor cannot be told "valid" by the site and rejected here.
+      # See validator/src/rules.ts.
       - name: L0 + L1 — structure and namespace ownership
         if: steps.changes.outputs.skills == 'true'
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: python scripts/validate.py --changed changed.txt --author "$PR_AUTHOR"
+        run: npx tsx validator/src/cli.ts --changed changed.txt --author "$PR_AUTHOR"
 
       - name: L2 + L3 — signature scan
         if: always() && steps.changes.outputs.skills == 'true'
