@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { DownloadBox } from "./DownloadBox";
-import { TierBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
+import { TierBadge, LabBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
 import {
   label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS,
   DEPLOYMENT_LABELS, LOCALIZATION_LABELS,
@@ -67,6 +67,7 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
       <header className="detail__head">
         <div className="card__badges">
           <TierBadge tier={detail.tier} reviewed={detail.reviewed} />
+          <LabBadge namespace={detail.namespace} />
           <LocalizationBadge value={detail.localization} />
           <DeploymentBadge provenance={detail.provenance} detail />
         </div>

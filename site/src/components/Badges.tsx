@@ -1,7 +1,30 @@
+import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
 import {
   label, TIER_LABELS, LOCALIZATION_LABELS, DEPLOYMENT_LABELS, SENSITIVITY_LABELS,
 } from "../lib/labels";
 import type { Skill } from "../lib/types";
+
+/** Who wrote it, when we did (#51, ADR 0001 ruling 2).
+ *
+ *  Derived from the reserved namespace the validator already enforces, so a Lab
+ *  skill discloses itself without an author setting a field and without the site
+ *  keeping its own list of what counts as ours.
+ *
+ *  It says authorship and stops. The tier badge next to it renders the review
+ *  claim from the ledger, and on a Lab skill in the Reviewed tier both chips
+ *  name the Lab while meaning different things — who wrote it, who read it. That
+ *  pairing is the whole reason the disclosure exists, and it only works while
+ *  each chip owns exactly one of the two facts. A word about review in here
+ *  would be a second, unpinned copy of a claim the ledger already owns.
+ *
+ *  Crimson rather than a status colour, and deliberately so. The status palette
+ *  is kept off the brand accent because a tier chip must not read as brand
+ *  chrome; this one is brand chrome — it is the Lab's name on the listing. It
+ *  follows the crimson band's rule and looks the same in either theme. */
+export function LabBadge({ namespace }: { namespace: Skill["namespace"] }) {
+  if (!RESERVED_NAMESPACES.has(namespace.toLowerCase())) return null;
+  return <span className="badge badge--lab">Written by the AI Lab</span>;
+}
 
 /** Tier is the most consequential thing on a card, so it reads as a status
  *  chip rather than brand chrome — and Community says what it means, because
