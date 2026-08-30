@@ -11,8 +11,7 @@ Every listing sits in exactly one tier. The split exists so the registry can acc
 Automated checks can only ever say *no*. A pass is the absence of a specific set of known-bad signals, not the presence of safety. Signature scanning is triage, and evasion is well documented — see [SECURITY.md](SECURITY.md).
 
 - Merged without human sign-off once L0–L2 pass.
-- Listed with an explicit disclaimer on the detail page and in the merge comment, and on the card for every listing except the Lab's own.
-- **Lab-authored Community listings show the authorship chip in place of the tier chip on a card**, by decision of the owner on [#51](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/51). Recorded here because it narrows a warning rather than removing a duplicate: a skill the Lab wrote has cleared the same automated checks as anyone else's and no more — writing a skill is not reviewing it — so the card carries no signal that nobody has read it, and the full warning appears only at the point of download.
+- Listed with an explicit disclaimer on the card, on the detail page, and in the merge comment. This applies to the Lab's own skills on the same terms as anyone else's: a skill the Lab wrote has cleared the same automated checks and no more, and writing a skill is not reviewing it. Lab-authored listings carry the authorship chip alongside the tier chip, never instead of it — see [#53](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/53) ruling 2.
 - Unbounded in **number of listings**. This is where the long tail lives, and
   that's fine. Individual skills are capped — see
   [CONTRIBUTING.md](../CONTRIBUTING.md) for the four limits.
