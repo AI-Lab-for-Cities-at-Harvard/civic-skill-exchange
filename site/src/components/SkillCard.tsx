@@ -1,5 +1,5 @@
 import {
-  TierBadge, LocalizationBadge, DeploymentBadge, SensitivityBadge,
+  TierBadge, LabBadge, LocalizationBadge, DeploymentBadge, SensitivityBadge,
 } from "./Badges";
 import { label, CATEGORY_LABELS, JURISDICTION_LABELS } from "../lib/labels";
 import { skillHref } from "../lib/route";
@@ -24,7 +24,8 @@ export function SkillCard({ skill }: { skill: Skill }) {
   return (
     <article className="card">
       <div className="card__badges">
-        <TierBadge tier={skill.tier} reviewed={skill.reviewed} />
+        <TierBadge tier={skill.tier} reviewed={skill.reviewed} namespace={skill.namespace} />
+        <LabBadge namespace={skill.namespace} />
         <SensitivityBadge value={skill.data_sensitivity} />
         <LocalizationBadge value={skill.localization} />
         <DeploymentBadge provenance={skill.provenance} />

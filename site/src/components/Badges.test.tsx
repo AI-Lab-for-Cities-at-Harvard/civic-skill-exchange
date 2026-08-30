@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { SensitivityBadge, DeploymentBadge, TierBadge } from "./Badges";
+import { SensitivityBadge, DeploymentBadge, TierBadge, LabBadge } from "./Badges";
 import { SkillCard } from "./SkillCard";
 import { makeSkill } from "../test/fixtures";
 
@@ -135,5 +135,102 @@ describe("SkillCard feeds the badge its attestation", () => {
     })} />);
     expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
       .toBeInTheDocument();
+  });
+});
+
+/** #51, from ADR 0001 ruling 2: a Lab-authored skill says so wherever it
+ *  appears. #49 put the disclosure on the review claim, which is where the Lab
+ *  vouches for itself — this is the other half, a standing marker that does not
+ *  wait for a tier.
+ *
+ *  It states authorship and nothing else. The tier badge beside it renders the
+ *  review claim from the ledger, and two chips making overlapping claims about
+ *  the same thing is how one of them goes stale without anyone noticing. */
+describe("LabBadge", () => {
+  it("marks a skill in the reserved namespace", () => {
+    render(<LabBadge namespace="civic-skills" />);
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+  });
+
+  it("says nothing about anybody else's skill", () => {
+    const { container } = render(<LabBadge namespace="cityofx" />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("does not care how the namespace was cased", () => {
+    render(<LabBadge namespace="Civic-Skills" />);
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+  });
+
+  it("claims authorship and nothing about review", () => {
+    render(<LabBadge namespace="civic-skills" />);
+    expect(screen.queryByText(/review/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("the Lab badge stands at both tiers", () => {
+  const lab = { namespace: "civic-skills" };
+
+  it("appears on a Community card, where nothing else discloses it", () => {
+    render(<SkillCard skill={makeSkill({ ...lab, tier: "community" })} />);
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+  });
+
+  it("appears on a Reviewed card, beside a tier badge that names the Lab too", () => {
+    render(<SkillCard skill={makeSkill({
+      ...lab, tier: "reviewed",
+      reviewed: {
+        date: "2026-08-30", expires: "2027-08-30",
+        reviewers: ["AI Lab for Cities at Harvard"], notes: "",
+      },
+    })} />);
+    // Two chips, two different facts: who wrote it, and who read it.
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+      .toBeInTheDocument();
+  });
+
+  it("stays off a card nobody at the Lab wrote", () => {
+    render(<SkillCard skill={makeSkill({ namespace: "cityofx" })} />);
+    expect(screen.queryByText(/Written by the AI Lab/)).not.toBeInTheDocument();
+  });
+});
+
+/** Owner's ruling on #51: a Lab-authored skill does not carry the Community
+ *  chip. The Lab runs the registry, and the two chips together were read as
+ *  redundant on its own listings.
+ *
+ *  Recorded plainly because it narrows a warning: the Community chip says
+ *  nobody reviewed the skill, which stays true of a Lab skill — the Lab writing
+ *  something is not the Lab reviewing it. What carries the warning instead is
+ *  DownloadBox, at the point of download, and these tests pin that it is still
+ *  there. The Reviewed chip is untouched: a Lab skill that reaches Reviewed
+ *  still shows both, because there the two chips make genuinely different
+ *  claims. */
+describe("the Community chip on a Lab-authored listing", () => {
+  it("gives way to the Lab chip", () => {
+    render(<SkillCard skill={makeSkill({
+      namespace: "civic-skills", tier: "community",
+    })} />);
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+    expect(screen.queryByText(/automated checks only/)).not.toBeInTheDocument();
+  });
+
+  it("stays on everybody else's Community listing", () => {
+    render(<SkillCard skill={makeSkill({ namespace: "cityofx", tier: "community" })} />);
+    expect(screen.getByText("automated checks only")).toBeInTheDocument();
+  });
+
+  it("does not touch a Lab skill that reached Reviewed", () => {
+    render(<SkillCard skill={makeSkill({
+      namespace: "civic-skills", tier: "reviewed",
+      reviewed: {
+        date: "2026-08-30", expires: "2027-08-30",
+        reviewers: ["AI Lab for Cities at Harvard"], notes: "",
+      },
+    })} />);
+    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+      .toBeInTheDocument();
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
   });
 });
