@@ -44,19 +44,23 @@ body:
     id: category
     attributes:
       label: Category
+      description: >
+        A closed vocabulary — pick the closest fit rather than the most flattering
+        one. In frontmatter this becomes a short `civic.category` id (for example
+        `permitting-licensing`); the contributor guide lists them.
       options:
-        - constituent-services
-        - benefits-eligibility
-        - permitting-licensing
-        - procurement-contracting
-        - budget-finance
-        - public-records-foia
-        - open-data-publishing
-        - policy-legislative
-        - grants-development
-        - emergency-public-safety
-        - plain-language-accessibility
-        - language-access
+        - Constituent Services & Casework
+        - Benefits & Eligibility
+        - Permitting & Licensing
+        - Procurement & Contracting
+        - Budget & Finance
+        - Public Records & FOIA
+        - Open Data & Publishing
+        - Policy & Legislative Analysis
+        - Grants & Development
+        - Emergency Management & Public Safety
+        - Plain Language & Accessibility
+        - Translation & Language Access
     validations:
       required: true
 

@@ -10,73 +10,73 @@
 
 categories:
   - id: constituent-services
-    label: Constituent services & casework
+    label: Constituent Services & Casework
     description: >
       Intake, triage, correspondence, case notes, and service requests — the
       work of responding to individual residents.
 
   - id: benefits-eligibility
-    label: Benefits & eligibility
+    label: Benefits & Eligibility
     description: >
       Screening, eligibility rules, application support, notices, and appeals
       for public benefit programs.
 
   - id: permitting-licensing
-    label: Permitting & licensing
+    label: Permitting & Licensing
     description: >
       Applications, plan review, inspections, status explanation, and renewal
       for permits and licenses.
 
   - id: procurement-contracting
-    label: Procurement & contracting
+    label: Procurement & Contracting
     description: >
       Solicitations, scopes of work, bid evaluation, vendor questions, and
       contract administration.
 
   - id: budget-finance
-    label: Budget & finance
+    label: Budget & Finance
     description: >
       Budget preparation and presentation, financial reporting, grants
       accounting, and fiscal analysis.
 
   - id: public-records-foia
-    label: Public records & FOIA
+    label: Public Records & FOIA
     description: >
       Records requests, responsive-document review, redaction support, and
       response letters.
 
   - id: open-data-publishing
-    label: Open data & publishing
+    label: Open Data & Publishing
     description: >
       Dataset preparation, metadata, data dictionaries, quality checks, and
       publication workflows.
 
   - id: policy-legislative
-    label: Policy & legislative analysis
+    label: Policy & Legislative Analysis
     description: >
       Bill and ordinance analysis, fiscal notes, comparative policy research,
       and briefing material.
 
   - id: grants-development
-    label: Grants & development
+    label: Grants & Development
     description: >
       Opportunity research, narrative drafting, budget justification, and
       reporting — for both applicants and funders.
 
   - id: emergency-public-safety
-    label: Emergency management & public safety
+    label: Emergency Management & Public Safety
     description: >
       Incident documentation, public information, after-action review, and
       preparedness planning.
 
   - id: plain-language-accessibility
-    label: Plain language & accessibility
+    label: Plain Language & Accessibility
     description: >
       Rewriting government text for readability, plain-language review, and
       accessibility remediation.
 
   - id: language-access
-    label: Translation & language access
+    label: Translation & Language Access
     description: >
       Translation support, terminology consistency, and language-access
       compliance.

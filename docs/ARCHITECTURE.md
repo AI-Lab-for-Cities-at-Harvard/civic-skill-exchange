@@ -147,29 +147,29 @@ A closed vocabulary in `registry/categories.yml`, enforced by schema. Free-text 
 ```yaml
 categories:
   - id: constituent-services
-    label: Constituent services & casework
+    label: Constituent Services & Casework
   - id: benefits-eligibility
-    label: Benefits & eligibility
+    label: Benefits & Eligibility
   - id: permitting-licensing
-    label: Permitting & licensing
+    label: Permitting & Licensing
   - id: procurement-contracting
-    label: Procurement & contracting
+    label: Procurement & Contracting
   - id: budget-finance
-    label: Budget & finance
+    label: Budget & Finance
   - id: public-records-foia
-    label: Public records & FOIA
+    label: Public Records & FOIA
   - id: open-data-publishing
-    label: Open data & publishing
+    label: Open Data & Publishing
   - id: policy-legislative
-    label: Policy & legislative analysis
+    label: Policy & Legislative Analysis
   - id: grants-development
-    label: Grants & development
+    label: Grants & Development
   - id: emergency-public-safety
-    label: Emergency management & public safety
+    label: Emergency Management & Public Safety
   - id: plain-language-accessibility
-    label: Plain language & accessibility
+    label: Plain Language & Accessibility
   - id: language-access
-    label: Translation & language access
+    label: Translation & Language Access
 ```
 
 Start narrow. Adding a category is a PR against this file, and it should require evidence that at least two existing skills are miscategorized without it. Splitting a category later is easy; merging two that never should have been separate is not.
