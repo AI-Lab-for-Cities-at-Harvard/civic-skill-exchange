@@ -45,7 +45,9 @@ export default function App() {
       .catch(() => setError("The catalog could not be loaded. Try reloading the page."));
   }, []);
 
-  const skills = index?.skills ?? [];
+  // Memoised so the array identity is stable — a fresh [] on every render would
+  // defeat the useMemo below it and re-filter the whole catalog on each keystroke.
+  const skills = useMemo(() => index?.skills ?? [], [index]);
   const results = useMemo(() => applyFilters(skills, filters), [skills, filters]);
   const active = Object.entries(filters).some(([k, v]) => (k === "q" ? v !== "" : v !== null));
 

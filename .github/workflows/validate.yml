@@ -1,29 +1,31 @@
-# Runs against untrusted, contributor-authored content. It therefore holds NOTHING:
-# no secrets, no write scope, no credentials persisted from checkout.
+# Gate 1 of 3: submitted skills.
 #
-# Anything that needs a token lives in report.yml, which runs afterwards on
+# Runs on every pull request and ALWAYS reports, even when no skill changed.
+# A required status check that is filtered out by `paths:` never reports at all,
+# which leaves the pull request permanently unmergeable rather than passing — so
+# the filtering happens inside the job, not on the trigger.
+#
+# The scanning steps read untrusted, contributor-authored content. This job
+# therefore holds NOTHING: no secrets, no write scope, no persisted credentials.
+# Anything needing a token lives in report.yml, which runs afterwards on
 # workflow_run and never reads skill content. Do not merge these two files.
 #
 # See docs/SECURITY.md — "CI hardening".
 
-name: Validate
+name: Skills
 
-on:
-  pull_request:
-    paths:
-      - "skills/**"
+on: pull_request
 
-# Least privilege. This job reads attacker-controlled text for a living.
 permissions:
   contents: read
 
 concurrency:
-  group: validate-${{ github.event.pull_request.number }}
+  group: skills-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    name: Structure, ownership, and signatures
+    name: Skills — structure, ownership, signatures
     runs-on: ubuntu-latest
     steps:
       - name: Check out the pull request head
@@ -33,39 +35,48 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install --require-hashes -r requirements.txt || pip install pyyaml jsonschema
-
       # Untrusted values reach the shell through the environment, never through
       # ${{ }} expansion into a command string. github.head_ref in particular is
-      # attacker-controlled. This is the same discipline that keeps event text out
-      # of model prompts.
-      - name: List changed files
+      # attacker-controlled. This is the same discipline that keeps event text
+      # out of model prompts.
+      - name: Work out what changed
+        id: changes
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
           git fetch --no-tags --depth=50 origin "$BASE_REF"
           git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
-          echo "Changed paths:"
-          cat changed.txt
+          if grep -q '^skills/' changed.txt; then
+            echo "skills=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skills=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Changed paths:"; cat changed.txt
+
+      - name: Nothing to validate
+        if: steps.changes.outputs.skills != 'true'
+        run: echo "This pull request touches no skills/, so there is nothing to validate."
+
+      - uses: actions/setup-python@v5
+        if: steps.changes.outputs.skills == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        if: steps.changes.outputs.skills == 'true'
+        run: pip install pyyaml jsonschema
 
       - name: L0 + L1 — structure and namespace ownership
+        if: steps.changes.outputs.skills == 'true'
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: |
-          python scripts/validate.py --changed changed.txt --author "$PR_AUTHOR"
+        run: python scripts/validate.py --changed changed.txt --author "$PR_AUTHOR"
 
       - name: L2 + L3 — signature scan
-        if: always()
+        if: always() && steps.changes.outputs.skills == 'true'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          python scripts/scan.py --changed changed.txt --out findings.json --pr "$PR_NUMBER"
+        run: python scripts/scan.py --changed changed.txt --out findings.json --pr "$PR_NUMBER"
 
       # L4 — a purpose-built skill scanner belongs here. General-purpose LLM
       # security products do not cover this artifact type; use a dedicated tool.
@@ -73,13 +84,15 @@ jobs:
       #   run: uvx skillspector scan skills/ --format json --out l4.json
 
       - name: Record the PR number for the reporting job
-        if: always()
+        if: always() && steps.changes.outputs.skills == 'true'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: echo "$PR_NUMBER" > pr-number.txt
 
+      # Only uploaded when skills actually changed, so report.yml stays silent on
+      # tooling and site pull requests instead of commenting "nothing found".
       - name: Upload findings
-        if: always()
+        if: always() && steps.changes.outputs.skills == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: findings

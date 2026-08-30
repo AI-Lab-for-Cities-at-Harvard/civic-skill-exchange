@@ -1,21 +1,19 @@
-# Tests for the registry's own tooling — validate.py, scan.py, build_index.py.
+# Gates 2 and 3: the registry's own tooling, and the site.
 #
-# Separate from validate.yml, which tests submitted SKILLS. This one tests the
-# things that test the skills, and must pass before any change to the pipeline
-# merges. A scanner nobody tested is a scanner nobody can trust.
+# Separate from the Skills gate, which validates submitted SKILLS. These validate
+# the things that validate the skills, plus the site that publishes them. A
+# scanner nobody tested is a scanner nobody can trust.
+#
+# Both jobs run on every pull request and ALWAYS report. A required status check
+# filtered out by `paths:` never reports at all, which leaves the pull request
+# permanently unmergeable rather than passing — so the filtering happens inside
+# each job. A pull request that touches neither area gets two fast green checks
+# that say so explicitly.
 
-name: Tests
+name: Checks
 
 on:
   pull_request:
-    paths:
-      - "scripts/**"
-      - "schema/**"
-      - "registry/**"
-      - "tests/**"
-      - "pytest.ini"
-      - "site/**"
-      - ".github/workflows/test.yml"
   push:
     branches: [main]
 
@@ -23,8 +21,9 @@ permissions:
   contents: read
 
 jobs:
-  pytest:
-    name: pytest
+  # --------------------------------------------------------------------- #
+  tooling:
+    name: Tooling — pytest
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -35,49 +34,107 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Work out what changed
+        id: changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "tooling=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
+          if grep -qE '^(scripts|schema|registry|tests|skills)/|^pytest\.ini$|^\.github/workflows/' changed.txt; then
+            echo "tooling=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tooling=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Nothing to test
+        if: steps.changes.outputs.tooling != 'true'
+        run: echo "This pull request touches no tooling, schema, or skills. Nothing to test."
 
       - uses: actions/setup-python@v5
+        if: steps.changes.outputs.tooling == 'true'
         with:
           python-version: ${{ matrix.python-version }}
 
-      - run: pip install pyyaml jsonschema pytest
+      - name: Install
+        if: steps.changes.outputs.tooling == 'true'
+        run: pip install pyyaml jsonschema pytest
 
-      - run: python -m pytest -q
+      - name: Test
+        if: steps.changes.outputs.tooling == 'true'
+        run: python -m pytest -q
 
-      # The seed skills must always pass their own pipeline. If this breaks, the
-      # registry is asking contributors to meet a bar it does not meet itself.
+      # The committed skills must always pass their own pipeline. If this breaks,
+      # the registry is asking contributors to meet a bar it does not meet itself.
       - name: Self-check the committed skills
+        if: steps.changes.outputs.tooling == 'true'
         run: |
           python scripts/validate.py all
           python scripts/scan.py all
 
+  # --------------------------------------------------------------------- #
   site:
-    name: site
+    name: Site — lint, typecheck, test, build
     runs-on: ubuntu-latest
     steps:
-      # TODO: pin to commit SHAs before relying on this in branch protection.
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
+
+      - name: Work out what changed
+        id: changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "site=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
+          if grep -qE '^site/|^\.github/workflows/' changed.txt; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "site=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Nothing to build
+        if: steps.changes.outputs.site != 'true'
+        run: echo "This pull request touches no site/. Nothing to build."
 
       - uses: actions/setup-node@v4
+        if: steps.changes.outputs.site == 'true'
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: site/package-lock.json
 
       - name: Install
+        if: steps.changes.outputs.site == 'true'
         working-directory: site
         run: npm ci
 
+      - name: Lint
+        if: steps.changes.outputs.site == 'true'
+        working-directory: site
+        run: npm run lint
+
       - name: Typecheck
+        if: steps.changes.outputs.site == 'true'
         working-directory: site
         run: npx tsc -b
 
       - name: Test
+        if: steps.changes.outputs.site == 'true'
         working-directory: site
         run: npm run test
 
       - name: Build
+        if: steps.changes.outputs.site == 'true'
         working-directory: site
         run: npx vite build

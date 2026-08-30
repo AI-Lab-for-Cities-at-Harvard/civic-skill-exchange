@@ -72,6 +72,26 @@ learn to ignore the flag list, and the layer quietly stops working.
 **Test names are sentences.** `test_unverifiable_sha_demotes_rather_than_trusting`
 tells a future reader what the rule is and why. `test_resolve_tier_3` does not.
 
+## The three CI gates
+
+Every pull request gets three checks, and **each one always reports** — including
+when it has nothing to do.
+
+| Gate | Covers | Runs when |
+|---|---|---|
+| **Skills** | `validate.py`, `scan.py` over submitted skills | `skills/**` changed |
+| **Tooling — pytest** | the registry's own scripts and schema | `scripts/`, `schema/`, `registry/`, `tests/`, `skills/` changed |
+| **Site — lint, typecheck, test, build** | the React app | `site/**` changed |
+
+The filtering happens **inside each job**, not with a `paths:` trigger filter.
+This matters: a required status check that `paths:` filters out never reports at
+all, and GitHub leaves the pull request permanently unmergeable rather than
+treating it as passed. A site-only pull request would sit blocked forever waiting
+on a skills check that was never going to run.
+
+So a pull request touching only `site/` gets a green Skills check that says
+"touches no skills/, nothing to validate", and the site gate does the real work.
+
 ## Security-sensitive changes
 
 Changes to `scan.py` signatures, `validate.py` ownership logic, tier derivation in
@@ -102,6 +122,7 @@ React + Vite + TypeScript under `site/`, deployed to Pages by `build.yml`.
 cd site
 npm install
 npm run dev       # localhost:5173
+npm run lint      # eslint
 npm run test      # vitest
 npm run build     # → site/dist
 ```
