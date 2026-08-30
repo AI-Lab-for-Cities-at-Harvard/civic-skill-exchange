@@ -8,7 +8,8 @@ function skill(over: Partial<Skill> = {}): Skill {
     description: "An example skill for tests.",
     license: "MIT", compatibility: null, allowed_tools: ["Read"],
     category: "budget-finance", jurisdiction: "generic", localization: null,
-    data_sensitivity: "none", human_review: "none", maintainer: "Test",
+    data_sensitivity: "none", human_review: "none",
+    use_when: null, avoid_when: null, maintainer: "Test",
     provenance: {
       self_reported: true, affiliation: "individual", deployment: "none",
       deployed_at: null, deployed_in: null, deployed_since: null,

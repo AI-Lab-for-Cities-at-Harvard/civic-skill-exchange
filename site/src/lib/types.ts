@@ -23,6 +23,10 @@ export interface Skill {
   localization: Localization;
   data_sensitivity: string | null;
   human_review: string | null;
+  /** When the skill fits, and when it does not. Plain text — rendered as text,
+   *  never as markdown. Null when the author did not answer. */
+  use_when: string | null;
+  avoid_when: string | null;
   maintainer: string | null;
   provenance: Provenance;
   tier: Tier;
