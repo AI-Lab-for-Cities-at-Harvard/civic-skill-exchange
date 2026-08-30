@@ -59,8 +59,11 @@ describe("the structural rules are importable from the site", () => {
 
   it("enforces the same file-type allowlist CI enforces", () => {
     expect(ALLOWED_SUFFIXES.has(".md")).toBe(true);
+    // The point is that an archive is refused here exactly as it is in CI —
+    // not what the cap happens to be. Asserting the number would only pin a
+    // constant that measurement is allowed to move.
     expect(ALLOWED_SUFFIXES.has(".zip")).toBe(false);
-    expect(MAX_FILES_PER_SKILL).toBe(60);
+    expect(MAX_FILES_PER_SKILL).toBeGreaterThan(0);
   });
 
   it("catches a symlink entry, which a browser could not spot for itself", () => {

@@ -26,7 +26,19 @@ Rules the automation enforces:
 - `{skill-name}` must match the `name` field in `SKILL.md` exactly.
 - Your PR may not touch anything outside your own namespace. Changes to schema, workflows, or documentation are separate PRs and need maintainer review.
 - No symlinks, no binaries, no nested `.git` directories, no compiled artifacts.
-- 1 MB per skill directory, 100 KB per file.
+- **All four size limits**, so you can check before you hit them:
+
+  | Limit | Value |
+  |---|---|
+  | Files per skill | 100 |
+  | Total per skill | 2 MB |
+  | Any single file | 256 KB |
+  | Frontmatter | 16 KB |
+
+  The file count is not our ceiling — GitHub's own multi-file upload interface
+  refuses more than a hundred, so a submission going that way could not exceed
+  it anyway. The rest come from measuring real skills: the numbers are set where
+  they stop refusing work people actually do.
 
 ## 2. Write `SKILL.md`
 

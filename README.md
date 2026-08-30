@@ -17,7 +17,7 @@ Every listing sits in exactly one tier, and the difference matters.
 | Automated checks | Yes | Yes |
 | Human review | No | Two named reviewers |
 | Pinned to a commit | No | Yes — attestation covers one exact content hash |
-| Size | Unbounded | Deliberately small |
+| How many listings | Unbounded — this is where the long tail lives | Deliberately small; its value is its scarcity |
 | What a listing means | It is well-formed and nothing mechanical is wrong with it | Named people read every line and put their names on it |
 
 **A Community listing is not an endorsement.** It means the skill passed automated structural and security checks. Automated checks can only ever say *no* — a pass is never a statement that a skill is safe. Read anything from this tier before you run it, exactly as you would read any code you found on the internet.

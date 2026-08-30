@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { extname as nodeExtname } from "node:path";
 import {
   checkStructureCore, checkPathSafety, extname, type Entry,
-  MAX_FILE_BYTES, MAX_FILES_PER_SKILL,
+  MAX_FILE_BYTES, MAX_FILES_PER_SKILL, MAX_SKILL_BYTES, ALLOWED_SUFFIXES,
 } from "./structure-core";
 
 const bytes = (s: string) => new TextEncoder().encode(s);
@@ -63,7 +63,8 @@ describe("checkStructureCore", () => {
   it("counts a rejected file toward the totals", () => {
     const entries = Array.from({ length: MAX_FILES_PER_SKILL + 1 },
       (_, i) => file(`payload-${i}.exe`, "MZ"));
-    expect(messages(checkStructureCore(entries))).toMatch(/over the 60-file cap/);
+    expect(messages(checkStructureCore(entries)))
+      .toMatch(new RegExp(`over the ${MAX_FILES_PER_SKILL}-file cap`));
   });
 
   it("emits findings in the order the entries arrive", () => {
@@ -100,5 +101,63 @@ describe("checkPathSafety — paths a filesystem walk cannot produce", () => {
 
   it("does not confuse a dotted filename with a traversal", () => {
     expect(checkPathSafety([file("..hidden.md"), file("a..b.md")])).toEqual([]);
+  });
+});
+
+/**
+ * The caps were re-derived from anthropics/skills, so these test the shapes
+ * that measurement turned on rather than the numbers themselves. A literal
+ * assertion would only restate the constant; these fail if somebody tightens a
+ * cap back to where it refuses real work, or loosens the type rule.
+ */
+describe("the caps admit real skills and still refuse binaries", () => {
+  /** The document skills: many files, ~1.1 MB, a 237 KB schema. */
+  const documentSkill = (): Entry[] => {
+    const entries: Entry[] = [
+      { path: "SKILL.md", kind: "file", bytes: bytes("---\nname: docx\n---\n\nBody.\n") },
+      { path: "schemas/wml.xsd", kind: "file", bytes: bytes("<xs:schema/>".padEnd(237 * 1024, " ")) },
+    ];
+    for (let i = 0; i < 59; i += 1) {
+      entries.push({ path: `schemas/part-${i}.xsd`, kind: "file", bytes: bytes("<x/>".padEnd(14 * 1024, " ")) });
+    }
+    return entries;
+  };
+
+  it("accepts a document skill — 61 files, a 237 KB schema, ~1.1 MB", () => {
+    const entries = documentSkill();
+    const total = entries.reduce((n, e) => n + (e.kind === "file" ? e.bytes.length : 0), 0);
+    expect(entries.length).toBeGreaterThan(60);          // over the old count cap
+    expect(total).toBeGreaterThan(1024 * 1024);          // over the old size cap
+    expect(checkStructureCore(entries)).toEqual([]);
+  });
+
+  it("allows .xsd, because .xml was already allowed and it is the same thing", () => {
+    expect(ALLOWED_SUFFIXES.has(".xsd")).toBe(true);
+    expect(ALLOWED_SUFFIXES.has(".xml")).toBe(true);
+  });
+
+  it.each([".ttf", ".pdf", ".gz", ".zip", ".png", ".docx"])(
+    "still refuses %s — the text-only line is not a cap", (suffix) => {
+      expect(ALLOWED_SUFFIXES.has(suffix)).toBe(false);
+      expect(messages(checkStructureCore([file(`asset${suffix}`, "x")])))
+        .toMatch(/not an allowed file type/);
+    });
+
+  it("keeps a ceiling GitHub's upload interface can actually honour", () => {
+    // Above a hundred files that interface hard-fails, so a higher cap here
+    // would promise something the submission path cannot deliver.
+    expect(MAX_FILES_PER_SKILL).toBeLessThanOrEqual(100);
+  });
+
+  it("still refuses something that is a project rather than a skill", () => {
+    const entries: Entry[] = Array.from({ length: MAX_FILES_PER_SKILL + 1 },
+      (_, i) => file(`f-${i}.md`, "x"));
+    expect(messages(checkStructureCore(entries)))
+      .toMatch(new RegExp(`over the ${MAX_FILES_PER_SKILL}-file cap`));
+
+    const heavy: Entry[] = Array.from({ length: 10 },
+      (_, i) => file(`big-${i}.md`, "x".repeat(MAX_FILE_BYTES)));
+    expect(messages(checkStructureCore(heavy)))
+      .toMatch(new RegExp(`over the ${MAX_SKILL_BYTES}-byte cap`));
   });
 });

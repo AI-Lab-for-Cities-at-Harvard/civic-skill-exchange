@@ -12,7 +12,9 @@ Automated checks can only ever say *no*. A pass is the absence of a specific set
 
 - Merged without human sign-off once L0–L2 pass.
 - Listed with an explicit disclaimer on the card, on the detail page, and in the merge comment.
-- Unbounded in size. This is where the long tail lives, and that's fine.
+- Unbounded in **number of listings**. This is where the long tail lives, and
+  that's fine. Individual skills are capped — see
+  [CONTRIBUTING.md](../CONTRIBUTING.md) for the four limits.
 
 ## Reviewed
 
