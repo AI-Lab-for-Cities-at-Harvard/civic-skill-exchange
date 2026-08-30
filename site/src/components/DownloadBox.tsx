@@ -1,10 +1,11 @@
 import { useState } from "react";
-import type { Skill } from "../lib/types";
+import { bytes } from "../lib/format";
+import type { SkillDetail } from "../lib/types";
 
 /** The disclaimer sits here, not in a footer, because this is the moment
  *  someone is about to act. A Community listing is not an endorsement, and the
  *  place to say so is next to the button. */
-export function DownloadBox({ skill }: { skill: Skill }) {
+export function DownloadBox({ skill }: { skill: SkillDetail }) {
   const [copied, setCopied] = useState<string | null>(null);
 
   const repo = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
@@ -50,6 +51,24 @@ export function DownloadBox({ skill }: { skill: Skill }) {
           against the published checklist
           {skill.reviewed?.date ? ` on ${skill.reviewed.date}` : ""}. That is a
           statement about this content, not a warranty.
+        </p>
+      )}
+
+      {/* First, and deliberately. degit needs Node and clone needs git; this is
+          the only path open to somebody with a browser and nothing else. */}
+      {skill.archive && (
+        <p className="download__archive" data-testid="download-archive">
+          <a
+            className="btn btn--strong download__get"
+            href={`${import.meta.env.BASE_URL}${skill.archive.path}`}
+            download={`${skill.name}.zip`}
+          >
+            Download the skill ({bytes(skill.archive.size)})
+          </a>
+          <span>
+            A zip of this folder. Upload it wherever your agent tool takes
+            skills — no git, no command line.
+          </span>
         </p>
       )}
 

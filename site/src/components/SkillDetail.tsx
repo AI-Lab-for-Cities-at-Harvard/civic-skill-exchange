@@ -5,6 +5,7 @@ import {
   label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS,
   DEPLOYMENT_LABELS, LOCALIZATION_LABELS,
 } from "../lib/labels";
+import { bytes } from "../lib/format";
 import type { SkillDetail as Detail } from "../lib/types";
 
 const HUMAN_REVIEW_NOTE: Record<string, string> = {
@@ -12,10 +13,6 @@ const HUMAN_REVIEW_NOTE: Record<string, string> = {
   "advisory-only": "Informs a person. Does not determine anything on its own.",
   "decision-support": "Feeds a determination someone acts on. Review its output.",
 };
-
-function bytes(n: number): string {
-  return n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`;
-}
 
 export function SkillDetail({ namespace, name }: { namespace: string; name: string }) {
   // Keyed by the skill being viewed rather than reset on navigation: clearing

@@ -7,6 +7,7 @@ defeats the whole mechanism.
 
 from __future__ import annotations
 
+import zipfile
 from datetime import date, timedelta
 
 import build_index
@@ -192,3 +193,100 @@ def test_detail_carries_no_file_contents(make_skill):
     assert "body" not in detail
     for f in detail["files"]:
         assert "content" not in f
+
+
+# --------------------------------------------------------------------------- #
+# The downloadable archive
+#
+# The point of these is a person with a browser and nothing else: no git, no
+# Node, no GitHub account. They download one file and upload it to claude.ai.
+
+
+def test_archive_is_written_next_to_the_detail_payload(make_skill, tmp_path):
+    skill = make_skill(files={"scripts/helper.py": "import os\n"})
+    out = tmp_path / "out"
+    entry = build_index.build_entry(skill, {}, {})
+    build_index.write_outputs(skill, entry, out)
+
+    archive = out / "skills" / entry["namespace"] / f"{entry['name']}.zip"
+    assert archive.is_file(), "no archive written"
+
+
+def test_archive_roots_at_the_skill_directory(make_skill, tmp_path):
+    """Zipping a folder is what a person does by hand, and it is what unpacks
+    cleanly on the other end — so the archive carries the skill directory as its
+    top level rather than loose files."""
+    skill = make_skill(name="example-skill", files={"references/notes.md": "hi\n"})
+    out = tmp_path / "out"
+    entry = build_index.build_entry(skill, {}, {})
+    build_index.write_outputs(skill, entry, out)
+
+    with zipfile.ZipFile(out / "skills" / entry["namespace"] / "example-skill.zip") as z:
+        names = sorted(z.namelist())
+    assert names == [
+        "example-skill/SKILL.md",
+        "example-skill/references/notes.md",
+    ]
+
+
+def test_archive_holds_exactly_what_the_detail_payload_lists(make_skill, tmp_path):
+    """A file in one and not the other means the page describes something the
+    download does not contain."""
+    skill = make_skill(files={"scripts/a.py": "a\n", "references/b.md": "b\n"})
+    out = tmp_path / "out"
+    entry = build_index.build_entry(skill, {}, {})
+    detail = build_index.write_outputs(skill, entry, out)
+
+    with zipfile.ZipFile(out / "skills" / entry["namespace"] / f"{entry['name']}.zip") as z:
+        in_zip = sorted(n.split("/", 1)[1] for n in z.namelist())
+    assert in_zip == sorted(f["path"] for f in detail["files"])
+
+
+def test_archive_content_survives_the_round_trip(make_skill, tmp_path):
+    skill = make_skill(files={"scripts/helper.py": "print('hello')\n"})
+    out = tmp_path / "out"
+    entry = build_index.build_entry(skill, {}, {})
+    build_index.write_outputs(skill, entry, out)
+
+    with zipfile.ZipFile(out / "skills" / entry["namespace"] / f"{entry['name']}.zip") as z:
+        got = z.read(f"{entry['name']}/scripts/helper.py").decode("utf-8")
+    assert got == "print('hello')\n"
+
+
+def test_archive_is_byte_identical_across_builds(make_skill, tmp_path):
+    """A zip that embeds wall-clock timestamps changes on every build, which
+    churns the Pages artifact and makes the download's bytes unstable for no
+    reason. Fixed timestamps, sorted entries."""
+    skill = make_skill(files={"scripts/helper.py": "import os\n"})
+    entry = build_index.build_entry(skill, {}, {})
+
+    first = tmp_path / "one"
+    second = tmp_path / "two"
+    build_index.write_outputs(skill, entry, first)
+    build_index.write_outputs(skill, entry, second)
+
+    a = (first / "skills" / entry["namespace"] / f"{entry['name']}.zip").read_bytes()
+    b = (second / "skills" / entry["namespace"] / f"{entry['name']}.zip").read_bytes()
+    assert a == b
+
+
+def test_detail_reports_the_archive_so_the_page_can_state_its_size(make_skill, tmp_path):
+    skill = make_skill()
+    out = tmp_path / "out"
+    entry = build_index.build_entry(skill, {}, {})
+    detail = build_index.write_outputs(skill, entry, out)
+
+    archive = out / "skills" / entry["namespace"] / f"{entry['name']}.zip"
+    assert detail["archive"]["path"] == f"data/skills/{entry['namespace']}/{entry['name']}.zip"
+    assert detail["archive"]["size"] == archive.stat().st_size
+
+
+def test_archive_skips_symlinks_like_the_detail_payload_does(make_skill, tmp_path):
+    skill = make_skill()
+    (skill / "evil.md").symlink_to("/etc/passwd")
+    out = tmp_path / "out"
+    entry = build_index.build_entry(skill, {}, {})
+    build_index.write_outputs(skill, entry, out)
+
+    with zipfile.ZipFile(out / "skills" / entry["namespace"] / f"{entry['name']}.zip") as z:
+        assert not any(n.endswith("evil.md") for n in z.namelist())

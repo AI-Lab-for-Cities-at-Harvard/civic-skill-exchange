@@ -20,6 +20,7 @@ import json
 import re
 import subprocess
 import sys
+import zipfile
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -218,6 +219,59 @@ def build_detail(skill_dir: Path, entry: dict) -> dict:
     return {**entry, "files": files}
 
 
+# A fixed timestamp for every archive entry. A zip that embeds wall-clock time
+# changes on every build even when the skill has not, which churns the Pages
+# artifact and makes the bytes a person downloads unstable for no reason.
+ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
+
+
+def write_archive(skill_dir: Path, entry: dict, files: list[dict], target: Path) -> int:
+    """Write the downloadable archive and return its size in bytes.
+
+    This exists for the person with a browser and nothing else — no git, no
+    Node, no GitHub account. They download one file and upload it to an agent
+    tool that expects an archive.
+
+    Entries are rooted at the skill directory, because that is what zipping a
+    folder produces by hand and what unpacks cleanly on the other end.
+
+    The file list is the one build_detail already computed, so the archive and
+    the page describing it cannot disagree — including about symlinks, which
+    that traversal already drops.
+    """
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
+        for item in files:
+            info = zipfile.ZipInfo(f"{entry['name']}/{item['path']}", date_time=ZIP_EPOCH)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = 0o644 << 16
+            archive.writestr(info, (skill_dir / item["path"]).read_bytes())
+    return target.stat().st_size
+
+
+def write_outputs(skill_dir: Path, entry: dict, out: Path) -> dict:
+    """Write one skill's detail payload and its archive. Returns the detail.
+
+    The archive is written first because the payload states its size, and a page
+    that tells someone how large a download is before they start it is worth the
+    ordering constraint.
+    """
+    directory = out / "skills" / entry["namespace"]
+    directory.mkdir(parents=True, exist_ok=True)
+
+    detail = build_detail(skill_dir, entry)
+    name = entry["name"]
+    size = write_archive(skill_dir, entry, detail["files"], directory / f"{name}.zip")
+    detail["archive"] = {
+        "path": f"data/skills/{entry['namespace']}/{name}.zip",
+        "size": size,
+    }
+
+    (directory / f"{name}.json").write_text(json.dumps(detail, indent=2) + "\n",
+                                            encoding="utf-8")
+    return detail
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=ROOT / "site" / "data")
@@ -269,11 +323,7 @@ def main() -> int:
                                          encoding="utf-8")
 
     for entry in entries:
-        path = out / "skills" / entry["namespace"]
-        path.mkdir(parents=True, exist_ok=True)
-        detail = build_detail(SKILLS_DIR / entry["namespace"] / entry["name"], entry)
-        (path / f"{entry['name']}.json").write_text(json.dumps(detail, indent=2) + "\n",
-                                                    encoding="utf-8")
+        write_outputs(SKILLS_DIR / entry["namespace"] / entry["name"], entry, out)
 
     print(f"Wrote {len(entries)} skills to {out} "
           f"({len(reviewed)} reviewed, {len(entries) - len(reviewed)} community).")
