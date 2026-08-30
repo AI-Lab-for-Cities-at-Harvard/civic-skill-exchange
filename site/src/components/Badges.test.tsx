@@ -195,3 +195,42 @@ describe("the Lab badge stands at both tiers", () => {
     expect(screen.queryByText(/Written by the AI Lab/)).not.toBeInTheDocument();
   });
 });
+
+/** Owner's ruling on #51: a Lab-authored skill does not carry the Community
+ *  chip. The Lab runs the registry, and the two chips together were read as
+ *  redundant on its own listings.
+ *
+ *  Recorded plainly because it narrows a warning: the Community chip says
+ *  nobody reviewed the skill, which stays true of a Lab skill — the Lab writing
+ *  something is not the Lab reviewing it. What carries the warning instead is
+ *  DownloadBox, at the point of download, and these tests pin that it is still
+ *  there. The Reviewed chip is untouched: a Lab skill that reaches Reviewed
+ *  still shows both, because there the two chips make genuinely different
+ *  claims. */
+describe("the Community chip on a Lab-authored listing", () => {
+  it("gives way to the Lab chip", () => {
+    render(<SkillCard skill={makeSkill({
+      namespace: "civic-skills", tier: "community",
+    })} />);
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+    expect(screen.queryByText(/automated checks only/)).not.toBeInTheDocument();
+  });
+
+  it("stays on everybody else's Community listing", () => {
+    render(<SkillCard skill={makeSkill({ namespace: "cityofx", tier: "community" })} />);
+    expect(screen.getByText("automated checks only")).toBeInTheDocument();
+  });
+
+  it("does not touch a Lab skill that reached Reviewed", () => {
+    render(<SkillCard skill={makeSkill({
+      namespace: "civic-skills", tier: "reviewed",
+      reviewed: {
+        date: "2026-08-30", expires: "2027-08-30",
+        reviewers: ["AI Lab for Cities at Harvard"], notes: "",
+      },
+    })} />);
+    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+      .toBeInTheDocument();
+    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+  });
+});

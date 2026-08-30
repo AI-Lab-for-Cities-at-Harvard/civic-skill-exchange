@@ -88,3 +88,18 @@ describe("DownloadBox discloses self-review", () => {
     expect(screen.queryByText(/two reviewers/i)).not.toBeInTheDocument();
   });
 });
+
+/** The card no longer warns on a Lab-authored Community listing (#51, owner's
+ *  ruling). This is where that warning has to survive, because it is now the
+ *  only place a reader meets it — and it is the moment they are about to run
+ *  the thing. */
+describe("DownloadBox still warns about an unreviewed Lab skill", () => {
+  it("says nobody has reviewed it, exactly as for anyone else's", () => {
+    render(<DownloadBox skill={detail({
+      namespace: "civic-skills", tier: "community",
+    })} />);
+    expect(screen.getByText(/Nobody has reviewed this skill/)).toBeInTheDocument();
+    expect(screen.getByText(/Read the source on GitHub before you/))
+      .toBeInTheDocument();
+  });
+});
