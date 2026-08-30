@@ -34,12 +34,18 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pip install pyyaml jsonschema
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+      - run: pip install pyyaml
 
       - name: Validate
         id: validate
         continue-on-error: true
-        run: python scripts/validate.py all 2>&1 | tee validate.log
+        run: npx tsx validator/src/cli.ts all 2>&1 | tee validate.log
 
       - name: Scan
         id: scan

@@ -55,3 +55,7 @@ Thumbs.db
 
 # TS incremental build info
 *.tsbuildinfo
+
+# npm workspace root
+/node_modules/
+/validator/node_modules/

@@ -63,19 +63,17 @@ jobs:
 
       - name: Install
         if: steps.changes.outputs.tooling == 'true'
-        run: pip install pyyaml jsonschema pytest
+        run: pip install pyyaml pytest
 
       - name: Test
         if: steps.changes.outputs.tooling == 'true'
         run: python -m pytest -q
 
-      # The committed skills must always pass their own pipeline. If this breaks,
-      # the registry is asking contributors to meet a bar it does not meet itself.
-      - name: Self-check the committed skills
+      # The committed skills must always pass their own scan. Structural
+      # validation is the validator workspace's job — see the Validator gate.
+      - name: Self-scan the committed skills
         if: steps.changes.outputs.tooling == 'true'
-        run: |
-          python scripts/validate.py all
-          python scripts/scan.py all
+        run: python scripts/scan.py all
 
   # --------------------------------------------------------------------- #
   site:
@@ -138,3 +136,57 @@ jobs:
         if: steps.changes.outputs.site == 'true'
         working-directory: site
         run: npx vite build
+
+  # --------------------------------------------------------------------- #
+  validator:
+    name: Validator — typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Work out what changed
+        id: changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "validator=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
+          if grep -qE '^(validator|registry|schema|skills)/|^package(-lock)?\.json$|^\.github/workflows/' changed.txt; then
+            echo "validator=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "validator=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Nothing to check
+        if: steps.changes.outputs.validator != 'true'
+        run: echo "This pull request touches no validator inputs. Nothing to check."
+
+      - uses: actions/setup-node@v4
+        if: steps.changes.outputs.validator == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        if: steps.changes.outputs.validator == 'true'
+        run: npm ci --workspace @civic-skill-exchange/validator
+
+      - name: Typecheck
+        if: steps.changes.outputs.validator == 'true'
+        run: npm run typecheck --workspace @civic-skill-exchange/validator
+
+      - name: Test
+        if: steps.changes.outputs.validator == 'true'
+        run: npm run test --workspace @civic-skill-exchange/validator
+
+      # The committed skills must always pass their own validation. If this
+      # breaks, the registry is asking contributors to meet a bar it does not.
+      - name: Self-check the committed skills
+        if: steps.changes.outputs.validator == 'true'
+        run: npx tsx validator/src/cli.ts all

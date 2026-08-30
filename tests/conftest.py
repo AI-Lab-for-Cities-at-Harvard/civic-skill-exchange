@@ -1,6 +1,9 @@
-"""Shared fixtures. Every test builds a throwaway skill on disk rather than
-reaching into skills/ — a test that depends on a real listing breaks the moment
-someone edits that listing.
+"""Shared fixtures for the Python suite, which now covers scan.py and
+build_index.py only. Frontmatter validation moved to validator/ — see
+docs/DEVELOPMENT.md for why the split runs the way it does.
+
+Every test builds a throwaway skill on disk rather than reaching into skills/ —
+a test that depends on a real listing breaks the moment someone edits it.
 """
 
 from __future__ import annotations
@@ -100,16 +103,3 @@ def make_skill(tmp_path):
 
     return _make
 
-
-@pytest.fixture
-def validator():
-    import validate
-
-    return validate.load_validator()
-
-
-@pytest.fixture
-def categories():
-    import validate
-
-    return validate.load_categories()

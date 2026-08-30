@@ -22,7 +22,7 @@
 /registry/reviewed.yml  @AI-Lab-for-Cities-at-Harvard/reviewers
 
 # Maintainer-seeded skills. Reserved namespace — needs maintainer approval,
-# which is why scripts/validate.py skips the author check for it.
+# which is why the validator skips the author check for it.
 /skills/civic-skills/  @AI-Lab-for-Cities-at-Harvard/maintainers
 
 # Tests for the tooling. A scanner nobody tested is a scanner nobody can trust.

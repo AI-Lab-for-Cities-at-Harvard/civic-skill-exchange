@@ -24,9 +24,13 @@ civic-skills/
 │   ├── categories.yml                  closed vocabulary
 │   └── reviewed.yml                    SHA-pinned review attestations
 ├── schema/
-│   └── skill.schema.json               JSON Schema for SKILL.md frontmatter
+│   └── skill.schema.json               the frontmatter contract, as documentation
+├── validator/                          npm workspace — L0 + L1, TypeScript
+│   └── src/
+│       ├── rules.ts                    pure frontmatter rules — browser AND CI
+│       ├── structure.ts                filesystem checks — Node only
+│       └── cli.ts                       what CI invokes
 ├── scripts/
-│   ├── validate.py                     schema + ownership + structure
 │   ├── scan.py                         signature layers, emits JSON findings
 │   └── build_index.py                  tree + ledger → index.json
 ├── site/                               static reader over index.json
@@ -84,14 +88,26 @@ metadata:
 `civic.localization` is optional and records whether a skill carries one
 jurisdiction's specifics (`localized`) or has had them lifted out into a context an
 adopter fills in (`generalized`). Skills with no jurisdiction-specific content omit
-it. `validate.py` rejects the one contradiction an adopter cannot resolve —
+it. The validator rejects the one contradiction an adopter cannot resolve —
 `generalized` alongside a named jurisdiction like `us-state`. See
 [LOCALIZATION.md](LOCALIZATION.md).
+
+### The schema file
+
+`schema/skill.schema.json` is the contract a contributor reads. It is no longer
+executed — `validator/src/rules.ts` is the implementation — so a test in the
+validator asserts the two agree on every enum, every required field, and the six
+spec fields. Drift is a build failure rather than a surprise.
+
+One thing the schema deliberately does not carry: the category enum. That lives
+in `registry/categories.yml` and would go stale here the moment a category is
+added.
 
 ### Provenance
 
 The `deployment` fields are self-reported and published as such. One rule lives in
-`validate.py` rather than the schema, because the error message matters: a claim
+`validator/src/rules.ts` rather than the schema, because the error message
+matters: a claim
 other than `none` must name both `deployed-at` and `deployed-in`.
 
 Provenance plays no part in deriving tier. It is context for a human deciding
