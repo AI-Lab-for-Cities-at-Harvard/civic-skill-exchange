@@ -24,7 +24,7 @@ export function SkillCard({ skill }: { skill: Skill }) {
   return (
     <article className="card">
       <div className="card__badges">
-        <TierBadge tier={skill.tier} />
+        <TierBadge tier={skill.tier} reviewed={skill.reviewed} />
         <SensitivityBadge value={skill.data_sensitivity} />
         <LocalizationBadge value={skill.localization} />
         <DeploymentBadge provenance={skill.provenance} />

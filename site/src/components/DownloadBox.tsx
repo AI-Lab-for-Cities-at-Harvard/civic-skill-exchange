@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
 import { bytes } from "../lib/format";
 import type { SkillDetail } from "../lib/types";
 
@@ -7,6 +8,14 @@ import type { SkillDetail } from "../lib/types";
  *  place to say so is next to the button. */
 export function DownloadBox({ skill }: { skill: SkillDetail }) {
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Derived, not declared. `civic-skills` is the Lab's seeded namespace and is
+  // already reserved in the validator, so a Lab-authored skill discloses itself
+  // without anyone remembering to set a field (ADR 0001, ruling 2). Under one
+  // reviewer the Lab can be both author and reviewer, and the sentence that
+  // makes the review claim is the sentence that has to say so.
+  const selfReviewed =
+    skill.tier === "reviewed" && RESERVED_NAMESPACES.has(skill.namespace.toLowerCase());
 
   const repo = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
   const commands = [
@@ -46,11 +55,17 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
         </p>
       ) : (
         <p className="download__ok">
-          <strong>Reviewed.</strong>{" "}
+          <strong>Reviewed{selfReviewed ? " — by its own author" : ""}.</strong>{" "}
           {skill.reviewed?.reviewers.join(" and ")} read this exact commit
           against the published checklist
           {skill.reviewed?.date ? ` on ${skill.reviewed.date}` : ""}. That is a
           statement about this content, not a warranty.
+          {selfReviewed && (
+            <>
+              {" "}The AI Lab for Cities wrote and reviewed this skill. Nobody
+              outside the Lab has read it.
+            </>
+          )}
         </p>
       )}
 

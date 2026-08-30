@@ -42,9 +42,15 @@ export function About() {
           <div className="tier-card tier-card--reviewed">
             <h3 className="h3">Reviewed</h3>
             <p>
-              Two named people from different organizations read every line of
-              one specific commit against a published checklist and put their
-              names on it.
+              The AI Lab for Cities at Harvard read every line of one specific
+              commit against a published checklist and put its name on it.
+            </p>
+            <p className="tier-card__warn">
+              <strong>One reader, and it is us.</strong> This is the Lab saying
+              it looked, not an independent audit — and where the Lab wrote the
+              skill as well, the listing says so. It is a smaller claim than two
+              readers from separate organizations would be, and it is one we can
+              actually make.
             </p>
             <p>
               The attestation is pinned to a <strong>content hash</strong>. If
@@ -158,9 +164,9 @@ export function About() {
             Inclusion in this registry does not constitute endorsement,
             verification, or any guarantee regarding a skill's quality,
             functionality, security, or fitness for any purpose. Skills in the
-            Reviewed tier have been read by named people against a published
-            checklist; that is a statement about a specific commit, not a
-            warranty. <strong>You are responsible for what you run.</strong>
+            Reviewed tier have been read by the AI Lab for Cities at Harvard
+            against a published checklist; that is a statement about a specific
+            commit, not a warranty, and not an independent assessment. <strong>You are responsible for what you run.</strong>
           </p>
           <p>
             Registry infrastructure is MIT licensed. Each skill carries its own
