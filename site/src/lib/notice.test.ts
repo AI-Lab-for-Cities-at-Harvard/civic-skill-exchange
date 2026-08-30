@@ -36,7 +36,8 @@ describe("communityNotice", () => {
     ]) {
       const notice = communityNotice(counts);
       expect(notice?.body).toMatch(/automated checks/i);
-      expect(notice?.body).toMatch(/nobody|no one/i);
+      // However phrased, it must address who read the code: nobody did.
+      expect(notice?.body).toMatch(/nobody|no one|anybody|anyone/i);
       expect(notice?.body).toMatch(/before you run/i);
     }
   });

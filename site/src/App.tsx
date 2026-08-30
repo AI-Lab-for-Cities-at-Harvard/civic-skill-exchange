@@ -3,6 +3,7 @@ import { About } from "./components/About";
 import { SkillDetail } from "./components/SkillDetail";
 import { Facet } from "./components/Facets";
 import { SkillCard } from "./components/SkillCard";
+import { TierBand, ContributeBand } from "./components/Bands";
 import { applyFilters } from "./lib/filter";
 import {
   CATEGORY_LABELS, JURISDICTION_LABELS, LOCALIZATION_LABELS,
@@ -127,7 +128,10 @@ export default function App() {
           <SkillDetail namespace={route.namespace} name={route.name} />
         </main>
       ) : (
-      <main className="layout">
+      <>
+      {index && <TierBand counts={index.counts} />}
+
+      <main className="layout canvas">
         <aside className="filters" aria-label="Filter skills">
           <div className="search">
             <label className="search__label" htmlFor="q">Search</label>
@@ -189,6 +193,9 @@ export default function App() {
           )}
         </section>
       </main>
+
+      {index && <ContributeBand repo={index.repo} />}
+      </>
       )}
 
       <footer className="footer">

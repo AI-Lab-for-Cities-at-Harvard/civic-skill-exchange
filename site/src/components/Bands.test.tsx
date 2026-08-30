@@ -16,8 +16,10 @@ describe("TierBand", () => {
 
   it("explains both tiers", () => {
     render(<TierBand counts={MIXED} />);
-    expect(screen.getByText(/Community/)).toBeInTheDocument();
-    expect(screen.getByText(/Reviewed/)).toBeInTheDocument();
+    // By heading, not by text: "Community" also appears in the standing notice
+    // below, and a bare text match cannot tell the two apart.
+    expect(screen.getByRole("heading", { name: "Community" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reviewed" })).toBeInTheDocument();
   });
 
   it("carries the standing notice, counted from the catalogue", () => {
