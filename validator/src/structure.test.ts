@@ -108,7 +108,8 @@ describe("checkStructure — behaviour the split must preserve", () => {
     for (let i = 0; i <= MAX_FILES_PER_SKILL; i += 1) {
       writeFileSync(join(skill, `note-${i}.md`), "x\n");
     }
-    expect(messages(checkStructure(skill))).toMatch(/over the 60-file cap/);
+    expect(messages(checkStructure(skill)))
+      .toMatch(new RegExp(`over the ${MAX_FILES_PER_SKILL}-file cap`));
   });
 
   it("accepts exactly the cap", () => {
@@ -125,7 +126,8 @@ describe("checkStructure — behaviour the split must preserve", () => {
     for (let i = 0; i < Math.ceil(MAX_SKILL_BYTES / per) + 1; i += 1) {
       writeFileSync(join(skill, `bulk-${i}.md`), "x".repeat(per));
     }
-    expect(messages(checkStructure(skill))).toMatch(/over the 1048576-byte cap/);
+    expect(messages(checkStructure(skill)))
+      .toMatch(new RegExp(`over the ${MAX_SKILL_BYTES}-byte cap`));
   });
 
   it("rejects an extension-less file, naming the path when there is no suffix", () => {
