@@ -7,10 +7,12 @@
  * anyone can skip the check. CI re-runs this same module and remains the
  * authority. Do not add a code path that trusts a client-supplied result.
  *
- * Structural checks — symlinks, size caps, file types, YAML aliases — live in
- * structure.ts, which needs a filesystem and is never imported by the browser.
- * Content security scanning stays in scripts/scan.py: the browser never scans a
- * submitter's scripts, and porting those regexes buys nothing.
+ * Structural checks — symlinks, size caps, file types — live in
+ * structure-core.ts, which is equally pure and runs in both runtimes too. Only
+ * structure.ts is Node-only, and all it does is turn a directory into the entry
+ * list that module takes. Content security scanning stays in scripts/scan.py:
+ * the browser never scans a submitter's scripts, and porting those regexes buys
+ * nothing.
  */
 
 import type { Finding, Frontmatter, RuleContext } from "./types";
