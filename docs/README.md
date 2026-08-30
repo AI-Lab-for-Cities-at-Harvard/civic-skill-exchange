@@ -27,6 +27,7 @@ superseded by a later one.
 | | |
 |---|---|
 | [0001](adr/0001-reviewed-is-a-lab-attestation.md) | Reviewed means the Lab read it — single reviewer, self-review with disclosure |
+| [0002](adr/0002-lab-is-authorship-not-a-tier.md) | Lab is authorship, not a tier — and the Lab waives the waiting period on its own namespace |
 
 ## Spikes
 
