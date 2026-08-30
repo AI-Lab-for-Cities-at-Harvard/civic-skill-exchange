@@ -1,0 +1,112 @@
+/* Design tokens.
+ *
+ * Structure and values follow the HBS web design system (identity.hbs.edu,
+ * designsystem.hbs.edu): semantic --c-* colors redefined per theme on the root
+ * element, fluid clamp() spacing, and their breakpoint set.
+ *
+ * Two deliberate departures:
+ *
+ * 1. THE BRAND ACCENT IS ONE VARIABLE. --brand-accent is the only place the
+ *    crimson appears. This project is affiliated with HBS but not yet approved
+ *    to carry the brand, so de-identifying the site must stay a one-line change
+ *    rather than a redesign. Never hardcode #A41034 anywhere else.
+ *
+ * 2. NO HBS TYPEFACES. Graphik and Tiempos are commercially licensed and cannot
+ *    be redistributed. Inter and Source Serif 4 hold the same grotesque/serif
+ *    pairing with open licenses.
+ *
+ * No HBS logo, wordmark, shield, or name is used anywhere in this project.
+ */
+
+:root {
+  /* ---- The one brand lever ---------------------------------------------- */
+  --brand-accent: #a41034;
+  --brand-accent-on-dark: #9bcfff;
+
+  /* ---- Semantic color, light theme -------------------------------------- */
+  --c-bg: #f6f4f2;
+  --c-bg-raised: #ffffff;
+  --c-bg-inverse: #222222;
+  --c-solid: #000000;
+  --c-solid-inverse: #ffffff;
+  --c-spot: var(--brand-accent);
+  --c-text: rgba(0, 0, 0, 0.85);
+  --c-text-light: rgba(0, 0, 0, 0.66);
+  --c-text-lighter: rgba(0, 0, 0, 0.55);
+  --c-text-link: #000000;
+  --c-border: rgba(0, 0, 0, 0.34);
+  --c-border-light: rgba(0, 0, 0, 0.08);
+  --c-border-dark: rgba(0, 0, 0, 0.45);
+  --c-button-bg: #ffffff;
+  --c-button-bg-subtle: rgba(0, 0, 0, 0.06);
+  --c-button-bg-strong: var(--brand-accent);
+  --c-outline: var(--brand-accent);
+
+  /* Status. Separate from the accent by design — a tier badge must not read as
+     brand chrome, and must stay legible if --brand-accent is repointed. */
+  --c-ok: #2c6a4a;
+  --c-ok-bg: #dfeee6;
+  --c-warn: #8a6108;
+  --c-warn-bg: #f5ebd8;
+  --c-info: #2f5c86;
+  --c-info-bg: #dce9f4;
+
+  /* ---- Fluid spacing (HBS block-spacing scale) --------------------------- */
+  --space-sm: clamp(12px, 2.5vw, 18px);
+  --space-md: clamp(36px, 2.5vw, 60px);
+  --space-lg: clamp(60px, 5vw, 120px);
+  --space-xl: clamp(60px, 10vw, 100px);
+  --gap-1: 0.25rem;
+  --gap-2: 0.5rem;
+  --gap-3: 0.75rem;
+  --gap-4: 1rem;
+  --gap-5: 1.5rem;
+  --gap-6: 2rem;
+
+  /* ---- Type ------------------------------------------------------------- */
+  --f-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --f-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --t-xs: 0.75rem;
+  --t-sm: 0.875rem;
+  --t-base: 1rem;
+  --t-lg: clamp(1.125rem, 1.6vw, 1.25rem);
+  --t-xl: clamp(1.4rem, 2.4vw, 1.75rem);
+  --t-2xl: clamp(1.9rem, 4vw, 2.6rem);
+  --t-3xl: clamp(2.4rem, 6vw, 3.6rem);
+
+  /* ---- Layout (HBS breakpoints and 16-column grid) ----------------------- */
+  --bp-tablet: 600px;
+  --bp-desktop: 1024px;
+  --w-center: 62rem;
+  --w-wide: 78rem;
+  --radius: 2px;
+  --radius-pill: 999px;
+}
+
+:root[data-theme="dark"] {
+  --c-bg: #222222;
+  --c-bg-raised: #2b2b2b;
+  --c-bg-inverse: #f6f4f2;
+  --c-solid: #ffffff;
+  --c-solid-inverse: #000000;
+  --c-spot: var(--brand-accent-on-dark);
+  --c-text: rgba(255, 255, 255, 0.95);
+  --c-text-light: rgba(255, 255, 255, 0.82);
+  --c-text-lighter: rgba(255, 255, 255, 0.72);
+  --c-text-link: rgba(255, 255, 255, 0.95);
+  --c-border: rgba(255, 255, 255, 0.34);
+  --c-border-light: rgba(255, 255, 255, 0.15);
+  --c-border-dark: rgba(255, 255, 255, 0.72);
+  --c-button-bg: #000000;
+  --c-button-bg-subtle: rgba(255, 255, 255, 0.12);
+  --c-outline: var(--brand-accent-on-dark);
+
+  --c-ok: #75c49b;
+  --c-ok-bg: #142520;
+  --c-warn: #d7a851;
+  --c-warn-bg: #2a2114;
+  --c-info: #8fb8dd;
+  --c-info-bg: #16242f;
+}

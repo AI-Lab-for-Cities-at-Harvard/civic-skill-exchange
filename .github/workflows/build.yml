@@ -43,14 +43,22 @@ jobs:
         run: python scripts/scan.py all --out findings.json
         continue-on-error: true   # a finding on main is an issue to open, not a broken deploy
 
+      # Into site/public/ so Vite copies it verbatim into dist/data/.
       - name: Build index
-        run: python scripts/build_index.py --out site/data --findings findings.json
+        run: python scripts/build_index.py --out site/public/data --findings findings.json
 
-      - name: Assemble the site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Build the site
+        working-directory: site
         run: |
-          mkdir -p site/dist
-          cp -r site/data site/dist/data
-          if [ -d site/public ]; then cp -r site/public/. site/dist/; fi
+          npm ci
+          npm run test
+          npm run build
 
       - uses: actions/upload-pages-artifact@v3
         with:
