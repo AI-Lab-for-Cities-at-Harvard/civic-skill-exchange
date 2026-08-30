@@ -111,6 +111,34 @@ body:
       required: true
 
   - type: textarea
+    id: use-when
+    attributes:
+      label: When is this skill useful? (optional)
+      description: >
+        The concrete situations where it earns its place. Becomes
+        `civic.use-when` in your frontmatter and shows on the skill's page in
+        the catalogue. Two sentences is plenty — 500 characters maximum. Plain
+        text: markdown here will show up as literal asterisks.
+      placeholder: >
+        When a resident asks why their permit is stuck and the status codes in the
+        system mean nothing to them.
+
+  - type: textarea
+    id: avoid-when
+    attributes:
+      label: When is it NOT useful? (optional — but please answer it)
+      description: >
+        Where it falls down, what it should not be pointed at, what it gets
+        subtly wrong. **This is the most valuable box on the form.** Anyone can
+        guess what a skill is for; nobody but you knows where it breaks. A skill
+        that is honest about its limits gets adopted by the people it actually
+        helps, rather than by people who find out the hard way. Becomes
+        `civic.avoid-when`. Same 500-character, plain-text rules.
+      placeholder: >
+        Not for filled notices containing a specific person's data. Not a substitute
+        for legal review of whether required elements are present.
+
+  - type: textarea
     id: tools
     attributes:
       label: What tools does the skill need?
@@ -180,28 +208,6 @@ body:
       label: Roughly since when? (optional)
       description: "YYYY or YYYY-MM."
       placeholder: "2026-03"
-
-  - type: textarea
-    id: use-when
-    attributes:
-      label: When is this skill useful? (optional)
-      description: >
-        The concrete situations where it earns its place. This becomes a
-        "When to use this skill" section in the skill body.
-      placeholder: >
-        When a resident asks why their permit is stuck and the status codes in the
-        system mean nothing to them.
-
-  - type: textarea
-    id: avoid-when
-    attributes:
-      label: When is it NOT useful? (optional)
-      description: >
-        Where it falls down, what it should not be pointed at, what it gets wrong.
-        Worth filling in — nobody else can tell us this.
-      placeholder: >
-        Not for filled notices containing a specific person's data. Not a substitute
-        for legal review of whether required elements are present.
 
   - type: textarea
     id: skill-body

@@ -74,6 +74,12 @@ metadata:
   civic.jurisdiction: us-local
   civic.data-sensitivity: none
   civic.human-review: advisory-only
+  civic.use-when: >                      # optional, ≤500, plain text
+    A resident asks why their permit is stuck and the status codes in the system
+    mean nothing to them.
+  civic.avoid-when: >                    # optional, ≤500, plain text
+    Not for appeals or variance questions — it explains a status, it does not
+    advise on what to do about one.
   civic.maintainer: "City of X, Department of Building Safety"
   civic.contact: "digital@cityofx.gov"
   civic.affiliation: government          # who maintains it
@@ -91,6 +97,25 @@ adopter fills in (`generalized`). Skills with no jurisdiction-specific content o
 it. The validator rejects the one contradiction an adopter cannot resolve —
 `generalized` alongside a named jurisdiction like `us-state`. See
 [LOCALIZATION.md](LOCALIZATION.md).
+
+### Fit
+
+`civic.use-when` and `civic.avoid-when` are the submitter's account of when the
+skill helps and when it does not. Both optional, both capped at 500 characters,
+both **plain text and never markdown**.
+
+That last constraint is the reason they are frontmatter rather than prose. The
+detail page publishes structure but not content — no skill body, no file
+contents — because rendering submitter-authored markdown on our origin is a
+stored XSS surface (see [The site](#the-site)). But an adopter's first question
+is whether a skill fits their situation, and before these fields the page had no
+way to answer it. Two short plain-text fields answer it without reopening the
+surface.
+
+The validator checks length and nothing else. Neither field is required, and
+there is no rule relating them: a blocking check on `civic.avoid-when` would
+produce a sentence written to satisfy the check. The submission form pushes for
+it instead, which is where the pushing belongs.
 
 ### The schema file
 
@@ -177,6 +202,8 @@ An index entry:
   "jurisdiction": "us-local",
   "data_sensitivity": "none",
   "human_review": "advisory-only",
+  "use_when": "A resident asks why their permit is stuck and the status codes...",
+  "avoid_when": "Not for appeals or variance questions — it explains a status...",
   "provenance": {
     "self_reported": true,
     "affiliation": "government",
@@ -204,7 +231,7 @@ A static reader over `index.json`. It needs to do four things well and nothing e
 
 1. **Browse and filter** by category, jurisdiction, data sensitivity, and tier.
 2. **Show the tier honestly.** A Community listing must carry its disclaimer on the card and on the detail page — at the point where someone is about to download, not buried in a footer.
-3. **Show the skill's own text.** Render `SKILL.md`, list the files under `scripts/`, and display `allowed-tools` prominently. Someone should be able to evaluate a skill without leaving the page.
+3. **Describe the skill honestly without republishing it.** The page publishes structure, not content: the file tree with sizes, which files are executed rather than read, `allowed-tools` shown prominently, and the submitter's own `civic.use-when` / `civic.avoid-when` as plain text. It does **not** render `SKILL.md` or any file contents — submitter-authored markdown on our origin is a stored XSS surface, and describing a skill does not require it. Anyone reading the actual code reads it on GitHub, where they get the real thing rather than our rendering of it.
 4. **Make downloading obvious.** A copyable command and a link to the tree.
 
 Any static generator works, or none — the index is small enough to render client-side for a long time. Don't build a search backend; a client-side index over a few thousand entries is fast and has no operational surface.
