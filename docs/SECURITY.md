@@ -114,13 +114,19 @@ jobs:
 ```yaml
 on:
   workflow_run:               # separate privileged job reads the artifact
-    workflows: [Validate]
+    workflows: [Skills]
     types: [completed]
 permissions:
   pull-requests: write
 ```
 
 Download `findings.json` and render a comment from **structured fields only**. Never echo submitter-authored strings into the comment body unescaped.
+
+The artifact is uploaded only when a pull request touches `skills/`, so most runs
+find nothing to download. That is the ordinary path: the download step carries
+`continue-on-error` and the render step exits quietly when the file is absent.
+Keep both — without them the workflow goes red on every tooling and site pull
+request, and a check that is always red is a check nobody reads.
 
 ### The rules that matter
 

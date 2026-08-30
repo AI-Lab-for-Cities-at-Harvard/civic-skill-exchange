@@ -28,8 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.event == 'pull_request'
     steps:
+      # validate.yml uploads this artifact only when a pull request actually
+      # touches skills/, so on a tooling or site change there is nothing to
+      # download and this step fails. That is the expected path, not an error:
+      # the render step below already treats a missing artifact as "nothing to
+      # report" and exits clean. Without continue-on-error the whole workflow
+      # goes red on every non-skill pull request, which is how it sat from #20
+      # to #33 — and a permanently red check is one nobody reads.
       - name: Download findings
-        # TODO: pin to a commit SHA before enabling this workflow.
+        continue-on-error: true
+        # TODO: pin to a commit SHA — see #35.
         uses: actions/download-artifact@v4
         with:
           name: findings
