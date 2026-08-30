@@ -43,12 +43,12 @@ export interface SkillFile {
   size: number;
   /** Under scripts/ — run by the agent, not read by the model. */
   executed: boolean;
-  truncated: boolean;
-  content: string | null;
 }
 
+/** Structure only. The skill body and file contents are deliberately not
+ *  published — rendering submitter-authored content on our origin would be a
+ *  stored XSS surface, and describing a skill does not require it. */
 export interface SkillDetail extends Skill {
-  body: string;
   files: SkillFile[];
 }
 

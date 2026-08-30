@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { DownloadBox } from "./DownloadBox";
 import { TierBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
-import { renderMarkdown } from "../lib/markdown";
 import {
   label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS,
   DEPLOYMENT_LABELS, LOCALIZATION_LABELS,
@@ -50,13 +49,6 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
   const detail = fresh ? loaded.detail : null;
   const error = fresh ? loaded.error : null;
 
-  // Rendered once per body rather than on every render: the source is untrusted,
-  // and the sanitising pass is the expensive part.
-  const bodyHtml = useMemo(
-    () => (detail ? renderMarkdown(detail.body) : ""),
-    [detail],
-  );
-
   if (error) {
     return (
       <div className="page">
@@ -66,9 +58,6 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
     );
   }
   if (!detail) return <div className="page"><p className="notice">Loading…</p></div>;
-
-  const executed = detail.files.filter((f) => f.executed);
-  const referenced = detail.files.filter((f) => !f.executed);
 
   return (
     <div className="page detail">
@@ -93,13 +82,6 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
 
       <div className="detail__grid">
         <div className="detail__main">
-          {/* Untrusted markdown. renderMarkdown drops raw HTML outright and
-              protocol-allowlists every link — see src/lib/markdown.ts. */}
-          <article
-            className="prose markdown"
-            dangerouslySetInnerHTML={{ __html: bodyHtml }}
-          />
-
           <section aria-labelledby="tools-heading" className="detail__section">
             <h2 className="h2" id="tools-heading">What it can do</h2>
             <p>
@@ -116,25 +98,31 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
             </ul>
           </section>
 
-          {executed.length > 0 && (
-            <section aria-labelledby="scripts-heading" className="detail__section">
-              <h2 className="h2" id="scripts-heading">Code that runs</h2>
-              <p>
-                Files under <code>scripts/</code> are <strong>executed by the
-                agent</strong>, not read by the model. Reviewing the prose above
-                is not reviewing the skill — this is the part to read.
-              </p>
-              {executed.map((f) => <FileBlock key={f.path} file={f} />)}
-            </section>
-          )}
+          <section aria-labelledby="structure-heading" className="detail__section">
+            <h2 className="h2" id="structure-heading">What is in it</h2>
+            <p>
+              Files under <code>scripts/</code> are <strong>executed by the
+              agent</strong>, not read by the model. Read them before you run this
+              skill — the descriptions above tell you what it claims to do, and
+              only the code tells you what it does.
+            </p>
 
-          {referenced.length > 0 && (
-            <section aria-labelledby="refs-heading" className="detail__section">
-              <h2 className="h2" id="refs-heading">Reference files</h2>
-              <p>Read by the agent as data. Not executed.</p>
-              {referenced.map((f) => <FileBlock key={f.path} file={f} />)}
-            </section>
-          )}
+            <ul className="tree">
+              {detail.files.map((f) => (
+                <li className={f.executed ? "tree__item tree__item--exec" : "tree__item"} key={f.path}>
+                  <code className="tree__path">{f.path}</code>
+                  {f.executed && <span className="tree__tag">executed</span>}
+                  <span className="tree__size">{bytes(f.size)}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p>
+              <a className="arrow-link" href={detail.download}>
+                Read the source on GitHub <span aria-hidden="true">&rarr;</span>
+              </a>
+            </p>
+          </section>
         </div>
 
         <aside className="detail__side">
@@ -185,23 +173,5 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
         </aside>
       </div>
     </div>
-  );
-}
-
-function FileBlock({ file }: { file: { path: string; size: number; truncated: boolean; content: string | null } }) {
-  return (
-    <details className="file" open={!file.truncated && (file.content?.length ?? 0) < 4000}>
-      <summary>
-        <code>{file.path}</code>
-        <span className="file__size">{bytes(file.size)}</span>
-      </summary>
-      {file.content === null ? (
-        <p className="file__omitted">
-          Too large to show here. Read it on GitHub before running this skill.
-        </p>
-      ) : (
-        <pre><code>{file.content}</code></pre>
-      )}
-    </details>
   );
 }

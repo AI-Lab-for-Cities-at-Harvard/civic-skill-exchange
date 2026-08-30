@@ -360,38 +360,25 @@ a:hover { color: var(--c-spot); }
 }
 .detail__section > p { font-size: var(--t-sm); color: var(--c-text-light); }
 
-/* Rendered from untrusted markdown — see src/lib/markdown.ts */
-.markdown { max-width: 68ch; }
-.markdown h1, .markdown h2, .markdown h3 {
-  font-family: var(--f-sans); font-weight: 700;
-  letter-spacing: var(--track-heading); line-height: 1.2;
-  margin: var(--gap-6) 0 var(--gap-3);
+.tree { list-style: none; padding: 0; margin: 0 0 var(--gap-4); display: grid; gap: 1px; }
+.tree__item {
+  display: flex; align-items: baseline; gap: var(--gap-3);
+  padding: var(--gap-2) var(--gap-3);
+  background: var(--c-bg-raised);
+  border: 1px solid var(--c-border-light);
+  font-size: var(--t-sm);
 }
-.markdown h1 { font-size: var(--t-xl); }
-.markdown h2 { font-size: var(--t-lg); }
-.markdown h3 { font-size: var(--t-base); font-weight: 600; }
-.markdown p, .markdown li { line-height: 1.65; }
-.markdown ul, .markdown ol { padding-left: 1.3rem; }
-.markdown li { margin-bottom: var(--gap-2); }
-.markdown code {
-  font-family: var(--f-mono); font-size: 0.85em;
-  background: var(--c-button-bg-subtle); padding: 0.1em 0.35em; border-radius: var(--radius);
+.tree__item--exec { border-left: 3px solid var(--c-warn); }
+.tree__path { font-family: var(--f-mono); font-size: var(--t-xs); flex: 1; word-break: break-all; }
+.tree__tag {
+  font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--c-warn); background: var(--c-warn-bg);
+  padding: 0.1rem 0.4rem; border-radius: var(--radius); white-space: nowrap;
 }
-.markdown pre {
-  background: var(--c-button-bg-subtle); padding: var(--gap-4);
-  border-radius: var(--radius); overflow-x: auto;
+.tree__size {
+  font-size: var(--t-xs); color: var(--c-text-lighter);
+  font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.markdown pre code { background: none; padding: 0; }
-.markdown blockquote {
-  margin: var(--gap-4) 0; padding-left: var(--gap-4);
-  border-left: 3px solid var(--c-spot); color: var(--c-text-light);
-}
-.markdown table { border-collapse: collapse; width: 100%; font-size: var(--t-sm); display: block; overflow-x: auto; }
-.markdown th, .markdown td {
-  text-align: left; padding: var(--gap-2) var(--gap-3);
-  border-bottom: 1px solid var(--c-border-light);
-}
-.markdown img { max-width: 100%; height: auto; }
 
 .tools { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--gap-2); }
 .tools li code {
@@ -400,32 +387,6 @@ a:hover { color: var(--c-spot); }
   padding: var(--gap-1) var(--gap-3); background: var(--c-bg-raised);
 }
 .tools__none { color: var(--c-text-lighter); font-size: var(--t-sm); }
-
-.file {
-  border: 1px solid var(--c-border-light); border-radius: var(--radius);
-  background: var(--c-bg-raised); margin-bottom: var(--gap-3);
-}
-.file > summary {
-  cursor: pointer; padding: var(--gap-3) var(--gap-4);
-  display: flex; align-items: baseline; gap: var(--gap-3);
-  font-size: var(--t-sm);
-}
-.file > summary code { font-family: var(--f-mono); flex: 1; }
-.file__size {
-  color: var(--c-text-lighter); font-size: var(--t-xs);
-  font-variant-numeric: tabular-nums;
-}
-.file pre {
-  margin: 0; padding: var(--gap-4);
-  border-top: 1px solid var(--c-border-light);
-  overflow-x: auto; font-size: var(--t-xs); line-height: 1.6;
-}
-.file pre code { font-family: var(--f-mono); }
-.file__omitted {
-  margin: 0; padding: var(--gap-4);
-  border-top: 1px solid var(--c-border-light);
-  font-size: var(--t-sm); color: var(--c-text-lighter);
-}
 
 /* ---- download box ---- */
 .download {
@@ -450,7 +411,10 @@ a:hover { color: var(--c-spot); }
 .download__cmd code {
   font-family: var(--f-mono); font-size: var(--t-xs);
   background: var(--c-button-bg-subtle); padding: var(--gap-2) var(--gap-3);
-  border-radius: var(--radius); overflow-x: auto; white-space: pre;
+  border-radius: var(--radius); line-height: 1.6;
+  /* Wrap rather than scroll: a command you cannot see all of is a command you
+     will not trust enough to paste. */
+  white-space: pre-wrap; word-break: break-all;
 }
 .download__cmd .btn { justify-self: start; }
 .download__note {

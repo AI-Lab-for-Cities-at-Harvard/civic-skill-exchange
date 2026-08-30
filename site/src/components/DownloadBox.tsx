@@ -40,8 +40,8 @@ export function DownloadBox({ skill }: { skill: Skill }) {
         <p className="download__warn">
           <strong>Nobody has reviewed this skill.</strong> It passed automated
           structural and signature checks, which can only ever reject — a pass is
-          not a statement that it is safe. Read the body and every file below
-          before you run it.
+          not a statement that it is safe. Read the source on GitHub before you
+          run it, particularly anything under <code>scripts/</code>.
         </p>
       ) : (
         <p className="download__ok">
