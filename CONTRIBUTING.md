@@ -63,7 +63,7 @@ metadata:
 
 # Permit Status Explainer
 
-## When to use this skill
+## Steps
 ...
 ```
 
@@ -135,25 +135,27 @@ If you claim anything other than `none`, name where: `civic.deployed-at` and
 Whatever helps an agent do the job. A useful shape:
 
 ```markdown
-## When to use this skill
-Concrete triggers. Be specific enough that the agent doesn't over-apply it.
-
-## What this skill does not do
-Boundaries. Especially important where the output touches people's benefits or rights.
-
 ## Steps
 The actual procedure.
+
+## Output
+Anything the skill must always say, verbatim.
 
 ## Adapting this to your jurisdiction
 What a user has to change. Point at files under references/.
 ```
 
-These two body sections overlap with `civic.use-when` and `civic.avoid-when`, and
-that is deliberate — they serve different readers. The frontmatter fields are a
-sentence or two for a person browsing the catalogue, who cannot see the body at
-all. The body sections are the operating detail the agent reads at runtime, and
-can be as long as the job needs. Write the short version in frontmatter and the
-full version here.
+**Don't add "When to use this skill" or "What this skill does not do" sections.**
+That guidance belongs in `civic.use-when` and `civic.avoid-when`, and stating it
+in both places means one copy goes stale — the body copy, usually, because it is
+the one nobody is looking at when they edit the frontmatter. The frontmatter is
+also the only copy a person browsing the catalogue can see; the site does not
+render skill bodies.
+
+Boundaries that the agent has to *act* on are a different thing and belong in the
+body, written as steps. "Don't use this on filled notices" is fit guidance and
+goes in `civic.avoid-when`; "if the text contains a real person's name, stop and
+tell the user" is a procedure and goes in `## Steps`.
 
 If your skill produces anything affecting someone's rights, benefits, or legal standing, **say so in the skill's own output**, not just in the frontmatter. The person reading the result is not the person who read your metadata.
 

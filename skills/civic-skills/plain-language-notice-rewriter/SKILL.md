@@ -24,7 +24,8 @@ metadata:
     Not for filled notices containing a real person's name, case number, or
     determination — templates only. Not a substitute for legal review: it
     preserves the required elements you list, but cannot tell you what those
-    elements are.
+    elements are. It decides nothing: every output is a draft someone else has
+    to read, approve, and send.
   civic.maintainer: "Civic Skills Registry maintainers"
   civic.contact: "security@civic-skill-exchange.example"
   civic.affiliation: academic
@@ -38,22 +39,6 @@ authority instead of consequence, bury the deadline, name a form without saying
 where to get it, and sit four grades above the reading level of the people who
 receive them. This skill rewrites a notice template to fix those things without
 dropping anything a statute requires.
-
-## When to use this skill
-
-- Rewriting a notice, letter, or form instruction template for readability
-- Auditing an existing template against a target reading level
-- Preparing source text before translation — plain English translates better and
-  cheaper than bureaucratic English
-
-## What this skill does not do
-
-- **It does not work on filled notices.** Templates only. If the text contains a
-  real person's name, case number, or determination, stop and say so.
-- **It does not decide anything.** The output is a draft for a human to review,
-  approve, and send.
-- **It does not check legal sufficiency.** It preserves the required elements you
-  list; it cannot tell you what those elements are. Counsel does that.
 
 ## Steps
 
