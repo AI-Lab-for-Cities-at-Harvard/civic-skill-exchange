@@ -23,11 +23,10 @@ import { Marked } from "marked";
 const SAFE_PROTOCOLS = ["http:", "https:", "mailto:"];
 
 /** Browsers strip control characters and whitespace from a scheme before
- *  parsing, so "java\tscript:" resolves to javascript:. Strip them first or the
- *  protocol check reads the wrong string. */
-// eslint-disable-next-line no-control-regex -- matching control characters IS
-// the point: browsers strip them from a scheme before parsing, so a payload
-// like "java\u0009script:" must be collapsed before the protocol is checked.
+ *  parsing, so "java\u0009script:" resolves to javascript:. Collapse them first
+ *  or the protocol check reads the wrong string — matching control characters
+ *  is the point, hence the disable below. */
+// eslint-disable-next-line no-control-regex
 const SCHEME_NOISE = /[\u0000-\u0020]/g;
 
 /** Relative URLs are fine and common: skills link to their own references/. */
