@@ -96,6 +96,22 @@ Removal delists; it does not recall. Anyone who already cloned the skill still h
 
 ---
 
+## Seed before you open submissions
+
+Every documented failure mode of a community registry is a **volume** failure
+mode: unreviewable queues, taxonomy that cannot be fixed retroactively, moderation
+load that arrives faster than the people to carry it. So volume comes last, on
+purpose.
+
+Write or solicit the first skills directly, with no submission path open. It gets
+the schema and the categories wrong cheaply — fixing a taxonomy across twenty
+skills is an afternoon, across two hundred it is a migration — and it avoids the
+empty-catalogue problem, where the first visitor is also the last.
+
+**A registry with twenty good skills and no submission form is useful. A registry
+with an open form and nothing in it is not**, and the empty version is the one
+that does not recover.
+
 ## If you cannot staff the Reviewed tier
 
 Ship Community-only and say so on the front page. That is a coherent, defensible registry, and several successful registries operate exactly this way.

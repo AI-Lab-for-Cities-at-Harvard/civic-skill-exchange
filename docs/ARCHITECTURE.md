@@ -4,7 +4,9 @@ The registry is a single GitHub repository. Skills are plain directories committ
 
 ## Why this shape
 
-Git supplies, for free, the primitives a registry needs to make any safety claim at all: content-addressed history, signed commits, line-level diffs, blame, and instant revert. A skill is a directory, so distribution is `git clone` with no packaging step. Contributors already have accounts. Pages hosting costs nothing and cannot be taken down by a traffic spike.
+Git supplies, for free, the primitives a registry needs to make any safety claim at all: content-addressed history, signed commits, line-level diffs, blame, and instant revert. A skill is a directory, so it is stored, reviewed and diffed as one. Pages hosting costs nothing and cannot be taken down by a traffic spike.
+
+There is one packaging step, added deliberately. The index build writes a `.zip` per skill, because `git clone` and `npx degit` both assume developer tooling and a large part of this audience has neither — see [The index build](#the-index-build). The archive is a build output, never a stored artifact: the directory in git remains the only source of truth.
 
 The tradeoff, taken deliberately: because we host the artifacts rather than pointers to them, we cannot delegate malware scanning to an upstream package registry the way a pointer-based registry can. We own the scanning. See [SECURITY.md](SECURITY.md).
 
@@ -56,6 +58,21 @@ civic-skills/
 Check the folder namespace against **`github.event.pull_request.user.login`** — the account that opened the PR.
 
 Do not check it against the fork owner. The reference implementation this design borrows from checks the fork, which means any member of an organization can fork the repo and write into that organization's namespace. Check the author.
+
+**A consequence worth stating plainly: an organization cannot own a namespace.**
+The pull request author is always an individual account, so `namespace` must be
+somebody's personal GitHub handle. The `cityofx` used in the examples here is
+achievable only if a person registers an account by that name.
+
+That means the registry attributes a skill to a person, while the institutional
+claim — "City of X, Department of Building Safety" — lives in
+`civic.maintainer` and `civic.affiliation`, which are self-reported and shown
+that way. For a civic registry that is the weaker of the two claims, and it
+forces an individual to put their own name on institutional work.
+
+Whether institutional namespaces should exist, and what would verify one, is an
+open question being settled in the submission spike. This section describes what
+the code does today, not what it should do.
 
 ---
 
@@ -186,44 +203,63 @@ Start narrow. Adding a category is a PR against this file, and it should require
 /index.json                            all skills with tier, category, scan status
 /categories.json                       the vocabulary, for the site's facets
 /skills/{namespace}/{skill}.json       one skill's full metadata
+/skills/{namespace}/{skill}.zip        the same skill, downloadable
 ```
+
+The archive is written from the file list the detail payload already computed,
+so the two cannot disagree about what a skill contains — including about
+symlinks, which that traversal drops. It is deterministic: fixed timestamps and
+sorted entries, so an unchanged skill produces byte-identical output rather than
+churning the Pages artifact on every build.
 
 The tier is **derived, never stored on the skill**. A skill is Reviewed if and only if `reviewed.yml` contains an unexpired attestation whose `sha` matches the skill directory's current commit. Everything else is Community. This is what makes the attestation meaningful — see [TIERS.md](TIERS.md).
 
-An index entry:
+An index entry, with every field the build actually emits:
 
 ```json
 {
   "id": "cityofx/permit-status-explainer",
   "name": "permit-status-explainer",
-  "description": "Explains the status of a municipal building permit...",
   "namespace": "cityofx",
+  "description": "Explains the status of a municipal building permit...",
   "license": "MIT",
+  "compatibility": "Requires no network access and no credentials.",
   "allowed_tools": ["Read", "Grep"],
   "category": "permitting-licensing",
   "jurisdiction": "us-local",
+  "localization": "localized",
   "data_sensitivity": "none",
   "human_review": "advisory-only",
   "use_when": "A resident asks why their permit is stuck and the status codes...",
   "avoid_when": "Not for appeals or variance questions — it explains a status...",
+  "maintainer": "City of X, Department of Building Safety",
   "provenance": {
     "self_reported": true,
     "affiliation": "government",
     "deployment": "organization",
     "deployed_at": "City of X, Department of Building Safety",
     "deployed_in": "US-MA / Boston",
-    "deployed_since": "2026-03",
-    "contact_domain": "government",
-    "verified": { "scope": "organization", "by": "alice-gov", "date": "2026-09-12" }
+    "deployed_since": "2026-03"
   },
   "tier": "reviewed",
-  "sha": "a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92",
+  "reason": "attestation matches current content",
   "reviewed": { "date": "2026-09-14", "expires": "2027-09-14",
-                "reviewers": ["alice-gov", "bob-nonprofit"] },
-  "scan": { "last_run": "2026-09-20", "findings": [], "flags": 0 },
-  "download": "https://github.com/ORG/civic-skills/tree/main/skills/cityofx/permit-status-explainer"
+                "reviewers": ["alice-gov", "bob-nonprofit"], "notes": "Read-only." },
+  "sha": "a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92",
+  "has_scripts": false,
+  "script_files": [],
+  "scan": { "last_run": "2026-09-20", "blocking": 0, "flags": 0, "signatures": [] },
+  "path": "skills/cityofx/permit-status-explainer",
+  "download": "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/tree/main/skills/cityofx/permit-status-explainer"
 }
 ```
+
+`civic.contact` is deliberately absent. It exists so somebody can be reached
+about a security report, not to be harvested out of a static JSON file.
+
+The per-skill detail payload is this plus two fields the index does not carry:
+`files`, the tree with sizes and which entries the agent executes rather than
+reads, and `archive`, the path and size of the downloadable `.zip`.
 
 Publishing scan status into the index matters: it lets the site show what was checked, when, and by what — rather than presenting a listing as unqualified.
 
@@ -234,6 +270,6 @@ A static reader over `index.json`. It needs to do four things well and nothing e
 1. **Browse and filter** by category, jurisdiction, data sensitivity, and tier.
 2. **Show the tier honestly.** A Community listing must carry its disclaimer on the card and on the detail page — at the point where someone is about to download, not buried in a footer.
 3. **Describe the skill honestly without republishing it.** The page publishes structure, not content: the file tree with sizes, which files are executed rather than read, `allowed-tools` shown prominently, and the submitter's own `civic.use-when` / `civic.avoid-when` as plain text. It does **not** render `SKILL.md` or any file contents — submitter-authored markdown on our origin is a stored XSS surface, and describing a skill does not require it. Anyone reading the actual code reads it on GitHub, where they get the real thing rather than our rendering of it.
-4. **Make downloading obvious.** A copyable command and a link to the tree.
+4. **Make downloading obvious, without assuming tooling.** A `.zip` anyone can take with a browser alone, plus copyable `degit` and `clone` commands for people working in a terminal.
 
 Any static generator works, or none — the index is small enough to render client-side for a long time. Don't build a search backend; a client-side index over a few thousand entries is fast and has no operational surface.
