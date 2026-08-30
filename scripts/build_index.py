@@ -32,6 +32,10 @@ FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 
 REPO_URL = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange"
 
+# A file larger than this is named on the detail page but its content withheld,
+# so the page never has to render a megabyte of text into the DOM.
+MAX_DISPLAY_BYTES = 40 * 1024
+
 
 def head_sha(path: Path) -> str | None:
     """The commit that last touched this directory."""
@@ -185,6 +189,54 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
     return entry
 
 
+def build_detail(skill_dir: Path, entry: dict) -> dict:
+    """The per-skill payload the landing page reads.
+
+    Carries the skill body and the contents of every bundled file, because the
+    question someone actually has on that page is "would I run this?" — and the
+    only honest way to answer it is to show them what runs. Files under scripts/
+    are executed by the agent rather than read by the model, and are flagged so
+    the page can say which is which.
+    """
+    _, body = split_body(skill_dir / "SKILL.md")
+
+    files = []
+    for path in sorted(skill_dir.rglob("*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        rel = path.relative_to(skill_dir).as_posix()
+        if rel == "SKILL.md":
+            continue  # already published as `body`
+
+        size = path.stat().st_size
+        too_big = size > MAX_DISPLAY_BYTES
+        try:
+            content = None if too_big else path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            content, too_big = None, True
+
+        files.append({
+            "path": rel,
+            "size": size,
+            # Anything under scripts/ is run, not read. The page says so.
+            "executed": rel.startswith("scripts/"),
+            "truncated": too_big,
+            "content": content,
+        })
+
+    return {**entry, "body": body.strip(), "files": files}
+
+
+def split_body(skill_md: Path) -> tuple[str, str]:
+    """Frontmatter and body. The frontmatter is already published as structured
+    fields, so the detail payload carries only what comes after it."""
+    text = skill_md.read_text(encoding="utf-8")
+    m = FRONTMATTER_RE.match(text)
+    if not m:
+        return "", text
+    return m.group(1), text[m.end():]
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=ROOT / "site" / "data")
@@ -238,7 +290,8 @@ def main() -> int:
     for entry in entries:
         path = out / "skills" / entry["namespace"]
         path.mkdir(parents=True, exist_ok=True)
-        (path / f"{entry['name']}.json").write_text(json.dumps(entry, indent=2) + "\n",
+        detail = build_detail(SKILLS_DIR / entry["namespace"] / entry["name"], entry)
+        (path / f"{entry['name']}.json").write_text(json.dumps(detail, indent=2) + "\n",
                                                     encoding="utf-8")
 
     print(f"Wrote {len(entries)} skills to {out} "

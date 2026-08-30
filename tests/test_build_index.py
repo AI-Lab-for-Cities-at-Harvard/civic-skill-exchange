@@ -115,3 +115,70 @@ def test_entry_carries_the_fields_the_site_filters_on(make_skill):
 
 def test_skill_without_frontmatter_is_skipped_not_fatal(make_skill):
     assert build_index.build_entry(make_skill(raw="# nothing\n"), {}, {}) is None
+
+
+# --------------------------------------------------------------------------- #
+# Detail payload — what the landing page needs to answer "would I run this?"
+
+
+def test_detail_carries_the_skill_body(make_skill):
+    skill = make_skill(body="# Heading\n\nThe body of the skill.\n")
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    assert "The body of the skill." in detail["body"]
+
+
+def test_detail_body_excludes_the_frontmatter(make_skill):
+    """The frontmatter is already published as structured fields. Repeating it
+    as raw YAML in the rendered body is noise."""
+    detail = build_index.build_detail(make_skill(), build_index.build_entry(make_skill(), {}, {}))
+    assert "civic.category" not in detail["body"]
+
+
+def test_detail_carries_script_contents(make_skill):
+    """The reviewer checklist says read every line of scripts/. Someone deciding
+    whether to run a skill needs the same thing, without leaving the page."""
+    skill = make_skill(files={"scripts/helper.py": "import os\nprint('hi')\n"})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    files = {f["path"]: f["content"] for f in detail["files"]}
+    assert files["scripts/helper.py"] == "import os\nprint('hi')\n"
+
+
+def test_detail_carries_reference_files(make_skill):
+    skill = make_skill(files={"references/notes.md": "# Notes\n"})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    assert any(f["path"] == "references/notes.md" for f in detail["files"])
+
+
+def test_detail_does_not_repeat_skill_md_as_a_file(make_skill):
+    """SKILL.md is already the body. Listing it again is duplication."""
+    detail = build_index.build_detail(make_skill(), build_index.build_entry(make_skill(), {}, {}))
+    assert not any(f["path"] == "SKILL.md" for f in detail["files"])
+
+
+def test_detail_marks_which_files_are_executed(make_skill):
+    """Anything under scripts/ is run by the agent, not read by the model. The
+    page has to be able to say so."""
+    skill = make_skill(files={
+        "scripts/helper.py": "x = 1\n",
+        "references/notes.md": "# Notes\n",
+    })
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    executed = {f["path"]: f["executed"] for f in detail["files"]}
+    assert executed["scripts/helper.py"] is True
+    assert executed["references/notes.md"] is False
+
+
+def test_detail_files_are_sorted(make_skill):
+    skill = make_skill(files={"scripts/b.py": "b\n", "scripts/a.py": "a\n"})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    assert [f["path"] for f in detail["files"]] == ["scripts/a.py", "scripts/b.py"]
+
+
+def test_detail_skips_a_file_too_large_to_show(make_skill):
+    """A file over the display cap is named but its content withheld, so the
+    page never has to render a megabyte of text."""
+    skill = make_skill(files={"scripts/big.py": "x" * (build_index.MAX_DISPLAY_BYTES + 1)})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    entry = next(f for f in detail["files"] if f["path"] == "scripts/big.py")
+    assert entry["content"] is None
+    assert entry["truncated"] is True
