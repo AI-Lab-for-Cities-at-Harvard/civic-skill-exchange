@@ -92,6 +92,18 @@ The category vocabulary comes from `registry/categories.yml` in Node and from th
 published `data/categories.json` in the browser. Both derive from the same file,
 so the vocabulary cannot drift either.
 
+The site depends on the workspace and imports it directly:
+
+```ts
+import { checkFrontmatter } from "@civic-skill-exchange/validator/rules";
+
+const findings = checkFrontmatter(frontmatter, { categories });
+// findings: { where: "civic.deployed-at", message: "..." }[]
+```
+
+`where` names the field, so the submission form can render an error beside the
+input it belongs to. There is no second implementation to keep in step.
+
 ## Testing conventions
 
 Tests live in `tests/`, one file per script. `conftest.py` supplies `make_skill`,
