@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { SensitivityBadge, DeploymentBadge } from "./Badges";
+import { SensitivityBadge, DeploymentBadge, TierBadge } from "./Badges";
 import { SkillCard } from "./SkillCard";
 import { makeSkill } from "../test/fixtures";
 
@@ -73,5 +73,67 @@ describe("DeploymentBadge", () => {
       <DeploymentBadge provenance={{ ...used, deployment: "none", deployed_at: null }} />,
     );
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+/** ADR 0001, ruling 4: the badge renders from the ledger.
+ *
+ *  It used to hardcode "two reviewers signed off" on every Reviewed card, which
+ *  became false the moment the tier meant one reviewer. A note derived from the
+ *  attestation cannot drift from it — that is the whole point of the ruling, and
+ *  these tests are what keeps a future edit from putting a literal back. */
+describe("TierBadge names who attested, from the ledger", () => {
+  const attestation = {
+    date: "2026-08-30",
+    expires: "2027-08-30",
+    reviewers: ["AI Lab for Cities at Harvard"],
+    notes: "Read-only.",
+  };
+
+  it("names the attesting party on a Reviewed listing", () => {
+    render(<TierBadge tier="reviewed" reviewed={attestation} />);
+    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+      .toBeInTheDocument();
+  });
+
+  it("never claims a count the ledger does not hold", () => {
+    render(<TierBadge tier="reviewed" reviewed={attestation} />);
+    expect(screen.queryByText(/two reviewers/i)).not.toBeInTheDocument();
+  });
+
+  it("names both when a second reviewer exists", () => {
+    render(
+      <TierBadge
+        tier="reviewed"
+        reviewed={{ ...attestation, reviewers: ["alice-gov", "bob-nonprofit"] }}
+      />,
+    );
+    expect(screen.getByText(/alice-gov and bob-nonprofit read this commit/))
+      .toBeInTheDocument();
+  });
+
+  it("falls back to the checklist rather than an empty claim", () => {
+    render(<TierBadge tier="reviewed" reviewed={{ ...attestation, reviewers: [] }} />);
+    expect(screen.getByText(/read against the published checklist/))
+      .toBeInTheDocument();
+  });
+
+  it("leaves the Community note alone", () => {
+    render(<TierBadge tier="community" />);
+    expect(screen.getByText("automated checks only")).toBeInTheDocument();
+  });
+});
+
+describe("SkillCard feeds the badge its attestation", () => {
+  it("so a card says who read the commit, not how many did", () => {
+    render(<SkillCard skill={makeSkill({
+      tier: "reviewed",
+      reviewed: {
+        date: "2026-08-30", expires: "2027-08-30",
+        reviewers: ["AI Lab for Cities at Harvard"], notes: "",
+      },
+    })} />);
+    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+      .toBeInTheDocument();
   });
 });
