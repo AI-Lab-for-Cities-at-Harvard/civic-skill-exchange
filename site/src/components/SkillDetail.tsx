@@ -5,6 +5,7 @@ import {
   label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS,
   DEPLOYMENT_LABELS, LOCALIZATION_LABELS,
 } from "../lib/labels";
+import { addFieldsHref } from "../lib/route";
 import { bytes } from "../lib/format";
 import type { SkillDetail as Detail } from "../lib/types";
 
@@ -80,6 +81,19 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
 
       <div className="detail__grid">
         <div className="detail__main">
+          {!detail.use_when && !detail.avoid_when && (
+            /* Flow 2 on #24. Shown only where the fields are actually absent,
+               so it is an offer to the maintainer rather than chrome on every
+               listing. */
+            <p className="detail__nudge" data-testid="fit-nudge">
+              This listing does not say when the skill fits and when it does
+              not.{" "}
+              <a className="arrow-link" href={addFieldsHref(detail.namespace, detail.name)}>
+                Maintain it? Add that <span aria-hidden="true">&rarr;</span>
+              </a>
+            </p>
+          )}
+
           {(detail.use_when || detail.avoid_when) && (
             <section aria-labelledby="fit-heading" className="detail__section">
               <h2 className="h2" id="fit-heading">When to use this</h2>

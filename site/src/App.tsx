@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { About } from "./components/About";
+import { Submit } from "./components/Submit";
 import { SkillDetail } from "./components/SkillDetail";
 import { Facet } from "./components/Facets";
 import { SkillCard } from "./components/SkillCard";
@@ -10,6 +11,7 @@ import {
   SENSITIVITY_LABELS, TIER_LABELS,
 } from "./lib/labels";
 import { parseRoute, type Route } from "./lib/route";
+import { repoSlug } from "./lib/submit";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
 
 type Theme = "light" | "dark";
@@ -85,6 +87,9 @@ export default function App() {
               <a href="#/about" aria-current={route.page === "about" ? "page" : undefined}>
                 About
               </a>
+              <a href="#/submit" aria-current={route.page === "submit" ? "page" : undefined}>
+                Submit
+              </a>
               <a href="https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange">
                 GitHub
               </a>
@@ -122,6 +127,10 @@ export default function App() {
       {route.page === "about" ? (
         <main id="results" className="page">
           <About />
+        </main>
+      ) : route.page === "submit" ? (
+        <main id="results" className="page">
+          <Submit repo={repoSlug(index?.repo ?? "")} skills={skills} add={route.add} />
         </main>
       ) : route.page === "skill" ? (
         <main id="results">

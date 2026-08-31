@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRoute, skillHref } from "./route";
+import { parseRoute, skillHref, addFieldsHref } from "./route";
 
 describe("parseRoute", () => {
   it("defaults to browse", () => {
@@ -46,5 +46,28 @@ describe("skillHref", () => {
 
   it("encodes segments so a name cannot break out of the route", () => {
     expect(skillHref("ns", "a/b")).toBe("#/skill/ns/a%2Fb");
+  });
+});
+
+/** #24: the submission page, and flow 2's deep link into it. */
+describe("the submit route", () => {
+  it("parses #/submit", () => {
+    expect(parseRoute("#/submit")).toEqual({ page: "submit" });
+  });
+
+  it("carries the skill a maintainer arrived to update", () => {
+    expect(parseRoute("#/submit?add=civic-skills/notice-rewriter"))
+      .toEqual({ page: "submit", add: "civic-skills/notice-rewriter" });
+  });
+
+  it("ignores an add= that is not a namespaced skill", () => {
+    // It becomes a path into GitHub's editor, so a stray value must not travel.
+    expect(parseRoute("#/submit?add=../../etc")).toEqual({ page: "submit" });
+    expect(parseRoute("#/submit?add=nothing")).toEqual({ page: "submit" });
+  });
+
+  it("builds the link flow 2 uses", () => {
+    expect(addFieldsHref("civic-skills", "notice-rewriter"))
+      .toBe("#/submit?add=civic-skills%2Fnotice-rewriter");
   });
 });
