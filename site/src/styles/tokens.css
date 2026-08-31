@@ -34,7 +34,7 @@
   --c-text-light: rgba(0, 0, 0, 0.66);
   --c-text-lighter: rgba(0, 0, 0, 0.55);
   --c-text-link: #000000;
-  --c-border: rgba(0, 0, 0, 0.34);
+  --c-border: rgba(0, 0, 0, 0.44);
   --c-border-light: rgba(0, 0, 0, 0.08);
   --c-border-dark: rgba(0, 0, 0, 0.45);
   --c-button-bg: #ffffff;
@@ -124,7 +124,7 @@
   --c-text-light: rgba(255, 255, 255, 0.82);
   --c-text-lighter: rgba(255, 255, 255, 0.72);
   --c-text-link: rgba(255, 255, 255, 0.95);
-  --c-border: rgba(255, 255, 255, 0.34);
+  --c-border: rgba(255, 255, 255, 0.44);
   --c-border-light: rgba(255, 255, 255, 0.15);
   --c-border-dark: rgba(255, 255, 255, 0.72);
   --c-button-bg: #000000;
@@ -213,7 +213,7 @@
   --c-text-light: rgba(0, 0, 0, 0.66);
   --c-text-lighter: rgba(0, 0, 0, 0.55);
   --c-text-link: #000000;
-  --c-border: rgba(0, 0, 0, 0.34);
+  --c-border: rgba(0, 0, 0, 0.44);
   --c-border-light: rgba(0, 0, 0, 0.12);
   --c-button-bg: transparent;
   --c-button-bg-subtle: rgba(0, 0, 0, 0.06);
