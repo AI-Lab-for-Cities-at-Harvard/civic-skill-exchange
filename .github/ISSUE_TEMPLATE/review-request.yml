@@ -32,7 +32,7 @@ body:
     attributes:
       label: Eligibility
       options:
-        - label: Listed in the Community tier for at least 30 days.
+        - label: Listed in the Community tier for at least 30 days, or in the reserved `civic-skills` namespace, which is exempt.
           required: true
         - label: Clean automated results — no blocking signatures.
           required: true
