@@ -336,3 +336,34 @@ def test_the_documented_provenance_block_matches(make_skill):
     real = build_index.build_entry(make_skill(), {}, {})
     documented = _documented_entry()
     assert set(documented["provenance"]) == set(real["provenance"])
+
+
+def test_source_fields_reach_the_index(make_skill, monkeypatch):
+    """#63: an imported skill records where the copy came from, and the site
+    needs it to show the link. Nothing in the build resolves it — a listing
+    stays valid when its upstream is deleted."""
+    import build_index
+
+    front = dict(VALID_FRONTMATTER)
+    front["metadata"] = dict(front["metadata"])
+    front["metadata"]["civic.source-repo"] = "sgarcese/Civic-Analytics-Agent-Workflow"
+    front["metadata"]["civic.source-commit"] = "a" * 40
+    skill_dir = make_skill(front=front)
+
+    monkeypatch.setattr(build_index, "head_sha", lambda _: "b" * 40)
+    entry = build_index.build_entry(skill_dir, {}, {})
+
+    assert entry["source"] == {
+        "repo": "sgarcese/Civic-Analytics-Agent-Workflow",
+        "commit": "a" * 40,
+    }
+
+
+def test_a_skill_with_no_upstream_publishes_none(make_skill, monkeypatch):
+    """Most skills are written here. `source` is absent rather than an object of
+    nulls, so the site can test one thing."""
+    import build_index
+
+    monkeypatch.setattr(build_index, "head_sha", lambda _: "b" * 40)
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["source"] is None

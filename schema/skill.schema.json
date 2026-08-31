@@ -170,6 +170,17 @@
             "localized"
           ],
           "description": "Where the skill sits on the jurisdiction axis. 'localized' carries one jurisdiction's specifics; 'generalized' has had them lifted out into a context an adopter fills in. Optional \u2014 omit it when the skill has no jurisdiction-specific content either way. See docs/LOCALIZATION.md."
+        },
+        "civic.source-repo": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][\\w.-]*/[\\w.-]+$",
+          "maxLength": 140,
+          "description": "Where an imported copy came from, as owner/repository. Optional; a skill written here has no upstream. The registry always holds the content \u2014 this records the origin so a reader can look, and nothing in the build resolves it. See docs/ARCHITECTURE.md."
+        },
+        "civic.source-commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "The upstream commit the copy was taken from. Full 40-character SHA; a short one stops being unique as a repository grows. Requires civic.source-repo."
         }
       }
     }

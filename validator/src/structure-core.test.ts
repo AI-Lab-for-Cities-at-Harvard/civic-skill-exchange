@@ -1,8 +1,15 @@
 import { describe, it, expect } from "vitest";
 import { extname as nodeExtname } from "node:path";
 import {
-  checkStructureCore, checkPathSafety, extname, type Entry,
-  MAX_FILE_BYTES, MAX_FILES_PER_SKILL, MAX_SKILL_BYTES, ALLOWED_SUFFIXES,
+  checkStructureCore,
+  checkPathSafety,
+  extname,
+  type Entry,
+  MAX_FILE_BYTES,
+  MAX_FILES_PER_SKILL,
+  MAX_SKILL_BYTES,
+  ALLOWED_SUFFIXES,
+  isRepositoryFurniture,
 } from "./structure-core";
 
 const bytes = (s: string) => new TextEncoder().encode(s);
@@ -159,5 +166,28 @@ describe("the caps admit real skills and still refuse binaries", () => {
       (_, i) => file(`big-${i}.md`, "x".repeat(MAX_FILE_BYTES)));
     expect(messages(checkStructureCore(heavy)))
       .toMatch(new RegExp(`over the ${MAX_SKILL_BYTES}-byte cap`));
+  });
+});
+
+/** #63: a skill imported from its own repository arrives with the repository's
+ *  files beside it. They are not skill content and the allowlist has nothing
+ *  useful to say about them. */
+describe("isRepositoryFurniture", () => {
+  it("names the files every repository has", () => {
+    for (const path of ["LICENSE", ".gitignore", ".gitattributes", "Makefile"]) {
+      expect(isRepositoryFurniture(path)).toBe(true);
+    }
+  });
+
+  it("is not a second allowlist — a disallowed extension is still disallowed", () => {
+    for (const path of ["payload.exe", "image.png", "archive.tar"]) {
+      expect(isRepositoryFurniture(path)).toBe(false);
+    }
+  });
+
+  it("leaves real skill content alone", () => {
+    for (const path of ["SKILL.md", "scripts/run.py", "references/notes.md"]) {
+      expect(isRepositoryFurniture(path)).toBe(false);
+    }
   });
 });

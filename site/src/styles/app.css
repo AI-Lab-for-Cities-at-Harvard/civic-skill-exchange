@@ -693,3 +693,8 @@ a:hover { color: var(--c-spot); }
   background: var(--c-bg-inverse); color: var(--c-solid-inverse);
 }
 .modes__item:focus-visible { outline: 2px solid var(--c-outline); outline-offset: 2px; }
+
+/* The repo field and its button sit on one line until there is no room. */
+.submit__row { display: flex; flex-wrap: wrap; gap: var(--gap-2); align-items: stretch; }
+.submit__row .input { flex: 1 1 18rem; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
