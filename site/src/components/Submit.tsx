@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   checkFrontmatter, checkStructureCore, type Finding,
 } from "@civic-skill-exchange/validator";
@@ -8,6 +8,7 @@ import {
 } from "../lib/submit";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
+import { checkGitHubUser, type UserCheck } from "../lib/github";
 import { CATEGORY_LABELS } from "../lib/labels";
 import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
@@ -139,6 +140,7 @@ export function Submit(
   const [archive, setArchive] =
     useState<{ name: string; files: number; structural: Finding[] } | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
+  const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
   const [copied, setCopied] = useState(false);
 
   const set = (key: keyof Draft) => (value: string) =>
@@ -146,6 +148,19 @@ export function Submit(
   const onInput = (key: keyof Draft) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       set(key)(e.target.value);
+
+  // Debounced, and aborted when the value moves on. The rate limit is 60 an
+  // hour per address, so a request per keystroke would exhaust it inside one
+  // username.
+  useEffect(() => {
+    const login = draft.author.trim();
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      if (!login) { setUserCheck("unknown"); return; }
+      checkGitHubUser(login, controller.signal).then(setUserCheck);
+    }, 500);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [draft.author]);
 
   const front = useMemo(() => toFrontmatter(draft), [draft]);
   const yaml = useMemo(() => toYaml(front), [front]);
@@ -318,10 +333,19 @@ export function Submit(
         <section className="prose__block">
           <h2 className="h2">About the skill</h2>
 
-          <Field id="namespace" label="Your GitHub username" findings={findings}
-            hint="Your skill goes in your own folder, and only you can write there.">
+          <Field
+            id="namespace" label="Your GitHub username" findings={findings}
+            hint="This has to match your login exactly — your skill goes in a folder of that name, and only you can write there."
+          >
             <input id="namespace" className="input" value={draft.author}
               onChange={onInput("author")} autoComplete="off" />
+            {userCheck === "missing" && draft.author.trim() !== "" && (
+              <p className="field__finding" data-testid="no-such-user">
+                No GitHub user called {draft.author.trim()}. A submission whose
+                folder does not match the account that opens the pull request is
+                rejected.
+              </p>
+            )}
           </Field>
 
           <Field

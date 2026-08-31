@@ -11,7 +11,7 @@
  *  verdict, CI re-runs the same module, and `git` bypasses this page entirely.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { zipSync, strToU8 } from "fflate";
@@ -324,5 +324,63 @@ describe("Submit — the skill name", () => {
       "Civic-Analytics-Agent-Workflow-Claude-Skill");
     expect(screen.getByTestId("handoff")).toHaveAttribute("href",
       expect.stringContaining("skills%2Fsgarcese%2Fcivic-analytics-agent-workflow-claude-skill"));
+  });
+});
+
+/** The namespace has to equal the pull request author's login, because that is
+ *  what validate.yml hands the validator. A typo here is a pull request that
+ *  fails L1 — so it is worth catching before the round trip, and worth saying
+ *  why rather than just marking it wrong. */
+describe("Submit — checking the GitHub username", () => {
+  afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
+
+  const answer = (status: number) =>
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ status, ok: status < 300 }));
+
+  it("warns when there is no such user", async () => {
+    answer(404);
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcees");
+    expect(await screen.findByTestId("no-such-user")).toBeInTheDocument();
+  });
+
+  it("says nothing about a real one", async () => {
+    answer(200);
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await new Promise((r) => setTimeout(r, 700));
+    expect(screen.queryByTestId("no-such-user")).not.toBeInTheDocument();
+  });
+
+  it("stays quiet when rate limited rather than warning wrongly", async () => {
+    answer(403);
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await new Promise((r) => setTimeout(r, 700));
+    expect(screen.queryByTestId("no-such-user")).not.toBeInTheDocument();
+  });
+
+  it("does not spend a request per keystroke", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ status: 200, ok: true });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await new Promise((r) => setTimeout(r, 700));
+    // Eight characters, one request. The limit is 60 an hour per address.
+    expect(fetchMock.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+
+  it("never blocks the hand-off on it", async () => {
+    answer(404);
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcees");
+    await user.type(screen.getByLabelText(/^Skill name/i), "a-skill");
+    await screen.findByTestId("no-such-user");
+    expect(screen.getByTestId("handoff")).toHaveAttribute("href");
   });
 });
