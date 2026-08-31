@@ -1,6 +1,6 @@
 # Spike: should Lab be a third tier?
 
-**Status:** ruled. Issue [#53](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/53).
+**Status:** ruled. Issue [#53](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/53) · encoded in [ADR 0002](../adr/0002-lab-is-authorship-not-a-tier.md).
 
 > Kept as the analysis behind the decision, not as a description of current
 > behaviour. The rulings are in §7; the documents that own each behaviour are
