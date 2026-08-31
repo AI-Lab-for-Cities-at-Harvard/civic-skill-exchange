@@ -599,3 +599,97 @@ a:hover { color: var(--c-spot); }
   line-height: 1.6; max-width: 56ch; color: var(--c-text-light);
 }
 .band__links { margin: 0; display: flex; flex-wrap: wrap; gap: var(--gap-5); }
+
+/* ---- submission page (#24) ----
+ *
+ * Every colour resolves from a token, so the page inverts with the theme like
+ * everything else. The form is long by nature — nineteen fields — so the work
+ * here is rhythm: one column, generous vertical space, and a finding that sits
+ * against its own field rather than in a summary list the reader has to map
+ * back.
+ */
+.submit { max-width: 46rem; }
+
+.field { margin: 0 0 var(--gap-5); }
+.field__label {
+  display: block; font-weight: 600; font-size: var(--t-sm);
+  margin-bottom: var(--gap-1);
+}
+.field__hint {
+  margin: 0 0 var(--gap-2); font-size: var(--t-xs);
+  color: var(--c-text-lighter); max-width: 42rem;
+}
+/* The flag is a rule beside the field, not a red fill. A wall of red on a form
+   somebody is still filling in reads as failure rather than guidance. */
+.field--flagged { border-left: 2px solid var(--c-warn); padding-left: var(--gap-4); }
+.field__finding {
+  margin: var(--gap-2) 0 0; font-size: var(--t-xs); color: var(--c-warn);
+}
+
+.input, .select, .textarea {
+  width: 100%; padding: 0.5rem 0.65rem;
+  font: inherit; font-size: var(--t-sm); color: var(--c-text);
+  background: var(--c-bg-raised);
+  border: 1px solid var(--c-border); border-radius: var(--radius);
+}
+.textarea { resize: vertical; }
+.input:focus-visible, .select:focus-visible, .textarea:focus-visible {
+  outline: 2px solid var(--c-outline); outline-offset: 1px;
+}
+
+.disclosure { border-top: 1px solid var(--c-border-light); padding-top: var(--gap-4); }
+.disclosure__summary { cursor: pointer; margin-bottom: var(--gap-4); }
+.disclosure__summary::marker { color: var(--c-text-lighter); }
+
+.submit__warn, .submit__blocked {
+  padding: var(--gap-4); border-radius: var(--radius);
+  background: var(--c-warn-bg); color: var(--c-warn);
+  font-size: var(--t-sm);
+}
+.submit__ok { color: var(--c-ok); font-size: var(--t-sm); }
+.submit__note { font-size: var(--t-sm); color: var(--c-text-light); }
+
+.submit__yaml {
+  padding: var(--gap-4); border-radius: var(--radius);
+  background: var(--c-button-bg-subtle);
+  font-family: var(--f-mono); font-size: var(--t-xs);
+  /* Wide content scrolls inside its own box rather than widening the page. */
+  overflow-x: auto; white-space: pre;
+}
+.submit__archive { margin-top: var(--gap-4); font-size: var(--t-sm); }
+.submit__findings { margin: var(--gap-2) 0 0; padding-left: var(--gap-5); }
+.submit__findings li { margin-bottom: var(--gap-2); font-size: var(--t-xs); }
+.submit__handoff { margin-top: var(--gap-4); }
+
+/* Disabled by attribute as well as by class: an anchor without href is already
+   out of the tab order, and aria-disabled tells a screen reader why it is
+   there at all. */
+.btn--disabled, .btn[aria-disabled="true"] {
+  opacity: 0.5; cursor: not-allowed; pointer-events: none;
+}
+
+.detail__nudge {
+  padding: var(--gap-4); border: 1px dashed var(--c-border);
+  border-radius: var(--radius); font-size: var(--t-sm);
+  color: var(--c-text-light);
+}
+
+/* Two jobs on one page. Segmented rather than a row of links so it reads as a
+   choice between two states, and the current one is filled rather than merely
+   underlined — underline alone is easy to miss above a long form. */
+.modes {
+  display: flex; flex-wrap: wrap; gap: var(--gap-1);
+  margin: var(--gap-5) 0; padding: var(--gap-1);
+  border: 1px solid var(--c-border-light); border-radius: var(--radius);
+  width: fit-content; max-width: 100%;
+}
+.modes__item {
+  padding: 0.4rem 0.9rem; border-radius: var(--radius);
+  font-size: var(--t-sm); font-weight: 600;
+  color: var(--c-text-light); text-decoration: none;
+}
+.modes__item:hover { color: var(--c-text); background: var(--c-button-bg-subtle); }
+.modes__item[aria-current="page"] {
+  background: var(--c-bg-inverse); color: var(--c-solid-inverse);
+}
+.modes__item:focus-visible { outline: 2px solid var(--c-outline); outline-offset: 2px; }
