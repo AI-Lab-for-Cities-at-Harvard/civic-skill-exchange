@@ -18,7 +18,7 @@
 
 import { unzipSync } from "fflate";
 import {
-  MAX_FILE_BYTES, MAX_SKILL_BYTES, type Entry,
+  MAX_FILE_BYTES, MAX_SKILL_BYTES, isRepositoryFurniture, type Entry,
 } from "@civic-skill-exchange/validator";
 
 export interface SkillArchive {
@@ -96,7 +96,14 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
       problems.push(`${name} — unpacked larger than the archive declared. Skipped.`);
       continue;
     }
-    entries.push({ path: strip(name), kind: "file", bytes });
+    const path = strip(name);
+    if (isRepositoryFurniture(path)) {
+      // A zip downloaded straight from GitHub carries the repository's own
+      // files. Same reasoning as the import path.
+      problems.push(`${path} — belongs to the repository, not the skill. Left out.`);
+      continue;
+    }
+    entries.push({ path, kind: "file", bytes });
   }
   entries.sort((a, b) => a.path.localeCompare(b.path));
 

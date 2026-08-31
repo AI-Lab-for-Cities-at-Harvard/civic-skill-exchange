@@ -25,6 +25,7 @@ export function makeSkill(over: Partial<Skill> = {}): Skill {
     use_when: null,
     avoid_when: null,
     maintainer: "Test Suite",
+    source: null,
     provenance: {
       self_reported: true, affiliation: "individual", deployment: "none",
       deployed_at: null, deployed_in: null, deployed_since: null,

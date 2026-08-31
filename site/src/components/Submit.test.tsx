@@ -384,3 +384,122 @@ describe("Submit — checking the GitHub username", () => {
     expect(screen.getByTestId("handoff")).toHaveAttribute("href");
   });
 });
+
+/** #63: a skill already on GitHub should not need downloading and re-uploading.
+ *  The import copies the content in and records where it came from — the
+ *  registry holds the files, which is what the SHA pin and the re-scan work
+ *  against, so the listing survives the upstream being deleted. */
+describe("Submit — importing from a repository", () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  const SKILL = "---\nname: civic-analytics\ndescription: An example skill.\n---\nBody.\n";
+  const b64 = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+
+  function github(tree?: unknown, status?: Record<string, number>) {
+    return vi.fn(async (url: string) => {
+      const which = /\/git\/trees\//.test(url) ? "tree"
+        : /\/contents\//.test(url) ? "file"
+        : /api\.github\.com\/users\//.test(url) ? "user" : "repo";
+      const body = which === "tree"
+        ? tree ?? { sha: "c".repeat(40), truncated: false,
+                    tree: [{ path: "SKILL.md", type: "blob", size: 120 }] }
+        : which === "file" ? { encoding: "base64", content: b64(SKILL) }
+        : { default_branch: "main" };
+      const code = status?.[which] ?? 200;
+      return { status: code, ok: code < 300, json: async () => body };
+    });
+  }
+
+  async function importInto(user: ReturnType<typeof userEvent.setup>, url: string) {
+    await user.type(screen.getByLabelText(/GitHub repository/i), url);
+    await user.click(screen.getByTestId("import"));
+  }
+
+  it("fills the form from the repository", async () => {
+    vi.stubGlobal("fetch", github());
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "github.com/sgarcese/Civic-Analytics");
+    expect(await screen.findByTestId("imported")).toHaveTextContent("sgarcese/Civic-Analytics");
+    expect(screen.getByLabelText(/^Skill name/i)).toHaveValue("civic-analytics");
+  });
+
+  it("records the repository and the exact commit it read", async () => {
+    vi.stubGlobal("fetch", github());
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "sgarcese/Civic-Analytics");
+    await screen.findByTestId("imported");
+    const yaml = screen.getByTestId("yaml").textContent ?? "";
+    expect(yaml).toContain('civic.source-repo: "sgarcese/Civic-Analytics"');
+    expect(yaml).toContain(`civic.source-commit: "${"c".repeat(40)}"`);
+  });
+
+  it("takes the username from the repository owner", async () => {
+    vi.stubGlobal("fetch", github());
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "sgarcese/Civic-Analytics");
+    await screen.findByTestId("imported");
+    expect(screen.getByLabelText(/GitHub username/i)).toHaveValue("sgarcese");
+  });
+
+  it("runs the structural checks on the real file list", async () => {
+    vi.stubGlobal("fetch", github({
+      sha: "c".repeat(40), truncated: false,
+      tree: [
+        { path: "SKILL.md", type: "blob", size: 120 },
+        { path: "payload.exe", type: "blob", size: 10 },
+      ],
+    }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "sgarcese/Civic-Analytics");
+    expect(await screen.findByTestId("blocked")).toBeInTheDocument();
+  });
+
+  it("says a rate limit is a rate limit", async () => {
+    vi.stubGlobal("fetch", github(undefined, { repo: 403 }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "sgarcese/Civic-Analytics");
+    expect(await screen.findByTestId("parse-notes")).toHaveTextContent(/rate-limiting/i);
+  });
+
+  it("points at the upload path when the repository cannot be read", async () => {
+    vi.stubGlobal("fetch", github(undefined, { repo: 404 }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "sgarcese/Private-Thing");
+    expect(await screen.findByTestId("parse-notes")).toHaveTextContent(/zip/i);
+  });
+});
+
+/** What is left out is not the same as what is wrong.
+ *
+ *  The block exists for problems with what you are about to submit. A file that
+ *  is not being copied is not one of those, so it is named and the hand-off
+ *  stays open. */
+describe("Submit — left out versus blocked", () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("names a repository's own files without stopping anything", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", { "s/SKILL.md": SKILL_MD, "s/LICENSE": "MIT", "s/.gitignore": "node_modules" }));
+    expect(await screen.findByTestId("left-out")).toHaveTextContent("LICENSE");
+    expect(screen.queryByTestId("blocked")).not.toBeInTheDocument();
+    expect(screen.getByTestId("handoff")).toHaveAttribute("href");
+  });
+
+  it("still blocks on a file type that would be copied in", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", { "s/SKILL.md": SKILL_MD, "s/payload.exe": "MZ" }));
+    expect(await screen.findByTestId("blocked")).toBeInTheDocument();
+  });
+});

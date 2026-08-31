@@ -32,6 +32,9 @@ export interface Draft {
   deployedAt: string;
   deployedIn: string;
   deployedSince: string;
+  /** Stamped by an import, never typed. Empty for a skill written here. */
+  sourceRepo: string;
+  sourceCommit: string;
 }
 
 export const EMPTY_DRAFT: Draft = {
@@ -40,6 +43,7 @@ export const EMPTY_DRAFT: Draft = {
   dataSensitivity: "none", humanReview: "none", useWhen: "", avoidWhen: "",
   maintainer: "", contact: "", affiliation: "", deployment: "none",
   deployedAt: "", deployedIn: "", deployedSince: "",
+  sourceRepo: "", sourceCommit: "",
 };
 
 /** Under GitHub's dirty-failure band, not inside it. */
@@ -80,6 +84,8 @@ export function toFrontmatter(draft: Draft): Frontmatter & { metadata?: Record<s
   put(meta, "civic.deployed-at", draft.deployedAt);
   put(meta, "civic.deployed-in", draft.deployedIn);
   put(meta, "civic.deployed-since", draft.deployedSince);
+  put(meta, "civic.source-repo", draft.sourceRepo);
+  put(meta, "civic.source-commit", draft.sourceCommit);
   front.metadata = meta;
 
   return front;

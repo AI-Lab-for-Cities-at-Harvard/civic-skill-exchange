@@ -45,6 +45,21 @@ export const MAX_FILES_PER_SKILL = 100;
  * makes "somebody read every line" a claim the Reviewed tier can actually make,
  * and it is why no image, archive or document format appears here.
  */
+/** Repository furniture, not skill content.
+ *
+ *  A skill copied out of its own repository arrives with the repository's own
+ *  files beside it — `LICENSE`, `.gitignore`, `.gitattributes`. They have no
+ *  extension, so the allowlist below rejects them, which is correct for a skill
+ *  directory and useless as an answer to somebody importing a repository: every
+ *  repository has them, and none of them belong in the skill.
+ *
+ *  A submission path can use this to leave them behind and say so. It is not a
+ *  second allowlist — anything with a disallowed *extension* still fails.
+ */
+export function isRepositoryFurniture(path: string): boolean {
+  return extname(path) === "";
+}
+
 export const ALLOWED_SUFFIXES = new Set([
   ".md", ".txt", ".yml", ".yaml", ".json", ".toml", ".csv", ".tsv",
   ".py", ".sh", ".bash", ".js", ".mjs", ".ts", ".sql", ".jinja", ".j2",

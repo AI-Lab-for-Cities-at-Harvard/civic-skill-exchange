@@ -84,6 +84,20 @@ def build_provenance(meta: dict) -> dict:
     }
 
 
+def source_of(meta: dict) -> dict | None:
+    """The upstream a copy was taken from, or None when there is not one.
+
+    A commit without a repository is dropped rather than published: it names a
+    point in a history nobody can find. rules.ts rejects that combination, so
+    reaching here means the skill predates the rule or was written by hand.
+    """
+    repo = meta.get("civic.source-repo")
+    if not repo:
+        return None
+    commit = meta.get("civic.source-commit")
+    return {"repo": repo, "commit": commit} if commit else {"repo": repo, "commit": None}
+
+
 def normalize_tools(value) -> list[str]:
     if value is None:
         return []
@@ -167,6 +181,13 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "use_when": meta.get("civic.use-when"),
         "avoid_when": meta.get("civic.avoid-when"),
         "maintainer": meta.get("civic.maintainer"),
+        # Where an imported copy came from (#63). An object or null, rather than
+        # two keys that are usually null, so the site tests one thing.
+        #
+        # Published, never resolved. The registry holds the content — that is
+        # what the SHA pin, the weekly re-scan and the archive all work against
+        # — and a listing stays valid when its upstream is deleted or renamed.
+        "source": source_of(meta),
         "sha": sha,
         "has_scripts": (skill_dir / "scripts").is_dir(),
         "script_files": sorted(

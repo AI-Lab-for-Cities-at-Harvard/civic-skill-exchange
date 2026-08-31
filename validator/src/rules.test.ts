@@ -1,5 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { checkFrontmatter, checkLocalization, checkProvenance, quarantineExtensions } from "./rules";
+import {
+  checkFrontmatter,
+  checkLocalization,
+  checkProvenance,
+  quarantineExtensions,
+  checkSource,
+} from "./rules";
 import type { Finding, Frontmatter, RuleContext } from "./types";
 
 const CATEGORIES = ["budget-finance", "benefits-eligibility", "plain-language-accessibility"];
@@ -297,5 +303,60 @@ describe("quarantineExtensions", () => {
   it("leaves a spec-only frontmatter untouched", () => {
     const { moved } = quarantineExtensions(front());
     expect(moved).toEqual([]);
+  });
+});
+
+/** Where an imported skill came from (#63, and the half of #62 it answers).
+ *
+ *  The registry holds the content — that is what keeps the SHA pin, the weekly
+ *  re-scan and the download working. These two fields say where the copy came
+ *  from, so a reader can go and look upstream, without the listing depending on
+ *  that repository still existing.
+ *
+ *  Both optional. A skill written here has no upstream, and a hand-written one
+ *  should never be pushed toward inventing a value.
+ */
+describe("checkSource", () => {
+  it("accepts a skill with no upstream at all", () => {
+    expect(checkSource({})).toEqual([]);
+  });
+
+  it("accepts owner/repo with a full commit SHA", () => {
+    expect(checkSource({
+      "civic.source-repo": "sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill",
+      "civic.source-commit": "a".repeat(40),
+    })).toEqual([]);
+  });
+
+  it("rejects a repo that is not owner/name", () => {
+    for (const bad of [
+      "https://github.com/a/b",   // a URL, not a slug
+      "justanowner",
+      "a/b/c",
+      "a b/c",
+    ]) {
+      expect(checkSource({ "civic.source-repo": bad })).toHaveLength(1);
+    }
+  });
+
+  it("rejects a short or non-hex commit", () => {
+    // With a repo present, so this isolates the commit's own format.
+    for (const bad of ["a".repeat(7), "z".repeat(40), "A".repeat(40)]) {
+      expect(checkSource({
+        "civic.source-repo": "owner/name", "civic.source-commit": bad,
+      })).toHaveLength(1);
+    }
+  });
+
+  it("will not take a commit without the repository it came from", () => {
+    // A bare SHA points at nothing anyone can resolve.
+    const findings = checkSource({ "civic.source-commit": "a".repeat(40) });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe("civic.source-commit");
+  });
+
+  it("allows a repository without a commit", () => {
+    // Worth less, and still worth recording — it names where to look.
+    expect(checkSource({ "civic.source-repo": "owner/name" })).toEqual([]);
   });
 });

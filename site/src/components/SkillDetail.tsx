@@ -184,6 +184,24 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
               {detail.sha && (
                 <div><dt>Commit</dt><dd className="mono">{detail.sha.slice(0, 12)}</dd></div>
               )}
+              {detail.source && (
+                /* Where the copy came from. The registry holds the content —
+                   this is provenance, and the listing does not depend on that
+                   repository still existing. */
+                <div data-testid="source">
+                  <dt>Copied from</dt>
+                  <dd>
+                    <a href={`https://github.com/${detail.source.repo}${
+                      detail.source.commit ? `/tree/${detail.source.commit}` : ""
+                    }`}>
+                      {detail.source.repo}
+                    </a>
+                    {detail.source.commit && (
+                      <span className="mono"> @ {detail.source.commit.slice(0, 7)}</span>
+                    )}
+                  </dd>
+                </div>
+              )}
             </dl>
           </section>
 

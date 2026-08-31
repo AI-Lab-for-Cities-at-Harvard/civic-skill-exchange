@@ -71,6 +71,8 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
       deployedAt: text(meta["civic.deployed-at"]),
       deployedIn: text(meta["civic.deployed-in"]),
       deployedSince: text(meta["civic.deployed-since"]),
+      sourceRepo: text(meta["civic.source-repo"]),
+      sourceCommit: text(meta["civic.source-commit"]),
     },
   };
 }

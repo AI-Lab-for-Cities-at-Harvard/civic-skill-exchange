@@ -9,6 +9,9 @@ import {
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
 import { checkGitHubUser, type UserCheck } from "../lib/github";
+import {
+  importFromRepo, FAILURE_MESSAGES, type ImportResult,
+} from "../lib/import";
 import { CATEGORY_LABELS } from "../lib/labels";
 import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
@@ -137,10 +140,14 @@ export function Submit(
   // shown rather than imposed.
   const [typedName, setTypedName] = useState("");
   const [pasted, setPasted] = useState("");
-  const [archive, setArchive] =
-    useState<{ name: string; files: number; structural: Finding[] } | null>(null);
+  const [archive, setArchive] = useState<{
+    name: string; files: number; structural: Finding[]; left: string[];
+  } | null>(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
+  const [repoUrl, setRepoUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [imported, setImported] = useState<ImportResult | null>(null);
   const [copied, setCopied] = useState(false);
 
   const set = (key: keyof Draft) => (value: string) =>
@@ -194,19 +201,55 @@ export function Submit(
     setNotes([...problems, ...readProblems]);
   };
 
+  const onImport = async () => {
+    setImporting(true);
+    setImported(null);
+    const out = await importFromRepo(repoUrl);
+    setImporting(false);
+    if ("kind" in out) {
+      setArchive(null);
+      setNotes([FAILURE_MESSAGES[out.kind]]);
+      return;
+    }
+    setImported(out);
+    setArchive({
+      name: `${out.ref.owner}/${out.ref.repo}`,
+      files: out.entries.length,
+      // Left out is not the same as wrong. Repository furniture and oversized
+      // files are named so nothing vanishes quietly, but only real structural
+      // findings stop the hand-off.
+      left: out.skipped,
+      structural: checkStructureCore(out.entries),
+    });
+    // Fill from the file, then stamp on where this copy came from and the
+    // commit it was taken at.
+    const { draft: parsed, problems } = draftFromSkillMd(out.skillMd, out.ref.owner);
+    if (problems.length === 0) {
+      setDraft({
+        ...parsed,
+        name: slugify(parsed.name),
+        sourceRepo: `${out.ref.owner}/${out.ref.repo}`,
+        sourceCommit: out.commit,
+      });
+      setTypedName(parsed.name);
+    }
+    setNotes(problems);
+  };
+
   const onFile = async (file: File | undefined) => {
     if (!file) return;
     try {
       const read = readSkillZip(new Uint8Array(await file.arrayBuffer()));
-      const structural = [
-        ...read.problems.map((message) => ({ where: file.name, message })),
-        ...checkStructureCore(read.entries),
-      ];
-      setArchive({ name: file.name, files: read.entries.length, structural });
+      setArchive({
+        name: file.name, files: read.entries.length,
+        left: read.problems,
+        structural: checkStructureCore(read.entries),
+      });
       if (read.skillMd) load(read.skillMd);
     } catch {
       setArchive({
         name: file.name, files: 0,
+        left: [],
         structural: [{ where: file.name, message: "This file could not be read as a zip archive." }],
       });
     }
@@ -283,7 +326,36 @@ export function Submit(
             <strong>Code &rarr; Download ZIP</strong> gives you the file to drop.
           </p>
 
-          <Field id="archive" label="Upload the skill folder as a .zip" findings={[]}
+          <Field
+            id="repo" label="Your skill's GitHub repository" findings={[]}
+            hint="Public repositories only. We read the file list and SKILL.md and copy them in — the listing records where the copy came from."
+          >
+            <span className="submit__row">
+              <input
+                id="repo" className="input" value={repoUrl}
+                placeholder="github.com/you/your-skill"
+                onChange={(e) => setRepoUrl(e.target.value)}
+              />
+              <button
+                className="btn" onClick={onImport}
+                disabled={importing || repoUrl.trim() === ""}
+                data-testid="import"
+              >
+                {importing ? "Reading…" : "Read it"}
+              </button>
+            </span>
+          </Field>
+
+          {imported && (
+            <p className="submit__ok" data-testid="imported">
+              Read {imported.entries.length} file
+              {imported.entries.length === 1 ? "" : "s"} from{" "}
+              <code>{imported.ref.owner}/{imported.ref.repo}</code> at{" "}
+              <code>{imported.commit.slice(0, 7)}</code>.
+            </p>
+          )}
+
+          <Field id="archive" label="Or upload the skill folder as a .zip" findings={[]}
             hint="Unpacked in your browser. It is not sent anywhere.">
             <input
               id="archive" type="file" accept=".zip,application/zip" className="input"
@@ -311,8 +383,15 @@ export function Submit(
                 <strong>{archive.name}</strong> — {archive.files} file
                 {archive.files === 1 ? "" : "s"}.
               </p>
+              {archive.left.length > 0 && (
+                /* Left out is not the same as wrong. Named so nothing vanishes
+                   quietly, but these do not stop the hand-off. */
+                <ul className="submit__findings" data-testid="left-out">
+                  {archive.left.map((m) => <li key={m}>{m}</li>)}
+                </ul>
+              )}
               {archive.structural.length === 0 ? (
-                <p className="submit__ok">Nothing to fix.</p>
+                <p className="submit__ok">Nothing else to fix.</p>
               ) : (
                 <ul className="submit__findings">
                   {archive.structural.map((f) => (

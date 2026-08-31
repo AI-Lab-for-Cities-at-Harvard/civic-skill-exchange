@@ -23,7 +23,7 @@ interface Schema {
   properties: {
     metadata: {
       required: string[];
-      properties: Record<string, { enum?: string[]; maxLength?: number }>;
+      properties: Record<string, { enum?: string[]; maxLength?: number; pattern?: string }>;
     };
   } & Record<string, unknown>;
 }
@@ -88,5 +88,25 @@ describe("the category vocabulary is well formed", () => {
   it("has no duplicate ids", () => {
     const ids = doc.categories.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+/** The published schema and rules.ts have to agree about the source fields, or
+ *  a submission passes one and fails the other. */
+describe("the source fields", () => {
+  it("are both optional", () => {
+    for (const field of ["civic.source-repo", "civic.source-commit"]) {
+      expect(schema.properties.metadata.required).not.toContain(field);
+      expect(metaProps[field]).toBeDefined();
+    }
+  });
+
+  it("carry the same patterns rules.ts enforces", () => {
+    const repo = metaProps["civic.source-repo"]?.pattern;
+    const commit = metaProps["civic.source-commit"]?.pattern;
+    expect(new RegExp(repo!).test("owner/name")).toBe(true);
+    expect(new RegExp(repo!).test("https://github.com/owner/name")).toBe(false);
+    expect(new RegExp(commit!).test("a".repeat(40))).toBe(true);
+    expect(new RegExp(commit!).test("a".repeat(7))).toBe(false);
   });
 });

@@ -156,6 +156,47 @@ export function checkFit(meta: Record<string, unknown>): Finding[] {
   return findings;
 }
 
+/** Where an imported copy came from.
+ *
+ *  The registry holds the content, always — that is what keeps the SHA pin, the
+ *  weekly re-scan and the published archive working, and none of them can work
+ *  against a repository we do not control. These two fields record the origin
+ *  of the copy so a reader can go and look, and so nothing has to be guessed
+ *  later about which upstream a listing came from.
+ *
+ *  Deliberately inert: nothing in the build reads them, nothing fetches them,
+ *  and a listing stays valid when its upstream is deleted. They are provenance,
+ *  not a link.
+ *
+ *  Both optional. A skill written here has no upstream, and a hand-written one
+ *  must never be pushed toward inventing a value.
+ */
+const SOURCE_REPO_RE = /^[A-Za-z0-9][\w.-]*\/[\w.-]+$/;
+const SOURCE_COMMIT_RE = /^[0-9a-f]{40}$/;
+
+export function checkSource(meta: Record<string, unknown>): Finding[] {
+  const findings: Finding[] = [];
+  const repo = str(meta["civic.source-repo"]);
+  const commit = str(meta["civic.source-commit"]);
+
+  if (repo && !SOURCE_REPO_RE.test(repo)) {
+    findings.push(finding("civic.source-repo",
+      `'${repo}' should be owner/repository, not a URL`));
+  }
+  if (commit && !SOURCE_COMMIT_RE.test(commit)) {
+    findings.push(finding("civic.source-commit",
+      "civic.source-commit must be a full 40-character lowercase commit SHA. " +
+      "A short SHA stops being unique as a repository grows."));
+  }
+  // A commit with no repository names a point in a history nobody can find.
+  if (commit && !repo) {
+    findings.push(finding("civic.source-commit",
+      "civic.source-commit needs civic.source-repo — a commit on its own " +
+      "cannot be resolved to anything"));
+  }
+  return findings;
+}
+
 /** Move non-spec top-level fields into metadata instead of rejecting them.
  *  Some agent tools accept roughly twenty fields beyond the spec's six, and
  *  rejecting those would reject otherwise-working skills. */
@@ -248,6 +289,7 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   findings.push(...checkProvenance(metadata));
   findings.push(...checkLocalization(metadata));
   findings.push(...checkFit(metadata));
+  findings.push(...checkSource(metadata));
 
   return findings;
 }

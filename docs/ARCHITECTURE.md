@@ -157,6 +157,26 @@ other than `none` must name both `deployed-at` and `deployed-in`.
 Provenance plays no part in deriving tier. It is context for a human deciding
 whether to adopt a skill, not a security signal.
 
+### Where an imported copy came from
+
+`civic.source-repo` and `civic.source-commit` record the repository a skill was
+copied in from, and the commit it was taken at. Both optional: a skill written
+here has no upstream. The submission page fills them when someone imports from
+GitHub. They surface in the index as `source`, an object or `null`.
+
+**The registry always holds the content.** That is what the SHA pin, the weekly
+re-scan and the published archive work against, and none of them could work
+against a repository this project does not control.
+
+So these fields are provenance, not a link. Nothing in the build resolves them,
+fetches them or compares against them, and a listing stays valid when its
+upstream is deleted, renamed or made private. A commit without a repository is
+rejected — it names a point in a history nobody can find.
+
+Whether a listing may instead *point at* an external repository, holding no copy
+of its own, is a different question and a much larger one. It is a spike:
+[#62](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/62).
+
 ---
 
 ## Categories
@@ -233,6 +253,7 @@ An index entry, with every field the build actually emits:
   "use_when": "A resident asks why their permit is stuck and the status codes...",
   "avoid_when": "Not for appeals or variance questions — it explains a status...",
   "maintainer": "City of X, Department of Building Safety",
+  "source": null,
   "provenance": {
     "self_reported": true,
     "affiliation": "government",

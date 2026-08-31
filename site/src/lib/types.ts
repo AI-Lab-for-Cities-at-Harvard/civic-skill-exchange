@@ -28,6 +28,10 @@ export interface Skill {
   use_when: string | null;
   avoid_when: string | null;
   maintainer: string | null;
+  /** Where an imported copy came from. Null when the skill was written here.
+   *  Provenance, not a link — nothing resolves it, and the listing survives the
+   *  upstream being deleted. */
+  source: { repo: string; commit: string | null } | null;
   provenance: Provenance;
   tier: Tier;
   reason: string;
