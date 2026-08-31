@@ -1,0 +1,20 @@
+# Pinned SHAs stop moving. So do the security fixes in them — which is why
+# pinning without an update path trades a mutable ref for a stale one.
+#
+# Dependabot reads the `@<sha> # <version>` form in .github/workflows/, opens a
+# pull request per action, and rewrites both the SHA and the comment. Reviewing
+# one means checking that the comment moved to the next release of the same
+# action, and that the SHA resolves to that tag.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # One pull request rather than eight. These move together and are reviewed
+    # together; eight separate PRs is how a bump gets rubber-stamped.
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci

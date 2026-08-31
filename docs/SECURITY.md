@@ -135,9 +135,25 @@ request, and a check that is always red is a check nobody reads.
 1. **`pull_request`, never `pull_request_target`,** for anything that runs on untrusted content. `pull_request_target` executes in the trusted base-branch context with access to secrets — the classic pwn-request surface.
 2. **No secrets in any job that reads skill content.** Split privileged work into a separate `workflow_run` job.
 3. **Never `${{ }}`-interpolate event text into a model prompt.** If a model ever enters this pipeline, it must read untrusted text from a file or an environment variable.
-4. **Pin actions by commit SHA,** not by tag. Tags move.
+4. **Pin actions by commit SHA,** not by tag. Tags move, and whoever controls a tag controls what runs in CI — including the job that holds `pull-requests: write` and the one that deploys the site. Every `uses:` carries a full 40-character SHA and a trailing `# vN.N.N` comment saying which release it is. `tests/test_workflows.py` fails if an unpinned ref, a bare SHA, or a "pin this later" comment appears.
 5. **`persist-credentials: false`** on checkout.
 6. **CODEOWNER approval** for anything outside `skills/`, and for promotion into the Reviewed tier.
+
+### Keeping the pins current
+
+Pinning without an update path trades a mutable ref for a stale one: the SHAs
+stop moving, and so do the security fixes in them. `.github/dependabot.yml`
+watches `github-actions` weekly and opens one grouped pull request.
+
+Reviewing one is two checks: the trailing comment moved to the next release of
+the *same* action, and the new SHA is what that tag actually points at.
+
+```
+git ls-remote https://github.com/actions/checkout.git 'refs/tags/v4.4.0^{}'
+```
+
+The `^{}` matters — without it an annotated tag returns the tag object's SHA
+rather than the commit's, and the two will not match what the workflow needs.
 
 ### Repository settings
 
