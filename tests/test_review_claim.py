@@ -134,3 +134,38 @@ def test_the_ledger_pr_is_never_described_as_two_person_control() -> None:
     control = re.compile(r"two[- ]person control", re.I)
     for rel in ("docs/SECURITY.md", "docs/TIERS.md", "docs/REVIEW.md", ".github/CODEOWNERS"):
         assert not _unnegated(_text(rel), control), rel
+
+
+def test_the_waiting_period_records_its_exception() -> None:
+    """ADR 0002 ruling 5: the Lab does not observe the 30-day period on
+    `civic-skills`. TIERS.md has to state the period, the exception, and what
+    the exception costs — an exception with no stated cost reads as a tidy-up
+    rather than a trade."""
+    text = _text("docs/TIERS.md")
+    # In the paragraph that states the period, not merely somewhere in the file:
+    # `civic-skills` is named elsewhere for self-review, and a match there would
+    # pass this test while promotion step 2 still read as absolute.
+    para = next(p for p in text.split("\n\n") if "30 days" in p)
+    assert "civic-skills" in para, "the exempt namespace is not named beside the period"
+    assert "re-scan" in para, "what the exception costs is not stated beside it"
+
+
+def test_the_issue_template_does_not_ask_for_a_false_affirmation() -> None:
+    """The period is a required checkbox, not enforced in code. A Lab submitter
+    reviewing on day one would have to tick something untrue unless the label
+    carries the exception."""
+    text = _text(".github/ISSUE_TEMPLATE/review-request.yml")
+    line = next(l for l in text.splitlines() if "30 days" in l)
+    assert "civic-skills" in line, (
+        f"the eligibility checkbox still reads {line.strip()!r} with no exception"
+    )
+
+
+def test_the_exception_is_confined_to_the_reserved_namespace() -> None:
+    """It applies to the namespace the Lab controls and can re-scan on demand,
+    and to nothing else."""
+    for rel in ("docs/TIERS.md", ".github/ISSUE_TEMPLATE/review-request.yml"):
+        for line in _text(rel).splitlines():
+            if "30 days" in line and "civic-skills" in line:
+                assert not re.search(r"any namespace|all namespaces|every namespace",
+                                     line, re.I), rel
