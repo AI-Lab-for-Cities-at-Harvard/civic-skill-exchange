@@ -184,9 +184,36 @@ Before touching a workflow, re-read the CI hardening section of
 
 - [ ] `pytest` passes
 - [ ] `npx tsx validator/src/cli.ts all` and `python scripts/scan.py all` pass
+- [ ] `npm test --prefix site` passes, which includes the accessibility gates
 - [ ] New behaviour has a test that fails without the change
 - [ ] Docs updated if you changed the contract contributors rely on
 - [ ] Security-sensitive changes flagged in the description
+
+## Accessibility
+
+Not a pass anyone does once. Three gates run with the site's ordinary tests, so
+a regression fails the pull request that caused it:
+
+| What | Where | Covers |
+|---|---|---|
+| **axe** | `src/components/a11y.test.tsx`, `src/App.a11y.test.tsx` | Names, roles, labels, landmarks, heading order — per component and over the whole document |
+| **Contrast** | `src/styles/contrast.test.ts` | Every foreground/background pair in every theme, computed from `tokens.css` |
+| **Keyboard** | `src/keyboard.test.tsx` | Tab order, the skip link, native disclosures, nothing reachable by pointer alone |
+| **Responsive** | `src/styles/responsive.test.ts` | Viewport meta, no fixed pixel widths, wide content scrolls in its own box |
+
+**axe's colour-contrast rule is switched off in the harness**, deliberately. It
+needs layout and jsdom has none, so it returns "incomplete" rather than a
+result. `contrast.test.ts` covers the same ground from the other end: it parses
+`tokens.css`, resolves each theme, composites the `rgba` text colours over their
+grounds, and computes the WCAG ratio. That is what caught form-control borders
+sitting at 2.35:1 against a 3:1 requirement.
+
+The axe harness has its own tests, in the same file, that feed it a bare
+`<input>` and an `<img>` with no alt. A harness reporting nothing because it is
+misconfigured looks exactly like a clean codebase.
+
+What none of this covers: whether the page is *comprehensible*. Run it and use
+it with the keyboard.
 
 ## The site
 

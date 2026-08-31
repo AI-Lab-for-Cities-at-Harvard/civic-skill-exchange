@@ -46,11 +46,11 @@ export function About() {
               commit against a published checklist and put its name on it.
             </p>
             <p className="tier-card__warn">
-              <strong>One reader, and it is us.</strong> This is the Lab saying
-              it looked, not an independent audit — and where the Lab wrote the
-              skill as well, the listing says so. It is a smaller claim than two
-              readers from separate organizations would be, and it is one we can
-              actually make.
+              <strong>One reader, and it is us.</strong> Nobody outside the Lab
+              has read it, and where the Lab wrote the skill as well, the
+              listing says so. It is a smaller claim than two readers from
+              separate organizations would be, and it is one we can actually
+              make.
             </p>
             <p>
               The attestation is pinned to a <strong>content hash</strong>. If
@@ -130,25 +130,41 @@ export function About() {
       </section>
 
       <section className="prose__block">
-        <h2 className="h2">What we check, and what we don't</h2>
+        <h2 className="h2">What we check, and what we don&rsquo;t</h2>
         <p>
-          Submissions pass through layered checks — structure and schema,
-          namespace ownership, then signature scanning for the patterns that
-          matter: shell commands that execute before a model reads the file,
-          unrestricted tool grants, and credential access.
+          Every submission goes through automated checks. They confirm the skill
+          is well formed, that it was submitted into its author&rsquo;s own
+          folder, and they scan for a set of known problems: commands that run
+          before the model has read the file, unrestricted tool access, and code
+          that reaches for credentials.
         </p>
         <p>
-          <strong>Signature scanning is triage, not a gate.</strong> Published
-          bypass rates against skill scanners are substantial. A clean scan means
-          no known-bad signal matched — it does not mean a skill is safe.
+          <strong>These checks find known problems. They cannot tell you a skill
+          is safe.</strong> Scanners of this kind are well documented as
+          possible to evade, so a clean result means only that nothing on the
+          list matched.
         </p>
         <p>
-          Three things worth knowing before you run any skill, from any source:
-          skills can bundle scripts the agent <em>executes</em> rather than
-          reads; the <code>allowed-tools</code> field grants tool access without
-          prompting you; and delisting a skill here does not un-ship it from
-          anyone who already cloned it.
+          A review is a different thing. Someone reads the whole skill and
+          checks that what it does matches what it says it does. That is the
+          question no scanner can answer, and it is why the Reviewed tier
+          exists.
         </p>
+        <p>Three things to know before you run any skill, from anywhere:</p>
+        <ul className="plain-list">
+          <li>
+            Skills can include scripts your agent <em>runs</em>, not only text
+            it reads.
+          </li>
+          <li>
+            The <code>allowed-tools</code> field gives a skill access to tools
+            without asking you first.
+          </li>
+          <li>
+            Removing a skill from this catalog does not remove it from anyone
+            who already downloaded it.
+          </li>
+        </ul>
         <p>
           <a className="arrow-link" href={`${REPO}/blob/main/docs/SECURITY.md`}>
             Security model and how to report a problem{" "}

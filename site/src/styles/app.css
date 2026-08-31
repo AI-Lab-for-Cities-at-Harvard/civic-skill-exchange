@@ -698,3 +698,8 @@ a:hover { color: var(--c-spot); }
 .submit__row { display: flex; flex-wrap: wrap; gap: var(--gap-2); align-items: stretch; }
 .submit__row .input { flex: 1 1 18rem; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Three short statements read better as three lines than as one sentence with
+   semicolons holding it together. */
+.plain-list { margin: 0 0 var(--gap-4); padding-left: var(--gap-5); max-width: 66ch; }
+.plain-list li { margin-bottom: var(--gap-3); line-height: 1.65; }
