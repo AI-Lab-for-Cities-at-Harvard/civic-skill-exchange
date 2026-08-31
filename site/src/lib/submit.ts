@@ -119,6 +119,26 @@ export function repoSlug(repoUrl: string): string {
   return repoUrl.replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
 }
 
+/** Turn what somebody typed into a name the registry accepts.
+ *
+ *  rules.ts requires lowercase words joined by single hyphens, and a real skill
+ *  is usually not named that way — a repository called
+ *  `Civic-Analytics-Agent-Workflow-Claude-Skill` is a valid name everywhere
+ *  else. Rejecting that is the form making its own rule the submitter's
+ *  problem, so it converts instead and shows what it produced.
+ *
+ *  Applied to the value used, never to the box being typed in: rewriting text
+ *  under the cursor eats a hyphen the moment it is typed. */
+export function slugify(input: string): string {
+  return input
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g, "")  // café → cafe
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 64)
+    .replace(/-+$/, "");  // the slice may have landed mid-word
+}
+
 export function skillPath(draft: Draft): string {
   return `skills/${trim(draft.author)}/${trim(draft.name)}`;
 }

@@ -4,7 +4,7 @@ import {
 } from "@civic-skill-exchange/validator";
 import {
   EMPTY_DRAFT, toFrontmatter, toYaml, newFileUrl, editUrl, uploadUrl, mailtoUrl,
-  fitsInUrl, skillPath, type Draft,
+  fitsInUrl, skillPath, slugify, type Draft,
 } from "../lib/submit";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
@@ -131,6 +131,10 @@ export function Submit(
   },
 ) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  // What was typed, kept beside the slug it becomes. Rewriting the box under
+  // the cursor would eat a hyphen the moment it is typed, so the conversion is
+  // shown rather than imposed.
+  const [typedName, setTypedName] = useState("");
   const [pasted, setPasted] = useState("");
   const [archive, setArchive] =
     useState<{ name: string; files: number; structural: Finding[] } | null>(null);
@@ -168,7 +172,10 @@ export function Submit(
 
   const load = (source: string, problems: string[] = []) => {
     const { draft: parsed, problems: readProblems } = draftFromSkillMd(source, draft.author);
-    if (readProblems.length === 0) setDraft(parsed);
+    if (readProblems.length === 0) {
+      setDraft({ ...parsed, name: slugify(parsed.name) });
+      setTypedName(parsed.name);
+    }
     setNotes([...problems, ...readProblems]);
   };
 
@@ -251,11 +258,15 @@ export function Submit(
 
       {mode === "new" && (
         <>
-        {/* First, because most people arrive with a skill already written and
-            should not retype it. */}
+        {/* Upload and paste first, because most people arrive with a skill
+            already written and should not retype it. */}
         <section className="prose__block">
-          <h2 className="h2">Already have one?</h2>
-          <p>Drop it here and the rest of this page fills itself in.</p>
+          <h2 className="h2">Submit a new skill</h2>
+          <p>
+            Already have one? Drop it here and the rest of this page fills
+            itself in. If your skill lives in its own repository, GitHub&rsquo;s{" "}
+            <strong>Code &rarr; Download ZIP</strong> gives you the file to drop.
+          </p>
 
           <Field id="archive" label="Upload the skill folder as a .zip" findings={[]}
             hint="Unpacked in your browser. It is not sent anywhere.">
@@ -313,10 +324,23 @@ export function Submit(
               onChange={onInput("author")} autoComplete="off" />
           </Field>
 
-          <Field id="name" label="Skill name" findings={findings}
-            hint="Lowercase, with hyphens instead of spaces — permit-status-explainer, not Permit Status Explainer.">
-            <input id="name" className="input" value={draft.name} onChange={onInput("name")}
-              placeholder="permit-status-explainer" />
+          <Field
+            id="name" label="Skill name" findings={findings}
+            hint={
+              draft.name && draft.name !== typedName.trim()
+                ? <>Listed as <code>{draft.name}</code> — names are lowercase with
+                    hyphens instead of spaces.</>
+                : "Type it however you like; we will tidy the spacing and capitals."
+            }
+          >
+            <input
+              id="name" className="input" value={typedName}
+              placeholder="Permit Status Explainer"
+              onChange={(e) => {
+                setTypedName(e.target.value);
+                set("name")(slugify(e.target.value));
+              }}
+            />
           </Field>
 
           <Field id="description" label="Description" findings={findings}
@@ -498,6 +522,11 @@ export function Submit(
           Choose it and we will show you what to add. You paste two lines into
           the file on GitHub, and nothing else changes.
         </p>
+        {skills.length === 0 && (
+          <p className="submit__note" data-testid="nothing-listed">
+            Nothing is listed here yet.
+          </p>
+        )}
         <label className="field__label" htmlFor="add">Your skill</label>
         <select
           id="add" className="select" value={add ?? ""}
@@ -525,9 +554,9 @@ export function Submit(
         )}
 
         <p className="submit__note">
-          Changing anything else about a skill?{" "}
-          <a href={submitHref("new")}>Start from the other side</a> — or edit the
-          file on GitHub directly.
+          Not finding it? Only skills already in this catalog appear here. If
+          yours is not listed yet,{" "}
+          <a href={submitHref("new")}>submit it as a new skill</a> first.
         </p>
       </section>
       )}

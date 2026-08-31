@@ -10,7 +10,8 @@
 
 import { describe, it, expect } from "vitest";
 import {
-  toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, repoSlug, URL_BUDGET,
+  toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, repoSlug, slugify,
+  URL_BUDGET,
   fitsInUrl,
   EMPTY_DRAFT,
   type Draft,
@@ -193,5 +194,42 @@ describe("mailtoUrl — the path for somebody without a GitHub account", () => {
   it("is held to the same length budget, because mail clients truncate quietly", () => {
     const big = draft({ useWhen: "x".repeat(8000) });
     expect(fitsInUrl(mailtoUrl("w@e.test", big, toYaml(toFrontmatter(big))))).toBe(false);
+  });
+});
+
+describe("slugify — meeting submitters where their skills are named", () => {
+  it("lowercases a real repository name", () => {
+    expect(slugify("Civic-Analytics-Agent-Workflow-Claude-Skill"))
+      .toBe("civic-analytics-agent-workflow-claude-skill");
+  });
+
+  it("turns spaces into hyphens", () => {
+    expect(slugify("Permit Status Explainer")).toBe("permit-status-explainer");
+  });
+
+  it("handles underscores and other separators", () => {
+    expect(slugify("permit_status.explainer")).toBe("permit-status-explainer");
+  });
+
+  it("collapses runs and trims the ends", () => {
+    expect(slugify("  --Permit  //  Status--  ")).toBe("permit-status");
+  });
+
+  it("strips accents rather than dropping the letter", () => {
+    expect(slugify("Café Résumé")).toBe("cafe-resume");
+  });
+
+  it("holds the 64-character cap, and does not end mid-hyphen", () => {
+    const out = slugify("a".repeat(60) + " bbbbbbbbbb");
+    expect(out.length).toBeLessThanOrEqual(64);
+    expect(out.endsWith("-")).toBe(false);
+  });
+
+  it("gives back nothing when there was nothing usable", () => {
+    expect(slugify("!!!")).toBe("");
+  });
+
+  it("leaves an already-valid name untouched", () => {
+    expect(slugify("permit-status-explainer")).toBe("permit-status-explainer");
   });
 });

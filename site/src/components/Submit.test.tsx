@@ -66,8 +66,8 @@ describe("Submit — findings report, and do not block", () => {
   it("attaches a finding to the field that caused it", async () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
-    await user.type(screen.getByLabelText(/^Skill name/i), "Not A Valid Name");
-    expect(screen.getByText(/lowercase alphanumeric words/i)).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/Description/i), "too short");
+    expect(screen.getByText(/at least 40 characters/i)).toBeInTheDocument();
   });
 
   it("leaves the hand-off usable with findings outstanding", async () => {
@@ -271,5 +271,58 @@ describe("Submit — moving between the two modes", () => {
     render(<Submit repo={REPO} skills={[]} mode="update" />);
     expect(screen.queryByText(/community skill until it is reviewed/i))
       .not.toBeInTheDocument();
+  });
+});
+
+
+/** A skill is rarely named the way the registry stores names. A repository
+ *  called Civic-Analytics-Agent-Workflow-Claude-Skill is a perfectly ordinary
+ *  name, and rejecting it would be the form making its own rule the
+ *  submitter's problem. */
+describe("Submit — the skill name", () => {
+  it("accepts a real repository name and converts it", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/^Skill name/i),
+      "Civic-Analytics-Agent-Workflow-Claude-Skill");
+    expect(screen.getByTestId("yaml").textContent)
+      .toContain('name: "civic-analytics-agent-workflow-claude-skill"');
+  });
+
+  it("shows what the name became, rather than silently changing it", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/^Skill name/i), "Permit Status Explainer");
+    // In the hint beside the field, not only buried in the YAML further down.
+    // Exact, so the YAML block further down — whose full text is the whole
+    // document — is not also a match.
+    expect(screen.getByText("permit-status-explainer", { selector: "code" }))
+      .toBeInTheDocument();
+  });
+
+  it("leaves the box exactly as it was typed", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    const box = screen.getByLabelText(/^Skill name/i);
+    await user.type(box, "Permit Status Explainer");
+    // Rewriting under the cursor eats a hyphen the moment it is typed.
+    expect(box).toHaveValue("Permit Status Explainer");
+  });
+
+  it("raises no complaint about a name it converted itself", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/^Skill name/i), "Permit Status Explainer");
+    expect(screen.queryByText(/lowercase alphanumeric/i)).not.toBeInTheDocument();
+  });
+
+  it("puts the converted name in the GitHub path", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await user.type(screen.getByLabelText(/^Skill name/i),
+      "Civic-Analytics-Agent-Workflow-Claude-Skill");
+    expect(screen.getByTestId("handoff")).toHaveAttribute("href",
+      expect.stringContaining("skills%2Fsgarcese%2Fcivic-analytics-agent-workflow-claude-skill"));
   });
 });
