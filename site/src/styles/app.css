@@ -673,3 +673,23 @@ a:hover { color: var(--c-spot); }
   border-radius: var(--radius); font-size: var(--t-sm);
   color: var(--c-text-light);
 }
+
+/* Two jobs on one page. Segmented rather than a row of links so it reads as a
+   choice between two states, and the current one is filled rather than merely
+   underlined — underline alone is easy to miss above a long form. */
+.modes {
+  display: flex; flex-wrap: wrap; gap: var(--gap-1);
+  margin: var(--gap-5) 0; padding: var(--gap-1);
+  border: 1px solid var(--c-border-light); border-radius: var(--radius);
+  width: fit-content; max-width: 100%;
+}
+.modes__item {
+  padding: 0.4rem 0.9rem; border-radius: var(--radius);
+  font-size: var(--t-sm); font-weight: 600;
+  color: var(--c-text-light); text-decoration: none;
+}
+.modes__item:hover { color: var(--c-text); background: var(--c-button-bg-subtle); }
+.modes__item[aria-current="page"] {
+  background: var(--c-bg-inverse); color: var(--c-solid-inverse);
+}
+.modes__item:focus-visible { outline: 2px solid var(--c-outline); outline-offset: 2px; }

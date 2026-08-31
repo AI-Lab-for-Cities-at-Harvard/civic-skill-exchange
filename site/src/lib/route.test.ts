@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRoute, skillHref, addFieldsHref } from "./route";
+import { parseRoute, skillHref, addFieldsHref, submitHref } from "./route";
 
 describe("parseRoute", () => {
   it("defaults to browse", () => {
@@ -52,22 +52,49 @@ describe("skillHref", () => {
 /** #24: the submission page, and flow 2's deep link into it. */
 describe("the submit route", () => {
   it("parses #/submit", () => {
-    expect(parseRoute("#/submit")).toEqual({ page: "submit" });
+    expect(parseRoute("#/submit")).toEqual({ page: "submit", mode: "new" });
   });
 
   it("carries the skill a maintainer arrived to update", () => {
     expect(parseRoute("#/submit?add=civic-skills/notice-rewriter"))
-      .toEqual({ page: "submit", add: "civic-skills/notice-rewriter" });
+      .toEqual({ page: "submit", mode: "update", add: "civic-skills/notice-rewriter" });
   });
 
   it("ignores an add= that is not a namespaced skill", () => {
     // It becomes a path into GitHub's editor, so a stray value must not travel.
-    expect(parseRoute("#/submit?add=../../etc")).toEqual({ page: "submit" });
-    expect(parseRoute("#/submit?add=nothing")).toEqual({ page: "submit" });
+    expect(parseRoute("#/submit?add=../../etc")).toEqual({ page: "submit", mode: "new" });
+    expect(parseRoute("#/submit?add=nothing")).toEqual({ page: "submit", mode: "new" });
   });
 
   it("builds the link flow 2 uses", () => {
     expect(addFieldsHref("civic-skills", "notice-rewriter"))
       .toBe("#/submit?add=civic-skills%2Fnotice-rewriter");
+  });
+});
+
+/** #24: the page has two jobs — a new skill, and updating one already listed.
+ *  The mode lives in the URL so each is linkable and the back button works. */
+describe("the submit page's two modes", () => {
+  it("defaults to adding a new skill", () => {
+    expect(parseRoute("#/submit")).toEqual({ page: "submit", mode: "new" });
+  });
+
+  it("takes the update mode from the URL", () => {
+    expect(parseRoute("#/submit?mode=update")).toEqual({ page: "submit", mode: "update" });
+  });
+
+  it("implies update mode when a listing was named", () => {
+    // Arriving from a skill page is arriving to update that skill.
+    expect(parseRoute("#/submit?add=civic-skills/notice-rewriter"))
+      .toEqual({ page: "submit", mode: "update", add: "civic-skills/notice-rewriter" });
+  });
+
+  it("falls back to new when the mode is not one we have", () => {
+    expect(parseRoute("#/submit?mode=nonsense")).toEqual({ page: "submit", mode: "new" });
+  });
+
+  it("builds both links", () => {
+    expect(submitHref("new")).toBe("#/submit");
+    expect(submitHref("update")).toBe("#/submit?mode=update");
   });
 });

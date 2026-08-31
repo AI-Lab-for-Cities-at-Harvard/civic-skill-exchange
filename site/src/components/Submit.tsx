@@ -9,13 +9,17 @@ import {
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
 import { CATEGORY_LABELS } from "../lib/labels";
+import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
 
 /** Where a maintainer reads submissions from people without a GitHub account.
- *  A personal address until the project has a dedicated one; changing it is a
- *  one-line edit here. Empty disables the path rather than rendering a broken
- *  link. */
-export const SUBMISSIONS_EMAIL = "sgarces@hbs.edu";
+ *
+ *  Empty on purpose, and the path renders nothing while it is. The project has
+ *  no dedicated inbox yet, and a personal address on a public page is a
+ *  scraping target that cannot be taken back once published. Set this one
+ *  string to switch the path on; mailtoUrl and its tests are already in place.
+ */
+export const SUBMISSIONS_EMAIL = "";
 
 const CATEGORIES = Object.keys(CATEGORY_LABELS);
 
@@ -122,7 +126,9 @@ function Choice(
 }
 
 export function Submit(
-  { repo, skills, add }: { repo: string; skills: Skill[]; add?: string },
+  { repo, skills, mode, add }: {
+    repo: string; skills: Skill[]; mode: SubmitMode; add?: string;
+  },
 ) {
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [pasted, setPasted] = useState("");
@@ -214,254 +220,283 @@ export function Submit(
           Fill this in and we will put it in the right shape for you. It takes a
           few minutes.
         </p>
-        <p className="submit__warn">
-          The skill will be listed as a community skill until it is reviewed.
-        </p>
+
+        {/* Links rather than scripted tabs. Each mode is a real URL, so it can
+            be sent to someone, bookmarked, and reached with the back button —
+            and a skill page linking straight to the update mode needs no extra
+            machinery. */}
+        <nav className="modes" aria-label="What do you want to do?">
+          <a
+            className="modes__item" href={submitHref("new")}
+            aria-current={mode === "new" ? "page" : undefined}
+            data-testid="mode-new"
+          >
+            Add a new skill
+          </a>
+          <a
+            className="modes__item" href={submitHref("update")}
+            aria-current={mode === "update" ? "page" : undefined}
+            data-testid="mode-update"
+          >
+            Update one you already listed
+          </a>
+        </nav>
+
+        {mode === "new" && (
+          <p className="submit__warn">
+            The skill will be listed as a community skill until it is reviewed.
+          </p>
+        )}
       </section>
 
-      {/* First, because most people arrive with a skill already written and
-          should not retype it. */}
-      <section className="prose__block">
-        <h2 className="h2">Already have one?</h2>
-        <p>Drop it here and the rest of this page fills itself in.</p>
+      {mode === "new" && (
+        <>
+        {/* First, because most people arrive with a skill already written and
+            should not retype it. */}
+        <section className="prose__block">
+          <h2 className="h2">Already have one?</h2>
+          <p>Drop it here and the rest of this page fills itself in.</p>
 
-        <Field id="archive" label="Upload the skill folder as a .zip" findings={[]}
-          hint="Unpacked in your browser. It is not sent anywhere.">
-          <input
-            id="archive" type="file" accept=".zip,application/zip" className="input"
-            onChange={(e) => onFile(e.target.files?.[0])}
-          />
-        </Field>
+          <Field id="archive" label="Upload the skill folder as a .zip" findings={[]}
+            hint="Unpacked in your browser. It is not sent anywhere.">
+            <input
+              id="archive" type="file" accept=".zip,application/zip" className="input"
+              onChange={(e) => onFile(e.target.files?.[0])}
+            />
+          </Field>
 
-        <Field id="paste" label="Or paste your SKILL.md" findings={[]}>
-          <textarea
-            id="paste" className="textarea" rows={5} value={pasted}
-            placeholder={"---\nname: my-skill\n..."}
-            onChange={(e) => { setPasted(e.target.value); load(e.target.value); }}
-          />
-        </Field>
+          <Field id="paste" label="Or paste your SKILL.md" findings={[]}>
+            <textarea
+              id="paste" className="textarea" rows={5} value={pasted}
+              placeholder={"---\nname: my-skill\n..."}
+              onChange={(e) => { setPasted(e.target.value); load(e.target.value); }}
+            />
+          </Field>
 
-        {notes.length > 0 && (
-          <ul className="submit__findings" data-testid="parse-notes">
-            {notes.map((n) => <li key={n}>{n}</li>)}
-          </ul>
-        )}
+          {notes.length > 0 && (
+            <ul className="submit__findings" data-testid="parse-notes">
+              {notes.map((n) => <li key={n}>{n}</li>)}
+            </ul>
+          )}
 
-        {archive && (
-          <div className="submit__archive" data-testid="archive-result">
-            <p>
-              <strong>{archive.name}</strong> — {archive.files} file
-              {archive.files === 1 ? "" : "s"}.
+          {archive && (
+            <div className="submit__archive" data-testid="archive-result">
+              <p>
+                <strong>{archive.name}</strong> — {archive.files} file
+                {archive.files === 1 ? "" : "s"}.
+              </p>
+              {archive.structural.length === 0 ? (
+                <p className="submit__ok">Nothing to fix.</p>
+              ) : (
+                <ul className="submit__findings">
+                  {archive.structural.map((f) => (
+                    <li key={`${f.where}${f.message}`}><code>{f.where}</code> {f.message}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {blocked && (
+            <p className="submit__blocked" data-testid="blocked">
+              Fix these before continuing. They cannot be corrected below.
             </p>
-            {archive.structural.length === 0 ? (
-              <p className="submit__ok">Nothing to fix.</p>
+          )}
+        </section>
+
+        <section className="prose__block">
+          <h2 className="h2">About the skill</h2>
+
+          <Field id="namespace" label="Your GitHub username" findings={findings}
+            hint="Your skill goes in your own folder, and only you can write there.">
+            <input id="namespace" className="input" value={draft.author}
+              onChange={onInput("author")} autoComplete="off" />
+          </Field>
+
+          <Field id="name" label="Skill name" findings={findings}
+            hint="Lowercase, with hyphens instead of spaces — permit-status-explainer, not Permit Status Explainer.">
+            <input id="name" className="input" value={draft.name} onChange={onInput("name")}
+              placeholder="permit-status-explainer" />
+          </Field>
+
+          <Field id="description" label="Description" findings={findings}
+            hint="What the skill does, in a couple of sentences. This is what an agent reads to decide whether to use it.">
+            <textarea id="description" className="textarea" rows={3}
+              value={draft.description} onChange={onInput("description")} />
+          </Field>
+
+          <Choice id="civic.category" label="Category" value={draft.category}
+            findings={findings} placeholder="Choose…" onChange={set("category")}
+            options={CATEGORIES.map((c) => [c, CATEGORY_LABELS[c] ?? c])} />
+
+          <Choice id="civic.jurisdiction" label="Where does it apply?"
+            value={draft.jurisdiction} findings={findings} placeholder="Choose…"
+            onChange={set("jurisdiction")} options={WHERE_LABELS} />
+
+          <Choice
+            id="civic.localization"
+            label="Is it set up for one place, or does it work anywhere?"
+            value={draft.localization} findings={findings} onChange={set("localization")}
+            options={[
+              ["localized", "Set up for one place — it has our forms, deadlines and rules in it"],
+              ["generalized", "Works anywhere — the local specifics have been lifted out"],
+            ]}
+            placeholder="Not sure yet"
+            hint={<>
+              <a href="#/about">What this means</a> — a localized skill carries one
+              jurisdiction&rsquo;s specifics; a generalized one has had them taken out so
+              another city can fill in its own.
+            </>}
+          />
+
+          <Choice id="civic.data-sensitivity" label="What data does it touch?"
+            value={draft.dataSensitivity} findings={findings}
+            onChange={set("dataSensitivity")} options={DATA_LABELS} />
+
+          <Choice id="civic.human-review"
+            label="Does what it produces affect anyone's rights or benefits?"
+            value={draft.humanReview} findings={findings}
+            onChange={set("humanReview")} options={EFFECT_LABELS} />
+
+          <Choice id="civic.deployment" label="Have you used it?"
+            value={draft.deployment} findings={findings}
+            onChange={set("deployment")} options={USE_LABELS} />
+
+          <Field id="civic.contact" label="Contact" findings={findings}
+            hint="How someone reaches you about a problem with the skill.">
+            <input id="civic.contact" className="input" value={draft.contact}
+              onChange={onInput("contact")} />
+          </Field>
+
+          <Field id="civic.maintainer" label="Who maintains it?" findings={findings}
+            hint="A person or a team — City of X, Department of Innovation.">
+            <input id="civic.maintainer" className="input" value={draft.maintainer}
+              onChange={onInput("maintainer")} />
+          </Field>
+
+          <Choice id="civic.affiliation" label="What kind of organization?"
+            value={draft.affiliation} findings={findings} placeholder="Choose…"
+            onChange={set("affiliation")} options={ORG_LABELS} />
+        </section>
+
+        <section className="prose__block">
+          <details className="disclosure">
+            <summary className="h2 disclosure__summary">A few optional things</summary>
+
+            <Field id="civic.use-when" label="When is this useful?" findings={findings}>
+              <textarea id="civic.use-when" className="textarea" rows={2}
+                value={draft.useWhen} onChange={onInput("useWhen")} />
+            </Field>
+
+            <Field id="civic.avoid-when" label="When is it not?" findings={findings}
+              hint="The one only you can answer. A skill honest about its limits gets adopted faster.">
+              <textarea id="civic.avoid-when" className="textarea" rows={2}
+                value={draft.avoidWhen} onChange={onInput("avoidWhen")} />
+            </Field>
+
+            <Field id="allowed-tools" label="Tools it needs" findings={findings}
+              hint="Comma separated. These are granted without asking the person who runs it, so list the least it needs.">
+              <input id="allowed-tools" className="input" value={draft.tools}
+                onChange={onInput("tools")} placeholder="Read, Grep" />
+            </Field>
+
+            <Field id="license" label="License" findings={findings}>
+              <input id="license" className="input" value={draft.license}
+                onChange={onInput("license")} />
+            </Field>
+
+            <Field id="civic.deployed-at" label="Which organization uses it?" findings={findings}>
+              <input id="civic.deployed-at" className="input" value={draft.deployedAt}
+                onChange={onInput("deployedAt")} />
+            </Field>
+
+            <Field id="civic.deployed-in" label="Where does that organization operate?"
+              findings={findings} hint="Like US-MA / Boston.">
+              <input id="civic.deployed-in" className="input" value={draft.deployedIn}
+                onChange={onInput("deployedIn")} placeholder="US-MA / Boston" />
+            </Field>
+
+            <Field id="civic.deployed-since" label="Roughly since when?" findings={findings}>
+              <input id="civic.deployed-since" className="input" value={draft.deployedSince}
+                onChange={onInput("deployedSince")} placeholder="2026-03" />
+            </Field>
+          </details>
+        </section>
+
+        <section className="prose__block">
+          <h2 className="h2">Send it</h2>
+          {findings.length > 0 && (
+            <p className="submit__note" data-testid="findings-note">
+              {findings.length} thing{findings.length === 1 ? "" : "s"} still to fill
+              in, marked above. You can send it anyway — the checks that count run
+              after you do, and you can fix things then.
+            </p>
+          )}
+
+          <p className="cta-row">
+            {urlFits ? (
+              <a
+                className={`btn btn--strong${!ready || blocked ? " btn--disabled" : ""}`}
+                href={ready && !blocked ? url : undefined}
+                aria-disabled={!ready || blocked}
+                data-testid="handoff"
+              >
+                Continue on GitHub
+              </a>
             ) : (
-              <ul className="submit__findings">
-                {archive.structural.map((f) => (
-                  <li key={`${f.where}${f.message}`}><code>{f.where}</code> {f.message}</li>
-                ))}
-              </ul>
+              <span className="submit__note" data-testid="url-too-long">
+                This is too long to carry in a link. Copy it below and paste it
+                into GitHub instead.
+              </span>
             )}
-          </div>
-        )}
-
-        {blocked && (
-          <p className="submit__blocked" data-testid="blocked">
-            Fix these before continuing. They cannot be corrected below.
+            {ready && !blocked && (
+              <a className="btn" href={uploadUrl(repo, draft)} data-testid="upload-handoff">
+                Upload a folder instead
+              </a>
+            )}
+            <button className="btn" onClick={copy}>{copied ? "Copied" : "Copy it"}</button>
           </p>
-        )}
-      </section>
 
-      <section className="prose__block">
-        <h2 className="h2">About the skill</h2>
+          {mailto ? (
+            <p className="submit__note">
+              No GitHub account?{" "}
+              <a href={mailto} data-testid="email-handoff">Email it to us</a> and we
+              will add it for you. It goes in under the project&rsquo;s name rather
+              than yours, with you credited as the maintainer &mdash; attach the
+              skill file and anything it needs.
+            </p>
+          ) : SUBMISSIONS_EMAIL ? (
+            <p className="submit__note" data-testid="email-too-long">
+              Too long to send by email link. Copy it above and mail it to{" "}
+              <a href={`mailto:${SUBMISSIONS_EMAIL}`}>{SUBMISSIONS_EMAIL}</a> with
+              the skill file attached.
+            </p>
+          ) : null}
 
-        <Field id="namespace" label="Your GitHub username" findings={findings}
-          hint="Your skill goes in your own folder, and only you can write there.">
-          <input id="namespace" className="input" value={draft.author}
-            onChange={onInput("author")} autoComplete="off" />
-        </Field>
+          <details className="disclosure">
+            <summary className="disclosure__summary">See what will be added</summary>
+            <pre className="submit__yaml" data-testid="yaml"><code>{yaml}</code></pre>
+          </details>
 
-        <Field id="name" label="Skill name" findings={findings}
-          hint="Lowercase, with hyphens instead of spaces — permit-status-explainer, not Permit Status Explainer.">
-          <input id="name" className="input" value={draft.name} onChange={onInput("name")}
-            placeholder="permit-status-explainer" />
-        </Field>
+          <details className="disclosure">
+            <summary className="disclosure__summary">Or do it from the command line</summary>
+            <pre className="submit__yaml"><code>{
+  `git clone https://github.com/${repo}.git
+  mkdir -p ${skillPath(draft)}
+  git checkout -b add-${draft.name || "your-skill"}
+  git commit -am "Add ${skillPath(draft)}"
+  git push origin add-${draft.name || "your-skill"}`}</code></pre>
+          </details>
+        </section>
+        </>
+      )}
 
-        <Field id="description" label="Description" findings={findings}
-          hint="What the skill does, in a couple of sentences. This is what an agent reads to decide whether to use it.">
-          <textarea id="description" className="textarea" rows={3}
-            value={draft.description} onChange={onInput("description")} />
-        </Field>
-
-        <Choice id="civic.category" label="Category" value={draft.category}
-          findings={findings} placeholder="Choose…" onChange={set("category")}
-          options={CATEGORIES.map((c) => [c, CATEGORY_LABELS[c] ?? c])} />
-
-        <Choice id="civic.jurisdiction" label="Where does it apply?"
-          value={draft.jurisdiction} findings={findings} placeholder="Choose…"
-          onChange={set("jurisdiction")} options={WHERE_LABELS} />
-
-        <Choice
-          id="civic.localization"
-          label="Is it set up for one place, or does it work anywhere?"
-          value={draft.localization} findings={findings} onChange={set("localization")}
-          options={[
-            ["localized", "Set up for one place — it has our forms, deadlines and rules in it"],
-            ["generalized", "Works anywhere — the local specifics have been lifted out"],
-          ]}
-          placeholder="Not sure yet"
-          hint={<>
-            <a href="#/about">What this means</a> — a localized skill carries one
-            jurisdiction&rsquo;s specifics; a generalized one has had them taken out so
-            another city can fill in its own.
-          </>}
-        />
-
-        <Choice id="civic.data-sensitivity" label="What data does it touch?"
-          value={draft.dataSensitivity} findings={findings}
-          onChange={set("dataSensitivity")} options={DATA_LABELS} />
-
-        <Choice id="civic.human-review"
-          label="Does what it produces affect anyone's rights or benefits?"
-          value={draft.humanReview} findings={findings}
-          onChange={set("humanReview")} options={EFFECT_LABELS} />
-
-        <Choice id="civic.deployment" label="Have you used it?"
-          value={draft.deployment} findings={findings}
-          onChange={set("deployment")} options={USE_LABELS} />
-
-        <Field id="civic.contact" label="Contact" findings={findings}
-          hint="How someone reaches you about a problem with the skill.">
-          <input id="civic.contact" className="input" value={draft.contact}
-            onChange={onInput("contact")} />
-        </Field>
-
-        <Field id="civic.maintainer" label="Who maintains it?" findings={findings}
-          hint="A person or a team — City of X, Department of Innovation.">
-          <input id="civic.maintainer" className="input" value={draft.maintainer}
-            onChange={onInput("maintainer")} />
-        </Field>
-
-        <Choice id="civic.affiliation" label="What kind of organization?"
-          value={draft.affiliation} findings={findings} placeholder="Choose…"
-          onChange={set("affiliation")} options={ORG_LABELS} />
-      </section>
-
-      <section className="prose__block">
-        <details className="disclosure">
-          <summary className="h2 disclosure__summary">A few optional things</summary>
-
-          <Field id="civic.use-when" label="When is this useful?" findings={findings}>
-            <textarea id="civic.use-when" className="textarea" rows={2}
-              value={draft.useWhen} onChange={onInput("useWhen")} />
-          </Field>
-
-          <Field id="civic.avoid-when" label="When is it not?" findings={findings}
-            hint="The one only you can answer. A skill honest about its limits gets adopted faster.">
-            <textarea id="civic.avoid-when" className="textarea" rows={2}
-              value={draft.avoidWhen} onChange={onInput("avoidWhen")} />
-          </Field>
-
-          <Field id="allowed-tools" label="Tools it needs" findings={findings}
-            hint="Comma separated. These are granted without asking the person who runs it, so list the least it needs.">
-            <input id="allowed-tools" className="input" value={draft.tools}
-              onChange={onInput("tools")} placeholder="Read, Grep" />
-          </Field>
-
-          <Field id="license" label="License" findings={findings}>
-            <input id="license" className="input" value={draft.license}
-              onChange={onInput("license")} />
-          </Field>
-
-          <Field id="civic.deployed-at" label="Which organization uses it?" findings={findings}>
-            <input id="civic.deployed-at" className="input" value={draft.deployedAt}
-              onChange={onInput("deployedAt")} />
-          </Field>
-
-          <Field id="civic.deployed-in" label="Where does that organization operate?"
-            findings={findings} hint="Like US-MA / Boston.">
-            <input id="civic.deployed-in" className="input" value={draft.deployedIn}
-              onChange={onInput("deployedIn")} placeholder="US-MA / Boston" />
-          </Field>
-
-          <Field id="civic.deployed-since" label="Roughly since when?" findings={findings}>
-            <input id="civic.deployed-since" className="input" value={draft.deployedSince}
-              onChange={onInput("deployedSince")} placeholder="2026-03" />
-          </Field>
-        </details>
-      </section>
-
-      <section className="prose__block">
-        <h2 className="h2">Send it</h2>
-        {findings.length > 0 && (
-          <p className="submit__note" data-testid="findings-note">
-            {findings.length} thing{findings.length === 1 ? "" : "s"} still to fill
-            in, marked above. You can send it anyway — the checks that count run
-            after you do, and you can fix things then.
-          </p>
-        )}
-
-        <p className="cta-row">
-          {urlFits ? (
-            <a
-              className={`btn btn--strong${!ready || blocked ? " btn--disabled" : ""}`}
-              href={ready && !blocked ? url : undefined}
-              aria-disabled={!ready || blocked}
-              data-testid="handoff"
-            >
-              Continue on GitHub
-            </a>
-          ) : (
-            <span className="submit__note" data-testid="url-too-long">
-              This is too long to carry in a link. Copy it below and paste it
-              into GitHub instead.
-            </span>
-          )}
-          {ready && !blocked && (
-            <a className="btn" href={uploadUrl(repo, draft)} data-testid="upload-handoff">
-              Upload a folder instead
-            </a>
-          )}
-          <button className="btn" onClick={copy}>{copied ? "Copied" : "Copy it"}</button>
-        </p>
-
-        {mailto ? (
-          <p className="submit__note">
-            No GitHub account?{" "}
-            <a href={mailto} data-testid="email-handoff">Email it to us</a> and we
-            will add it for you. It goes in under the project&rsquo;s name rather
-            than yours, with you credited as the maintainer &mdash; attach the
-            skill file and anything it needs.
-          </p>
-        ) : SUBMISSIONS_EMAIL ? (
-          <p className="submit__note" data-testid="email-too-long">
-            Too long to send by email link. Copy it above and mail it to{" "}
-            <a href={`mailto:${SUBMISSIONS_EMAIL}`}>{SUBMISSIONS_EMAIL}</a> with
-            the skill file attached.
-          </p>
-        ) : null}
-
-        <details className="disclosure">
-          <summary className="disclosure__summary">See what will be added</summary>
-          <pre className="submit__yaml" data-testid="yaml"><code>{yaml}</code></pre>
-        </details>
-
-        <details className="disclosure">
-          <summary className="disclosure__summary">Or do it from the command line</summary>
-          <pre className="submit__yaml"><code>{
-`git clone https://github.com/${repo}.git
-mkdir -p ${skillPath(draft)}
-git checkout -b add-${draft.name || "your-skill"}
-git commit -am "Add ${skillPath(draft)}"
-git push origin add-${draft.name || "your-skill"}`}</code></pre>
-        </details>
-      </section>
-
+      {mode === "update" && (
       <section className="prose__block" data-testid="flow-two">
-        <h2 className="h2">Updating a skill you already listed?</h2>
+        <h2 className="h2">Update a skill you already listed</h2>
         <p>
           Choose it and we will show you what to add. You paste two lines into
-          the file on GitHub.
+          the file on GitHub, and nothing else changes.
         </p>
         <label className="field__label" htmlFor="add">Your skill</label>
         <select
@@ -476,6 +511,10 @@ git push origin add-${draft.name || "your-skill"}`}</code></pre>
         </select>
         {listed && (
           <div className="submit__handoff" data-testid="edit-handoff">
+            <p className="field__hint">
+              Paste these into the <code>metadata:</code> block, keeping the
+              indentation, and change the text.
+            </p>
             <pre className="submit__yaml"><code>{
 `  civic.use-when: "When this skill earns its place."
   civic.avoid-when: "When it does not."`}</code></pre>
@@ -484,7 +523,14 @@ git push origin add-${draft.name || "your-skill"}`}</code></pre>
             </a>
           </div>
         )}
+
+        <p className="submit__note">
+          Changing anything else about a skill?{" "}
+          <a href={submitHref("new")}>Start from the other side</a> — or edit the
+          file on GitHub directly.
+        </p>
       </section>
+      )}
     </article>
   );
 }

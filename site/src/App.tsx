@@ -130,7 +130,8 @@ export default function App() {
         </main>
       ) : route.page === "submit" ? (
         <main id="results" className="page">
-          <Submit repo={repoSlug(index?.repo ?? "")} skills={skills} add={route.add} />
+          <Submit repo={repoSlug(index?.repo ?? "")} skills={skills}
+            mode={route.mode} add={route.add} />
         </main>
       ) : route.page === "skill" ? (
         <main id="results">
