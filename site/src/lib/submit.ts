@@ -51,43 +51,52 @@ export const URL_BUDGET = 6000;
 
 const trim = (v: string) => v.trim();
 
-/** Optional fields are omitted rather than emitted empty. An empty string is a
- *  value, and the schema treats a present-but-blank field differently from an
- *  absent one. */
-function put(into: Record<string, unknown>, key: string, value: string): void {
-  const v = trim(value);
-  if (v) into[key] = v;
+/** The draft as flat schema keys, in the order they belong in the file.
+ *
+ *  One place that knows the mapping. `toFrontmatter` nests it for the
+ *  from-scratch path; `patchSkillMd` writes the same keys into a file somebody
+ *  else wrote. Empties are kept rather than dropped, because "cleared" and
+ *  "never set" are different instructions to a patch — the omission happens in
+ *  the caller that needs it.
+ */
+export function toFields(draft: Draft): Record<string, string> {
+  return {
+    name: trim(draft.name),
+    description: trim(draft.description),
+    license: trim(draft.license),
+    compatibility: trim(draft.compatibility),
+    "allowed-tools": draft.tools.split(",").map(trim).filter(Boolean).join(", "),
+    "civic.category": trim(draft.category),
+    "civic.jurisdiction": trim(draft.jurisdiction),
+    "civic.localization": trim(draft.localization),
+    "civic.data-sensitivity": trim(draft.dataSensitivity),
+    "civic.human-review": trim(draft.humanReview),
+    "civic.use-when": trim(draft.useWhen),
+    "civic.avoid-when": trim(draft.avoidWhen),
+    "civic.maintainer": trim(draft.maintainer),
+    "civic.contact": trim(draft.contact),
+    "civic.affiliation": trim(draft.affiliation),
+    "civic.deployment": trim(draft.deployment),
+    "civic.deployed-at": trim(draft.deployedAt),
+    "civic.deployed-in": trim(draft.deployedIn),
+    "civic.deployed-since": trim(draft.deployedSince),
+    "civic.source-repo": trim(draft.sourceRepo),
+    "civic.source-commit": trim(draft.sourceCommit),
+  };
 }
 
 export function toFrontmatter(draft: Draft): Frontmatter & { metadata?: Record<string, unknown> } {
   const front: Record<string, unknown> = {};
-  put(front, "name", draft.name);
-  put(front, "description", draft.description);
-  put(front, "license", draft.license);
-  put(front, "compatibility", draft.compatibility);
-
-  const tools = draft.tools.split(",").map(trim).filter(Boolean);
-  if (tools.length) front["allowed-tools"] = tools.join(", ");
-
   const meta: Record<string, unknown> = {};
-  put(meta, "civic.category", draft.category);
-  put(meta, "civic.jurisdiction", draft.jurisdiction);
-  put(meta, "civic.localization", draft.localization);
-  put(meta, "civic.data-sensitivity", draft.dataSensitivity);
-  put(meta, "civic.human-review", draft.humanReview);
-  put(meta, "civic.use-when", draft.useWhen);
-  put(meta, "civic.avoid-when", draft.avoidWhen);
-  put(meta, "civic.maintainer", draft.maintainer);
-  put(meta, "civic.contact", draft.contact);
-  put(meta, "civic.affiliation", draft.affiliation);
-  put(meta, "civic.deployment", draft.deployment);
-  put(meta, "civic.deployed-at", draft.deployedAt);
-  put(meta, "civic.deployed-in", draft.deployedIn);
-  put(meta, "civic.deployed-since", draft.deployedSince);
-  put(meta, "civic.source-repo", draft.sourceRepo);
-  put(meta, "civic.source-commit", draft.sourceCommit);
+  // Optional fields are omitted rather than emitted empty. An empty string is a
+  // value, and the schema treats a present-but-blank field differently from an
+  // absent one.
+  for (const [key, value] of Object.entries(toFields(draft))) {
+    if (!value) continue;
+    if (key.startsWith("civic.")) meta[key] = value;
+    else front[key] = value;
+  }
   front.metadata = meta;
-
   return front;
 }
 
@@ -212,4 +221,32 @@ export function mailtoUrl(email: string, draft: Draft, yaml: string): string {
  *  comfortably under the budget by character count and well over it in bytes. */
 export function fitsInUrl(url: string): boolean {
   return new TextEncoder().encode(encodeURI(url)).length <= URL_BUDGET;
+}
+
+/** Fork first, rather than trusting an auto-fork.
+ *
+ *  GitHub documents automatic forking for *editing a file* in a repository you
+ *  cannot write to. It documents nothing of the kind for **uploading**, and the
+ *  multi-file path depends entirely on the upload page working — so the
+ *  submitter forks deliberately and uploads somewhere they certainly can write.
+ */
+export function forkUrl(repo: string): string {
+  return `https://github.com/${repo}/fork`;
+}
+
+/** The upload page inside the submitter's fork.
+ *
+ *  A fork keeps the repository name, so the owner is the only part that
+ *  changes. GitHub's upload page takes a dragged folder and preserves its
+ *  subdirectories, which is the whole reason this path exists: `value=` can
+ *  prefill one new file and there is no equivalent for a directory.
+ */
+export function forkUploadUrl(repo: string, draft: Draft): string {
+  const name = repo.split("/")[1] ?? repo;
+  return `https://github.com/${trim(draft.author)}/${name}/upload/main/${skillPath(draft)}`;
+}
+
+/** The pull request, opened from the fork's branch back to the registry. */
+export function pullRequestUrl(repo: string, draft: Draft): string {
+  return `https://github.com/${repo}/compare/main...${trim(draft.author)}:main?expand=1`;
 }
