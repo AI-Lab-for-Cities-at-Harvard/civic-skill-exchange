@@ -82,6 +82,14 @@ jobs:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: npx tsx validator/src/cli.ts --changed changed.txt --author "$PR_AUTHOR"
 
+      # The marketplace manifest is committed rather than built, because
+      # `/plugin marketplace add` reads the repository and not the published
+      # site. So it can drift, and this is what stops it. Runs only when
+      # skills/ changed, so a docs pull request is never blocked by it.
+      - name: Marketplace manifest is current
+        if: steps.changes.outputs.skills == 'true'
+        run: python scripts/build_marketplace.py --check
+
       - name: L2 + L3 — signature scan
         if: always() && steps.changes.outputs.skills == 'true'
         env:

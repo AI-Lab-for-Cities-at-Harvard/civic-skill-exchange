@@ -103,3 +103,23 @@ describe("DownloadBox still warns about an unreviewed Lab skill", () => {
       .toBeInTheDocument();
   });
 });
+
+/** #73: the registry is a Claude Code plugin marketplace, so a skill is two
+ *  commands rather than a download. The plugin name carries the namespace
+ *  because plugin names are unique across a marketplace and two people may
+ *  publish the same skill name. */
+describe("DownloadBox — installing as a plugin", () => {
+  it("offers the marketplace commands", () => {
+    render(<DownloadBox skill={detail({ namespace: "cityofx", name: "permit-status" })} />);
+    expect(screen.getByText(/\/plugin marketplace add AI-Lab-for-Cities-at-Harvard\/civic-skill-exchange/))
+      .toBeInTheDocument();
+    expect(screen.getByText("/plugin install cityofx-permit-status@civic-skill-exchange"))
+      .toBeInTheDocument();
+  });
+
+  it("puts the plugin path first, because it is the one that needs no tooling knowledge", () => {
+    render(<DownloadBox skill={detail({ namespace: "cityofx", name: "permit-status" })} />);
+    const labels = screen.getAllByText(/Just this skill|The whole registry|Add the marketplace|Install it/);
+    expect(labels[0]).toHaveTextContent(/Add the marketplace/);
+  });
+});
