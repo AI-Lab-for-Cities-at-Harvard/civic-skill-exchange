@@ -41,6 +41,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
+| [submitting-a-multi-file-skill.md](spikes/submitting-a-multi-file-skill.md) | How does a skill that is more than one file reach a pull request? — [#70](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/70), [#71](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/71), open |
 | [lab-as-a-tier.md](spikes/lab-as-a-tier.md) | Should Lab be a third tier? — [#53](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/53), ruled; see [ADR 0002](adr/0002-lab-is-authorship-not-a-tier.md) |
 | [reviewed-tier-definition.md](spikes/reviewed-tier-definition.md) | What should a Reviewed listing mean? — [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38), ruled; see [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) |
 
