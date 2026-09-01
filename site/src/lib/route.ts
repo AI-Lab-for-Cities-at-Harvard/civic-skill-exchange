@@ -2,7 +2,7 @@ export type SubmitMode = "new" | "update";
 
 export type Route =
   | { page: "browse" }
-  | { page: "about" }
+  | { page: "about"; section?: string }
   | { page: "submit"; mode: SubmitMode; add?: string }
   | { page: "skill"; namespace: string; name: string };
 
@@ -11,6 +11,10 @@ export type Route =
  *  rather than carried. */
 const SKILL_ID = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/;
 
+/** A section of the About page. Reaches `getElementById`, so it is a plain slug
+ *  or it is dropped — the same posture as SKILL_ID above. */
+const SECTION = /^[a-z0-9-]+$/;
+
 /** Hash routing rather than a router library or path routing.
  *  GitHub Pages has no SPA fallback, so /about would 404 on a hard refresh.
  *  Four pages does not justify a dependency. */
@@ -18,7 +22,15 @@ export function parseRoute(hash: string): Route {
   const [rawPath, rawQuery = ""] = hash.replace(/^#\/?/, "").split("?");
   const parts = (rawPath ?? "").split("/").filter(Boolean).map(decodeURIComponent);
 
-  if (parts[0] === "about") return { page: "about" };
+  if (parts[0] === "about") {
+    // A section is a path segment rather than a fragment: hash routing has only
+    // one `#`, so `#/about#metadata` cannot work — and a segment is a real URL
+    // somebody can send.
+    const section = parts[1];
+    return section && SECTION.test(section)
+      ? { page: "about", section }
+      : { page: "about" };
+  }
   if (parts[0] === "submit") {
     const query = new URLSearchParams(rawQuery);
     const add = query.get("add");
@@ -41,6 +53,10 @@ export function skillHref(namespace: string, name: string): string {
 /** Flow 2 on #24: a maintainer arriving to add newer fields to a listed skill. */
 export function addFieldsHref(namespace: string, name: string): string {
   return `#/submit?add=${encodeURIComponent(`${namespace}/${name}`)}`;
+}
+
+export function aboutHref(section?: string): string {
+  return section ? `#/about/${section}` : "#/about";
 }
 
 export function submitHref(mode: SubmitMode): string {
