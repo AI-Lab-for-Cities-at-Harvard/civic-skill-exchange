@@ -1,0 +1,62 @@
+# Keeps .claude-plugin/marketplace.json current, so a submitter never has to.
+#
+# The manifest is committed rather than built, because `/plugin marketplace add`
+# reads the repository and not the published site. That made adding a skill also
+# a chore of regenerating a distribution artifact — which failed #87's checks and
+# needed a maintainer to fix by hand. #90 ruled that the merge does it instead.
+#
+# REPOSITORY SETTING THIS NEEDS: main is protected, so the identity making this
+# commit must be allowed to push to it. Without that, this job fails on every
+# skill merge and the manifest silently stops tracking the catalogue. If you are
+# reading this because the job is failing, that is the first thing to check.
+#
+# It cannot retrigger itself: the trigger is scoped to skills/** and the only
+# path it ever writes is .claude-plugin/.
+
+name: Manifest
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "skills/**"
+
+permissions:
+  contents: write
+
+# Two merges in quick succession would otherwise race to write the same file.
+# Never cancel in progress: a cancelled run leaves the manifest behind the tree.
+concurrency:
+  group: marketplace-manifest
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    name: Regenerate the marketplace manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Regenerate
+        run: python scripts/build_marketplace.py
+
+      - name: Commit if it changed
+        run: |
+          if git diff --quiet -- .claude-plugin/marketplace.json; then
+            echo "Manifest already current — nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/marketplace.json
+          # No closing keyword and no issue reference: this commit lands directly
+          # on the default branch, where GitHub parses them.
+          git commit -m "Regenerate the marketplace manifest"
+          git push
