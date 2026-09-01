@@ -72,3 +72,30 @@ def test_dependabot_watches_the_actions() -> None:
     config = ROOT / ".github" / "dependabot.yml"
     assert config.is_file(), "nothing keeps the pinned SHAs current"
     assert "github-actions" in config.read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- #
+# #88: the checks comment used to announce a failure it could not attribute,
+# beside findings it had just described as harmless. It now reads the run's own
+# step conclusions, which needs a permission it did not have.
+
+
+def test_report_can_read_which_step_failed() -> None:
+    report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
+    assert "listJobsForWorkflowRun" in report, (
+        "report.yml must read step conclusions rather than guessing at the cause")
+    assert "actions: read" in report, (
+        "reading job steps needs actions: read")
+
+
+def test_report_says_the_flags_are_not_the_cause() -> None:
+    report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
+    assert "not** the cause" in report
+
+
+def test_report_still_fences_everything_it_interpolates() -> None:
+    """The privileged job's whole discipline. Step names are ours, not a
+    contributor's — but the next person editing this file should not have to
+    know which strings are trusted."""
+    report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
+    assert "failedSteps.map(safe)" in report

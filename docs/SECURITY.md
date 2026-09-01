@@ -58,7 +58,8 @@ grep -rE '(os\.environ|getenv|process\.env|printenv|\$AWS_|\.ssh/)' skills/
 ### L3 — Soft signatures
 Noisy by nature. These route to a human; they do not block.
 
-- External URLs in skill bodies — fires on virtually any skill citing documentation, which makes it useless as an auto-blocker and genuinely useful as a triage signal
+- External URLs in skill bodies — fires on virtually any skill citing documentation, which makes it useless as an auto-blocker and genuinely useful as a triage signal.
+  **Its disposition depends on `civic.localization`.** A skill declaring `localized` *is* one jurisdiction's forms, deadlines and portals, so its URLs are expected and are not flagged — flagging them teaches a reviewer that flags are ignorable, which is how a real signal gets missed. A skill declaring `generalized` gets a pointed finding instead: lifting jurisdiction-specific values out is what generalization means, so a hardcoded domain is either a leftover or the field is wrong. With the field absent, behaviour is unchanged
 - Network calls anywhere under `scripts/`
 - `eval`, `exec`, dynamic imports
 - Encoded blobs above a length threshold
