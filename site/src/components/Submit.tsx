@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  checkFrontmatter, checkStructureCore, type Finding,
+  checkFrontmatter, checkStructureCore, RESERVED_NAMESPACES, type Finding,
 } from "@civic-skill-exchange/validator";
 import {
   EMPTY_DRAFT, toFrontmatter, toYaml, newFileUrl, editUrl, uploadUrl, mailtoUrl,
@@ -156,6 +156,12 @@ export function Submit(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       set(key)(e.target.value);
 
+  // A reserved namespace is not a person, and checkFrontmatter skips the
+  // ownership check for it — CODEOWNERS gates the folder to the maintainers
+  // team instead, which is a stronger control than a username match. So the
+  // lookup would 404 on a name that is entirely correct.
+  const reserved = RESERVED_NAMESPACES.has(draft.author.trim().toLowerCase());
+
   // Debounced, and aborted when the value moves on. The rate limit is 60 an
   // hour per address, so a request per keystroke would exhaust it inside one
   // username.
@@ -163,7 +169,10 @@ export function Submit(
     const login = draft.author.trim();
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      if (!login) { setUserCheck("unknown"); return; }
+      if (!login || RESERVED_NAMESPACES.has(login.toLowerCase())) {
+        setUserCheck("unknown");
+        return;
+      }
       checkGitHubUser(login, controller.signal).then(setUserCheck);
     }, 500);
     return () => { window.clearTimeout(timer); controller.abort(); };
@@ -418,7 +427,14 @@ export function Submit(
           >
             <input id="namespace" className="input" value={draft.author}
               onChange={onInput("author")} autoComplete="off" />
-            {userCheck === "missing" && draft.author.trim() !== "" && (
+            {reserved ? (
+              <p className="field__hint" data-testid="reserved-namespace">
+                <code>{draft.author.trim()}</code> is the Lab&rsquo;s own folder,
+                so this does not have to match your login. It needs approval from
+                a maintainer instead, and the listing carries the Lab&rsquo;s
+                badge.
+              </p>
+            ) : userCheck === "missing" && draft.author.trim() !== "" && (
               <p className="field__finding" data-testid="no-such-user">
                 No GitHub user called {draft.author.trim()}. A submission whose
                 folder does not match the account that opens the pull request is
