@@ -179,6 +179,28 @@ Title it `Add {skill-name}`. In the description, tell us:
 - Whether it's been used in production anywhere
 - Anything a reviewer should look at closely
 
+### If you would rather not use git
+
+The [submission page](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/submit)
+does the same thing through GitHub's own interface. Drop your skill on it as a
+`.zip`, or give it the address of the repository the skill lives in — it reads
+the file, fills in what it can, and asks only for what the registry needs and
+your file does not already say.
+
+It never sends your skill anywhere. The archive is unpacked in your browser, and
+what it hands back is your own files with the extra fields written into
+`SKILL.md`. Nothing else is touched.
+
+Where it goes from there depends on how many files your skill has:
+
+| | What happens |
+|---|---|
+| **One file** | The page opens GitHub's new-file editor with your `SKILL.md` already in it. Commit, and GitHub offers the pull request. |
+| **More than one** | A link cannot carry a folder. The page hands your folder back corrected, then walks you through four steps: download it, fork this repository, drag the folder onto the upload page in your fork, and open the pull request. |
+
+Either way **you** are the author of the commit, which is what the namespace
+check in L1 requires — a skill committed on your behalf would fail it.
+
 ---
 
 ## What the automation checks
