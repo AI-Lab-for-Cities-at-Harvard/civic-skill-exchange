@@ -106,8 +106,9 @@ describe("Submit — a dropped archive", () => {
     await user.upload(screen.getByLabelText(/Upload the skill folder/i),
       file("skill.zip", { "s/SKILL.md": SKILL_MD, "s/payload.exe": "MZ" }));
     expect(await screen.findByTestId("blocked")).toBeInTheDocument();
-    expect(screen.getByTestId("handoff")).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByTestId("handoff")).not.toHaveAttribute("href");
+    // Two files, so the hand-off is the folder path — and the folder is what
+    // must not leave the page while a blocked file type is still in it.
+    expect(screen.getByTestId("download-folder")).toBeDisabled();
   });
 
   it("names the path that escapes the skill directory", async () => {
@@ -431,8 +432,8 @@ describe("Submit — importing from a repository", () => {
     await importInto(user, "sgarcese/Civic-Analytics");
     await screen.findByTestId("imported");
     const yaml = screen.getByTestId("yaml").textContent ?? "";
-    expect(yaml).toContain('civic.source-repo: "sgarcese/Civic-Analytics"');
-    expect(yaml).toContain(`civic.source-commit: "${"c".repeat(40)}"`);
+    expect(yaml).toContain("civic.source-repo: sgarcese/Civic-Analytics");
+    expect(yaml).toContain(`civic.source-commit: ${"c".repeat(40)}`);
   });
 
   it("takes the username from the repository owner", async () => {
@@ -559,5 +560,93 @@ describe("Submit — the reserved namespace", () => {
     await user.type(screen.getByLabelText(/GitHub username/i), "sgarcees");
     expect(await screen.findByTestId("no-such-user")).toBeInTheDocument();
     expect(screen.queryByTestId("reserved-namespace")).not.toBeInTheDocument();
+  });
+});
+
+/** #70: what the submitter brought has to reach the pull request.
+ *
+ *  The page used to rebuild SKILL.md out of form values and hand that to
+ *  GitHub, so the body and every file beside it were dropped. These pin the
+ *  correction: the file is amended, and a skill of more than one file goes
+ *  through the fork-and-upload path rather than a single-file editor that
+ *  cannot carry it.
+ */
+describe("Submit — the skill survives the hand-off", () => {
+  const MULTI = () => file("skill.zip", {
+    "permit-status-explainer/SKILL.md": SKILL_MD,
+    "permit-status-explainer/scripts/reading_level.py": "print(1)\n",
+    "permit-status-explainer/references/swaps.md": "# Swaps\n",
+  });
+
+  it("carries the body of a pasted SKILL.md into the hand-off, not just its frontmatter", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.click(screen.getByLabelText(/paste your SKILL.md/i));
+    await user.paste(SKILL_MD);
+    expect(screen.getByTestId("handoff"))
+      .toHaveAttribute("href", expect.stringContaining("Body."));
+  });
+
+  it("keeps the fields the file already had rather than dropping them", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.click(screen.getByLabelText(/paste your SKILL.md/i));
+    await user.paste(SKILL_MD);
+    // URLSearchParams writes a space as `+`, which is correct for a query
+    // string and is not what decodeURIComponent undoes.
+    const href = decodeURIComponent(
+      (screen.getByTestId("handoff").getAttribute("href") ?? "").replaceAll("+", " "),
+    );
+    expect(href).toContain("permit-status-explainer");
+    expect(href).toContain("Explains why a building permit is stuck");
+  });
+
+  it("sends a multi-file skill through fork and upload, not the single-file editor", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    // The name came out of the file; only the username is still missing.
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    expect(screen.getByTestId("manual-steps")).toBeInTheDocument();
+    expect(screen.queryByTestId("handoff")).not.toBeInTheDocument();
+  });
+
+  it("offers the corrected folder back, because GitHub cannot be prefilled with files", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    // The name came out of the file; only the username is still missing.
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    expect(screen.getByTestId("download-folder")).toBeInTheDocument();
+  });
+
+  it("points the upload at the submitter's own fork, where they can write", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    // The name came out of the file; only the username is still missing.
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    expect(screen.getByTestId("step-upload")).toHaveAttribute(
+      "href",
+      "https://github.com/cityofx/civic-skill-exchange/upload/main/skills/cityofx/permit-status-explainer",
+    );
+  });
+
+  it("shows which fields it read, so they are not asked for twice", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.click(screen.getByLabelText(/paste your SKILL.md/i));
+    await user.paste(SKILL_MD);
+    expect(screen.getByTestId("from-file")).toHaveTextContent(/description/i);
+  });
+
+  it("does not claim it copied files in when it only read them", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.queryByText(/copy them in/i)).not.toBeInTheDocument();
   });
 });

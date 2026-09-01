@@ -649,6 +649,46 @@ a:hover { color: var(--c-spot); }
 .submit__ok { color: var(--c-ok); font-size: var(--t-sm); }
 .submit__note { font-size: var(--t-sm); color: var(--c-text-light); }
 
+/* The manual hand-off, as numbered steps.
+ *
+ * An ordered list, so the count and the order are the document's rather than
+ * the stylesheet's — a screen reader announces "3 of 4" without being told.
+ * The numerals are drawn from the list counter for the same reason: there is
+ * no second copy of the number to fall out of step. */
+.steps {
+  list-style: none;
+  margin: var(--gap-5) 0 0; padding: 0;
+  counter-reset: step;
+  display: grid; gap: var(--gap-5);
+  max-width: none !important;
+}
+.steps__item {
+  counter-increment: step;
+  position: relative;
+  padding-left: calc(var(--gap-6) + var(--gap-4));
+}
+.steps__item::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 0;
+  width: var(--gap-6); height: var(--gap-6);
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--c-bg-inverse); color: var(--c-solid-inverse);
+  font-size: var(--t-sm); font-variant-numeric: tabular-nums;
+}
+/* The line joining one step to the next. Decorative, so it is drawn rather
+ * than spoken, and it stops before the last marker. */
+.steps__item:not(:last-child)::after {
+  content: ""; position: absolute;
+  left: calc(var(--gap-6) / 2 - 1px); top: var(--gap-6);
+  width: 2px; height: calc(100% + var(--gap-5) - var(--gap-6));
+  background: var(--c-border-light);
+}
+.steps__title { margin: 0 0 var(--gap-2); font-size: var(--t-base); }
+.steps__body {
+  margin: 0 0 var(--gap-3); font-size: var(--t-sm); color: var(--c-text-light);
+}
+
 .submit__yaml {
   padding: var(--gap-4); border-radius: var(--radius);
   background: var(--c-button-bg-subtle);

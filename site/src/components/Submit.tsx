@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  checkFrontmatter, checkStructureCore, RESERVED_NAMESPACES, type Finding,
+  checkFrontmatter, checkStructureCore, RESERVED_NAMESPACES,
+  type Finding, type Entry,
 } from "@civic-skill-exchange/validator";
 import {
-  EMPTY_DRAFT, toFrontmatter, toYaml, newFileUrl, editUrl, uploadUrl, mailtoUrl,
+  EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
+  forkUrl, forkUploadUrl, pullRequestUrl,
   fitsInUrl, skillPath, slugify, type Draft,
 } from "../lib/submit";
+import { patchSkillMd } from "../lib/patch";
+import { buildSkillZip } from "../lib/folder";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
 import { checkGitHubUser, type UserCheck } from "../lib/github";
@@ -143,6 +147,12 @@ export function Submit(
   const [archive, setArchive] = useState<{
     name: string; files: number; structural: Finding[]; left: string[];
   } | null>(null);
+  // What the submitter actually brought. The hand-off amends this file rather
+  // than building a replacement out of the form, which is the whole of #70 —
+  // a rebuilt file carries no body, and the form knows nothing of scripts/.
+  const [source, setSource] = useState<
+    { skillMd: string; entries: Entry[]; directoryName: string } | null
+  >(null);
   const [notes, setNotes] = useState<string[]>([]);
   const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
   const [repoUrl, setRepoUrl] = useState("");
@@ -192,7 +202,24 @@ export function Submit(
     [front, draft.author],
   );
 
-  const url = useMemo(() => newFileUrl(repo, draft, yaml), [repo, draft, yaml]);
+  // The form's answers written into the submitter's own file. Falls back to the
+  // generated block only when there is no file to amend — someone starting from
+  // nothing — or when the file could not be read.
+  const patched = useMemo(
+    () => (source ? patchSkillMd(source.skillMd, toFields(draft)) : null),
+    [source, draft],
+  );
+  const fileText = patched && patched.problems.length === 0 ? patched.skillMd : yaml;
+
+  // A link can carry one new file. It cannot carry a folder, and GitHub offers
+  // no equivalent of `value=` for an upload — so a skill of more than one file
+  // goes the long way round rather than arriving with its scripts missing.
+  const multiFile = (source?.entries.length ?? 0) > 1;
+  const folderName = draft.name.trim() || source?.directoryName || "skill";
+
+  const url = useMemo(
+    () => newFileUrl(repo, draft, fileText), [repo, draft, fileText],
+  );
   const urlFits = useMemo(() => fitsInUrl(url), [url]);
   const ready = draft.author.trim() !== "" && draft.name.trim() !== "";
 
@@ -201,13 +228,25 @@ export function Submit(
   // pull request that fails CI for something already shown here.
   const blocked = (archive?.structural.length ?? 0) > 0;
 
-  const load = (source: string, problems: string[] = []) => {
-    const { draft: parsed, problems: readProblems } = draftFromSkillMd(source, draft.author);
+  const load = (
+    text: string,
+    problems: string[] = [],
+    archive?: { entries: Entry[]; directoryName: string },
+  ) => {
+    const { draft: parsed, problems: readProblems } = draftFromSkillMd(text, draft.author);
     if (readProblems.length === 0) {
       setDraft({ ...parsed, name: slugify(parsed.name) });
       setTypedName(parsed.name);
     }
     setNotes([...problems, ...readProblems]);
+    setSource(text.trim() === "" ? null : {
+      skillMd: text,
+      // A pasted file is a skill of one file, which is a real answer and not a
+      // degenerate case — it takes the prefilled editor, body and all.
+      entries: archive?.entries
+        ?? [{ path: "SKILL.md", kind: "file", bytes: new TextEncoder().encode(text) }],
+      directoryName: archive?.directoryName ?? "",
+    });
   };
 
   const onImport = async () => {
@@ -229,6 +268,9 @@ export function Submit(
       // findings stop the hand-off.
       left: out.skipped,
       structural: checkStructureCore(out.entries),
+    });
+    setSource({
+      skillMd: out.skillMd, entries: out.entries, directoryName: out.ref.repo,
     });
     // Fill from the file, then stamp on where this copy came from and the
     // commit it was taken at.
@@ -254,14 +296,33 @@ export function Submit(
         left: read.problems,
         structural: checkStructureCore(read.entries),
       });
-      if (read.skillMd) load(read.skillMd);
+      if (read.skillMd) {
+        load(read.skillMd, [], {
+          entries: read.entries,
+          directoryName: read.directoryName ?? "",
+        });
+      }
     } catch {
+      setSource(null);
       setArchive({
         name: file.name, files: 0,
         left: [],
         structural: [{ where: file.name, message: "This file could not be read as a zip archive." }],
       });
     }
+  };
+
+  /** Hands the skill back as a folder, corrected. Built from the entries that
+   *  were validated, so what the submitter uploads is what the page checked. */
+  const download = () => {
+    if (!source) return;
+    const zip = buildSkillZip(source.entries, folderName, fileText);
+    const href = URL.createObjectURL(new Blob([zip as BlobPart], { type: "application/zip" }));
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = `${folderName}.zip`;
+    a.click();
+    URL.revokeObjectURL(href);
   };
 
   const copy = async () => {
@@ -337,7 +398,7 @@ export function Submit(
 
           <Field
             id="repo" label="Your skill's GitHub repository" findings={[]}
-            hint="Public repositories only. We read the file list and SKILL.md and copy them in — the listing records where the copy came from."
+            hint="Public repositories only. We read the file list and SKILL.md, and hand the folder back for you to upload — the listing records where the copy came from."
           >
             <span className="submit__row">
               <input
@@ -420,6 +481,21 @@ export function Submit(
 
         <section className="prose__block">
           <h2 className="h2">About the skill</h2>
+
+          {patched && patched.problems.length === 0 && patched.present.length > 0 && (
+            /* Answered already, by the file. Shown rather than hidden, because a
+               description read out of somebody's repository is exactly the thing
+               they may want to improve before it is listed. */
+            <p className="submit__ok" data-testid="from-file">
+              Read from your file:{" "}
+              {patched.present
+                .filter((k) => k !== "metadata")
+                .map((k) => FIELD_LABELS[k] ?? k)
+                .join(", ")}
+              . Everything below is already filled in where it could be — change
+              anything that is wrong.
+            </p>
+          )}
 
           <Field
             id="namespace" label="Your GitHub username" findings={findings}
@@ -576,29 +652,86 @@ export function Submit(
             </p>
           )}
 
-          <p className="cta-row">
-            {urlFits ? (
-              <a
-                className={`btn btn--strong${!ready || blocked ? " btn--disabled" : ""}`}
-                href={ready && !blocked ? url : undefined}
-                aria-disabled={!ready || blocked}
-                data-testid="handoff"
-              >
-                Continue on GitHub
-              </a>
-            ) : (
-              <span className="submit__note" data-testid="url-too-long">
-                This is too long to carry in a link. Copy it below and paste it
-                into GitHub instead.
-              </span>
-            )}
-            {ready && !blocked && (
-              <a className="btn" href={uploadUrl(repo, draft)} data-testid="upload-handoff">
-                Upload a folder instead
-              </a>
-            )}
-            <button className="btn" onClick={copy}>{copied ? "Copied" : "Copy it"}</button>
-          </p>
+          {multiFile ? (
+            /* Four steps, because a folder cannot be put in a link. Each one is
+               a real URL the submitter can open, and the page never asks them to
+               type a path. */
+            <>
+              <p className="submit__note" data-testid="multi-file-note">
+                Your skill is {source?.entries.length} files. GitHub takes a
+                whole folder, but only from its own upload page &mdash; so the
+                last steps happen there, with the folder this page hands back.
+              </p>
+              <ol className="steps" data-testid="manual-steps">
+                <li className="steps__item">
+                  <h3 className="steps__title">Take the corrected folder</h3>
+                  <p className="steps__body">
+                    Your files, unchanged, with the answers above written into
+                    <code> SKILL.md</code>. Unzip it &mdash; you will drag the
+                    folder itself in step 3.
+                  </p>
+                  <button
+                    className="btn btn--strong" onClick={download}
+                    disabled={!ready || blocked} data-testid="download-folder"
+                  >
+                    Download {folderName}.zip
+                  </button>
+                </li>
+                <li className="steps__item">
+                  <h3 className="steps__title">Make your own copy of the registry</h3>
+                  <p className="steps__body">
+                    One button on GitHub. You are uploading into your copy, which
+                    is the only place you can write &mdash; and it is what makes
+                    you the author of the change.
+                  </p>
+                  <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
+                    target="_blank" rel="noreferrer">Fork the registry</a>
+                </li>
+                <li className="steps__item">
+                  <h3 className="steps__title">Drag the folder in</h3>
+                  <p className="steps__body">
+                    This opens the upload page at{" "}
+                    <code>{skillPath(draft)}</code> in your copy. Drop the
+                    unzipped folder on it &mdash; subfolders come too &mdash;
+                    then <strong>Commit changes</strong>.
+                  </p>
+                  <a className="btn" href={forkUploadUrl(repo, draft)}
+                    data-testid="step-upload" target="_blank" rel="noreferrer">
+                    Upload the folder
+                  </a>
+                </li>
+                <li className="steps__item">
+                  <h3 className="steps__title">Open the pull request</h3>
+                  <p className="steps__body">
+                    The checks run on it, and a maintainer takes it from there.
+                  </p>
+                  <a className="btn" href={pullRequestUrl(repo, draft)}
+                    data-testid="step-pr" target="_blank" rel="noreferrer">
+                    Open the pull request
+                  </a>
+                </li>
+              </ol>
+            </>
+          ) : (
+            <p className="cta-row">
+              {urlFits ? (
+                <a
+                  className={`btn btn--strong${!ready || blocked ? " btn--disabled" : ""}`}
+                  href={ready && !blocked ? url : undefined}
+                  aria-disabled={!ready || blocked}
+                  data-testid="handoff"
+                >
+                  Continue on GitHub
+                </a>
+              ) : (
+                <span className="submit__note" data-testid="url-too-long">
+                  This is too long to carry in a link. Copy it below and paste it
+                  into GitHub instead.
+                </span>
+              )}
+              <button className="btn" onClick={copy}>{copied ? "Copied" : "Copy it"}</button>
+            </p>
+          )}
 
           {mailto ? (
             <p className="submit__note">
@@ -618,7 +751,7 @@ export function Submit(
 
           <details className="disclosure">
             <summary className="disclosure__summary">See what will be added</summary>
-            <pre className="submit__yaml" data-testid="yaml"><code>{yaml}</code></pre>
+            <pre className="submit__yaml" data-testid="yaml"><code>{fileText}</code></pre>
           </details>
 
           <details className="disclosure">
