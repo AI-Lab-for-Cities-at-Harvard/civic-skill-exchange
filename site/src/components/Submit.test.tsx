@@ -503,3 +503,61 @@ describe("Submit — left out versus blocked", () => {
     expect(await screen.findByTestId("blocked")).toBeInTheDocument();
   });
 });
+
+/** #68: the reserved namespace is the one place the ownership rule does not
+ *  apply, and it was the one place the page warned.
+ *
+ *  checkFrontmatter skips the author check for RESERVED_NAMESPACES, because
+ *  CODEOWNERS gates /skills/civic-skills/ to the maintainers team instead — a
+ *  stronger control than a username match. There is no GitHub user called
+ *  civic-skills, so the lookup 404s and the page said the submission would be
+ *  rejected. Both halves were false. */
+describe("Submit — the reserved namespace", () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  const missing = () =>
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ status: 404, ok: false }));
+
+  it("does not warn that civic-skills is not a GitHub user", async () => {
+    missing();
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "civic-skills");
+    await new Promise((r) => setTimeout(r, 700));
+    expect(screen.queryByTestId("no-such-user")).not.toBeInTheDocument();
+  });
+
+  it("says what actually governs that folder", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "civic-skills");
+    expect(await screen.findByTestId("reserved-namespace")).toHaveTextContent(/approval/i);
+  });
+
+  it("spends no request on a namespace the rule exempts", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ status: 404, ok: false });
+    vi.stubGlobal("fetch", fetchMock);
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "civic-skills");
+    await new Promise((r) => setTimeout(r, 700));
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("raises no ownership finding, matching what the validator does", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "civic-skills");
+    expect(screen.queryByText(/does not match the pull request author/i))
+      .not.toBeInTheDocument();
+  });
+
+  it("still warns about a username that really is missing", async () => {
+    missing();
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcees");
+    expect(await screen.findByTestId("no-such-user")).toBeInTheDocument();
+    expect(screen.queryByTestId("reserved-namespace")).not.toBeInTheDocument();
+  });
+});
