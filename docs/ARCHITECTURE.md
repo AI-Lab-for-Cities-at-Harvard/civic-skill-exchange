@@ -1,6 +1,6 @@
 # Architecture
 
-The registry is a single GitHub repository. Skills are plain directories committed to it. A build step turns the tree into a static JSON index, and GitHub Pages serves a static site over that index. There is no database, no server, and no application to operate.
+The registry is a single GitHub repository. Skills are plain directories committed to it. A build step turns the tree into a static JSON index, and GitHub Pages serves a static site over that index. There is no database, no server, and no application to operate — a preference ruled on in [ADR 0003](adr/0003-no-backend-until-the-experience-requires-one.md), which names the conditions that would overturn it.
 
 ## Why this shape
 
