@@ -234,19 +234,66 @@ export function forkUrl(repo: string): string {
   return `https://github.com/${repo}/fork`;
 }
 
-/** The upload page inside the submitter's fork.
+/** `owner/name` out of whatever somebody pastes, or null.
  *
- *  A fork keeps the repository name, so the owner is the only part that
- *  changes. GitHub's upload page takes a dragged folder and preserves its
- *  subdirectories, which is the whole reason this path exists: `value=` can
- *  prefill one new file and there is no equivalent for a directory.
+ *  The page used to *derive* the fork from `{namespace}/{registry-name}` and was
+ *  wrong twice over (#81): the owner is not the namespace when the namespace is
+ *  reserved, and the name is whatever the submitter typed into GitHub's fork
+ *  dialog, which offers a name field. There is no reliable way to find "the fork
+ *  owned by X" without authenticating, so the page stops guessing and asks.
+ *
+ *  Same acceptance as parseRepoRef in import.ts, and for the same reason: people
+ *  paste the address bar.
  */
-export function forkUploadUrl(repo: string, draft: Draft): string {
-  const name = repo.split("/")[1] ?? repo;
-  return `https://github.com/${trim(draft.author)}/${name}/upload/main/${skillPath(draft)}`;
+export function parseForkRef(input: string): string | null {
+  const trimmed = input.trim().replace(/\.git\/?$/, "").replace(/\/+$/, "");
+  const m = /^(?:(?:https?:\/\/)?(?:www\.)?github\.com\/|git@github\.com:)?([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)\/([\w.-]+)$/
+    .exec(trimmed);
+  if (!m || !m[1] || !m[2]) return null;
+  return `${m[1]}/${m[2]}`;
 }
 
-/** The pull request, opened from the fork's branch back to the registry. */
-export function pullRequestUrl(repo: string, draft: Draft): string {
-  return `https://github.com/${repo}/compare/main...${trim(draft.author)}:main?expand=1`;
+/** The upload page inside the submitter's own fork, or null until it is known.
+ *
+ *  Null rather than a best guess: a link that 404s in the middle of a hand-off
+ *  is worse than no link, because the submitter goes looking for the page
+ *  themselves and can land anywhere — which is exactly how a skill came to be
+ *  committed at the repository root.
+ *
+ *  GitHub's upload page takes a dragged folder and preserves its subdirectories,
+ *  which is the whole reason this path exists: `value=` prefills one new file and
+ *  has no equivalent for a directory.
+ */
+export function forkUploadUrl(fork: string, draft: Draft): string | null {
+  const ref = parseForkRef(fork);
+  return ref ? `https://github.com/${ref}/upload/main/${skillPath(draft)}` : null;
+}
+
+/** The upload page in the registry itself, for somebody who can write to it.
+ *
+ *  A reserved namespace is not a person — CODEOWNERS gates the folder to the
+ *  maintainers team, and checkFrontmatter skips the ownership check for it. Such
+ *  a submitter has write access, so telling them to fork is both unnecessary and
+ *  impossible to follow: the fork the page would point at does not exist.
+ *
+ *  GitHub's upload page offers "create a new branch and start a pull request" at
+ *  commit time, which is the branch this path needs and never main.
+ */
+export function registryUploadUrl(repo: string, draft: Draft): string {
+  return `https://github.com/${repo}/upload/main/${skillPath(draft)}`;
+}
+
+/** The pull request, opened from the fork back to the registry.
+ *
+ *  The head ref is `owner:repo:branch` rather than `owner:branch`, which is
+ *  GitHub's form for a fork whose name differs from the base — the case that
+ *  broke this before. `main` is the branch GitHub's upload page starts from; if
+ *  the submitter took the "create a new branch" option, GitHub's compare page
+ *  offers the branch picker anyway.
+ */
+export function pullRequestUrl(repo: string, fork: string): string | null {
+  const ref = parseForkRef(fork);
+  if (!ref) return null;
+  const [owner, name] = ref.split("/");
+  return `https://github.com/${repo}/compare/main...${owner}:${name}:main?expand=1`;
 }
