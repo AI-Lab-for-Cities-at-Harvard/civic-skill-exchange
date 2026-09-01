@@ -229,10 +229,19 @@ client while staying where the ownership check needs it.
 
 **It is the one generated file that is committed**, and the exception is
 forced: `/plugin marketplace add` reads the repository, not the published site.
-`index.json` can be a build output served from Pages; this cannot be. So
-`scripts/build_marketplace.py` generates it, and `validate.yml` fails a pull
-request that touches `skills/` while leaving it stale. A hand-maintained copy
-would drift on the first merge.
+`index.json` can be a build output served from Pages; this cannot be.
+
+**The merge maintains it, not the submitter.** `scripts/build_marketplace.py`
+generates it, and `.github/workflows/manifest.yml` runs that on every push to
+`main` that touches `skills/`, committing the result when it differs. A pull
+request that leaves it stale gets a warning and not a failure — asking somebody
+to regenerate a distribution artifact in order to share a skill is friction that
+buys the registry nothing, and it blocked a real submission before this was
+ruled ([#90](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/90)).
+
+That job pushes to a protected branch, so the identity it runs as has to be
+permitted to. If the manifest ever stops tracking the catalogue, check that
+first.
 
 Plugin names are `{namespace}-{name}`, unconditionally. Plugin names must be
 unique across a marketplace and two submitters may publish the same skill name;

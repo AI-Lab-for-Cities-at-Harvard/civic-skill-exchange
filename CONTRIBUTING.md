@@ -177,23 +177,7 @@ tell the user" is a procedure and goes in `## Steps`.
 
 If your skill produces anything affecting someone's rights, benefits, or legal standing, **say so in the skill's own output**, not just in the frontmatter. The person reading the result is not the person who read your metadata.
 
-## 4. Regenerate the marketplace manifest
-
-`.claude-plugin/marketplace.json` is what makes the registry installable with
-`/plugin marketplace add`. It is generated from `skills/`, and CI fails a pull
-request that adds a skill while leaving it stale:
-
-```bash
-python scripts/build_marketplace.py
-```
-
-Commit the result alongside your skill, before you open the pull request. One
-command, and the check tells you exactly this if you forget.
-
-If you submitted through the website and have no Python to hand, leave it — a
-maintainer runs it before merging.
-
-## 5. Open the pull request
+## 4. Open the pull request
 
 Title it `Add {skill-name}`. In the description, tell us:
 

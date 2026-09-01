@@ -98,10 +98,9 @@ def test_output_is_deterministic(make_skill):
     ]
 
 
-def test_the_committed_manifest_is_current():
-    """The real one, against the real tree. This is the test that fails when
-    somebody merges a skill without regenerating."""
-    root = build_marketplace.ROOT
-    assert build_marketplace.is_current(
-        root, root / ".claude-plugin" / "marketplace.json"), (
-        "Run: python scripts/build_marketplace.py")
+# The committed manifest is deliberately NOT asserted here any more (#90).
+#
+# It was a property of the checkout rather than of the code, and it failed on
+# every branch that added a skill — which is exactly the friction #87 hit. The
+# merge keeps main current now, via .github/workflows/manifest.yml, and the
+# generator's own unit tests above are what protect the output.
