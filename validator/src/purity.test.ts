@@ -22,7 +22,12 @@ import { dirname, join, resolve } from "node:path";
 const SRC = resolve(dirname(fileURLToPath(import.meta.url)));
 
 /** Everything reachable from the package entry point, which the site imports. */
-const BROWSER_SAFE = ["index.ts", "rules.ts", "types.ts", "structure-core.ts", "yaml-safety.ts"];
+const BROWSER_SAFE = [
+  "index.ts", "rules.ts", "types.ts", "structure-core.ts", "yaml-safety.ts",
+  // layout.ts takes a list of path strings and returns findings. It reads
+  // nothing, so it belongs here — and the submission page has a use for it.
+  "layout.ts",
+];
 
 /** Comments are stripped first: these files explain the rule in prose, and
  *  prose that names `node:fs` is not an import of it. Found the hard way. */

@@ -13,11 +13,15 @@ import {
   toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, repoSlug, slugify,
   URL_BUDGET,
   fitsInUrl,
+  forkUploadUrl, pullRequestUrl, registryUploadUrl, parseForkRef,
   EMPTY_DRAFT,
   type Draft,
 } from "./submit";
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
+
+/** The draft the fork tests share: namespace cityofx, skill permit-status. */
+const D: Draft = { ...EMPTY_DRAFT, author: "cityofx", name: "permit-status" };
 
 function draft(over: Partial<Draft> = {}): Draft {
   return {
@@ -231,5 +235,68 @@ describe("slugify — meeting submitters where their skills are named", () => {
 
   it("leaves an already-valid name untouched", () => {
     expect(slugify("permit-status-explainer")).toBe("permit-status-explainer");
+  });
+});
+
+/** #81: the page used to guess the fork's address and got it wrong two ways —
+ *  the owner is not the namespace when the namespace is reserved, and the
+ *  repository name is whatever the submitter renamed their fork to. A guessed
+ *  URL that 404s at step three is what sent a skill to the wrong directory. */
+describe("the fork is asked for, not guessed", () => {
+  it("builds the upload link from the fork the submitter pasted", () => {
+    expect(forkUploadUrl("https://github.com/sgarcese-hbs/my-registry-copy", D))
+      .toBe("https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx/permit-status");
+  });
+
+  it("accepts what people actually paste — a bare slug", () => {
+    expect(forkUploadUrl("sgarcese-hbs/my-copy", D))
+      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx/permit-status");
+  });
+
+  it("survives a trailing slash and a .git suffix", () => {
+    expect(forkUploadUrl("https://github.com/a/b.git/", D))
+      .toBe("https://github.com/a/b/upload/main/skills/cityofx/permit-status");
+  });
+
+  it("returns null rather than a link when the fork is not known yet", () => {
+    expect(forkUploadUrl("", D)).toBeNull();
+    expect(forkUploadUrl("   ", D)).toBeNull();
+    expect(forkUploadUrl("not a repository", D)).toBeNull();
+  });
+
+  it("compares against the fork that was pasted, not one derived from the namespace", () => {
+    expect(pullRequestUrl(REPO, "sgarcese-hbs/my-copy"))
+      .toBe(`https://github.com/${REPO}/compare/main...sgarcese-hbs:my-copy:main?expand=1`);
+  });
+
+  it("has no compare link without a fork either", () => {
+    expect(pullRequestUrl(REPO, "")).toBeNull();
+  });
+});
+
+/** A reserved-namespace submitter has write access — CODEOWNERS gates the
+ *  folder — so forking is the wrong instruction for them, and the fork they
+ *  would need does not exist. */
+describe("the write-access path", () => {
+  it("uploads into the registry itself for a reserved namespace", () => {
+    expect(registryUploadUrl(REPO, { ...D, author: "civic-skills" }))
+      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills/permit-status`);
+  });
+});
+
+describe("parseForkRef", () => {
+  it("takes a browser URL, a clone URL or a bare slug", () => {
+    for (const input of [
+      "https://github.com/a/b", "github.com/a/b", "a/b",
+      "https://github.com/a/b.git", "git@github.com:a/b.git", " a/b/ ",
+    ]) {
+      expect(parseForkRef(input)).toBe("a/b");
+    }
+  });
+
+  it("refuses anything that is not owner/name", () => {
+    for (const input of ["", "   ", "a", "not a repo", "https://gitlab.com/a/b"]) {
+      expect(parseForkRef(input)).toBeNull();
+    }
   });
 });

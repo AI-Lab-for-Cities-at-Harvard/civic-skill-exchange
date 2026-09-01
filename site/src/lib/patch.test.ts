@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { patchSkillMd } from "./patch";
+import { patchSkillMd, addedFrontmatterLines } from "./patch";
 
 const FILE = `---
 name: permit-status-explainer
@@ -131,5 +131,29 @@ Body.
 
   it("round-trips: patching with nothing to change leaves the file alone", () => {
     expect(patchSkillMd(FILE, {}).skillMd).toBe(FILE);
+  });
+});
+
+describe("addedFrontmatterLines", () => {
+  const before = "---\nname: x\ndescription: A skill.\n---\n\nBody.\n";
+
+  it("names the keys the patch introduced", () => {
+    const after = "---\nname: x\ndescription: A skill.\nmetadata:\n  civic.maintainer: City of X\n---\n\nBody.\n";
+    expect(addedFrontmatterLines(before, after))
+      .toEqual(["metadata:", "civic.maintainer: City of X"]);
+  });
+
+  it("shows a changed value as an added line", () => {
+    const after = "---\nname: y\ndescription: A skill.\n---\n\nBody.\n";
+    expect(addedFrontmatterLines(before, after)).toEqual(["name: y"]);
+  });
+
+  it("is empty when nothing changed", () => {
+    expect(addedFrontmatterLines(before, before)).toEqual([]);
+  });
+
+  it("ignores the body entirely", () => {
+    const after = "---\nname: x\ndescription: A skill.\n---\n\nA different body.\n";
+    expect(addedFrontmatterLines(before, after)).toEqual([]);
   });
 });

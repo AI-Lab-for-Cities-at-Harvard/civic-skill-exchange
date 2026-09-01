@@ -5,10 +5,10 @@ import {
 } from "@civic-skill-exchange/validator";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
-  forkUrl, forkUploadUrl, pullRequestUrl,
+  forkUrl, forkUploadUrl, registryUploadUrl, pullRequestUrl, parseForkRef,
   fitsInUrl, skillPath, slugify, type Draft,
 } from "../lib/submit";
-import { patchSkillMd } from "../lib/patch";
+import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
@@ -159,6 +159,10 @@ export function Submit(
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<ImportResult | null>(null);
   const [copied, setCopied] = useState(false);
+  // Asked for, never derived. #81: the page guessed this and was wrong two ways
+  // — the owner is not the namespace for a reserved one, and the name is
+  // whatever the submitter typed into GitHub's fork dialog.
+  const [forkInput, setForkInput] = useState("");
 
   const set = (key: keyof Draft) => (value: string) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -216,6 +220,22 @@ export function Submit(
   // goes the long way round rather than arriving with its scripts missing.
   const multiFile = (source?.entries.length ?? 0) > 1;
   const folderName = draft.name.trim() || source?.directoryName || "skill";
+
+  // A reserved namespace is not a person. Its submitter has write access —
+  // CODEOWNERS gates the folder — so forking is both unnecessary and impossible
+  // to follow, because the fork the page would point at does not exist.
+  const forkRef = parseForkRef(forkInput);
+  const uploadHref = reserved
+    ? registryUploadUrl(repo, draft)
+    : forkUploadUrl(forkInput, draft);
+  const prHref = reserved ? null : pullRequestUrl(repo, forkInput);
+
+  // What the download is for, shown rather than asserted (#82).
+  const added = useMemo(
+    () => (source && patched && patched.problems.length === 0
+      ? addedFrontmatterLines(source.skillMd, patched.skillMd) : []),
+    [source, patched],
+  );
 
   const url = useMemo(
     () => newFileUrl(repo, draft, fileText), [repo, draft, fileText],
@@ -660,6 +680,25 @@ export function Submit(
 
         <section className="prose__block">
           <h2 className="h2">Send it</h2>
+          {added.length > 0 && (
+            /* What the page wrote into the submitter's own file, on every path.
+               #82: asserting that the download matters did not stop somebody
+               uploading their original folder instead and losing all of it. */
+            <details className="disclosure" data-testid="added">
+              <summary className="disclosure__summary">
+                What we added to your SKILL.md &mdash; {added.length} line
+                {added.length === 1 ? "" : "s"}
+              </summary>
+              <p className="submit__note">
+                Written into the copy this page hands you. Your original file on
+                disk still does not have these.
+              </p>
+              <pre className="submit__yaml" data-testid="added-lines"><code>{
+                added.map((l) => `+ ${l}`).join("\n")
+              }</code></pre>
+            </details>
+          )}
+
           {findings.length > 0 && (
             <p className="submit__note" data-testid="findings-note">
               {findings.length} thing{findings.length === 1 ? "" : "s"} still to fill
@@ -683,8 +722,9 @@ export function Submit(
                   <h3 className="steps__title">Take the corrected folder</h3>
                   <p className="steps__body">
                     Your files, unchanged, with the answers above written into
-                    <code> SKILL.md</code>. Unzip it &mdash; you will drag the
-                    folder itself in step 3.
+                    <code> SKILL.md</code>. This folder &mdash; not your original
+                    &mdash; is what you upload: the answers exist only in this
+                    copy. Unzip it first.
                   </p>
                   <button
                     className="btn btn--strong" onClick={download}
@@ -693,39 +733,79 @@ export function Submit(
                     Download {folderName}.zip
                   </button>
                 </li>
-                <li className="steps__item">
-                  <h3 className="steps__title">Make your own copy of the registry</h3>
-                  <p className="steps__body">
-                    One button on GitHub. You are uploading into your copy, which
-                    is the only place you can write &mdash; and it is what makes
-                    you the author of the change.
-                  </p>
-                  <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
-                    target="_blank" rel="noreferrer">Fork the registry</a>
-                </li>
+
+                {!reserved && (
+                  <li className="steps__item">
+                    <h3 className="steps__title">Make your own copy of the registry</h3>
+                    <p className="steps__body">
+                      One button on GitHub, then come back and paste the address
+                      it gives you. We cannot guess it &mdash; you may rename the
+                      copy, or keep it under a different account.
+                    </p>
+                    <p className="cta-row">
+                      <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
+                        target="_blank" rel="noreferrer">Fork the registry</a>
+                    </p>
+                    <Field
+                      id="fork" label="The address of your copy" findings={[]}
+                      hint="Paste it from your browser's address bar, or type owner/name."
+                    >
+                      <input
+                        id="fork" className="input" value={forkInput}
+                        placeholder="github.com/you/civic-skill-exchange"
+                        onChange={(e) => setForkInput(e.target.value)}
+                      />
+                      {forkInput.trim() !== "" && !forkRef && (
+                        <p className="field__finding" data-testid="fork-unparsed">
+                          That does not look like a GitHub repository. It should
+                          be like <code>github.com/you/civic-skill-exchange</code>.
+                        </p>
+                      )}
+                    </Field>
+                  </li>
+                )}
+
                 <li className="steps__item">
                   <h3 className="steps__title">Drag the folder in</h3>
-                  <p className="steps__body">
-                    This opens the upload page at{" "}
-                    <code>{skillPath(draft)}</code> in your copy. Drop the
-                    unzipped folder on it &mdash; subfolders come too &mdash;
-                    then <strong>Commit changes</strong>.
+                  <p className="steps__body" data-testid="upload-step-body">
+                    Drop the folder you <strong>downloaded</strong> in step 1
+                    &mdash; unzipped, subfolders and all &mdash; then{" "}
+                    <strong>Commit changes</strong>, choosing{" "}
+                    <em>create a new branch and start a pull request</em> rather
+                    than committing to <code>main</code>.
+                    {reserved
+                      ? " This opens the registry itself, which you can write to."
+                      : " This opens your copy at the right folder."}
                   </p>
-                  <a className="btn" href={forkUploadUrl(repo, draft)}
-                    data-testid="step-upload" target="_blank" rel="noreferrer">
-                    Upload the folder
-                  </a>
+                  {uploadHref ? (
+                    <a className="btn" href={uploadHref}
+                      data-testid="step-upload" target="_blank" rel="noreferrer">
+                      Upload the folder
+                    </a>
+                  ) : (
+                    <p className="submit__note" data-testid="upload-waiting">
+                      Paste the address of your copy above and this becomes a
+                      link. A guessed one would send you to the wrong place.
+                    </p>
+                  )}
                 </li>
-                <li className="steps__item">
-                  <h3 className="steps__title">Open the pull request</h3>
-                  <p className="steps__body">
-                    The checks run on it, and a maintainer takes it from there.
-                  </p>
-                  <a className="btn" href={pullRequestUrl(repo, draft)}
-                    data-testid="step-pr" target="_blank" rel="noreferrer">
-                    Open the pull request
-                  </a>
-                </li>
+
+                {!reserved && (
+                  <li className="steps__item">
+                    <h3 className="steps__title">Open the pull request</h3>
+                    <p className="steps__body">
+                      If GitHub already offered you one at the end of step 3,
+                      that is this step done. The checks run on it, and a
+                      maintainer takes it from there.
+                    </p>
+                    {prHref && (
+                      <a className="btn" href={prHref}
+                        data-testid="step-pr" target="_blank" rel="noreferrer">
+                        Open the pull request
+                      </a>
+                    )}
+                  </li>
+                )}
               </ol>
             </>
           ) : (
