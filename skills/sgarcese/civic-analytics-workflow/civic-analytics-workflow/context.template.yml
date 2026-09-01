@@ -1,0 +1,404 @@
+# Context for the civic-analytics-workflow skill.
+#
+# Copy this to `context.yml` beside the skill and fill in every TODO — or hand
+# it to whoever adopts the skill so they can fill it in for their jurisdiction.
+# The skills read `context.yml`; this file stays blank as the template.
+# `context.yml` is gitignored so a filled copy never ships with the skill.
+#
+# Every value marked TODO must be replaced. A plausible wrong value is worse
+# than a missing one: a stale dataset ID or field name produces a confident
+# wrong answer with no error.
+#
+# SCOPE NOTE: this skill assumes a US local government — 311-style non-emergency
+# service requests, ZIP codes, US crime-reporting standards (UCR/NIBRS), and
+# US-convention plain-language reading levels. Adopters outside the US will need
+# to adapt those, not merely fill these slots.
+
+# These four are read before the skill body — by an agent deciding whether to
+# invoke the skill at all — so they cannot contain {{placeholders}}. Write them
+# as finished prose about your jurisdiction. They become the frontmatter of a
+# localized copy: `description` replaces the generic description in SKILL.md,
+# and `use_when` / `avoid_when` state when this jurisdiction's version applies.
+# Nothing in the skill body substitutes them; they exist so that a localized
+# copy triggers on the right requests and does not trigger on someone else's.
+#
+# HARD LIMIT: `description` must be 1024 characters or fewer, or the skill
+# will not save or load. It is easy to exceed — a description packed with
+# trigger phrases runs long fast. Count it before you localize. `use_when` and
+# `avoid_when` are merged into the description on localization, so budget for
+# all three together.
+jurisdiction: TODO
+description: TODO
+use_when: TODO
+avoid_when: TODO
+
+slots:
+
+  # ── Open data platform ───────────────────────────────────────────────
+
+  primary_portal_url:
+    what: >
+      The public URL of your open data portal, cited in every published
+      output so readers can verify the analysis. e.g. https://data.example.gov
+    value: TODO
+
+  primary_mcp_server:
+    what: >
+      The name of the MCP server connected to your open data portal, exactly
+      as it appears in your Claude configuration. Tool calls in this skill are
+      written with this prefix.
+    value: TODO
+
+  tool_search_datasets:
+    what: >
+      Your MCP's dataset-discovery tool name — the call that takes a topic
+      string and returns candidate datasets.
+    value: TODO
+
+  tool_get_dataset_info:
+    what: >
+      Your MCP's tool for retrieving a dataset's metadata and the queryable
+      resource IDs inside it.
+    value: TODO
+
+  tool_get_schema:
+    what: >
+      Your MCP's tool for retrieving exact field names and types for a
+      resource. The skill calls this before every query.
+    value: TODO
+
+  tool_query:
+    what: >
+      Your MCP's record-retrieval tool — the call that takes a resource ID,
+      filters, sort and limit and returns rows.
+    value: TODO
+
+  # ── Geography ────────────────────────────────────────────────────────
+
+  geographic_unit_label:
+    what: >
+      What your jurisdiction calls its primary sub-area for analysis, in the
+      singular: neighborhood, ward, district, borough, community area,
+      precinct, village. This is the unit every equity analysis disaggregates
+      to. Use the word residents and staff actually use.
+    value: TODO
+
+  geographic_unit_field:
+    what: >
+      The column name carrying that unit in your service request data. This is
+      the primary join key between datasets.
+    value: TODO
+
+  geographic_units:
+    what: >
+      Every geographic unit in your jurisdiction, with population and a short
+      characterization. Used as the denominator source for per-capita rates and
+      as the frame for equity analysis. If you have more than about forty,
+      list the ones analysis actually reports on.
+    value: TODO
+
+  population:
+    what: >
+      Total resident population of your jurisdiction, and the year and source
+      of the estimate. Used to normalize every cross-jurisdiction comparison.
+    value: TODO
+
+  rate_denominator:
+    what: >
+      The population base every per-capita rate in this skill is expressed
+      against — 10000, 1000 or 100. Pick one your size supports and use it
+      everywhere, including across peers. Per 10,000 is the usual convention
+      for a large city and nonsense in a town of eight thousand or for a
+      sub-area of five hundred, where every rate becomes a fractional
+      extrapolation that reads as absurd in a public document. Rule of thumb:
+      the denominator should not exceed the population of your smallest
+      reported geographic unit.
+    value: TODO
+
+  # ── Service request (311-style) data ─────────────────────────────────
+  #
+  # If your jurisdiction has changed service-request systems, fill these with
+  # the CURRENT system's values and analyze earlier eras separately — field
+  # names rarely survive a migration.
+
+  service_request_dataset:
+    what: >
+      The dataset identifier or slug for your non-emergency service request
+      system (311, FixIt, CRM, work orders — whatever it is called locally).
+    value: TODO
+
+  service_request_resource_ids:
+    what: >
+      The queryable resource ID for each year or period of service request
+      data, labeled by period. Many portals split these by year.
+    value: TODO
+
+  open_date_field:
+    what: "The column holding the date a service request was opened."
+    value: TODO
+
+  close_date_field:
+    what: "The column holding the date a service request was closed."
+    value: TODO
+
+  service_type_field:
+    what: >
+      The column holding the kind of request — pothole, missed collection,
+      streetlight out, and so on.
+    value: TODO
+
+  department_field:
+    what: >
+      The column holding the department or team a request is assigned to.
+      Verify the exact strings it contains; department naming rarely matches
+      across datasets.
+    value: TODO
+
+  on_time_field:
+    what: >
+      The column indicating whether a request met its service-level target,
+      if your system records one.
+    value: TODO
+
+  on_time_met_value:
+    what: "The literal value in that column meaning the target was met."
+    value: TODO
+
+  on_time_missed_value:
+    what: "The literal value in that column meaning the target was missed."
+    value: TODO
+
+  # ── Other operational datasets ───────────────────────────────────────
+
+  permits_dataset:
+    what: "Building permit dataset identifier, with approval or issue dates."
+    value: TODO
+
+  code_violations_dataset:
+    what: "Code enforcement / violations dataset identifier, if published."
+    value: TODO
+
+  public_safety_datasets:
+    what: >
+      Crime incident and emergency dispatch dataset identifiers. Note which
+      crime-classification standard applies (UCR or NIBRS) and when your
+      jurisdiction transitioned, since it breaks year-over-year comparability.
+    value: TODO
+
+  population_dataset:
+    what: >
+      Dataset identifier and resource ID for population by geographic unit —
+      the denominator for every per-capita rate in this skill.
+    value: TODO
+
+  digital_access_dataset:
+    what: >
+      A digital access, broadband or digital equity survey, if published. Used
+      to assess whether low reporting volume reflects low need or low access.
+      Leave as "none" if you have none.
+    value: TODO
+
+  additional_datasets:
+    what: >
+      Datasets outside the core workflows that analysis reaches for by domain —
+      housing and development, transportation and mobility, environment and
+      climate, and anything else your portal publishes that questions land on.
+      Group them by domain, since that is how Problem Framing looks them up. A
+      domain left empty is a real answer: it means the question cannot be
+      answered from open data as published, which is worth saying early.
+    value:
+      housing: TODO
+      transportation: TODO
+      environment: TODO
+      # add further domains as your portal publishes them
+
+  # ── Budget, spending and staffing ────────────────────────────────────
+
+  actual_spend_dataset:
+    what: >
+      Dataset and resource ID for actual transaction-level expenditures — what
+      was really spent, as distinct from what was appropriated.
+    value: TODO
+
+  actual_spend_dept_field:
+    what: "The department column in the actual-spend dataset."
+    value: TODO
+
+  actual_spend_date_field:
+    what: "The transaction date column in the actual-spend dataset."
+    value: TODO
+
+  budget_dataset:
+    what: >
+      Dataset and resource ID for the adopted or appropriated operating
+      budget — planned spending by department.
+    value: TODO
+
+  budget_dept_field:
+    what: "The department column in the budget dataset."
+    value: TODO
+
+  budget_year_fields:
+    what: >
+      The multi-year columns in the budget dataset, e.g. prior-year actuals,
+      current appropriation, proposed budget. Name them exactly.
+    value: TODO
+
+  payroll_dataset:
+    what: >
+      Dataset and resource ID for employee compensation or earnings. Used as a
+      headcount proxy and for overtime rates — it is not authorized FTE data.
+    value: TODO
+
+  payroll_dept_field:
+    what: "The department column in the payroll dataset."
+    value: TODO
+
+  overtime_field:
+    what: "The overtime pay column in the payroll dataset."
+    value: TODO
+
+  gross_pay_field:
+    what: "The total gross compensation column in the payroll dataset."
+    value: TODO
+
+  kpi_dashboard_dataset:
+    what: >
+      A jurisdiction-wide KPI or scorecard dataset, if you publish one. Used only as a
+      fallback when no direct operational dataset covers a service domain.
+      Leave as "none" if you have none.
+    value: TODO
+
+  # ── Calendar ─────────────────────────────────────────────────────────
+
+  fiscal_year_start:
+    what: >
+      The month and day your fiscal year begins. Every budget-versus-outcome
+      date range in this skill is built from it. Common: July 1, October 1,
+      January 1.
+    value: TODO
+
+  fiscal_year_convention:
+    what: >
+      How your fiscal years are named relative to the calendar — e.g. "FY26
+      runs July 1 2025 to June 30 2026" versus "FY26 is calendar 2026".
+    value: TODO
+
+  # ── Thresholds ───────────────────────────────────────────────────────
+
+  overtime_stress_threshold:
+    what: >
+      Overtime as a share of gross compensation, above which a department is
+      flagged for staffing review. A screening trigger, not proof of
+      understaffing. Set it from your own historical distribution across
+      departments: a threshold near the median flags everything and tells you
+      nothing, one above the maximum flags nothing. With only a handful of
+      departments, calibrate against one department across several years. If you have no local
+      standard, derive one before running Module 4 rather than adopting a
+      number from elsewhere.
+    value: TODO
+
+  # ── Offices and who does the work ────────────────────────────────────
+  #
+  # These are read as prose in the body, not substituted as {{placeholders}},
+  # because a title mid-sentence reads badly until it is filled. Fill them
+  # anyway: the audience tables, sign-off steps and memo headers all point here.
+  # A valid answer can be "the town clerk, as one of nine duties" — the skill
+  # does not assume a dedicated office exists.
+
+  executive_official:
+    what: >
+      Who holds executive authority — mayor, city manager, town administrator,
+      county executive, selectboard chair, or a split between two of these.
+      Say which decisions actually require them, since some jurisdictions
+      split the ceremonial and administrative halves of the job.
+    value: TODO
+
+  executive_office:
+    what: >
+      The office or staff around the chief executive that receives briefings,
+      and the person who screens what reaches them. May be one deputy, may be
+      nobody.
+    value: TODO
+
+  legislative_body:
+    what: >
+      Your legislative body — city council, board of supervisors, selectboard,
+      board of aldermen, county commission. Note whether it must vote on
+      resource decisions or is merely notified.
+    value: TODO
+
+  legislative_member:
+    what: >
+      What an individual member is called (councilor, supervisor, alderman,
+      commissioner), and whether members represent districts or run at large.
+      Affects whether geographic analysis maps onto political accountability.
+    value: TODO
+
+  department_head_title:
+    what: >
+      What department heads are called, and whether they are elected or
+      appointed. Appointed heads take direction; elected ones negotiate.
+    value: TODO
+
+  departments:
+    what: >
+      The departments this analysis touches, by function rather than by name:
+      who fills potholes, who inspects buildings, who polices, who runs the
+      service request system. Include the exact strings each appears as in
+      data, which frequently differ from the official name and from each
+      other.
+    value: TODO
+
+  analytics_function:
+    what: >
+      Where analysis sits in your organization and who does it — a standalone
+      data office, an analyst inside budget or the executive office, a
+      contractor, or one person among other duties. Determines what "prepared
+      by" says and how much capacity a recommendation can assume.
+    value: TODO
+
+  # ── Communication ────────────────────────────────────────────────────
+
+  translation_languages:
+    what: >
+      The languages public-facing materials must be available in, in order of
+      speaker population. Drives the translation line on every community
+      fact sheet.
+    value: TODO
+
+  public_contact:
+    what: >
+      The email, phone and feedback URL residents should use to respond to
+      published findings. Community materials in this skill are required to
+      carry a working feedback route.
+    value: TODO
+
+  regional_authority:
+    what: >
+      The state, province, county or regional government that handles
+      functions your jurisdiction does not. Needed when comparing scope or
+      budgets against peers who absorb those functions themselves.
+    value: TODO
+
+# Judgments, not facts — who is usefully similar. An adopter who keeps these
+# has not necessarily made a mistake, whereas one who keeps a slot on its
+# original value has.
+comparators:
+
+  peer_jurisdictions:
+    what: >
+      Who to benchmark against, and on what basis. For each peer record: the
+      portal URL, the MCP server and platform, the population, and the
+      comparability strengths and cautions that qualify every number drawn
+      from it. Choose peers for structural similarity — population scale,
+      form of government, service obligations, data maturity — before looking
+      at any outcomes. Peers chosen after seeing results are not peers.
+    value: TODO
+
+  peer_selection_rationale:
+    what: >
+      Why these peers and not others, written down before the first
+      comparison. This is what you show the skeptic who says the peer set was
+      picked to flatter.
+    value: TODO
