@@ -356,6 +356,22 @@ export function Submit(
           few minutes.
         </p>
 
+        {/* Before the form, not after it. Every path this page offers ends on
+            GitHub, and somebody could otherwise fill in twenty fields before
+            finding that out. */}
+        <p className="submit__prereq" data-testid="account-needed">
+          You will need a <strong>GitHub account</strong> to finish &mdash; it is
+          free, and it is what records the skill as yours.{" "}
+          <a
+            href="https://github.com/signup" data-testid="account-signup"
+            target="_blank" rel="noreferrer"
+          >
+            Create one
+          </a>{" "}
+          if you do not have one; it takes a couple of minutes and you can come
+          back to this page afterwards.
+        </p>
+
         {/* Links rather than scripted tabs. Each mode is a real URL, so it can
             be sent to someone, bookmarked, and reached with the back button —
             and a skill page linking straight to the update mode needs no extra
@@ -747,7 +763,21 @@ export function Submit(
               <a href={`mailto:${SUBMISSIONS_EMAIL}`}>{SUBMISSIONS_EMAIL}</a> with
               the skill file attached.
             </p>
-          ) : null}
+          ) : (
+            /* No inbox yet, so this cannot say "email it to us" — and going
+               quiet instead would leave somebody who will not make an account
+               with no idea whether that is a dead end. It is, for now, and
+               saying so beats letting them find out. */
+            <p className="submit__note" data-testid="no-account-path">
+              Every route from here goes through GitHub, so an account is
+              required &mdash; the checks that admit a skill work by confirming
+              the account that submitted it owns the folder it went into. If that
+              is a problem, open an{" "}
+              <a href={`https://github.com/${repo}/issues`}>issue</a> or ask
+              whoever pointed you at this page; a maintainer can submit on your
+              behalf, and the listing will credit you as the maintainer.
+            </p>
+          )}
 
           <details className="disclosure">
             <summary className="disclosure__summary">See what will be added</summary>
