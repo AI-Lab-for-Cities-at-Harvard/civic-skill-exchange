@@ -116,3 +116,22 @@ export function patchSkillMd(
   const emitted = doc.toString({ lineWidth: 0 });
   return { skillMd: `---\n${emitted}---\n${body}`, present, problems: [] };
 }
+
+/** The frontmatter lines the patch introduced or changed.
+ *
+ *  #82: the corrected SKILL.md lives only inside the download, so a submitter
+ *  who drags their original folder loses everything they typed — silently. The
+ *  page knows both texts, so it can show what the download is *for* rather than
+ *  asserting that it matters.
+ *
+ *  Line-level and deliberately crude. This is a "here is what changed" display,
+ *  not a diff engine, and the frontmatter it compares is one key per line.
+ */
+export function addedFrontmatterLines(original: string, patched: string): string[] {
+  const front = (text: string) => {
+    const m = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(text);
+    return (m?.[1] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+  };
+  const before = new Set(front(original));
+  return front(patched).filter((line) => !before.has(line));
+}

@@ -624,17 +624,19 @@ describe("Submit — the skill survives the hand-off", () => {
     expect(screen.getByTestId("download-folder")).toBeInTheDocument();
   });
 
-  it("points the upload at the submitter's own fork, where they can write", async () => {
+  it("offers no upload link until it knows where the fork actually is", async () => {
+    /* Superseded the guessed URL this used to assert. #81: deriving
+       {namespace}/{registry-name} is wrong when the namespace is reserved and
+       wrong again when the fork is renamed, and a link that 404s mid-hand-off is
+       how a skill ended up committed at the repository root. */
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
     await screen.findByTestId("archive-result");
     // The name came out of the file; only the username is still missing.
     await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
-    expect(screen.getByTestId("step-upload")).toHaveAttribute(
-      "href",
-      "https://github.com/cityofx/civic-skill-exchange/upload/main/skills/cityofx/permit-status-explainer",
-    );
+    expect(screen.queryByTestId("step-upload")).not.toBeInTheDocument();
+    expect(screen.getByTestId("upload-waiting")).toBeInTheDocument();
   });
 
   it("shows which fields it read, so they are not asked for twice", async () => {
@@ -648,5 +650,123 @@ describe("Submit — the skill survives the hand-off", () => {
   it("does not claim it copied files in when it only read them", () => {
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     expect(screen.queryByText(/copy them in/i)).not.toBeInTheDocument();
+  });
+});
+
+/** A GitHub account is a hard prerequisite for every path this page offers,
+ *  and the page used to say so only inside a block that renders nothing while
+ *  SUBMISSIONS_EMAIL is empty. Somebody without an account could fill the whole
+ *  form before discovering that. */
+describe("Submit — you need a GitHub account", () => {
+  it("says so before the form, not after it", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("account-needed")).toHaveTextContent(/GitHub account/i);
+  });
+
+  it("links somewhere you can make one", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("account-signup"))
+      .toHaveAttribute("href", "https://github.com/signup");
+  });
+
+  it("says it is free, because that is the first thing anyone asks", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("account-needed")).toHaveTextContent(/free/i);
+  });
+
+  it("says what to do instead when there is no address to send to", () => {
+    /* SUBMISSIONS_EMAIL is deliberately empty — a personal address on a public
+       page is a scraping target. So the fallback cannot be "email us", and the
+       page must not simply go quiet about people who will not make an account. */
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    if (!SUBMISSIONS_EMAIL) {
+      expect(screen.getByTestId("no-account-path")).toBeInTheDocument();
+    }
+  });
+
+  it("tells someone updating a listing too, since that also needs an account", () => {
+    render(<Submit repo={REPO} skills={[]} mode="update" />);
+    expect(screen.getByTestId("account-needed")).toBeInTheDocument();
+  });
+});
+
+/** #81 and #82, both found in first real use.
+ *
+ *  #81: the page guessed the fork's address and got it wrong two ways, so
+ *  step 3 dead-ended and the submitter went looking — landing a skill at the
+ *  repository root. #82: the corrected SKILL.md exists only inside the download,
+ *  so dragging the original folder silently discards everything typed. */
+describe("Submit — the fork is asked for", () => {
+  const MULTI = () => file("skill.zip", {
+    "permit-status-explainer/SKILL.md": SKILL_MD,
+    "permit-status-explainer/scripts/reading_level.py": "print(1)\n",
+  });
+
+  async function multiFileFlow(user: ReturnType<typeof userEvent.setup>, ns = "cityofx") {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    await user.type(screen.getByLabelText(/GitHub username/i), ns);
+  }
+
+  it("gives no upload link until the fork is known", async () => {
+    const user = userEvent.setup();
+    await multiFileFlow(user);
+    expect(screen.queryByTestId("step-upload")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/address of your copy/i)).toBeInTheDocument();
+  });
+
+  it("builds the upload link from the fork that was pasted, renamed or not", async () => {
+    const user = userEvent.setup();
+    await multiFileFlow(user);
+    await user.type(screen.getByLabelText(/address of your copy/i),
+      "github.com/sgarcese-hbs/my-registry-copy");
+    expect(screen.getByTestId("step-upload")).toHaveAttribute(
+      "href",
+      "https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx/permit-status-explainer",
+    );
+  });
+
+  it("says so rather than silently offering nothing when the address is not a repository", async () => {
+    const user = userEvent.setup();
+    await multiFileFlow(user);
+    await user.type(screen.getByLabelText(/address of your copy/i), "nonsense");
+    expect(screen.getByTestId("fork-unparsed")).toBeInTheDocument();
+    expect(screen.queryByTestId("step-upload")).not.toBeInTheDocument();
+  });
+
+  it("sends a reserved-namespace submitter into the registry, not a fork that cannot exist", async () => {
+    const user = userEvent.setup();
+    await multiFileFlow(user, "civic-skills");
+    expect(screen.queryByTestId("step-fork")).not.toBeInTheDocument();
+    expect(screen.getByTestId("step-upload")).toHaveAttribute(
+      "href",
+      `https://github.com/${REPO}/upload/main/skills/civic-skills/permit-status-explainer`,
+    );
+  });
+});
+
+describe("Submit — the download cannot be skipped by accident", () => {
+  const MULTI = () => file("skill.zip", {
+    "permit-status-explainer/SKILL.md": SKILL_MD,
+    "permit-status-explainer/scripts/reading_level.py": "print(1)\n",
+  });
+
+  it("names step one's output where step three consumes it", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    expect(screen.getByTestId("upload-step-body")).toHaveTextContent(/downloaded/i);
+  });
+
+  it("shows the frontmatter it wrote, so the download has a visible purpose", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.click(screen.getByLabelText(/paste your SKILL.md/i));
+    await user.paste(SKILL_MD);
+    await user.type(screen.getByLabelText(/Who maintains it/i), "City of X");
+    expect(screen.getByTestId("added-lines")).toHaveTextContent(/civic.maintainer/);
   });
 });

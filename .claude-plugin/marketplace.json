@@ -6,6 +6,11 @@
   },
   "plugins": [
     {
+      "name": "civic-skills-generalize-skill",
+      "source": "./skills/civic-skills/generalize-skill",
+      "description": "Separates a skill written for one organization into two things a portable generalized skill, and a context file holding every value that was specific to that place. Records how far the skill was generalized to travel, since that is what decides which values are local at all. Reports what it was unsure about rather than guessing. Produces drafts for the author to check; decides nothing and publishes nothing."
+    },
+    {
       "name": "civic-skills-plain-language-notice-rewriter",
       "source": "./skills/civic-skills/plain-language-notice-rewriter",
       "description": "Rewrites a government notice template into plain language at a target reading level, preserving every legally required element. Works on templates, not on filled notices containing a specific person's information. Produces a draft for human review; it does not approve or send anything."
