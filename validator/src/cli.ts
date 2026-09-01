@@ -12,32 +12,51 @@
  *   validate-skills all
  *   validate-skills skills/octocat/permit-status-explainer
  *   validate-skills --changed changed.txt --author octocat
+ *   validate-skills --layout changed.txt
  *
  * Exit code 0 if every checked skill passes, 1 otherwise.
  */
 
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, relative, resolve } from "node:path";
 import { loadCategories, validateSkill, discoverAll, discoverChanged } from "./skill";
+import { checkChangedLayout } from "./layout";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 function parseArgs(argv: string[]) {
   let changed: string | undefined;
   let author: string | undefined;
+  let layout: string | undefined;
   let target: string | undefined;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--changed") { changed = argv[++i]; }
     else if (arg === "--author") { author = argv[++i]; }
+    else if (arg === "--layout") { layout = argv[++i]; }
     else if (arg && !arg.startsWith("--")) { target = arg; }
   }
-  return { changed, author, target };
+  return { changed, author, layout, target };
 }
 
 function main(): number {
-  const { changed, author, target } = parseArgs(process.argv.slice(2));
+  const { changed, author, layout, target } = parseArgs(process.argv.slice(2));
+
+  // Runs on the raw changed-path list, before anything has been discovered as a
+  // skill. It has to: a SKILL.md outside skills/ is invisible to discovery, and
+  // that invisibility is exactly what let three of them through (#85).
+  if (layout) {
+    const paths = readFileSync(layout, "utf8").split("\n");
+    const findings = checkChangedLayout(paths);
+    if (findings.length === 0) {
+      console.log("ok    every changed SKILL.md is in a place the registry reads");
+      return 0;
+    }
+    for (const f of findings) console.log(`FAIL  ${f.where}\n        ${f.message}`);
+    return 1;
+  }
 
   let targets: string[];
   if (changed) targets = discoverChanged(ROOT, changed);

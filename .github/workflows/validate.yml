@@ -50,28 +50,43 @@ jobs:
           else
             echo "skills=false" >> "$GITHUB_OUTPUT"
           fi
+          # Separately, and deliberately not gated on the above: a SKILL.md is a
+          # submission wherever it sits. Deciding whether to validate by looking
+          # for skills/ is what let three skills land outside it (#85).
+          if grep -qE '(^|/)SKILL\.md$' changed.txt; then
+            echo "skillmd=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skillmd=false" >> "$GITHUB_OUTPUT"
+          fi
           echo "Changed paths:"; cat changed.txt
 
       - name: Nothing to validate
-        if: steps.changes.outputs.skills != 'true'
+        if: steps.changes.outputs.skills != 'true' && steps.changes.outputs.skillmd != 'true'
         run: echo "This pull request touches no skills/, so there is nothing to validate."
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        if: steps.changes.outputs.skills == 'true'
+        if: steps.changes.outputs.skills == 'true' || steps.changes.outputs.skillmd == 'true'
         with:
           node-version: "22"
           cache: npm
 
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        if: steps.changes.outputs.skills == 'true'
+        if: steps.changes.outputs.skills == 'true' || steps.changes.outputs.skillmd == 'true'
         with:
           python-version: "3.12"
 
       - name: Install dependencies
-        if: steps.changes.outputs.skills == 'true'
+        if: steps.changes.outputs.skills == 'true' || steps.changes.outputs.skillmd == 'true'
         run: |
           npm ci --workspace @civic-skill-exchange/validator
           pip install pyyaml          # scan.py only; validation is TypeScript now
+
+      # Before L0, because L0 cannot see a skill that is not where skills live.
+      # A submission outside skills/{namespace}/{name}/ used to skip every check
+      # in this file and go green (#85).
+      - name: Layout — every changed SKILL.md is somewhere the registry reads
+        if: steps.changes.outputs.skillmd == 'true'
+        run: npx tsx validator/src/cli.ts --layout changed.txt
 
       # L0 and L1 run the same module the submission form runs in the browser,
       # so a contributor cannot be told "valid" by the site and rejected here.

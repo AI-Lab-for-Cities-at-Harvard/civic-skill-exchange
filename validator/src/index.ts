@@ -11,3 +11,5 @@ export * from "./types";
 // @types/node and compiles cleanly.
 export * from "./structure-core";
 export * from "./yaml-safety";
+
+export { checkChangedLayout } from "./layout";
