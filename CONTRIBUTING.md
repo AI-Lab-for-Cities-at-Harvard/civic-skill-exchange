@@ -4,6 +4,12 @@ Thanks for sharing your work. This page is the whole contract: what a skill has 
 
 ## Before you start
 
+**You will need a GitHub account.** It is free — [create one](https://github.com/signup)
+if you do not have one. This is not incidental: the automated check that admits a
+skill works by confirming the account opening the pull request owns the folder
+the skill went into, so a submission cannot be made on your behalf without
+changing whose skill it is.
+
 Two things worth knowing up front:
 
 1. **Submitting is easy; getting into the Reviewed tier is not.** Most submissions land in the Community tier, which is a real and useful place to be. See [docs/TIERS.md](docs/TIERS.md).

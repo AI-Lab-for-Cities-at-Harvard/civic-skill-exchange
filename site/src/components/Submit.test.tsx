@@ -650,3 +650,40 @@ describe("Submit — the skill survives the hand-off", () => {
     expect(screen.queryByText(/copy them in/i)).not.toBeInTheDocument();
   });
 });
+
+/** A GitHub account is a hard prerequisite for every path this page offers,
+ *  and the page used to say so only inside a block that renders nothing while
+ *  SUBMISSIONS_EMAIL is empty. Somebody without an account could fill the whole
+ *  form before discovering that. */
+describe("Submit — you need a GitHub account", () => {
+  it("says so before the form, not after it", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("account-needed")).toHaveTextContent(/GitHub account/i);
+  });
+
+  it("links somewhere you can make one", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("account-signup"))
+      .toHaveAttribute("href", "https://github.com/signup");
+  });
+
+  it("says it is free, because that is the first thing anyone asks", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("account-needed")).toHaveTextContent(/free/i);
+  });
+
+  it("says what to do instead when there is no address to send to", () => {
+    /* SUBMISSIONS_EMAIL is deliberately empty — a personal address on a public
+       page is a scraping target. So the fallback cannot be "email us", and the
+       page must not simply go quiet about people who will not make an account. */
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    if (!SUBMISSIONS_EMAIL) {
+      expect(screen.getByTestId("no-account-path")).toBeInTheDocument();
+    }
+  });
+
+  it("tells someone updating a listing too, since that also needs an account", () => {
+    render(<Submit repo={REPO} skills={[]} mode="update" />);
+    expect(screen.getByTestId("account-needed")).toBeInTheDocument();
+  });
+});

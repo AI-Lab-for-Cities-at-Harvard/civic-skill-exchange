@@ -689,6 +689,16 @@ a:hover { color: var(--c-spot); }
   margin: 0 0 var(--gap-3); font-size: var(--t-sm); color: var(--c-text-light);
 }
 
+.submit__prereq {
+  margin: var(--gap-4) 0 0;
+  padding: var(--gap-3) var(--gap-4);
+  border-left: 3px solid var(--c-info);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--c-info-bg); color: var(--c-info);
+  font-size: var(--t-sm);
+}
+.submit__prereq a { color: inherit; }
+
 .submit__yaml {
   padding: var(--gap-4); border-radius: var(--radius);
   background: var(--c-button-bg-subtle);
