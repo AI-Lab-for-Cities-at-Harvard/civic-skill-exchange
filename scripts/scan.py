@@ -27,6 +27,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from build_index import read_frontmatter
+
 ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = ROOT / "skills"
 
@@ -127,6 +129,63 @@ SCANNABLE_SUFFIXES = {
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# Disposition, not pattern (#89).
+#
+# `external-url` means opposite things depending on civic.localization. A
+# localized skill *is* one jurisdiction's forms, deadlines and portals — its URLs
+# are the skill working, and flagging them teaches a maintainer that flags are
+# ignorable, which is how a real signal gets missed. A generalized skill carrying
+# a jurisdiction URL is a genuine finding, because removing exactly that is what
+# generalization is for.
+#
+# Unreadable frontmatter falls back to flagging: the safe direction is to say
+# something rather than nothing.
+
+GENERALIZED_URL = (
+    "External URL in a skill that declares itself generalized. Lifting "
+    "jurisdiction-specific values out is what generalization means, so a "
+    "hardcoded domain is either a leftover or the localization field is wrong. "
+    "Check which."
+)
+
+
+def localization_of(skill_dir: Path) -> str | None:
+    """`civic.localization`, or None when it cannot be read.
+
+    Shares build_index's parser rather than adding a second one — the field has
+    to mean the same thing to the scanner as it does to the index.
+    """
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.is_file():
+        return None
+    try:
+        front = read_frontmatter(skill_md)
+    except Exception:
+        # A malformed SKILL.md is L0's finding to report, not this scanner's to
+        # crash on.
+        return None
+    if not front:
+        return None
+    meta = front.get("metadata") or {}
+    value = meta.get("civic.localization")
+    return str(value) if value else None
+
+
+def apply_localization(flags: list[dict], localization: str | None) -> list[dict]:
+    kept = []
+    for f in flags:
+        if f["signature"] != "external-url":
+            kept.append(f)
+        elif localization == "localized":
+            continue  # expected by construction
+        elif localization == "generalized":
+            kept.append({**f, "explanation": GENERALIZED_URL})
+        else:
+            kept.append(f)
+    return kept
+
+
 def scan_text(text: str, signatures: list[Signature], rel: str) -> list[dict]:
     findings = []
     for name, pattern, explanation in signatures:
@@ -164,7 +223,10 @@ def scan_skill(skill_dir: Path) -> dict:
         blocking.extend(scan_text(text, HARD, rel))
         flags.extend(scan_text(text, SOFT, rel))
 
-    return {"blocking": blocking, "flags": flags}
+    return {
+        "blocking": blocking,
+        "flags": apply_localization(flags, localization_of(skill_dir)),
+    }
 
 
 def discover(changed_file: Path) -> list[Path]:

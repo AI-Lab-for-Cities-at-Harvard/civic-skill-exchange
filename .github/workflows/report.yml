@@ -21,6 +21,8 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  # Reading which step failed, so the comment can name it rather than guess (#88).
+  actions: read
 
 jobs:
   comment:
@@ -68,16 +70,50 @@ jobs:
               `  <sub>${f.excerpt ? safe(f.excerpt) : ''}</sub>`
             ).join('\n');
 
-            let body = `## Automated checks\n\n`;
-
-            if (conclusion !== 'success') {
-              body += `Validation did not pass. See the workflow run for details.\n\n`;
-            }
-
             const blocking = [], flags = [];
             for (const [id, r] of Object.entries(data.results || {})) {
               for (const f of r.blocking || []) blocking.push({ ...f, file: `${id}/${f.file}` });
               for (const f of r.flags || [])    flags.push({ ...f, file: `${id}/${f.file}` });
+            }
+
+            // #88: this comment used to announce a failure it could not attribute,
+            // beside items it had just called harmless — so a stale-manifest
+            // failure read as "the URL blocked me". The run knows which step
+            // failed; ask it.
+            let failedSteps = [];
+            if (conclusion !== 'success') {
+              try {
+                const jobs = await github.paginate(
+                  github.rest.actions.listJobsForWorkflowRun,
+                  { ...context.repo, run_id: context.payload.workflow_run.id, per_page: 100 },
+                );
+                for (const job of jobs) {
+                  for (const step of job.steps || []) {
+                    if (step.conclusion === 'failure') failedSteps.push(step.name);
+                  }
+                }
+              } catch (e) {
+                core.info(`Could not read step conclusions: ${e.message}`);
+              }
+            }
+
+            let body = `## Automated checks\n\n`;
+
+            if (conclusion !== 'success') {
+              // Step names come from our own workflow definitions, not from
+              // contributor input — but they go through safe() anyway, because the
+              // next person to edit this file should not have to know that.
+              const named = failedSteps.length
+                ? failedSteps.map(safe).join(', ')
+                : null;
+              body += named
+                ? `Something did not pass: ${named}. `
+                : `Validation did not pass. See the workflow run for details. `;
+              if (!blocking.length) {
+                body += `The signature scan found nothing blocking, so anything ` +
+                  `listed below is **not** the cause.`;
+              }
+              body += `\n\n`;
             }
 
             if (blocking.length) {
