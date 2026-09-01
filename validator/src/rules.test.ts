@@ -177,8 +177,33 @@ describe("checkProvenance", () => {
     expect(messages(f)).toMatch(/civic\.deployed-in/);
   });
 
-  it("treats personal use as a claim that still has to name where", () => {
-    expect(checkProvenance(meta({ "civic.deployment": "personal" })).length).toBeGreaterThan(0);
+  /* `civic.deployed-at` is "the organization where it was used". Personal use
+     means there is no organization, so requiring it demanded a field whose own
+     definition did not apply — and a required field that does not apply gets
+     filled with something, which corrupts the data it exists to collect. */
+  it("asks nothing further of somebody who only uses it themselves", () => {
+    expect(checkProvenance(meta({ "civic.deployment": "personal" }))).toEqual([]);
+  });
+
+  it("still lets personal use name a place, for anyone who wants to", () => {
+    const f = checkProvenance(meta({
+      "civic.deployment": "personal", "civic.deployed-in": "US-MA / Boston",
+    }));
+    expect(f).toEqual([]);
+  });
+
+  it("still checks the shape of what personal use does say", () => {
+    const f = checkProvenance(meta({
+      "civic.deployment": "personal", "civic.deployed-in": "Boston, obviously",
+    }));
+    expect(messages(f)).toMatch(/not in the expected form/);
+  });
+
+  it("keeps requiring an organization from a claim that names one", () => {
+    for (const deployment of ["team", "organization"]) {
+      const f = checkProvenance(meta({ "civic.deployment": deployment }));
+      expect(messages(f), deployment).toMatch(/civic\.deployed-at/);
+    }
   });
 
   it("rejects deployment details alongside a claim of none", () => {

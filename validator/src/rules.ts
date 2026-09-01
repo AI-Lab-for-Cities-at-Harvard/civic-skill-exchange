@@ -45,6 +45,20 @@ const DEPLOYED_SINCE_RE = /^\d{4}(-(0[1-9]|1[0-2]))?$/;
 
 const DEPLOYMENT_DETAILS = ["civic.deployed-at", "civic.deployed-in"] as const;
 
+/** Deployment values that are a claim *about an organization*, and so have to
+ *  name one.
+ *
+ *  `personal` is not among them, deliberately. `civic.deployed-at` is defined as
+ *  "the organization where it was used", and somebody using their own skill in
+ *  their own work has no organization to name — the check was demanding a field
+ *  whose own definition did not apply. A required field that does not apply does
+ *  not go unanswered; it gets filled with something, which corrupts the data the
+ *  field exists to collect.
+ *
+ *  `civic.maintainer` already says who the person is, which is the whole of what
+ *  a personal-use claim asserts. */
+const ORGANIZATIONAL_DEPLOYMENTS = ["team", "organization"] as const;
+
 /** Cap on the two fit fields. Exported so schema.test.ts can hold the published
  *  schema to the same number rather than repeating it. */
 export const FIT_MAX_LENGTH = 500;
@@ -81,7 +95,9 @@ function checkEnum(
 
 // --------------------------------------------------------------------------- //
 
-/** A deployment claim must say where, and a non-claim must not imply one. */
+/** A claim about an organization must name it, and a non-claim must not imply
+ *  one. Personal use is neither: it asserts nothing about anybody but the
+ *  maintainer, who is already named. */
 export function checkProvenance(meta: Record<string, unknown>): Finding[] {
   const findings: Finding[] = [];
   const deployment = str(meta["civic.deployment"]);
@@ -94,12 +110,13 @@ export function checkProvenance(meta: Record<string, unknown>): Finding[] {
           `been used. Remove ${field}, or state where it was used.`));
       }
     }
-  } else if (deployment && DEPLOYMENTS.includes(deployment as never)) {
+  } else if (deployment && ORGANIZATIONAL_DEPLOYMENTS.includes(deployment as never)) {
     for (const field of DEPLOYMENT_DETAILS) {
       if (!meta[field]) {
         findings.push(finding(field,
           `${field} is required when civic.deployment is '${deployment}'. ` +
-          `A deployment claim has to name where.`));
+          `Saying a team or an organization uses this is a claim about them, ` +
+          `and an unnamed organization is a claim nobody can check.`));
       }
     }
   }

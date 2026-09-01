@@ -615,7 +615,12 @@ export function Submit(
 
           <Choice id="civic.deployment" label="Have you used it?"
             value={draft.deployment} findings={findings}
-            onChange={set("deployment")} options={USE_LABELS} />
+            onChange={set("deployment")} options={USE_LABELS}
+            hint={
+              draft.deployment === "team" || draft.deployment === "organization"
+                ? "Saying a team or an organization uses it is a claim about them, so the details below are needed."
+                : "Using it yourself is a complete answer — nothing else is required."
+            } />
 
           <Field id="civic.contact" label="Contact" findings={findings}
             hint="How someone reaches you about a problem with the skill.">
@@ -660,7 +665,13 @@ export function Submit(
                 onChange={onInput("license")} />
             </Field>
 
-            <Field id="civic.deployed-at" label="Which organization uses it?" findings={findings}>
+            <Field
+              id="civic.deployed-at" label="Which organization uses it?"
+              findings={findings}
+              hint={draft.deployment === "personal"
+                ? "Leave this blank if it is just you — personal use names no organization."
+                : undefined}
+            >
               <input id="civic.deployed-at" className="input" value={draft.deployedAt}
                 onChange={onInput("deployedAt")} />
             </Field>
