@@ -48,6 +48,24 @@ Skills are plain directories. Take one however you like:
 skill folder. Upload it wherever your agent tool takes skills. No git, no Node,
 no account.
 
+**In Claude Code, as a plugin marketplace.** The registry is one, so a skill is
+one command:
+
+```
+/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
+/plugin install {namespace}-{skill-name}@civic-skill-exchange
+```
+
+The plugin name carries the namespace, because two people may publish a skill of
+the same name. Each skill page shows its exact command.
+
+**In other agent tools.** Skills here follow the open
+[Agent Skills](https://agentskills.io) format, so they work anywhere that has
+adopted it — ChatGPT, Codex, Gemini CLI, Copilot, Cursor and others. Those tools
+install a skill at a time rather than a repository: use the download link on the
+skill's page, which is a zip of the skill folder rooted at a single directory,
+which is the shape they expect.
+
 **With a terminal:**
 
 ```bash

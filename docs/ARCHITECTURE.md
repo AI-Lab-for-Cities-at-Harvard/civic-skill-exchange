@@ -215,6 +215,30 @@ Start narrow. Adding a category is a PR against this file, and it should require
 
 ---
 
+## The marketplace manifest
+
+`.claude-plugin/marketplace.json` makes the registry a Claude Code plugin
+marketplace: `/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange`,
+then one `/plugin install` per skill.
+
+Nothing moved to make this work. Every skill is already a directory with
+`SKILL.md` at its top level, which is what Claude Code loads as a single-skill
+plugin, and each entry in the manifest names its own `source` — so the
+`{namespace}/` directory between `skills/` and the skill is invisible to the
+client while staying where the ownership check needs it.
+
+**It is the one generated file that is committed**, and the exception is
+forced: `/plugin marketplace add` reads the repository, not the published site.
+`index.json` can be a build output served from Pages; this cannot be. So
+`scripts/build_marketplace.py` generates it, and `validate.yml` fails a pull
+request that touches `skills/` while leaving it stale. A hand-maintained copy
+would drift on the first merge.
+
+Plugin names are `{namespace}-{name}`, unconditionally. Plugin names must be
+unique across a marketplace and two submitters may publish the same skill name;
+qualifying only on collision would change the first submitter's install command
+the day a stranger arrives.
+
 ## The index build
 
 `build_index.py` walks `skills/`, joins each skill against `registry/reviewed.yml`, attaches the latest scan findings, and writes:

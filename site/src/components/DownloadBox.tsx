@@ -18,7 +18,25 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
     skill.tier === "reviewed" && RESERVED_NAMESPACES.has(skill.namespace.toLowerCase());
 
   const repo = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
+
+  // The registry is a Claude Code plugin marketplace (#73), which is the
+  // shortest path in and needs no knowledge of where a tool keeps its skills.
+  //
+  // The plugin name carries the namespace, matching what
+  // scripts/build_marketplace.py writes: plugin names are unique across a
+  // marketplace and two people may publish the same skill name.
+  const marketplace = "civic-skill-exchange";
   const commands = [
+    {
+      id: "marketplace",
+      label: "Add the marketplace, once",
+      value: `/plugin marketplace add ${repo}`,
+    },
+    {
+      id: "install",
+      label: "Install it",
+      value: `/plugin install ${skill.namespace}-${skill.name}@${marketplace}`,
+    },
     {
       id: "degit",
       label: "Just this skill",
@@ -96,6 +114,14 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
           </button>
         </div>
       ))}
+
+      <p className="download__note">
+        In Claude Code the two <code>/plugin</code> lines are all you need. Skills
+        here follow the open{" "}
+        <a href="https://agentskills.io">Agent Skills</a> format, so they also
+        work in ChatGPT, Codex, Gemini CLI, Copilot, Cursor and others — those
+        take a skill at a time, so use the download above.
+      </p>
 
       <p className="download__note">
         Install paths differ across agent tools — <code>.claude/skills/</code>,{" "}
