@@ -42,6 +42,20 @@ export const DEPLOYMENT_LABELS: Record<string, string> = {
   organization: "Used organization-wide",
 };
 
+export const HUMAN_REVIEW_LABELS: Record<string, string> = {
+  none: "No effect on rights or benefits",
+  "advisory-only": "Informs a person, decides nothing",
+  "decision-support": "Feeds a decision someone acts on",
+};
+
+export const AFFILIATION_LABELS: Record<string, string> = {
+  government: "Government",
+  nonprofit: "Nonprofit",
+  vendor: "Vendor",
+  academic: "Academic",
+  individual: "Individual",
+};
+
 export const TIER_LABELS: Record<string, string> = {
   reviewed: "Reviewed",
   community: "Community",

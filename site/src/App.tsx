@@ -64,6 +64,17 @@ export default function App() {
   // Memoised so the array identity is stable — a fresh [] on every render would
   // defeat the useMemo below it and re-filter the whole catalog on each keystroke.
   const skills = useMemo(() => index?.skills ?? [], [index]);
+
+  // #/about/<section> rather than a fragment, because hash routing has only one
+  // `#`. The scroll happens here rather than in About so it re-runs when the
+  // route changes without remounting the page.
+  const aboutSection = route.page === "about" ? route.section : undefined;
+  useEffect(() => {
+    if (!aboutSection) return;
+    // The section may not exist yet on the first render after a route change.
+    const target = document.getElementById(aboutSection);
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [aboutSection, index]);
   const results = useMemo(() => applyFilters(skills, filters), [skills, filters]);
   const active = Object.entries(filters).some(([k, v]) => (k === "q" ? v !== "" : v !== null));
 
@@ -126,7 +137,7 @@ export default function App() {
 
       {route.page === "about" ? (
         <main id="results" className="page">
-          <About />
+          <About skills={skills} />
         </main>
       ) : route.page === "submit" ? (
         <main id="results" className="page">

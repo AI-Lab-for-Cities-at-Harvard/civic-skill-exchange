@@ -689,6 +689,63 @@ a:hover { color: var(--c-spot); }
   margin: 0 0 var(--gap-3); font-size: var(--t-sm); color: var(--c-text-light);
 }
 
+/* On-this-page contents for the About page. A nav, so it is announced as one
+ * and can be skipped; sticky on a wide screen only, because a sticky bar on a
+ * phone eats the content it is meant to help you reach. */
+.toc {
+  margin: 0 0 var(--space-sm);
+  padding: var(--gap-3) var(--gap-4);
+  border: 1px solid var(--c-border-light); border-radius: var(--radius);
+  background: var(--c-bg-raised);
+  max-width: none !important;
+}
+.toc__list {
+  list-style: none; margin: 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: var(--gap-2) var(--gap-4);
+  font-size: var(--t-sm);
+}
+.toc__list a { color: var(--c-text-light); text-decoration: none; }
+.toc__list a:hover { color: var(--c-spot); text-decoration: underline; }
+
+/* The metadata reference. A description list, because that is what it is —
+ * and the browser gives the term/definition relationship for free. */
+.fields { margin: var(--gap-4) 0; }
+.fields dt {
+  margin-top: var(--gap-4); font-family: var(--f-mono); font-size: var(--t-sm);
+}
+.fields dt:first-child { margin-top: 0; }
+.fields dd {
+  margin: var(--gap-1) 0 0; padding-left: var(--gap-4);
+  font-size: var(--t-sm); color: var(--c-text-light);
+  border-left: 2px solid var(--c-border-light);
+}
+
+.vocab-grid {
+  display: grid; gap: var(--gap-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  margin: var(--gap-5) 0;
+  max-width: none !important;
+}
+.vocab {
+  padding: var(--gap-3) var(--gap-4);
+  border-radius: var(--radius); background: var(--c-button-bg-subtle);
+}
+.vocab__title {
+  margin: 0 0 var(--gap-2);
+  font-family: var(--f-mono); font-size: var(--t-xs);
+  color: var(--c-text-lighter); font-weight: 400;
+}
+.vocab__list { list-style: none; margin: 0; padding: 0; font-size: var(--t-sm); }
+.vocab__list li { display: flex; gap: var(--gap-2); padding: 2px 0; flex-wrap: wrap; }
+.vocab__list code { color: var(--c-text); }
+.vocab__list span { color: var(--c-text-light); }
+
+/* Sections are scroll targets from the contents above; keep the heading clear
+ * of the sticky header rather than tucked under it. */
+#what-this-is, #tiers, #localization, #metadata, #submitting, #checks {
+  scroll-margin-top: var(--gap-6);
+}
+
 .submit__prereq {
   margin: var(--gap-4) 0 0;
   padding: var(--gap-3) var(--gap-4);

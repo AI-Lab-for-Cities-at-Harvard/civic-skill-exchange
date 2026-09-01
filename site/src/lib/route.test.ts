@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRoute, skillHref, addFieldsHref, submitHref } from "./route";
+import { parseRoute, skillHref, addFieldsHref, submitHref, aboutHref} from "./route";
 
 describe("parseRoute", () => {
   it("defaults to browse", () => {
@@ -96,5 +96,36 @@ describe("the submit page's two modes", () => {
   it("builds both links", () => {
     expect(submitHref("new")).toBe("#/submit");
     expect(submitHref("update")).toBe("#/submit?mode=update");
+  });
+});
+
+/** The About page grew sections worth linking to directly. Hash routing has
+ *  only one `#`, so `#/about#metadata` cannot work — the section is a path
+ *  segment instead, which also makes it a real URL somebody can send. */
+describe("parseRoute — a section of the About page", () => {
+  it("carries the section", () => {
+    expect(parseRoute("#/about/metadata")).toEqual({ page: "about", section: "metadata" });
+  });
+
+  it("has no section when none was named", () => {
+    expect(parseRoute("#/about")).toEqual({ page: "about" });
+  });
+
+  it("drops a section that is not a plain slug, since it reaches getElementById", () => {
+    expect(parseRoute("#/about/../etc")).toEqual({ page: "about" });
+    expect(parseRoute("#/about/has spaces")).toEqual({ page: "about" });
+    expect(parseRoute("#/about/<script>")).toEqual({ page: "about" });
+  });
+
+  it("keeps working with a query string after it", () => {
+    expect(parseRoute("#/about/tiers?from=readme"))
+      .toEqual({ page: "about", section: "tiers" });
+  });
+});
+
+describe("aboutHref", () => {
+  it("links the page, or a section of it", () => {
+    expect(aboutHref()).toBe("#/about");
+    expect(aboutHref("metadata")).toBe("#/about/metadata");
   });
 });

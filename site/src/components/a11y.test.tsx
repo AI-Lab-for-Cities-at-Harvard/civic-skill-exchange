@@ -32,7 +32,7 @@ const detail = (over: Partial<SkillDetail> = {}): SkillDetail => ({
 });
 
 describe("no axe violations", () => {
-  it("About", async () => { await expectClean(<About />); });
+  it("About", async () => { await expectClean(<About skills={[]} />); });
 
   it("a skill card", async () => {
     await expectClean(<SkillCard skill={makeSkill()} />);
