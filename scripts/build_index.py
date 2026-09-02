@@ -52,8 +52,31 @@ def head_sha(path: Path) -> str | None:
 
 
 def load_attestations() -> dict[str, dict]:
-    doc = yaml.safe_load((ROOT / "registry" / "reviewed.yml").read_text(encoding="utf-8")) or {}
-    return {a["skill"]: a for a in (doc.get("attestations") or [])}
+    """The review ledger, keyed by skill id.
+
+    Raises rather than returning nothing when the file is malformed. `-> {}` on a
+    parse failure would demote every reviewed skill silently, which is the one
+    outcome worse than the build stopping: the badge is meant to disappear when
+    content changes, not when somebody mistypes this file.
+
+    `attestations:[]` — one missing space — parses as a plain string and used to
+    raise `AttributeError: 'str' object has no attribute 'get'`, naming neither
+    the file nor the mistake.
+    """
+    path = ROOT / "registry" / "reviewed.yml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    if not isinstance(doc, dict):
+        raise ValueError(
+            f"{path.relative_to(ROOT)} is not a mapping — it parsed as "
+            f"{type(doc).__name__}. The usual cause is a missing space after a "
+            f"colon: `attestations:[]` is one string, `attestations: []` is an "
+            f"empty list.")
+    entries = doc.get("attestations") or []
+    if not isinstance(entries, list):
+        raise ValueError(
+            f"{path.relative_to(ROOT)}: `attestations` must be a list, not "
+            f"{type(entries).__name__}.")
+    return {a["skill"]: a for a in entries}
 
 
 def load_categories() -> list[dict]:

@@ -21,11 +21,6 @@
       "description": "Rewrites a government notice template into plain language at a target reading level, preserving every legally required element. Works on templates, not on filled notices containing a specific person's information. Produces a draft for human review; it does not approve or send anything."
     },
     {
-      "name": "civic-skills-search-the-exchange",
-      "source": "./skills/civic-skills/search-the-exchange",
-      "description": "Searches the published civic-skill-exchange index for installable skills by category, jurisdiction, or a free-text description of the need, and reports each result's tier, scan status, and disclaimer alongside it. Reads the live index and category vocabulary rather than a bundled copy, so results and categories stay current as the registry changes. Never presents a Community listing as reviewed."
-    },
-    {
       "name": "civic-skills-submit-a-skill",
       "source": "./skills/civic-skills/submit-a-skill",
       "description": "Writes a civic agent skill as a real directory — SKILL.md, scripts, references — and opens the pull request that adds it to the civic-skill-exchange registry under the author's own GitHub namespace. Reads the registry's published frontmatter contract and category vocabulary at run time rather than carrying a copy, and reports the registry's own check result back rather than asserting the skill passed."

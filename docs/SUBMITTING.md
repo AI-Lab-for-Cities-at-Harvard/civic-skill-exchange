@@ -231,21 +231,14 @@ recapture.
 
 ## Part 3 — From inside a coding agent
 
-The registry publishes two skills that do its own work. Install the marketplace
-as in Part 1 and they are available like any other skill: you describe what you
-want in your own words and the agent runs them.
+The registry publishes a skill that does its own work. Install the marketplace
+as in Part 1 and it is available like any other skill: you describe what you
+want in your own words and the agent runs it.
 
-### Finding a skill without leaving the editor
-
-```
-/plugin install civic-skills-search-the-exchange@civic-skill-exchange
-```
-
-Then ask for what you need — by category, by jurisdiction, or just by
-describing the problem. It reads the live index, so what it reports is what is
-listed right now, and every result carries its own tier and scan status. A
-Community result means nobody has reviewed it; the skill says so on each one
-rather than once at the top of a list.
+To *find* a skill, use the marketplace listing itself or the
+[catalogue](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/) —
+both let you browse by category, and the catalogue shows each listing's tier and
+scan status.
 
 ### Writing a skill and opening the pull request
 
