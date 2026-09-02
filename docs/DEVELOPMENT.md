@@ -14,9 +14,54 @@ the split is not arbitrary:
 | **Frontmatter validation** — `validator/` | TypeScript | The submission page has to tell someone their frontmatter is valid *before* they open a pull request. Two validators that must agree will drift, and a site that says "valid" before CI says otherwise is worse than no browser validation at all. So there is one module, run in both places. |
 | **Security scanning** — `scripts/scan.py` | Python | The browser never scans a submitter's scripts, so there is nothing to share. Porting these regexes would reimplement the code most expensive to get subtly wrong — lookbehind support, `\b` against unicode, `re.IGNORECASE` versus `/i` on non-ASCII — for no gain. |
 | **Index build** — `scripts/build_index.py` | Python | Build-time only, and it shells out to git. |
+| **The pull request comment** — `validator/src/report.ts` | TypeScript | It has to run wherever the comment is produced, and one of those places is a JavaScript runtime. It used to be inline JavaScript in `report.yml`, where nothing outside CI could produce it. |
 
 **Browser validation is UX, never a gate.** CI re-runs the identical module and
 stays the authority. Do not add a code path that trusts a client-supplied result.
+
+### One command over two languages
+
+`npx tsx validator/src/check.ts skills/you/your-skill` runs all four layers and
+prints the report the pull request will carry. It is a Node entry point that
+drives `scan.py` as a subprocess, and the direction was a decision (#8):
+
+- **The renderer has to be TypeScript.** `report.yml` renders in Node and the
+  submission page could too. A Python driver would need a second renderer, and
+  two renderers of the same comment drift — which is the whole problem #8 exists
+  to close.
+- **So the driver goes where the renderer is.** Shelling the other way, with
+  Python running `npx tsx`, would put the process boundary between the driver and
+  the renderer rather than between the driver and the scanner. That is the more
+  expensive place for it: the driver needs the findings back as data, and from
+  `scan.py` it already gets them as a file.
+- **Neither half moves.** `scan.py` stays Python for the reasons in the table
+  above. The seam is `findings.json` — the same document CI uploads and
+  `report.yml` renders — so the local command and the pull request are reading
+  the same bytes through the same function.
+
+The interpreter is `$PYTHON`, else the repository's `.venv/bin/python`, else
+`python3`. If the scan cannot run, the command exits 2 and says why rather than
+printing a clean report over a layer that never executed. A report is only as
+honest as the layers behind it.
+
+### Where the comment's wording lives
+
+`validator/src/report.ts`, and nowhere else. `report.yml` runs
+`report-cli.ts`, which calls it; `check.ts` calls it directly. Every sentence is
+fixed as a fixture in `report.test.ts`, so changing one is a deliberate edit in
+two places at once — and `tests/test_workflows.py` fails if `report.yml` starts
+composing any of it again.
+
+Two constraints on `report.ts` if you edit it:
+
+- **Everything free-text goes through `safe()`.** `findings.json` is built from
+  contributor content and rendered by a job holding `pull-requests: write`. The
+  signature name is the one field that cannot be fenced — it is bold — so it is
+  checked against a fixed vocabulary instead, and `signatures.test.ts` reads
+  `scan.py` to keep that vocabulary honest.
+- **It reads no files.** It is reachable from the package entry point, so
+  `purity.test.ts` covers it. Filesystem and subprocess work belongs in
+  `check.ts`; `report-cli.ts` is the file-reading shell around it for CI.
 
 ## Setup
 
@@ -59,13 +104,20 @@ pull request.
 ## Running things
 
 ```bash
-npx tsx validator/src/cli.ts all          # L0 + L1 over every committed skill
-python scripts/scan.py all                # L2 + L3 over every committed skill
+npm run check -- skills/you/your-skill    # L0–L3, and the comment CI will post
+npm run check -- all
+
+npx tsx validator/src/cli.ts all          # L0 + L1 alone, over every skill
+python scripts/scan.py all                # L2 + L3 alone, over every skill
 python scripts/build_index.py --out site/public/data
 
 npm run test -w @civic-skill-exchange/validator
 pytest tests/test_scan.py -k wildcard     # one thing
 ```
+
+`npm run check` is the one to reach for. The two layers underneath it are still
+there and still run on their own, but only `check` ends in the report — and the
+report is the thing a contributor is going to be judged by.
 
 ## The validator workspace
 
@@ -77,9 +129,12 @@ validator/src/
 ├── rules.ts           pure frontmatter validation — runs in BOTH runtimes
 ├── structure-core.ts  size caps, file types, symlinks, path safety — BOTH
 ├── yaml-safety.ts     frontmatter size and alias rules — BOTH
+├── report.ts          the pull request comment — BOTH, and the workflow calls it
 ├── structure.ts       walks a directory into entries — Node ONLY
 ├── skill.ts           reads a skill directory, applies both layers
-└── cli.ts             what CI invokes
+├── cli.ts             L0 + L1; what the Skills gate invokes
+├── report-cli.ts      renders findings.json; what report.yml invokes
+└── check.ts           all four layers plus the report; what a contributor runs
 ```
 
 The line is **pure versus entry-producing**, not "frontmatter versus structure".
@@ -183,7 +238,7 @@ Before touching a workflow, re-read the CI hardening section of
 ## Before opening a pull request
 
 - [ ] `pytest` passes
-- [ ] `npx tsx validator/src/cli.ts all` and `python scripts/scan.py all` pass
+- [ ] `npm run check -- all` passes, and its report says what you expect
 - [ ] `npm test --prefix site` passes, which includes the accessibility gates
 - [ ] New behaviour has a test that fails without the change
 - [ ] Docs updated if you changed the contract contributors rely on

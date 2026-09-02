@@ -27,6 +27,9 @@ const BROWSER_SAFE = [
   // layout.ts takes a list of path strings and returns findings. It reads
   // nothing, so it belongs here — and the submission page has a use for it.
   "layout.ts",
+  // report.ts renders findings.json into the pull request comment. It takes the
+  // parsed document and returns a string; reading the file is check.ts's job.
+  "report.ts",
 ];
 
 /** Comments are stripped first: these files explain the rule in prose, and

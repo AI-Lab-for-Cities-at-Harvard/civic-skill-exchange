@@ -5,9 +5,29 @@
 # from typed fields — signature name, file path, line number — never from
 # contributor-authored strings.
 #
-# The excerpt field IS contributor-authored. It is fenced and length-capped below.
-# If you extend this file, keep that discipline: an injected issue title has already
-# stolen an npm publish token from a workflow shaped like this one.
+# The excerpt field IS contributor-authored. It is fenced and length-capped by
+# `safe()` in validator/src/report.ts. If you extend that file, keep that
+# discipline: an injected issue title has already stolen an npm publish token
+# from a workflow shaped like this one.
+#
+# The rendering used to live here as inline JavaScript, which meant nothing
+# outside CI could produce the comment. It now lives in the validator workspace
+# and the local check calls the same function, so a contributor's local run and
+# their pull request cannot say different things (#8). This file orchestrates:
+# fetch the artifact, ask the run which step failed, render, post. It composes no
+# part of the comment itself.
+#
+# TWO THINGS ABOUT THE CHECKOUT, since this job holds `pull-requests: write`:
+#
+#   - It takes the DEFAULT BRANCH, never `workflow_run.head_sha` or
+#     `head_branch`. workflow_run runs the workflow definition from the default
+#     branch precisely so that a fork cannot edit what executes with a token.
+#     Checking out the pull request head would hand that back — a fork could
+#     rewrite report.ts and have this job run it.
+#   - Nothing is installed. report-cli.ts imports one local module and two
+#     `node:` builtins, so `node` runs it as-is (Node strips the types itself).
+#     No `npm ci`, no `npx`, no package fetched at run time into this job. Keep
+#     it that way; see the note at the top of report-cli.ts.
 #
 # See docs/SECURITY.md — "CI hardening".
 
@@ -33,8 +53,8 @@ jobs:
       # validate.yml uploads this artifact only when a pull request actually
       # touches skills/, so on a tooling or site change there is nothing to
       # download and this step fails. That is the expected path, not an error:
-      # the render step below already treats a missing artifact as "nothing to
-      # report" and exits clean. Without continue-on-error the whole workflow
+      # every step below is gated on the artifact having arrived, and the job
+      # exits clean when it did not. Without continue-on-error the whole workflow
       # goes red on every non-skill pull request, which is how it sat from #20
       # to #33 — and a permanently red check is one nobody reads.
       - name: Download findings
@@ -45,43 +65,46 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Render and post
+      - name: Is there anything to report
+        id: artifact
+        run: |
+          if [ -f findings.json ] && [ -f pr-number.txt ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No findings artifact; nothing to report."
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Into a subdirectory: checkout cleans the directory it takes, and
+      # findings.json is sitting in the workspace root.
+      - name: Check out the renderer, from the default branch
+        if: steps.artifact.outputs.present == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: registry
+          persist-credentials: false
+
+      # The version matters: Node runs report-cli.ts's TypeScript directly, which
+      # is unflagged from 22.18 and 24. Pinning the major keeps that a property of
+      # the workflow rather than of whatever the runner image ships today.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.artifact.outputs.present == 'true'
+        with:
+          node-version: "24"
+
+      # #88: this comment used to announce a failure it could not attribute,
+      # beside items it had just called harmless — so a stale-manifest failure
+      # read as "the URL blocked me". The run knows which step failed; ask it.
+      # The names go to the renderer as data, and it fences them there.
+      - name: Ask the run which step failed
+        if: steps.artifact.outputs.present == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
-            if (!fs.existsSync('findings.json') || !fs.existsSync('pr-number.txt')) {
-              core.info('No findings artifact; nothing to report.');
-              return;
-            }
-
-            const pr = parseInt(fs.readFileSync('pr-number.txt', 'utf8').trim(), 10);
-            if (!Number.isInteger(pr)) { core.setFailed('Bad PR number.'); return; }
-
-            const data = JSON.parse(fs.readFileSync('findings.json', 'utf8'));
-            const conclusion = context.payload.workflow_run.conclusion;
-
-            // Contributor-authored text is fenced and truncated. Never interpolate
-            // it into markdown that could carry links, images, or directives.
-            const safe = (s) => '`' + String(s).replace(/`/g, "'").slice(0, 120) + '`';
-
-            const render = (list) => list.map(f =>
-              `- **${f.signature}** — ${safe(f.file)} line ${Number(f.line) || 0}\n` +
-              `  <sub>${f.excerpt ? safe(f.excerpt) : ''}</sub>`
-            ).join('\n');
-
-            const blocking = [], flags = [];
-            for (const [id, r] of Object.entries(data.results || {})) {
-              for (const f of r.blocking || []) blocking.push({ ...f, file: `${id}/${f.file}` });
-              for (const f of r.flags || [])    flags.push({ ...f, file: `${id}/${f.file}` });
-            }
-
-            // #88: this comment used to announce a failure it could not attribute,
-            // beside items it had just called harmless — so a stale-manifest
-            // failure read as "the URL blocked me". The run knows which step
-            // failed; ask it.
-            let failedSteps = [];
-            if (conclusion !== 'success') {
+            const failedSteps = [];
+            if (context.payload.workflow_run.conclusion !== 'success') {
               try {
                 const jobs = await github.paginate(
                   github.rest.actions.listJobsForWorkflowRun,
@@ -96,56 +119,31 @@ jobs:
                 core.info(`Could not read step conclusions: ${e.message}`);
               }
             }
+            fs.writeFileSync('failed-steps.json', JSON.stringify(failedSteps));
 
-            let body = `## Automated checks\n\n`;
+      - name: Render the comment
+        if: steps.artifact.outputs.present == 'true'
+        env:
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          node registry/validator/src/report-cli.ts \
+            --findings findings.json \
+            --conclusion "$CONCLUSION" \
+            --failed-steps failed-steps.json \
+            --out body.md
 
-            if (conclusion !== 'success') {
-              // Step names come from our own workflow definitions, not from
-              // contributor input — but they go through safe() anyway, because the
-              // next person to edit this file should not have to know that.
-              const named = failedSteps.length
-                ? failedSteps.map(safe).join(', ')
-                : null;
-              body += named
-                ? `Something did not pass: ${named}. `
-                : `Validation did not pass. See the workflow run for details. `;
-              if (!blocking.length) {
-                body += `The signature scan found nothing blocking, so anything ` +
-                  `listed below is **not** the cause.`;
-              }
-              body += `\n\n`;
-            }
-
-            if (blocking.length) {
-              body += `### Blocking — ${blocking.length}\n\n` +
-                `These signatures are high precision and fail the build.\n\n` +
-                render(blocking) + `\n\n` +
-                `Please do not rewrite the code to dodge the pattern. Explain what ` +
-                `you are trying to do in a comment — there are legitimate reasons ` +
-                `to need these, and a maintainer would rather discuss it.\n\n`;
-            }
-
-            if (flags.length) {
-              body += `### Flagged for review — ${flags.length}\n\n` +
-                `These are noisy by design and do **not** block. Several fire on ` +
-                `entirely legitimate skills — an external-URL match trips on ` +
-                `anything citing documentation. A maintainer will look.\n\n` +
-                render(flags) + `\n\n`;
-            }
-
-            if (!blocking.length && !flags.length && conclusion === 'success') {
-              body += `No signatures matched across ${data.skills_scanned || 0} skill(s).\n\n`;
-            }
-
-            body += `---\n<sub>Automated checks verify structure, namespace ` +
-              `ownership, and known-bad signatures. They can only ever reject — a ` +
-              `pass is not a statement that a skill is safe. Signature scanning is ` +
-              `triage, not a gate. See ` +
-              `[docs/SECURITY.md](../blob/main/docs/SECURITY.md).</sub>`;
+      - name: Post it
+        if: steps.artifact.outputs.present == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const pr = parseInt(fs.readFileSync('pr-number.txt', 'utf8').trim(), 10);
+            if (!Number.isInteger(pr)) { core.setFailed('Bad PR number.'); return; }
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr,
-              body,
+              body: fs.readFileSync('body.md', 'utf8'),
             });
