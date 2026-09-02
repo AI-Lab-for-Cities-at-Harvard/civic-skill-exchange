@@ -82,10 +82,29 @@ export function discoverAll(root: string): string[] {
 }
 
 /** Map a list of changed paths to the distinct skill directories they touch. */
+/** Files the registry generates into a skill directory rather than the author
+ *  writing them.
+ *
+ *  `.codex-plugin/plugin.json` is produced by scripts/build_marketplace.py for
+ *  every listed skill, so any pull request that regenerates the manifests
+ *  touches every namespace at once. Treating that as "this pull request changed
+ *  somebody's skill" makes L1's ownership check fire on maintenance work: a
+ *  maintainer regenerating manifests fails because another person's namespace
+ *  appears in the diff.
+ *
+ *  Exempting them does not weaken the rule the check exists for. The rule stops
+ *  somebody writing *a skill* into a namespace they do not own; these files are
+ *  registry-owned, regenerated on every merge, and any tampering is caught by
+ *  `build_marketplace.py --check`, which compares them against what the
+ *  generator produces. */
+const GENERATED_IN_SKILL = /(^|\/)\.codex-plugin\/plugin\.json$/;
+
 export function discoverChanged(root: string, changedFile: string): string[] {
   const dirs = new Set<string>();
   for (const line of readFileSync(changedFile, "utf8").split("\n")) {
-    const parts = line.trim().split("/");
+    const path = line.trim();
+    if (GENERATED_IN_SKILL.test(path)) continue;
+    const parts = path.split("/");
     if (parts.length >= 3 && parts[0] === "skills") {
       const candidate = join(root, parts[0], parts[1]!, parts[2]!);
       if (existsSync(candidate)) dirs.add(candidate);
