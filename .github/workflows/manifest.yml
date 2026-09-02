@@ -67,3 +67,9 @@ jobs:
           # on the default branch, where GitHub parses them.
           git commit -m "Regenerate the marketplace manifests"
           git push
+
+      # The job that fixes drift is also the job that can fail to. Today's bug
+      # was this workflow reporting success while leaving half the manifests
+      # stale, so it now asserts its own outcome rather than assuming it.
+      - name: Verify nothing is still stale
+        run: python scripts/build_marketplace.py --check
