@@ -13,3 +13,8 @@ export * from "./structure-core";
 export * from "./yaml-safety";
 
 export { checkChangedLayout } from "./layout";
+
+// The pull request comment. Exported so .github/workflows/report.yml and the
+// local check in cli/check.ts render from one implementation rather than two
+// that drift (#8).
+export * from "./report";

@@ -24,6 +24,14 @@ const findings = (results: ScanFindings["results"], scanned = 1): ScanFindings =
   results,
 });
 
+/** The report with every code span removed.
+ *
+ *  Fencing quotes contributor text; it does not delete it. So "the payload is
+ *  absent" is the wrong property to assert — the right one is that no occurrence
+ *  of it sits anywhere markdown would read it. This strips the inert copies and
+ *  leaves anything that escaped. */
+const outsideCodeSpans = (body: string): string => body.replace(/`[^`]*`/g, "");
+
 describe("renderReport", () => {
   it("renders a clean run", () => {
     const body = renderReport({
@@ -172,8 +180,14 @@ describe("renderReport", () => {
       conclusion: "failure",
     });
 
-    expect(body).not.toContain("](https://evil.example)");
-    expect(body).toContain("'' [click me](https://evil.example) ''");
+    // Both fields are rendered, and both are inert: the file path's link syntax
+    // and the excerpt's own backticks — which would have closed the span and let
+    // the link out — survive only as quoted text.
+    expect(body).toContain(
+      "- **credential-access** — `evil/skill/](https://evil.example)![x](y` line 1\n" +
+      "  <sub>`'' [click me](https://evil.example) ''`</sub>",
+    );
+    expect(outsideCodeSpans(body)).not.toContain("evil.example");
   });
 
   it("caps an excerpt so a long one cannot bury the comment", () => {
