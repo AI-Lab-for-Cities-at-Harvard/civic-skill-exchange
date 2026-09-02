@@ -1,0 +1,14 @@
+{
+  "name": "civic-skills-localize-skill",
+  "description": "Fits a generalized skill to one organization writes its local values back in and produces an ordinary, self-contained skill that runs without a context file. Works out what it can from the organization's own data and public sources, and asks a person only what no source can answer, at the precision the value actually needs. Confirms every machine-consumed value before shipping, because a plausible wrong value is worse than a blank one.",
+  "author": {
+    "name": "AI Lab for Cities at Harvard"
+  },
+  "license": "CC0-1.0",
+  "skills": "./",
+  "interface": {
+    "displayName": "Localize Skill",
+    "shortDescription": "Fits a generalized skill to one organization writes its local values back in and produces an ordinary, self-contained…",
+    "category": "Open Data & Publishing"
+  }
+}
