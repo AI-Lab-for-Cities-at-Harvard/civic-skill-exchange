@@ -237,12 +237,22 @@ Before touching a workflow, re-read the CI hardening section of
 
 ## Before opening a pull request
 
+Run them visibly — no piping that hides an exit code.
+
 - [ ] `pytest` passes
+- [ ] `npm test --workspaces` passes — the validator and the site, including the
+      accessibility and contrast gates
 - [ ] `npm run check -- all` passes, and its report says what you expect
-- [ ] `npm test --prefix site` passes, which includes the accessibility gates
+- [ ] `npm run lint --workspaces` and `npm run build --workspaces` pass
+- [ ] `python scripts/build_marketplace.py --check` passes, if you touched
+      `skills/` or the generator. The merge repairs it, so a submitter sharing a
+      skill can skip this; anybody changing how it is generated cannot
 - [ ] New behaviour has a test that fails without the change
 - [ ] Docs updated if you changed the contract contributors rely on
 - [ ] Security-sensitive changes flagged in the description
+
+After merging more than one pull request that touched the same area, run the
+whole list again on `main`. Cross-pull-request seams are invisible per-pull-request.
 
 ## Accessibility
 
