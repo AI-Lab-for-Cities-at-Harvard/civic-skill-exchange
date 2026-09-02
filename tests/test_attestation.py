@@ -144,3 +144,74 @@ def test_the_guide_gives_a_browser_route_too():
     is no help. The path-filtered commit list is the two-click answer."""
     guide = (ROOT / "docs" / "REVIEW.md").read_text(encoding="utf-8")
     assert "/commits/main/skills/" in guide
+
+
+# --------------------------------------------------------------------------- #
+# The ledger itself.
+#
+# `attestations:[]` — one missing space — parses as the string
+# "attestations:[]" rather than a mapping, and load_attestations raised
+# AttributeError on it. That broke the build and the deploy on main, and no
+# check caught it, because nothing read this file on purpose: it was parsed
+# only as a side effect of two tests about publishing the schema.
+#
+# The registry's most load-bearing mechanism was the one with no test on its
+# input.
+#
+# What these deliberately do NOT assert is that every attestation is current.
+# A drifted SHA is the design working — content changed, the badge dropped — so
+# CI failing on it would make automatic demotion impossible to ship.
+
+
+REQUIRED_KEYS = {"skill", "sha", "reviewers", "reviewed", "expires", "notes"}
+
+
+def _ledger() -> list[dict]:
+    return list(build_index.load_attestations().values())
+
+
+def test_the_ledger_loads():
+    """The check that was missing. Everything below assumes this passes."""
+    build_index.load_attestations()
+
+
+def test_a_malformed_ledger_says_what_is_wrong(tmp_path, monkeypatch):
+    """AttributeError: 'str' object has no attribute 'get' names neither the
+    file nor the mistake."""
+    bad = tmp_path / "registry"
+    bad.mkdir()
+    (bad / "reviewed.yml").write_text("attestations:[]\n", encoding="utf-8")
+    monkeypatch.setattr(build_index, "ROOT", tmp_path)
+    with pytest.raises(ValueError) as raised:
+        build_index.load_attestations()
+    assert "reviewed.yml" in str(raised.value)
+
+
+@pytest.mark.parametrize("entry", _ledger(), ids=lambda e: e["skill"])
+def test_every_attestation_has_the_documented_shape(entry: dict):
+    assert REQUIRED_KEYS <= set(entry), REQUIRED_KEYS - set(entry)
+    assert isinstance(entry["reviewers"], list) and entry["reviewers"]
+    assert str(entry["skill"]).count("/") == 1, "skill is {namespace}/{name}"
+
+
+@pytest.mark.parametrize("entry", _ledger(), ids=lambda e: e["skill"])
+def test_every_attestation_names_a_skill_that_is_still_here(entry: dict):
+    """An attestation outliving its skill is a badge with nothing under it."""
+    assert (ROOT / "skills" / entry["skill"] / "SKILL.md").is_file()
+
+
+@pytest.mark.parametrize("entry", _ledger(), ids=lambda e: e["skill"])
+def test_every_attestation_pins_a_commit_that_touched_that_skill(entry: dict):
+    """Catches a typo, and catches a SHA copied from somewhere else. It cannot
+    catch an older commit of the same skill, and must not try: that is
+    indistinguishable from drift, which is allowed."""
+    sha = str(entry["sha"])
+    assert len(sha) == 40 and all(c in "0123456789abcdef" for c in sha), sha
+
+    touched = subprocess.run(
+        ["git", "log", "--format=%H", "--", f"skills/{entry['skill']}"],
+        cwd=ROOT, capture_output=True, text=True, check=True,
+    ).stdout.split()
+    assert sha in touched, (
+        f"{sha[:12]} is not a commit that ever touched skills/{entry['skill']}. "
+        f"The one to attest to is {touched[0][:12]}.")
