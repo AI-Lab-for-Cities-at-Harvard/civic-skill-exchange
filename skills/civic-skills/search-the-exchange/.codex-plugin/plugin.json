@@ -1,0 +1,14 @@
+{
+  "name": "civic-skills-search-the-exchange",
+  "description": "Searches the published civic-skill-exchange index for installable skills by category, jurisdiction, or a free-text description of the need, and reports each result's tier, scan status, and disclaimer alongside it. Reads the live index and category vocabulary rather than a bundled copy, so results and categories stay current as the registry changes. Never presents a Community listing as reviewed.",
+  "author": {
+    "name": "Civic Skills Registry maintainers"
+  },
+  "license": "CC0-1.0",
+  "skills": "./",
+  "interface": {
+    "displayName": "Search The Exchange",
+    "shortDescription": "Searches the published civic-skill-exchange index for installable skills by category, jurisdiction, or a free-text…",
+    "category": "Open Data & Publishing"
+  }
+}

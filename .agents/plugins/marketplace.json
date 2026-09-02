@@ -38,6 +38,18 @@
       "category": "Plain Language & Accessibility"
     },
     {
+      "name": "civic-skills-search-the-exchange",
+      "source": {
+        "source": "local",
+        "path": "./skills/civic-skills/search-the-exchange"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Open Data & Publishing"
+    },
+    {
       "name": "sgarcese-hbs-civic-analytics-workflow",
       "source": {
         "source": "local",
