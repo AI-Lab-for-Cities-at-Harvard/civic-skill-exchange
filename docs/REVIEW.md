@@ -95,6 +95,40 @@ Not a rejection — a quality bar. Hardcoded field names, form numbers, and inte
 
 ## Signing off
 
+### Getting the SHA
+
+The SHA is the last commit that touched the skill's directory. Do not read blame for it — there are two shorter routes.
+
+**With a clone.** This prints the whole attestation block, ready to paste:
+
+```bash
+python scripts/attestation.py {namespace}/{skill-name} --notes "Read-only. No egress."
+```
+
+It takes the SHA from the same call the build compares against, and refuses rather than printing one the build would reject — a dirty working tree, a shallow clone, a branch that is not `main`. It writes nothing and decides nothing: `notes` is yours.
+
+**In the browser.** GitHub will filter its commit list to one directory. The newest entry is the commit to attest to, and each row has a copy button for the full SHA:
+
+```
+https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/commits/main/skills/{namespace}/{skill-name}
+```
+
+**With git and nothing else.** The helper imports the build's own resolver, so it needs the Python dependencies; this is the same question asked directly, and it needs none:
+
+```bash
+git log -1 --format=%H -- skills/{namespace}/{skill-name}
+```
+
+### Three ways it goes wrong
+
+Each produces an attestation that looks correct and grants no badge. The helper refuses all three; if you took the SHA in the browser, check them yourself.
+
+- **Taking it from the contributor's branch.** Pull requests are squash-merged, so the branch's commits never appear on `main` — the whole branch becomes one new commit, and that commit is what you are attesting to. A SHA from the branch does not exist on `main`. This is why the browser link above is pinned to `/commits/main/`.
+- **Working in a shallow clone.** If git cannot reach the commit, the build gets nothing back, treats the skill as unverifiable, and demotes it. `git clone` without `--depth` gives you what you need.
+- **Attesting before a follow-up commit.** Anything that touches that directory afterwards — a typo fix in the `SKILL.md` included — replaces the SHA and demotes the skill. Yours has to be the last word on the directory.
+
+### Writing it down
+
 Comment on the review-request issue with the SHA you reviewed and any conditions. Then open a PR adding to `registry/reviewed.yml`:
 
 ```yaml
@@ -106,7 +140,18 @@ Comment on the review-request issue with the SHA you reviewed and any conditions
   notes: "Read-only. No network egress. No PII handling."
 ```
 
-**The SHA is the attestation.** You are signing off on one exact content hash, not on a skill name and not on a person. If the content changes, your attestation stops applying automatically and the skill drops back to Community. That is the mechanism working — you do not need to monitor anything.
+**The SHA is the attestation.** You are signing off on one exact commit, not on a skill name and not on a person. If the content changes, your attestation stops applying automatically and the skill drops back to Community. That is the mechanism working — you do not need to monitor anything.
+
+### Checking that it took
+
+The file being right is not the same as the badge appearing. Ask what a clone would see:
+
+```bash
+python scripts/build_index.py --out /tmp/idx
+python3 -c "import json;[print(s['id'],s['tier'],'|',s['reason']) for s in json.load(open('/tmp/idx/index.json'))['skills']]"
+```
+
+Your skill should come back `reviewed`. If the SHA is wrong the tier stays `community` and `reason` says which of the two values did not match — that is where a mistyped or branch-taken SHA shows up, and it is much easier to see here than after the deploy.
 
 Write `notes` for the next reviewer, a year from now, who has to re-review this and has no memory of the conversation. What did you check especially closely? What would you look at first if something went wrong? If the Lab wrote the skill, say that here too — the site discloses it on the listing, and the note is where the next reader learns what you were careful about because of it.
 

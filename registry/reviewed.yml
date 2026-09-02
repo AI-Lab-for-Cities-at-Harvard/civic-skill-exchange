@@ -6,11 +6,11 @@
 #                        AND its sha matches the skill directory's current commit
 #            "community" otherwise
 #
-# The sha pin is the point. A reviewer attests to one exact content hash, not to
-# a skill name and not to a person. When the content changes the attestation stops
-# applying automatically, and the skill drops back to Community without anyone
-# having to notice. That is what makes this survive a contributor's account being
-# compromised months after review.
+# The sha pin is the point. A reviewer attests to one exact commit, not to a skill
+# name and not to a person. When anything commits to the skill's directory the
+# attestation stops applying automatically, and the skill drops back to Community
+# without anyone having to notice. That is what makes this survive a
+# contributor's account being compromised months after review.
 #
 # See docs/TIERS.md for promotion and demotion, docs/REVIEW.md for the checklist.
 #
@@ -18,7 +18,7 @@
 # Shape of an entry:
 #
 # - skill: "{namespace}/{skill-name}"
-#   sha: "<40-char commit SHA of the tree that was reviewed>"
+#   sha: "<40 chars: git log -1 --format=%H -- skills/{namespace}/{name}, on main>"
 #   reviewers: ["AI Lab for Cities at Harvard"] # the attesting party
 #   reviewed: YYYY-MM-DD
 #   expires: YYYY-MM-DD                         # one year; re-review or demote

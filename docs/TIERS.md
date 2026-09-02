@@ -56,7 +56,9 @@ tier = "reviewed"  if an unexpired attestation exists AND its sha == the skill's
 
 A submission-time gate protects you only against skills that were malicious *when submitted*. That is not the common failure. The common failure is a legitimate contributor whose account is compromised later, and whose already-reviewed skill is quietly amended.
 
-The SHA pin makes that attack fail closed. A reviewer attests to a content hash, not to a person or a name. The moment the content changes, the attestation no longer matches, and the skill drops to Community automatically — no maintainer has to notice.
+The SHA pin makes that attack fail closed. A reviewer attests to one commit — the last one that touched the skill's directory — not to a person or a name. The moment anything commits to that directory the attestation no longer matches, and the skill drops to Community automatically. No maintainer has to notice.
+
+That is deliberately stricter than hashing the reviewed content: a commit that touches the directory without changing the file the reviewer read demotes the skill too. Re-attesting after a typo fix is cheap. Failing to notice an amendment is not.
 
 This is cheap to implement and it is the single highest-value mechanism in the design.
 
