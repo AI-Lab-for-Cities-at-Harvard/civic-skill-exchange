@@ -19,6 +19,8 @@ from pathlib import Path
 
 import pytest
 
+import build_index
+
 ROOT = Path(__file__).resolve().parent.parent
 
 # Where the claim is made to a reader. Everything here describes current
@@ -169,3 +171,33 @@ def test_the_exception_is_confined_to_the_reserved_namespace() -> None:
             if "30 days" in line and "civic-skills" in line:
                 assert not re.search(r"any namespace|all namespaces|every namespace",
                                      line, re.I), rel
+
+
+# --------------------------------------------------------------------------- #
+# The guide has to name the command the build actually runs (#109).
+
+
+def test_the_reviewer_guide_names_the_command_the_build_runs(monkeypatch):
+    """A reviewer attests to whatever `head_sha` returns. If the guide tells
+    them to obtain it some other way, they attest to a different value and the
+    badge never appears — the hardest failure here to debug, because the
+    attestation, the skill and the build all look right on their own."""
+    captured: list[list[str]] = []
+
+    class Result:
+        returncode = 0
+        stdout = "a" * 40
+
+    def fake_run(command, **kwargs):
+        captured.append(command)
+        return Result()
+
+    monkeypatch.setattr(build_index.subprocess, "run", fake_run)
+    build_index.head_sha(build_index.ROOT / "skills" / "civic-skills" / "generalize-skill")
+
+    # Everything but the path: the flags are what a reviewer has to type.
+    flags = " ".join(captured[0][:captured[0].index("--") + 1])
+    guide = (build_index.ROOT / "docs" / "REVIEW.md").read_text(encoding="utf-8")
+    assert flags in guide, (
+        f"docs/REVIEW.md does not tell a reviewer to run `{flags}`, which is "
+        f"what build_index.py compares their attestation against")
