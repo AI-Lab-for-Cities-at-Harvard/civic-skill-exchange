@@ -5,6 +5,9 @@ agent. **Part 2** is putting one in.
 
 Neither needs you to be a developer. Part 1 needs no account at all.
 
+If you work in a coding agent — Claude Code, Codex — there is a third way to do
+both, without a browser: [Part 3](#part-3--from-inside-a-coding-agent).
+
 ---
 
 ## Part 1 — Installing a skill
@@ -223,6 +226,53 @@ double the download.
 **If they no longer match what you see, trust the page and not the picture** —
 GitHub redesigns, and a stale screenshot is worse than none. Tell us, and we will
 recapture.
+
+---
+
+## Part 3 — From inside a coding agent
+
+The registry publishes two skills that do its own work. Install the marketplace
+as in Part 1 and they are available like any other skill: you describe what you
+want in your own words and the agent runs them.
+
+### Finding a skill without leaving the editor
+
+```
+/plugin install civic-skills-search-the-exchange@civic-skill-exchange
+```
+
+Then ask for what you need — by category, by jurisdiction, or just by
+describing the problem. It reads the live index, so what it reports is what is
+listed right now, and every result carries its own tier and scan status. A
+Community result means nobody has reviewed it; the skill says so on each one
+rather than once at the top of a list.
+
+### Writing a skill and opening the pull request
+
+```
+/plugin install civic-skills-submit-a-skill@civic-skill-exchange
+```
+
+Then say you want to share a skill. The agent asks about what your skill does,
+writes the directory — `SKILL.md`, and `scripts/` or `references/` if it needs
+them — and opens the pull request under your own GitHub username. You need
+`git` and the [GitHub CLI](https://cli.github.com), signed in; that is what
+carries your credentials, so nothing asks you for a token.
+
+Three things worth knowing before you start:
+
+- **It asks the registry what a submission needs** rather than working from
+  memory, so it is asking for the fields that are actually required today.
+- **It submits under the account you are signed in as, and there is no way to
+  change that.** A skill's namespace has to match whoever opens the pull
+  request. If the skill should sit under an organization's name, sign in as
+  that account.
+- **It reports what the checks said, not that you passed.** When the pull
+  request is open it waits for the comment and relays it. The checks can only
+  reject; a pass is never a statement that a skill is safe or fit for anything.
+
+Ask for a dry run first if you want to see exactly what will happen — it prints
+every command before running any of it.
 
 ---
 

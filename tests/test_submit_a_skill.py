@@ -490,3 +490,51 @@ def test_the_dry_run_prints_the_commands_and_touches_nothing(tmp_path, fake_gh, 
     assert "skills/octocat/permit-status-explainer" in printed
     # Nothing but `gh api user` was run.
     assert fake_gh.read_text(encoding="utf-8").strip() == "api user --jq .login"
+
+
+# --------------------------------------------------------------------------- #
+# Where the skill sits while it is being written.
+#
+# The namespace is the parent directory, so a skill scaffolded straight into a
+# directory called `skills/` reads as namespace `skills` — and a local check
+# then reports a namespace mismatch, which is not the author's problem and not
+# what is wrong. submit.py places the skill under the right namespace whatever
+# the working path was, so the path only ever misleads.
+
+
+def test_the_working_path_is_reported_along_with_where_submitting_puts_it(
+    tmp_path, schema, categories, capsys,
+):
+    answers_file = tmp_path / "answers.json"
+    answers_file.write_text(json.dumps(answers()), encoding="utf-8")
+    code = scaffold.main([
+        "--answers", str(answers_file), "--into", str(tmp_path / "work"),
+        "--schema", str(SCHEMA), "--categories", str(_categories_json(tmp_path)),
+    ])
+    assert code == 0
+    printed = capsys.readouterr().out
+    assert "submit.py" in printed, "nothing tells the author what to do next"
+
+
+def test_scaffolding_into_a_directory_called_skills_says_what_that_will_look_like(
+    tmp_path, schema, categories, capsys,
+):
+    answers_file = tmp_path / "answers.json"
+    answers_file.write_text(json.dumps(answers()), encoding="utf-8")
+    scaffold.main([
+        "--answers", str(answers_file), "--into", str(tmp_path / "skills"),
+        "--schema", str(SCHEMA), "--categories", str(_categories_json(tmp_path)),
+    ])
+    printed = capsys.readouterr().out + capsys.readouterr().err
+    assert "namespace" in printed.lower(), (
+        "a check run against this path reports a namespace mismatch, and "
+        "nothing warned about it")
+
+
+def _categories_json(tmp_path: Path) -> Path:
+    import yaml
+
+    out = tmp_path / "categories.json"
+    out.write_text(json.dumps(yaml.safe_load(CATEGORIES.read_text(encoding="utf-8"))),
+                   encoding="utf-8")
+    return out

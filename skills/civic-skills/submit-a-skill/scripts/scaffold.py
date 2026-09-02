@@ -484,6 +484,19 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"Wrote {skill}")
+    print("Submitting puts it under your own namespace, wherever it sits now:")
+    print(f"    python3 scripts/submit.py --dir {skill}")
+
+    # A skill's namespace is its parent directory. Written straight into a
+    # directory called `skills`, that parent reads as the namespace, and a check
+    # run against this path reports a namespace mismatch — which is neither the
+    # author's mistake nor what is actually wrong. submit.py places the skill
+    # correctly regardless, so the path can only mislead.
+    if args.into.name == "skills":
+        print(f"\nNote: {args.into} is called 'skills', so a check run against "
+              f"this path reads 'skills' as the namespace and reports a "
+              f"namespace mismatch. That is the path, not the skill — "
+              f"submit.py puts it under your GitHub login.")
     return 0
 
 

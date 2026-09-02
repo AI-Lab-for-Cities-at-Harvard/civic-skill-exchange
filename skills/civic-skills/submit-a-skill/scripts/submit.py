@@ -102,7 +102,11 @@ def plan(login: str, name: str, branch: str, title: str | None = None) -> Plan:
         destination=destination,
         commands=[
             ["gh", "repo", "fork", MARKETPLACE_REPO, "--clone=false"],
-            ["git", "clone", "--depth", "1", upstream, "."],
+            # A partial clone rather than a shallow one: it keeps the commit
+            # graph, so pushing the branch to the fork is an ordinary push, and
+            # it still leaves the blobs on the server until something asks for
+            # them.
+            ["git", "clone", "--filter=blob:none", upstream, "."],
             ["git", "checkout", "-b", branch],
             ["git", "add", str(destination)],
             ["git", "commit", "-m", f"Add {login}/{name}"],
