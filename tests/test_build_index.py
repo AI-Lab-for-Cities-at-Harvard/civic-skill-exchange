@@ -367,3 +367,31 @@ def test_a_skill_with_no_upstream_publishes_none(make_skill, monkeypatch):
     monkeypatch.setattr(build_index, "head_sha", lambda _: "b" * 40)
     entry = build_index.build_entry(make_skill(), {}, {})
     assert entry["source"] is None
+
+
+# --------------------------------------------------------------------------- #
+# The published contract.
+#
+# skills/civic-skills/submit-a-skill asks the registry what a submission needs
+# rather than carrying a copy of the answer (#10). It runs on somebody else's
+# machine, so "ask" means fetch a published file — the same way search-the-
+# exchange reads index.json rather than the tree.
+
+
+def test_the_schema_is_published_alongside_the_index(tmp_path, monkeypatch):
+    out = tmp_path / "out"
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "empty")
+    build_index.main_with(out)
+
+    published = out / "skill.schema.json"
+    assert published.is_file(), "the schema is not published, so nothing can read it"
+
+
+def test_the_published_schema_is_the_repository_schema_byte_for_byte(tmp_path, monkeypatch):
+    """A transformed copy is a second source of truth. This is the same file."""
+    out = tmp_path / "out"
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "empty")
+    build_index.main_with(out)
+
+    source = build_index.ROOT / "schema" / "skill.schema.json"
+    assert (out / "skill.schema.json").read_bytes() == source.read_bytes()
