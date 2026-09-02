@@ -27,4 +27,16 @@
 #     What did you check closely? What would you look at first if it went wrong?
 # ---------------------------------------------------------------------------
 
-attestations: []
+attestations: [
+- skill: "{civic-skills}/{plain-language-notice-rewriter}"
+   sha: "d6ad433c8e735741635ae2d011ae5b0bc49d1edc"
+   reviewers: ["AI Lab for Cities at Harvard"] # the attesting party
+   reviewed: 2026-09-02
+   expires: 2027-09-01                         # one year; re-review or demote
+   notes: 
+     1. Does description honestly describe what the skill does? Yes, 2. Read every line of every file under scripts? Yes, runs a basic reading-level calculation
+     3. Is every entry in allowed-tools necessary? yes, basic tools allowed. 4. Is every network destination named, expected, and documented? Yes - none are made. 
+     5. Any credential, environment, or filesystem access outside the working directory? No Does anything instruct the agent to disregard prior instructions, conceal an action, or omit something from its summary? No
+     7. Civic appropriateness — does this affect anyone's rights, benefits, or legal standing? Yes, this provides public value - making government effective in engaging people.
+     8. Is the license present and actually applicable? Yes CC0-0.1, 9. Would this work outside its home jurisdiction? Yes, although it is callibrated in English with a bias for the US.
+]
