@@ -30,8 +30,13 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-INDEX_URL = "https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/index.json"
-CATEGORIES_URL = "https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/categories.json"
+# The published artifacts live under /data/. build.yml runs build_index.py with
+# --out site/public/data, and vite copies public/ into the deployed root — so
+# these are /data/index.json and /data/categories.json, not the bare names.
+# Getting this wrong 404s at runtime while every local test still passes.
+_SITE = "https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange"
+INDEX_URL = f"{_SITE}/data/index.json"
+CATEGORIES_URL = f"{_SITE}/data/categories.json"
 
 MARKETPLACE = "civic-skill-exchange"
 MARKETPLACE_REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange"
@@ -135,11 +140,16 @@ def scan_line(entry: dict[str, Any]) -> str:
 
 
 def install_lines(entry: dict[str, Any]) -> list[str]:
+    """Both marketplaces, because the registry publishes both (#98) and the
+    plugin name is deliberately identical in each — so the only difference a
+    reader has to notice is which command their tool takes."""
     plugin = f"{entry.get('namespace')}-{entry.get('name')}"
     return [
         f"Install (Claude Code): /plugin marketplace add {MARKETPLACE_REPO} "
         "--sparse .claude-plugin skills",
         f"                        /plugin install {plugin}@{MARKETPLACE}",
+        f"Install (Codex):        codex plugin marketplace add {MARKETPLACE_REPO}",
+        f"                        codex plugin add {plugin}@{MARKETPLACE}",
         f"Browse / download:      {entry.get('download')}",
     ]
 

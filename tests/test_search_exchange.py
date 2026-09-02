@@ -319,3 +319,40 @@ def test_list_categories_flag_does_not_touch_the_index(tmp_path):
     ])
     output = se.run(args)
     assert "budget-finance" in output
+
+
+# --------------------------------------------------------------------------- #
+# The published artifacts are under /data/. This was wrong on the first pass —
+# the URLs used the bare filenames, which 404 against the live site while every
+# test using a local path still passed.
+
+
+def test_the_default_urls_point_at_what_is_actually_published() -> None:
+    import re
+    source = (ROOT / "skills" / "civic-skills" / "search-the-exchange"
+              / "scripts" / "search_exchange.py").read_text(encoding="utf-8")
+    for name, expected in [("INDEX_URL", "/data/index.json"),
+                           ("CATEGORIES_URL", "/data/categories.json")]:
+        line = next(l for l in source.split("\n") if l.startswith(f"{name} ="))
+        assert expected in line, f"{name} must end in {expected}, got: {line}"
+
+
+def test_the_build_really_writes_to_that_path() -> None:
+    """Pins the other half: if the deploy stops writing into site/public/data,
+    the URLs above become wrong and this says so."""
+    build = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+    assert "--out site/public/data" in build
+
+
+def test_a_result_offers_both_marketplaces() -> None:
+    """The registry publishes a Claude and a Codex marketplace (#98) with the
+    same plugin name in each. A result that names only one sends half the
+    audience to the wrong tool."""
+    sys.path.insert(0, str(SKILL_SCRIPTS))
+    import search_exchange
+
+    lines = search_exchange.install_lines(
+        {"namespace": "cityofx", "name": "permit-status", "download": "https://example.test"})
+    joined = "\n".join(lines)
+    assert "/plugin install cityofx-permit-status@" in joined
+    assert "codex plugin add cityofx-permit-status@" in joined
