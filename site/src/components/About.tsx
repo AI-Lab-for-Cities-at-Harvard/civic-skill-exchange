@@ -15,6 +15,7 @@ const SECTIONS: [string, string][] = [
   ["metadata", "The civic metadata"],
   ["submitting", "How to submit"],
   ["checks", "What we check"],
+  ["review", "What a review checks for"],
 ];
 
 /** The vocabulary tables, built from the same maps the facets and the form use.
@@ -104,10 +105,17 @@ export function About({ skills = [] }: { skills?: Skill[] }) {
               make.
             </p>
             <p>
-              The attestation is pinned to a <strong>content hash</strong>. If
-              the skill changes, it drops back to Community automatically — so
-              a compromised account cannot quietly alter something already
-              carrying our review.
+              The attestation is pinned to{" "}
+              <strong>one commit</strong> — the last one that touched the
+              skill. If anything commits to it after that, the listing drops
+              back to Community automatically, so a compromised account cannot
+              quietly alter something already carrying our review.
+            </p>
+            <p>
+              <a className="arrow-link" href={aboutHref("review")}
+                data-testid="tier-card-review-link">
+                What a review checks for <span aria-hidden="true">→</span>
+              </a>
             </p>
           </div>
         </div>
@@ -349,6 +357,82 @@ export function About({ skills = [] }: { skills?: Skill[] }) {
         <p>
           <a className="arrow-link" href={`${REPO}/blob/main/docs/SECURITY.md`}>
             Security model and how to report a problem{" "}
+            <span aria-hidden="true">→</span>
+          </a>
+        </p>
+      </section>
+
+      <section className="prose__block" id="review">
+        <h2 className="h2">What a review checks for</h2>
+        <p>
+          A review is one person reading the whole skill against a fixed list of
+          nine questions, in this order. Four of them are outright rejections
+          rather than judgment calls, and they are marked.
+        </p>
+        <ol className="numbered-list">
+          <li>
+            <strong>Does the description match what the skill does?</strong> A
+            description broader than the behaviour is a security finding, not a
+            style problem — it is how a skill gets invoked for work it was not
+            written for. <em>Rejection.</em>
+          </li>
+          <li>
+            <strong>Would we run these scripts?</strong> Every line of every
+            file under <code>scripts/</code> gets read. If we would not run it
+            on our own machine, it does not pass. <em>Rejection.</em>
+          </li>
+          <li>
+            <strong>Does it ask for more tools than it needs?</strong>{" "}
+            <code>allowed-tools</code> grants access without prompting you and
+            is not gated by trusting the workspace, so every entry has to be
+            necessary. An unrestricted shell grant is refused outright.{" "}
+            <em>Rejection.</em>
+          </li>
+          <li>
+            <strong>Where does it send anything?</strong> Every network
+            destination has to be named, expected, and written down. Traffic to
+            somewhere the skill&rsquo;s stated purpose does not require is not a
+            question to ask the author. <em>Rejection.</em>
+          </li>
+          <li>
+            <strong>Does it reach outside the folder it was given?</strong>{" "}
+            Credentials, environment variables, files elsewhere on the machine.
+          </li>
+          <li>
+            <strong>Does it tell the agent to hide anything?</strong>{" "}
+            Instructions to disregard what came before, to conceal a step, or to
+            leave something out of what it reports back to you.
+          </li>
+          <li>
+            <strong>Does what it produces affect anyone&rsquo;s rights or
+            benefits?</strong> If it does, the skill has to say so in its own
+            output, where the person affected will see it — not only in its
+            metadata, where only we will.
+          </li>
+          <li>
+            <strong>Is the license there, and does it actually apply?</strong>{" "}
+            A license naming terms the author had no standing to grant is worse
+            than none.
+          </li>
+          <li>
+            <strong>Would it work outside the place it came from?</strong> A
+            skill welded to one jurisdiction&rsquo;s forms and deadlines is
+            still useful; it just needs to say so, so nobody adopts it
+            expecting otherwise.
+          </li>
+        </ol>
+        <p className="tier-card__warn">
+          <strong>This is a record of what was checked, not a guarantee.</strong>{" "}
+          One reader, about fifteen minutes, one version of the skill. It is not
+          an independent audit, we do not test that the skill works, and passing
+          these nine questions is not a statement that a skill is safe or fit
+          for your purpose. What it does mean is that somebody looked, and you
+          can see exactly what they looked for.
+        </p>
+        <p>
+          <a className="arrow-link" href={`${REPO}/blob/main/docs/REVIEW.md`}
+            data-testid="about-review-checklist">
+            The full checklist, with what each question rejects{" "}
             <span aria-hidden="true">→</span>
           </a>
         </p>

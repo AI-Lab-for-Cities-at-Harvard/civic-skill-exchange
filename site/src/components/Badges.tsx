@@ -35,20 +35,38 @@ export function LabBadge({ namespace }: { namespace: Skill["namespace"] }) {
  *  the rule it came from: true only until the rule changed, and then false on
  *  every card at once (ADR 0001, ruling 4). A note derived from the ledger
  *  cannot drift from it. */
+/** The badge says a skill was reviewed, names who reviewed it, and stops.
+ *
+ *  It used to say "{reviewers} read this commit", which undersold nine
+ *  questions covering scripts, tool grants, egress, credentials and
+ *  instruction-suppression — and meant nothing to a reader who does not know
+ *  what a commit is. The obvious repair, "reviewed for safety", is the one
+ *  claim the registry refuses everywhere else: a pass is never a statement
+ *  that a skill is safe.
+ *
+ *  So the questions moved to the About page, where there is room to say which
+ *  they are and what they do not amount to, and the badge stopped
+ *  characterising the review at all (#113). One line cannot hold the
+ *  difference between "these were asked" and "this is safe". */
+const REVIEWED_TITLE =
+  "Read against the published nine-item checklist, at this exact version. " +
+  "A record of what was checked, not a warranty.";
+
 export function TierBadge(
   { tier, reviewed }: { tier: Skill["tier"]; reviewed?: Skill["reviewed"] },
 ) {
   const isReviewed = tier === "reviewed";
   const reviewers = reviewed?.reviewers ?? [];
   return (
-    <span className={`badge ${isReviewed ? "badge--ok" : "badge--warn"}`}>
+    <span className={`badge ${isReviewed ? "badge--ok" : "badge--warn"}`}
+      title={isReviewed ? REVIEWED_TITLE : undefined}>
       {label(TIER_LABELS, tier)}
       <span className="badge__note">
         {!isReviewed ? "automated checks only"
           // No names in the ledger is a malformed attestation, not a stronger
           // claim. Say the least that is still true rather than nothing.
           : reviewers.length === 0 ? "read against the published checklist"
-          : `${reviewers.join(" and ")} read this commit`}
+          : reviewers.join(" and ")}
       </span>
     </span>
   );

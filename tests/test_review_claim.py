@@ -201,3 +201,65 @@ def test_the_reviewer_guide_names_the_command_the_build_runs(monkeypatch):
     assert flags in guide, (
         f"docs/REVIEW.md does not tell a reviewer to run `{flags}`, which is "
         f"what build_index.py compares their attestation against")
+
+
+# --------------------------------------------------------------------------- #
+# The published criteria (#113).
+#
+# The badge says a skill was reviewed and stops there, because a badge cannot
+# hold the difference between "these questions were asked" and "this skill is
+# safe". The questions move to the About page, where there is room to say which
+# they are and what they do not amount to.
+#
+# Nine items in two places is a copy, and a copy drifts. These hold the page to
+# docs/REVIEW.md, which is what a reviewer actually works from.
+
+REVIEW_ITEM = re.compile(r"^### (\d+)\. (.+)$", re.MULTILINE)
+
+#: One word from each of the nine items, in order. A rewording of an item is
+#: fine; losing the subject of it is not.
+ITEM_SUBJECTS = [
+    "description", "scripts", "allowed-tools", "network", "credential",
+    "conceal", "rights", "license", "jurisdiction",
+]
+
+
+def _about_review_section() -> str:
+    about = _text("site/src/components/About.tsx")
+    start = about.index('id="review"')
+    return about[start:about.index("</section>", start)]
+
+
+def test_the_checklist_still_has_nine_items():
+    """ITEM_SUBJECTS below is written against nine. If the checklist grows or
+    shrinks, this is the test that says so before the page goes stale."""
+    items = REVIEW_ITEM.findall(_text("docs/REVIEW.md"))
+    assert [n for n, _ in items] == [str(i) for i in range(1, 10)]
+
+
+def test_the_about_page_publishes_one_item_for_each_checklist_item():
+    section = _about_review_section()
+    assert section.count("<li>") == len(ITEM_SUBJECTS)
+
+
+@pytest.mark.parametrize("subject", ITEM_SUBJECTS)
+def test_the_about_page_keeps_the_subject_of_every_item(subject: str):
+    assert subject in _about_review_section().lower()
+
+
+def test_the_published_criteria_say_what_they_are_not():
+    """The whole reason the questions are on the page rather than in the badge:
+    there is room here to say a list of questions asked is not a warranty."""
+    section = _about_review_section().lower()
+    assert "not a guarantee" in section or "not a warranty" in section
+
+
+def test_the_section_is_reachable_at_its_own_url():
+    about = _text("site/src/components/About.tsx")
+    assert '["review", ' in about, "the section is not in the table of contents"
+
+
+def test_the_site_stops_calling_the_pin_a_content_hash():
+    """#110 corrected this in the documents and missed the site. The pin is the
+    commit that last touched the directory, which is stricter."""
+    assert "content hash" not in _text("site/src/components/About.tsx").lower()
