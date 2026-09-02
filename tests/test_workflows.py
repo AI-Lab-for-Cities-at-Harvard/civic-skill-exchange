@@ -99,3 +99,14 @@ def test_report_still_fences_everything_it_interpolates() -> None:
     know which strings are trusted."""
     report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
     assert "failedSteps.map(safe)" in report
+
+
+def test_the_manifest_job_stages_everything_the_generator_writes() -> None:
+    """It named .claude-plugin/marketplace.json explicitly, and #98 gave the
+    generator two more kinds of file to write — so a merged skill updated the
+    Claude marketplace and left the Codex side stale on main, silently."""
+    wf = (ROOT / ".github" / "workflows" / "manifest.yml").read_text(encoding="utf-8")
+    assert "git add -A .claude-plugin .agents skills" in wf, (
+        "the commit step must stage every path build_marketplace.py owns")
+    assert "git diff --cached --quiet" in wf, (
+        "the has-it-changed guard must ask git, not name one file")
