@@ -242,5 +242,9 @@ git push origin add-{skill-name}
 That validator command is the same module the website and CI both run, so it
 tells you the same thing they will.
 
+If you also have Python to hand, `npm run check -- skills/{your-github-username}/{skill-name}`
+goes further: it runs the signature scan too and prints the comment your pull
+request will get, rendered by the code that posts it.
+
 [CONTRIBUTING.md](../CONTRIBUTING.md) is the full contract, with a worked example
 and the field tables.

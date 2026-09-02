@@ -125,11 +125,27 @@ permissions:
 
 Download `findings.json` and render a comment from **structured fields only**. Never echo submitter-authored strings into the comment body unescaped.
 
+The rendering itself is `validator/src/report.ts`, so that a contributor's local
+check and their pull request comment come from one implementation rather than two
+that drift. Its `safe()` fences every free-text field in a code span, neutralises
+the backticks that would close it, flattens newlines, and caps the length.
+
+Two rules for the job that runs it, both under test in `tests/test_workflows.py`:
+
+- **It checks out the default branch, never the triggering run's head.**
+  `workflow_run` executes the workflow definition from the default branch
+  precisely so a fork cannot edit what runs beside a token. Checking out the pull
+  request head hands that back — the fork's copy of the renderer would run in the
+  privileged job.
+- **It installs nothing.** `report-cli.ts` imports one local module and two
+  `node:` builtins, so `node` runs it as-is. No package is fetched at run time
+  into a job holding `pull-requests: write`.
+
 The artifact is uploaded only when a pull request touches `skills/`, so most runs
 find nothing to download. That is the ordinary path: the download step carries
-`continue-on-error` and the render step exits quietly when the file is absent.
-Keep both — without them the workflow goes red on every tooling and site pull
-request, and a check that is always red is a check nobody reads.
+`continue-on-error` and every step after it is gated on the artifact having
+arrived. Keep both — without them the workflow goes red on every tooling and site
+pull request, and a check that is always red is a check nobody reads.
 
 ### The rules that matter
 

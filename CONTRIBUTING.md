@@ -228,7 +228,7 @@ Everything below runs on your PR and reports back in a comment. Layers 0–2 fai
 
 A flag is not a rejection. Several of these signatures fire on entirely legitimate skills — a bare external-URL match trips on anything that cites documentation. Flags route to a maintainer, who will ask you about them.
 
-You can run the same L0 and L1 checks locally with `npx tsx validator/src/cli.ts skills/your-name/your-skill` — it is the identical module CI runs.
+You can run all of this locally. `npx tsx validator/src/cli.ts skills/your-name/your-skill` runs L0 and L1 — the identical module CI runs. `npm run check -- skills/your-name/your-skill` runs L0 through L3 and then prints the pull request comment itself, rendered by the same code that will post it, so what you see locally is what will appear on your PR. It needs Python with `pyyaml` as well as Node; see [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 **If L2 blocks you**, do not work around the signature. Open the PR anyway and explain what you're trying to do. There are legitimate reasons to need network access, and a maintainer would much rather discuss it than watch someone obfuscate past a check.
 
