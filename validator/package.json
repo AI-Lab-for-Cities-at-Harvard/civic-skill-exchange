@@ -9,13 +9,15 @@
     "./rules": "./src/rules.ts"
   },
   "bin": {
-    "validate-skills": "./src/cli.ts"
+    "validate-skills": "./src/cli.ts",
+    "check-skill": "./src/check.ts"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "validate": "tsx src/cli.ts"
+    "validate": "tsx src/cli.ts",
+    "check": "tsx src/check.ts"
   },
   "dependencies": {
     "yaml": "^2.9.0"
