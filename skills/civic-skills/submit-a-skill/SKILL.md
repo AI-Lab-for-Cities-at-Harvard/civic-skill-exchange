@@ -79,11 +79,15 @@ what the registry's checks said.
    Two of the questions are not derivable from anything and no scanner can
    answer them. Ask them in these words:
 
-   - **What data does it touch?** — No personal data · Personal data (PII) ·
-     Protected — statutory regime
-   - **Does what it produces affect anyone's rights or benefits?** — No effect
-     on rights or benefits · Informs a person, decides nothing · Feeds a
-     decision someone acts on
+   **What data does it touch?**
+   - No personal data
+   - Personal details about identifiable people
+   - Health, benefits, immigration or criminal justice data
+
+   **Does what it produces affect anyone's rights or benefits?**
+   - No — it does not affect anyone's rights or benefits
+   - It informs a person, but decides nothing
+   - It feeds a decision someone acts on
 
    Take the author's answer. If they are unsure, describe what each option
    means and let them choose; do not choose for them, and do not pick the

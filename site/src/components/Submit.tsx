@@ -16,7 +16,7 @@ import { checkGitHubUser, type UserCheck } from "../lib/github";
 import {
   importFromRepo, FAILURE_MESSAGES, type ImportResult,
 } from "../lib/import";
-import { CATEGORY_LABELS } from "../lib/labels";
+import { CATEGORY_LABELS, JUDGMENT_QUESTIONS } from "../lib/labels";
 import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
 
@@ -72,17 +72,10 @@ const WHERE_LABELS: [string, string][] = [
   ["intl", "Outside the US"],
 ];
 
-const DATA_LABELS: [string, string][] = [
-  ["none", "No personal data"],
-  ["pii", "Personal details about identifiable people"],
-  ["protected", "Health, benefits, immigration or criminal justice data"],
-];
-
-const EFFECT_LABELS: [string, string][] = [
-  ["none", "No — it does not affect anyone's rights or benefits"],
-  ["advisory-only", "It informs a person, but decides nothing"],
-  ["decision-support", "It feeds a decision someone acts on"],
-];
+/** The two judgment questions live in labels.ts, because submit-a-skill has to
+ *  ask them in the same words and cannot import this component. */
+const DATA = JUDGMENT_QUESTIONS["civic.data-sensitivity"]!;
+const EFFECT = JUDGMENT_QUESTIONS["civic.human-review"]!;
 
 const USE_LABELS: [string, string][] = [
   ["none", "Not yet — I have not used it in real work"],
@@ -604,14 +597,13 @@ export function Submit(
             </>}
           />
 
-          <Choice id="civic.data-sensitivity" label="What data does it touch?"
+          <Choice id="civic.data-sensitivity" label={DATA.question}
             value={draft.dataSensitivity} findings={findings}
-            onChange={set("dataSensitivity")} options={DATA_LABELS} />
+            onChange={set("dataSensitivity")} options={DATA.options} />
 
-          <Choice id="civic.human-review"
-            label="Does what it produces affect anyone's rights or benefits?"
+          <Choice id="civic.human-review" label={EFFECT.question}
             value={draft.humanReview} findings={findings}
-            onChange={set("humanReview")} options={EFFECT_LABELS} />
+            onChange={set("humanReview")} options={EFFECT.options} />
 
           <Choice id="civic.deployment" label="Have you used it?"
             value={draft.deployment} findings={findings}
