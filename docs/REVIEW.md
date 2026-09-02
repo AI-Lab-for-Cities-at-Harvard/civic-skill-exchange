@@ -157,7 +157,7 @@ Write `notes` for the next reviewer, a year from now, who has to re-review this 
 
 ## Withdrawing a sign-off
 
-Comment on the original issue and open a PR removing the attestation. You do not owe anyone a justification, and nobody should ask you for one.
+Comment on the original issue and open a PR removing the attestation. Reviews can be removed without any notification or clear cause.
 
 ## When you find something bad
 
