@@ -6,7 +6,7 @@ import {
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   forkUrl, forkUploadUrl, registryUploadUrl, pullRequestUrl, parseForkRef,
-  fitsInUrl, skillPath, slugify, type Draft,
+  fitsInUrl, skillPath, namespacePath, slugify, type Draft,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
@@ -779,14 +779,19 @@ export function Submit(
                 <li className="steps__item">
                   <h3 className="steps__title">Drag the folder in</h3>
                   <p className="steps__body" data-testid="upload-step-body">
-                    Drop the folder you <strong>downloaded</strong> in step 1
-                    &mdash; unzipped, subfolders and all &mdash; then{" "}
+                    Drop in the whole folder you <strong>downloaded</strong> in
+                    step 1 &mdash; unzipped, named{" "}
+                    <code>{folderName}</code>, subfolders and all. Do not open it
+                    first: GitHub keeps the folder&rsquo;s name, which is how it
+                    lands in the right place. Then{" "}
                     <strong>Commit changes</strong>, choosing{" "}
                     <em>create a new branch and start a pull request</em> rather
                     than committing to <code>main</code>.
                     {reserved
-                      ? " This opens the registry itself, which you can write to."
-                      : " This opens your copy at the right folder."}
+                      ? " This opens the registry at "
+                      : " This opens your copy at "}
+                    <code>{namespacePath(draft)}</code>, so the result is{" "}
+                    <code>{skillPath(draft)}</code>.
                   </p>
                   {uploadHref ? (
                     <a className="btn" href={uploadHref}
