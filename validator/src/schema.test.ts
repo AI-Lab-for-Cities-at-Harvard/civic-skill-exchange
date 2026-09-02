@@ -12,7 +12,8 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { parse } from "yaml";
 import {
-  AFFILIATIONS, DEPLOYMENT_DETAILS, DEPLOYMENTS, HUMAN_REVIEW, JURISDICTIONS,
+  AFFILIATIONS, DEPLOYED_IN_PATTERN, DEPLOYED_SINCE_PATTERN, DEPLOYMENT_DETAILS,
+  DEPLOYMENTS, GENERALIZED_OK_JURISDICTIONS, HUMAN_REVIEW, JURISDICTIONS,
   FIT_MAX_LENGTH, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS, SENSITIVITIES,
   SPEC_FIELDS,
 } from "./rules";
@@ -21,7 +22,11 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 interface Conditional {
   if: { properties: Record<string, { enum?: string[]; const?: string }>; required?: string[] };
-  then: { required?: string[]; not?: { anyOf: { required: string[] }[] } };
+  then: {
+    required?: string[];
+    not?: { anyOf: { required: string[] }[] };
+    properties?: Record<string, { enum?: string[] }>;
+  };
 }
 
 interface Schema {
@@ -111,6 +116,26 @@ describe("the schema states its conditional rules machine-readably", () => {
     );
     const forbidden = rule?.then.not?.anyOf.flatMap((entry) => entry.required) ?? [];
     expect(forbidden.slice().sort()).toEqual([...DEPLOYMENT_DETAILS].sort());
+  });
+
+  it("declares the localization contradiction", () => {
+    const rule = conditionals.find(
+      (c) => c.if.properties["civic.localization"]?.const === "generalized",
+    );
+    expect(rule?.then.properties?.["civic.jurisdiction"]?.enum?.slice().sort())
+      .toEqual([...GENERALIZED_OK_JURISDICTIONS].sort());
+  });
+
+  it("declares that a source commit needs a source repository", () => {
+    const rule = conditionals.find((c) => c.if.required?.includes("civic.source-commit"));
+    expect(rule?.then.required).toEqual(["civic.source-repo"]);
+  });
+
+  it("carries the deployment patterns rules.ts enforces, not only prose", () => {
+    const inPattern = metaProps["civic.deployed-in"]?.pattern;
+    const sincePattern = metaProps["civic.deployed-since"]?.pattern;
+    expect(inPattern).toBe(DEPLOYED_IN_PATTERN);
+    expect(sincePattern).toBe(DEPLOYED_SINCE_PATTERN);
   });
 
   it("marks civic.category as coming from a vocabulary rather than an enum", () => {

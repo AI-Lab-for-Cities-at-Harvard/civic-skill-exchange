@@ -116,6 +116,42 @@
               ]
             }
           }
+        },
+        {
+          "$comment": "A generalized skill has had its jurisdiction specifics lifted out, so it cannot also be shaped for one named jurisdiction. 'generic' means no assumptions and 'intl' says nothing about which, so both are compatible.",
+          "if": {
+            "properties": {
+              "civic.localization": {
+                "const": "generalized"
+              }
+            },
+            "required": [
+              "civic.localization"
+            ]
+          },
+          "then": {
+            "properties": {
+              "civic.jurisdiction": {
+                "enum": [
+                  "generic",
+                  "intl"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$comment": "A commit on its own names a point in a history nobody can find.",
+          "if": {
+            "required": [
+              "civic.source-commit"
+            ]
+          },
+          "then": {
+            "required": [
+              "civic.source-repo"
+            ]
+          }
         }
       ],
       "additionalProperties": {
@@ -210,12 +246,14 @@
         "civic.deployed-in": {
           "type": "string",
           "maxLength": 120,
-          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Required alongside civic.deployed-at, optional for 'personal', forbidden for 'none'."
+          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Required alongside civic.deployed-at, optional for 'personal', forbidden for 'none'.",
+          "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$"
         },
         "civic.deployed-since": {
           "type": "string",
           "maxLength": 7,
-          "description": "YYYY or YYYY-MM. Optional. Duration of real use is the part of a deployment claim that carries the most weight."
+          "description": "YYYY or YYYY-MM. Optional. Duration of real use is the part of a deployment claim that carries the most weight.",
+          "pattern": "^\\d{4}(-(0[1-9]|1[0-2]))?$"
         },
         "civic.localization": {
           "type": "string",

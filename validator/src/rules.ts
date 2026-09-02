@@ -36,12 +36,21 @@ export const LOCALIZATIONS = ["generalized", "localized"] as const;
 /** A generalized skill has had its jurisdiction specifics lifted out, so it
  *  cannot also be shaped for one named jurisdiction. These two are compatible:
  *  'generic' means no assumptions, 'intl' says nothing about which. */
-const GENERALIZED_OK_JURISDICTIONS = new Set(["generic", "intl"]);
+export const GENERALIZED_OK_JURISDICTIONS = ["generic", "intl"] as const;
+const GENERALIZED_OK = new Set<string>(GENERALIZED_OK_JURISDICTIONS);
 
 const NAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/** Written as strings so the published schema can carry the same patterns
+ *  instead of describing them in English. A program reads the schema to find
+ *  out what a submission needs (#10) and cannot read a prose description;
+ *  schema.test.ts holds the two files to these exact strings. */
+export const DEPLOYED_IN_PATTERN = "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$";
+export const DEPLOYED_SINCE_PATTERN = "^\\d{4}(-(0[1-9]|1[0-2]))?$";
+
 /** ISO 3166 country, optional subdivision, optional locality: "US-MA / Boston". */
-const DEPLOYED_IN_RE = /^[A-Z]{2}(-[A-Z0-9]{1,3})?( \/ .+)?$/;
-const DEPLOYED_SINCE_RE = /^\d{4}(-(0[1-9]|1[0-2]))?$/;
+const DEPLOYED_IN_RE = new RegExp(DEPLOYED_IN_PATTERN);
+const DEPLOYED_SINCE_RE = new RegExp(DEPLOYED_SINCE_PATTERN);
 
 /** Exported so schema.test.ts can hold the published schema's conditionals to
  *  the same two fields rather than repeating them. */
@@ -150,7 +159,7 @@ export function checkLocalization(meta: Record<string, unknown>): Finding[] {
   }
 
   if (localization === "generalized" && jurisdiction &&
-      !GENERALIZED_OK_JURISDICTIONS.has(jurisdiction)) {
+      !GENERALIZED_OK.has(jurisdiction)) {
     return [finding("civic.localization",
       `civic.localization: generalized contradicts civic.jurisdiction: ` +
       `${jurisdiction}. A generalized skill has had its jurisdiction specifics ` +
