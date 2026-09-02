@@ -9,6 +9,12 @@
     "noUnusedParameters": true,
     "noUncheckedIndexedAccess": true,
     "verbatimModuleSyntax": true,
+    // report-cli.ts imports "./report.ts" by its real name: Node runs that file
+    // directly, with no bundler to resolve an extensionless specifier and no
+    // npm install in the privileged reporting job. Safe alongside noEmit —
+    // nothing here is compiled to JavaScript that would carry the specifier
+    // through to a runtime that cannot read it.
+    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "skipLibCheck": true,
     "noEmit": true,

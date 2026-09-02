@@ -75,30 +75,92 @@ def test_dependabot_watches_the_actions() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# The pull request comment, which is rendered across four files: report.yml
+# fetches and posts, report.ts writes the words, check.ts prints the same words
+# locally, and validate.yml owns the step names both of them quote.
+
+RENDERER = (ROOT / "validator" / "src" / "report.ts").read_text(encoding="utf-8")
+REPORT_YML = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
+VALIDATE_YML = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+LOCAL_CHECK = (ROOT / "validator" / "src" / "check.ts").read_text(encoding="utf-8")
+
+
 # #88: the checks comment used to announce a failure it could not attribute,
 # beside findings it had just described as harmless. It now reads the run's own
 # step conclusions, which needs a permission it did not have.
 
 
 def test_report_can_read_which_step_failed() -> None:
-    report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
-    assert "listJobsForWorkflowRun" in report, (
+    assert "listJobsForWorkflowRun" in REPORT_YML, (
         "report.yml must read step conclusions rather than guessing at the cause")
-    assert "actions: read" in report, (
+    assert "actions: read" in REPORT_YML, (
         "reading job steps needs actions: read")
 
 
 def test_report_says_the_flags_are_not_the_cause() -> None:
-    report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
-    assert "not** the cause" in report
+    assert "not** the cause" in RENDERER
 
 
 def test_report_still_fences_everything_it_interpolates() -> None:
-    """The privileged job's whole discipline. Step names are ours, not a
-    contributor's — but the next person editing this file should not have to
-    know which strings are trusted."""
-    report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
-    assert "failedSteps.map(safe)" in report
+    """The privileged job's whole discipline, now that the renderer holds it.
+    Step names are ours, not a contributor's — but the next person editing this
+    should not have to know which strings are trusted."""
+    assert ".map(safe)" in RENDERER
+
+
+# #8: the comment's wording lived only inside report.yml, so nothing outside CI
+# could produce it and any local reproduction would drift from it. It moved to
+# validator/src/report.ts, which the local check calls too. These keep the move
+# from quietly coming undone.
+
+
+@pytest.mark.parametrize(
+    "wording",
+    [
+        "## Automated checks",
+        "### Blocking",
+        "### Flagged for review",
+        "No signatures matched",
+        "not** the cause",
+        "docs/SECURITY.md",
+    ],
+)
+def test_report_yml_composes_no_part_of_the_comment(wording: str) -> None:
+    """A second copy of a sentence is a second copy that drifts. report.yml
+    fetches, asks which step failed, renders and posts; the words are the
+    renderer's. Comments in the file are prose about the move, not output."""
+    body = "\n".join(
+        line for line in REPORT_YML.splitlines() if not line.lstrip().startswith("#")
+    )
+    assert wording not in body, (
+        f"report.yml is composing {wording!r} again — it must call "
+        "validator/src/report.ts, not restate it"
+    )
+
+
+def test_the_local_check_names_the_same_steps_ci_does() -> None:
+    """The report names the step that failed. A local failure and a pull request
+    failure have to name the same one, or the sections match and the sentence
+    above them does not."""
+    ci_steps = set(re.findall(r"^\s*-?\s*name:\s*(.+?)\s*$", VALIDATE_YML, re.M))
+    local_steps = re.findall(r'^const STEP_\w+ = "(.+)";$', LOCAL_CHECK, re.M)
+    assert local_steps, "no step names found in check.ts — has the shape changed?"
+    for step in local_steps:
+        assert step in ci_steps, (
+            f"check.ts reports {step!r}, which is not a step name in validate.yml"
+        )
+
+
+def test_report_yml_never_checks_out_the_pull_request_head() -> None:
+    """workflow_run runs the workflow definition from the default branch, so a
+    fork cannot edit what executes beside `pull-requests: write`. Checking out
+    the triggering run's head hands that straight back: the renderer this job
+    executes would then be the contributor's copy of it."""
+    for ref in re.findall(r"^\s*ref:\s*(.+?)\s*$", REPORT_YML, re.M):
+        assert "head" not in ref, (
+            f"report.yml checks out {ref!r}. This job holds a token; it may only "
+            "take the default branch."
+        )
 
 
 def test_the_manifest_job_stages_everything_the_generator_writes() -> None:
