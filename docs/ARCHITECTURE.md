@@ -215,11 +215,31 @@ Start narrow. Adding a category is a PR against this file, and it should require
 
 ---
 
-## The marketplace manifest
+## The marketplace manifests
 
-`.claude-plugin/marketplace.json` makes the registry a Claude Code plugin
-marketplace: `/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange`,
-then one `/plugin install` per skill.
+Two, because Claude Code and Codex each read their own and neither reads the
+other's — pointing Codex at this repository before the second existed registered
+a marketplace that surfaced nothing.
+
+| | Claude Code | Codex |
+|---|---|---|
+| Marketplace | `.claude-plugin/marketplace.json` | `.agents/plugins/marketplace.json` |
+| Per-plugin manifest | none needed | `.codex-plugin/plugin.json`, inside each skill |
+| Add | `/plugin marketplace add {owner}/{repo}` | `codex plugin marketplace add {owner}/{repo}` |
+
+**One plugin per skill in both**, with the same name, so the install command
+reads the same in either tool. The cost of that consistency is a Codex manifest
+inside every skill directory; the alternative was one plugin per namespace, which
+needs far fewer files and makes the two marketplaces disagree about what a unit
+is. Consistency won.
+
+Codex's requirements were established by inspecting its own bundled marketplace
+and testing against the CLI rather than from documentation: a `SKILL.md` at the
+plugin root loads with `"skills": "./"`, and `version` is optional — a manifest
+without one installs. So no version is invented. When an author declares one it
+is published, which is what
+[#77](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/77)
+will supply.
 
 Nothing moved to make this work. Every skill is already a directory with
 `SKILL.md` at its top level, which is what Claude Code loads as a single-skill
