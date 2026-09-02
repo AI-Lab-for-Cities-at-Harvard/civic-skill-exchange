@@ -90,9 +90,7 @@ lives in, or paste your `SKILL.md` directly.
 The archive is unpacked **in your browser**. It is not sent anywhere. The page
 reads what is already in your `SKILL.md` and fills itself in.
 
-<!-- IMAGE: 01-submission-page.png
-     alt: The submission page, with the notice that a GitHub account is needed
-     and the three ways to give it a skill. -->
+![The submission page: a notice that a GitHub account is needed, then three ways to give it a skill — a repository address, a zip upload, or a pasted SKILL.md.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-01-submission-page.png)
 
 ### Step 2 — Answer only what it could not find
 
@@ -103,9 +101,7 @@ for, what data it touches, whether its output reaches a decision about somebody.
 Those last two are the questions nobody can answer by reading your code, and
 they are the reason this registry exists rather than a folder of gists.
 
-<!-- IMAGE: 04-read-from-your-file.png
-     alt: A note listing the fields read from the uploaded file, so they are not
-     asked for twice. -->
+![A note listing the fields read out of the uploaded file — the name, the description, the licence — so you are not asked for them twice.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-02-read-from-your-file.png)
 
 The full field reference is on the
 [About page](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/about/metadata).
@@ -119,9 +115,7 @@ leaving everything else exactly as you wrote it — body, comments, key order.
 the answers in it. The page shows you the lines it added, so you can see what the
 difference is.
 
-<!-- IMAGE: 05-what-we-added.png
-     alt: The lines the page added to SKILL.md, with a note that the original
-     file on disk does not have them. -->
+![The lines the page added to SKILL.md, each marked with a plus, above a note that your original file on disk still does not have them.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-03-what-we-added.png)
 
 ### Step 4 — Get it onto GitHub
 
@@ -133,39 +127,31 @@ already in it. Commit, and GitHub offers the pull request. You are done.
 
 **If it is more than one file**, four steps:
 
-<!-- IMAGE: 06-the-four-steps.png
-     alt: The four numbered steps: download the folder, fork the registry, drag
-     the folder in, open the pull request. -->
+![The four numbered steps on the page: download the corrected folder, fork the registry and paste its address back, drag the folder in, open the pull request.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-04-the-four-steps.png)
 
 1. **Download the corrected folder** and unzip it.
 2. **Fork the registry** — one button — then paste the address back into the
    page. It cannot guess it: you may rename your copy, or keep it under a
    different account.
 
-   <!-- IMAGE: 01-fork-dialog.png (from capture-github.mjs)
-        alt: GitHub's fork dialog. Leave the repository name as it is. -->
+   ![GitHub's Create a new fork dialog. Leave the Repository name field exactly as it is — GitHub invites you to change it, and a renamed fork is one the page cannot find.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-01-fork-dialog.png)
 
 3. **Drag the whole folder in.** The page opens the upload page at
    `skills/{your-username}/`, and GitHub keeps the name of the folder you drop —
    which is how it lands at `skills/{your-username}/{skill-name}/`. **Do not open
    the folder and drag its contents**, and do not rename it.
 
-   <!-- IMAGE: 02-upload-page.png (from capture-github.mjs)
-        alt: GitHub's upload page, with the breadcrumb showing the namespace
-        directory and the drop target. -->
+   ![GitHub's upload page in your fork. Check the breadcrumb reads skills / your-username before you drop anything, and note that Commit directly to the main branch is selected by default.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-02-upload-page.png)
 
    Then **Commit changes**, choosing **create a new branch and start a pull
    request** rather than committing to `main`.
 
-   <!-- IMAGE: 03-commit-box.png (from capture-github.mjs)
-        alt: The commit box at the bottom of the upload page, with "create a new
-        branch for this commit and start a pull request" selected. -->
+   ![The commit box at the foot of the upload page, with Create a new branch for this commit and start a pull request selected instead of the default, and a branch name filled in.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-03-commit-box.png)
 
 4. **Open the pull request.** If GitHub offered you one at the end of step 3,
    that is this step already done.
 
-   <!-- IMAGE: 04-pull-request.png (from capture-github.mjs)
-        alt: The compare page, with the Create pull request button. -->
+
 
 **If you are submitting into the Lab's own namespace**, there is no fork step —
 you have write access, so you upload straight into the registry and take the same
@@ -196,6 +182,25 @@ What is checked, and what is deliberately not, is in
 
 Nothing here is unrecoverable. A pull request can be pushed to again, and a
 maintainer can always be asked.
+
+---
+
+---
+
+## About these screenshots
+
+Captured **1 September 2026**, and kept on the
+[`guide-assets`](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/tree/guide-assets)
+branch rather than on `main`.
+
+That is not fussiness. `/plugin marketplace add` clones this repository, and the
+clone is shallow and single-branch — so a branch outside `main` costs somebody
+installing a civic skill nothing, while these images on `main` would roughly
+double the download.
+
+**If they no longer match what you see, trust the page and not the picture** —
+GitHub redesigns, and a stale screenshot is worse than none. Tell us, and we will
+recapture.
 
 ---
 
