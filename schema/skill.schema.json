@@ -151,12 +151,12 @@
           "type": "string",
           "minLength": 2,
           "maxLength": 200,
-          "description": "The organization where it was used. Required when civic.deployment is not 'none'; forbidden when it is."
+          "description": "The organization where it was used. Required when civic.deployment is 'team' or 'organization' \u2014 those are claims about an organization, and an unnamed one cannot be checked. Not required for 'personal', which asserts nothing about an organization; forbidden for 'none'."
         },
         "civic.deployed-in": {
           "type": "string",
           "maxLength": 120,
-          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Checked by scripts/validate.py."
+          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Required alongside civic.deployed-at, optional for 'personal', forbidden for 'none'."
         },
         "civic.deployed-since": {
           "type": "string",

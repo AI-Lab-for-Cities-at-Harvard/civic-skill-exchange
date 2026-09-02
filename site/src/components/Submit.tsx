@@ -6,7 +6,7 @@ import {
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   forkUrl, forkUploadUrl, registryUploadUrl, pullRequestUrl, parseForkRef,
-  fitsInUrl, skillPath, slugify, type Draft,
+  fitsInUrl, skillPath, namespacePath, slugify, type Draft,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
@@ -615,7 +615,12 @@ export function Submit(
 
           <Choice id="civic.deployment" label="Have you used it?"
             value={draft.deployment} findings={findings}
-            onChange={set("deployment")} options={USE_LABELS} />
+            onChange={set("deployment")} options={USE_LABELS}
+            hint={
+              draft.deployment === "team" || draft.deployment === "organization"
+                ? "Saying a team or an organization uses it is a claim about them, so the details below are needed."
+                : "Using it yourself is a complete answer — nothing else is required."
+            } />
 
           <Field id="civic.contact" label="Contact" findings={findings}
             hint="How someone reaches you about a problem with the skill.">
@@ -660,7 +665,13 @@ export function Submit(
                 onChange={onInput("license")} />
             </Field>
 
-            <Field id="civic.deployed-at" label="Which organization uses it?" findings={findings}>
+            <Field
+              id="civic.deployed-at" label="Which organization uses it?"
+              findings={findings}
+              hint={draft.deployment === "personal"
+                ? "Leave this blank if it is just you — personal use names no organization."
+                : undefined}
+            >
               <input id="civic.deployed-at" className="input" value={draft.deployedAt}
                 onChange={onInput("deployedAt")} />
             </Field>
@@ -768,14 +779,19 @@ export function Submit(
                 <li className="steps__item">
                   <h3 className="steps__title">Drag the folder in</h3>
                   <p className="steps__body" data-testid="upload-step-body">
-                    Drop the folder you <strong>downloaded</strong> in step 1
-                    &mdash; unzipped, subfolders and all &mdash; then{" "}
+                    Drop in the whole folder you <strong>downloaded</strong> in
+                    step 1 &mdash; unzipped, named{" "}
+                    <code>{folderName}</code>, subfolders and all. Do not open it
+                    first: GitHub keeps the folder&rsquo;s name, which is how it
+                    lands in the right place. Then{" "}
                     <strong>Commit changes</strong>, choosing{" "}
                     <em>create a new branch and start a pull request</em> rather
                     than committing to <code>main</code>.
                     {reserved
-                      ? " This opens the registry itself, which you can write to."
-                      : " This opens your copy at the right folder."}
+                      ? " This opens the registry at "
+                      : " This opens your copy at "}
+                    <code>{namespacePath(draft)}</code>, so the result is{" "}
+                    <code>{skillPath(draft)}</code>.
                   </p>
                   {uploadHref ? (
                     <a className="btn" href={uploadHref}

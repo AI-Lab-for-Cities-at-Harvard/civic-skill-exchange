@@ -52,12 +52,20 @@ no account.
 one command:
 
 ```
-/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
+/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .claude-plugin skills
 /plugin install {namespace}-{skill-name}@civic-skill-exchange
 ```
 
 The plugin name carries the namespace, because two people may publish a skill of
 the same name. Each skill page shows its exact command.
+
+`--sparse` is worth typing. Adding a marketplace clones the whole repository, and
+you only need the manifest and `skills/` — about 60 KB rather than 400 KB. It
+works without the flag; this just does not make you download the website source
+to install a skill.
+
+Fuller instructions for both Claude and ChatGPT, and how to submit one, are in
+[docs/SUBMITTING.md](docs/SUBMITTING.md).
 
 **In other agent tools.** Skills here follow the open
 [Agent Skills](https://agentskills.io) format, so they work anywhere that has

@@ -4,6 +4,7 @@
 
 | | |
 |---|---|
+| [SUBMITTING.md](SUBMITTING.md) | Installing a skill in Claude or ChatGPT, and sharing one — the walkthrough, with screenshots |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the registry is put together, and why it is a git repository rather than a service |
 | [TIERS.md](TIERS.md) | What Community and Reviewed each mean, how a skill moves between them, and when to open neither |
 | [SECURITY.md](SECURITY.md) | The threat model, the layered checks, and the CI hardening rules |

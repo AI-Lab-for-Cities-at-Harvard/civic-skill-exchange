@@ -110,7 +110,7 @@ metadata:
 | `civic.contact` | free text | A working address for security reports. |
 | `civic.affiliation` | `government`, `nonprofit`, `academic`, `vendor`, `individual` | Affiliation of the party in `civic.maintainer`. |
 | `civic.deployment` | `none`, `personal`, `team`, `organization` | The widest scope at which the skill has **actually** run. |
-| `civic.deployed-at` | free text | The organization where it ran. Required unless `deployment: none` — and forbidden when it is. |
+| `civic.deployed-at` | free text | The organization where it ran. Required for `team` and `organization`; not asked of `personal`; forbidden for `none`. |
 | `civic.deployed-in` | e.g. `US-MA / Boston`, `GB` | Where that organization operates. Same rule. |
 | `civic.deployed-since` | `YYYY` or `YYYY-MM` | Optional. Duration carries more weight than any other part of the claim. |
 | `civic.localization` | `generalized`, `localized` | Optional. Where the skill sits on the jurisdiction axis — see [docs/LOCALIZATION.md](docs/LOCALIZATION.md). Omit it if the skill has no jurisdiction-specific content. |
@@ -139,8 +139,13 @@ up as literal asterisks.
 It is useful context for anyone deciding whether to adopt it, and `none` is a
 perfectly good answer — plenty of good skills have never run in production.
 
-If you claim anything other than `none`, name where: `civic.deployed-at` and
-`civic.deployed-in` are then required, because an unattributed claim isn't context.
+If you claim `team` or `organization`, name it: `civic.deployed-at` and
+`civic.deployed-in` are then required, because those are claims about an
+organization and an unnamed one is a claim nobody can check.
+
+**`personal` asks for nothing further.** Using your own skill in your own work
+asserts nothing about an organization, and `civic.maintainer` already says who
+you are. Name a place if you want to; you do not have to.
 
 ### Two warnings that are not boilerplate
 
