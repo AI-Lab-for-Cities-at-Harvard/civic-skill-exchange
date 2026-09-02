@@ -92,8 +92,42 @@ describe("TierBadge names who attested, from the ledger", () => {
 
   it("names the attesting party on a Reviewed listing", () => {
     render(<TierBadge tier="reviewed" reviewed={attestation} />);
-    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+    expect(screen.getByText(/AI Lab for Cities at Harvard/))
       .toBeInTheDocument();
+  });
+
+  /** The badge says a skill was reviewed and by whom, and characterises the
+   *  review no further (#113). "Read this commit" undersold nine questions and
+   *  meant nothing to a reader who does not know what a commit is; "reviewed
+   *  for safety" is the one claim the registry refuses everywhere else. The
+   *  questions live on the About page, which has room for what they are not. */
+  it("carries the attestation's names and nothing else", () => {
+    const { container } = render(<TierBadge tier="reviewed" reviewed={attestation} />);
+    expect(container.querySelector(".badge__note")?.textContent)
+      .toBe("AI Lab for Cities at Harvard");
+  });
+
+  /** Checked against the visible badge only. The tooltip is allowed these words
+   *  and needs them — it says "not a warranty" — so the claim it makes is held
+   *  by the next test, which requires the negation rather than the absence. */
+  it.each(["safe", "safety", "guarantee", "warrant", "verified", "endorse", "secure"])(
+    "does not say '%s' on the face of the badge", (claim) => {
+      const { container } = render(<TierBadge tier="reviewed" reviewed={attestation} />);
+      expect((container.textContent ?? "").toLowerCase()).not.toContain(claim);
+    });
+
+  it("points at what was actually checked, for anyone who hovers", () => {
+    const { container } = render(<TierBadge tier="reviewed" reviewed={attestation} />);
+    const title = container.querySelector(".badge")?.getAttribute("title") ?? "";
+    expect(title).toMatch(/checklist/);
+    expect(title).toMatch(/this exact version/);
+    // The boundary travels with the claim, because a tooltip gets read alone.
+    expect(title).toMatch(/not a warranty/);
+  });
+
+  it("puts no tooltip on a Community listing, which has no review to describe", () => {
+    const { container } = render(<TierBadge tier="community" />);
+    expect(container.querySelector(".badge")?.getAttribute("title")).toBeNull();
   });
 
   it("never claims a count the ledger does not hold", () => {
@@ -108,7 +142,7 @@ describe("TierBadge names who attested, from the ledger", () => {
         reviewed={{ ...attestation, reviewers: ["alice-gov", "bob-nonprofit"] }}
       />,
     );
-    expect(screen.getByText(/alice-gov and bob-nonprofit read this commit/))
+    expect(screen.getByText(/alice-gov and bob-nonprofit/))
       .toBeInTheDocument();
   });
 
@@ -125,7 +159,7 @@ describe("TierBadge names who attested, from the ledger", () => {
 });
 
 describe("SkillCard feeds the badge its attestation", () => {
-  it("so a card says who read the commit, not how many did", () => {
+  it("so a card names who attested, not how many did", () => {
     render(<SkillCard skill={makeSkill({
       tier: "reviewed",
       reviewed: {
@@ -133,7 +167,7 @@ describe("SkillCard feeds the badge its attestation", () => {
         reviewers: ["AI Lab for Cities at Harvard"], notes: "",
       },
     })} />);
-    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+    expect(screen.getByText(/AI Lab for Cities at Harvard/))
       .toBeInTheDocument();
   });
 });
@@ -186,7 +220,7 @@ describe("the Lab badge stands at both tiers", () => {
     })} />);
     // Two chips, two different facts: who wrote it, and who read it.
     expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
-    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+    expect(screen.getByText(/AI Lab for Cities at Harvard/))
       .toBeInTheDocument();
   });
 
@@ -230,7 +264,7 @@ describe("the Community chip on a Lab-authored listing", () => {
         reviewers: ["AI Lab for Cities at Harvard"], notes: "",
       },
     })} />);
-    expect(screen.getByText(/AI Lab for Cities at Harvard read this commit/))
+    expect(screen.getByText(/AI Lab for Cities at Harvard/))
       .toBeInTheDocument();
     expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
   });
