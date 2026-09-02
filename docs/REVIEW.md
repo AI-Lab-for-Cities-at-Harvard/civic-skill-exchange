@@ -97,15 +97,33 @@ Not a rejection — a quality bar. Hardcoded field names, form numbers, and inte
 
 ### Getting the SHA
 
-The SHA is the last commit that touched the skill's directory. Ask git for it:
+The SHA is the last commit that touched the skill's directory. Do not read blame for it — there are two shorter routes.
+
+**With a clone.** This prints the whole attestation block, ready to paste:
+
+```bash
+python scripts/attestation.py {namespace}/{skill-name} --notes "Read-only. No egress."
+```
+
+It takes the SHA from the same call the build compares against, and refuses rather than printing one the build would reject — a dirty working tree, a shallow clone, a branch that is not `main`. It writes nothing and decides nothing: `notes` is yours.
+
+**In the browser.** GitHub will filter its commit list to one directory. The newest entry is the commit to attest to, and each row has a copy button for the full SHA:
+
+```
+https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/commits/main/skills/{namespace}/{skill-name}
+```
+
+**With git and nothing else.** The helper imports the build's own resolver, so it needs the Python dependencies; this is the same question asked directly, and it needs none:
 
 ```bash
 git log -1 --format=%H -- skills/{namespace}/{skill-name}
 ```
 
-**Run it on `main`, after the skill has merged.** Three ways to get this wrong, all of which produce an attestation that looks correct and grants no badge:
+### Three ways it goes wrong
 
-- **Taking it from the contributor's branch.** Pull requests are squash-merged, so the branch's commits never appear on `main` — the whole branch becomes one new commit, and that commit is what you are attesting to. A SHA from the branch does not exist on `main`.
+Each produces an attestation that looks correct and grants no badge. The helper refuses all three; if you took the SHA in the browser, check them yourself.
+
+- **Taking it from the contributor's branch.** Pull requests are squash-merged, so the branch's commits never appear on `main` — the whole branch becomes one new commit, and that commit is what you are attesting to. A SHA from the branch does not exist on `main`. This is why the browser link above is pinned to `/commits/main/`.
 - **Working in a shallow clone.** If git cannot reach the commit, the build gets nothing back, treats the skill as unverifiable, and demotes it. `git clone` without `--depth` gives you what you need.
 - **Attesting before a follow-up commit.** Anything that touches that directory afterwards — a typo fix in the `SKILL.md` included — replaces the SHA and demotes the skill. Yours has to be the last word on the directory.
 
