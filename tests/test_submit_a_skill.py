@@ -43,6 +43,16 @@ import submit  # noqa: E402
 SCHEMA = ROOT / "schema" / "skill.schema.json"
 CATEGORIES = ROOT / "registry" / "categories.yml"
 
+#: The acceptance criterion is that scaffolded output needs no edits to pass the
+#: registry's own checks, so these run the real validator rather than reasoning
+#: about it. That needs the validator's dependencies installed — CI installs
+#: them in the same job for this reason; a contributor working on the Python
+#: side alone gets a skip instead of a confusing failure.
+needs_validator = pytest.mark.skipif(
+    not (ROOT / "node_modules" / ".bin" / "tsx").exists(),
+    reason="the validator's dependencies are not installed — run `npm ci`",
+)
+
 
 # --------------------------------------------------------------------------- #
 # Fixtures. A complete answer set, and the two published artifacts as the skill
@@ -105,6 +115,7 @@ def build(tmp_path, schema, categories):
 # The headline acceptance criterion: what comes out needs no edits.
 
 
+@needs_validator
 def test_a_scaffolded_skill_passes_the_real_validator(build):
     skill = build()
     result = subprocess.run(
@@ -140,6 +151,7 @@ def test_scripts_and_references_are_created_only_when_asked(build):
     assert not (plain / "references").exists()
 
 
+@needs_validator
 def test_a_skill_with_scripts_and_references_still_passes_both_layers(
     tmp_path, schema, categories,
 ):

@@ -60,9 +60,24 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      # Node as well as Python, for the one assertion that needs both: the
+      # skill that writes a skill is Python, and what its output has to satisfy
+      # is the TypeScript validator. Only a job with both runtimes can check
+      # that, and checking it by reasoning is how a scaffold starts emitting
+      # something the pull request rejects.
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        if: steps.changes.outputs.tooling == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+
       - name: Install
         if: steps.changes.outputs.tooling == 'true'
-        run: pip install pyyaml pytest
+        # jsonschema is a test-only dependency: it holds the skill's partial
+        # schema reader to a real implementation. Nothing shipped uses it.
+        run: |
+          pip install pyyaml pytest jsonschema
+          npm ci
 
       - name: Test
         if: steps.changes.outputs.tooling == 'true'
