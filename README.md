@@ -67,12 +67,22 @@ to install a skill.
 Fuller instructions for both Claude and ChatGPT, and how to submit one, are in
 [docs/SUBMITTING.md](docs/SUBMITTING.md).
 
+**In Codex**, which has its own marketplace:
+
+```
+codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
+codex plugin add {namespace}-{skill-name}@civic-skill-exchange
+```
+
+The plugin names are the same as Claude's, on purpose, so the command reads the
+same in both tools.
+
 **In other agent tools.** Skills here follow the open
 [Agent Skills](https://agentskills.io) format, so they work anywhere that has
-adopted it — ChatGPT, Codex, Gemini CLI, Copilot, Cursor and others. Those tools
-install a skill at a time rather than a repository: use the download link on the
-skill's page, which is a zip of the skill folder rooted at a single directory,
-which is the shape they expect.
+adopted it — ChatGPT, Gemini CLI, Copilot, Cursor and others. Those install a
+skill at a time rather than a repository: use the download link on the skill's
+page, which is a zip of the skill folder rooted at a single directory, which is
+the shape they expect.
 
 **With a terminal:**
 

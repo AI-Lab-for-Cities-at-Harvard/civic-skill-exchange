@@ -1,0 +1,14 @@
+{
+  "name": "civic-skills-plain-language-notice-rewriter",
+  "description": "Rewrites a government notice template into plain language at a target reading level, preserving every legally required element. Works on templates, not on filled notices containing a specific person's information. Produces a draft for human review; it does not approve or send anything.",
+  "author": {
+    "name": "Civic Skills Registry maintainers"
+  },
+  "license": "CC0-1.0",
+  "skills": "./",
+  "interface": {
+    "displayName": "Plain Language Notice Rewriter",
+    "shortDescription": "Rewrites a government notice template into plain language at a target reading level, preserving every legally required…",
+    "category": "Plain Language & Accessibility"
+  }
+}
