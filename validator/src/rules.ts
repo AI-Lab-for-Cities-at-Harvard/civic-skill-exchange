@@ -43,7 +43,9 @@ const NAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 const DEPLOYED_IN_RE = /^[A-Z]{2}(-[A-Z0-9]{1,3})?( \/ .+)?$/;
 const DEPLOYED_SINCE_RE = /^\d{4}(-(0[1-9]|1[0-2]))?$/;
 
-const DEPLOYMENT_DETAILS = ["civic.deployed-at", "civic.deployed-in"] as const;
+/** Exported so schema.test.ts can hold the published schema's conditionals to
+ *  the same two fields rather than repeating them. */
+export const DEPLOYMENT_DETAILS = ["civic.deployed-at", "civic.deployed-in"] as const;
 
 /** Deployment values that are a claim *about an organization*, and so have to
  *  name one.
@@ -57,7 +59,7 @@ const DEPLOYMENT_DETAILS = ["civic.deployed-at", "civic.deployed-in"] as const;
  *
  *  `civic.maintainer` already says who the person is, which is the whole of what
  *  a personal-use claim asserts. */
-const ORGANIZATIONAL_DEPLOYMENTS = ["team", "organization"] as const;
+export const ORGANIZATIONAL_DEPLOYMENTS = ["team", "organization"] as const;
 
 /** Cap on the two fit fields. Exported so schema.test.ts can hold the published
  *  schema to the same number rather than repeating it. */
