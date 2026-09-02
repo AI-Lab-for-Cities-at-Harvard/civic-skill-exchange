@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import subprocess
 import sys
 import zipfile
@@ -293,18 +294,13 @@ def write_outputs(skill_dir: Path, entry: dict, out: Path) -> dict:
     return detail
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", type=Path, default=ROOT / "site" / "data")
-    parser.add_argument("--findings", type=Path, help="findings.json from scan.py")
-    args = parser.parse_args()
-
+def main_with(out: Path, findings: Path | None = None) -> int:
     attestations = load_attestations()
     categories = load_categories()
 
     scans: dict = {}
-    if args.findings and args.findings.is_file():
-        payload = json.loads(args.findings.read_text(encoding="utf-8"))
+    if findings and findings.is_file():
+        payload = json.loads(findings.read_text(encoding="utf-8"))
         scans = dict(payload.get("results", {}))
         scans["_generated"] = payload.get("generated")
 
@@ -337,11 +333,15 @@ def main() -> int:
         "skills": sorted(entries, key=lambda e: e["id"]),
     }
 
-    out = args.out
     out.mkdir(parents=True, exist_ok=True)
     (out / "index.json").write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
     (out / "categories.json").write_text(json.dumps({"categories": categories}, indent=2) + "\n",
                                          encoding="utf-8")
+
+    # The frontmatter contract, published so a program can read it. Copied byte
+    # for byte rather than rebuilt: a transformed copy would be a second source
+    # of truth, and the point of publishing it is that there is only one.
+    shutil.copyfile(ROOT / "schema" / "skill.schema.json", out / "skill.schema.json")
 
     for entry in entries:
         write_outputs(SKILLS_DIR / entry["namespace"] / entry["name"], entry, out)
@@ -355,6 +355,14 @@ def main() -> int:
             print(f"  {entry['id']}: {entry['reason']}")
 
     return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--out", type=Path, default=ROOT / "site" / "data")
+    parser.add_argument("--findings", type=Path, help="findings.json from scan.py")
+    args = parser.parse_args()
+    return main_with(args.out, args.findings)
 
 
 if __name__ == "__main__":

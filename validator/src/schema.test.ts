@@ -12,18 +12,33 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { parse } from "yaml";
 import {
-  AFFILIATIONS, DEPLOYMENTS, HUMAN_REVIEW, JURISDICTIONS,
-  FIT_MAX_LENGTH, LOCALIZATIONS, SENSITIVITIES, SPEC_FIELDS,
+  AFFILIATIONS, DEPLOYED_IN_PATTERN, DEPLOYED_SINCE_PATTERN, DEPLOYMENT_DETAILS,
+  DEPLOYMENTS, GENERALIZED_OK_JURISDICTIONS, HUMAN_REVIEW, JURISDICTIONS,
+  FIT_MAX_LENGTH, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS, SENSITIVITIES,
+  SPEC_FIELDS,
 } from "./rules";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+interface Conditional {
+  if: { properties: Record<string, { enum?: string[]; const?: string }>; required?: string[] };
+  then: {
+    required?: string[];
+    not?: { anyOf: { required: string[] }[] };
+    properties?: Record<string, { enum?: string[] }>;
+  };
+}
 
 interface Schema {
   required: string[];
   properties: {
     metadata: {
       required: string[];
-      properties: Record<string, { enum?: string[]; maxLength?: number; pattern?: string }>;
+      allOf?: Conditional[];
+      properties: Record<string, {
+        enum?: string[]; maxLength?: number; pattern?: string;
+        "x-vocabulary"?: string;
+      }>;
     };
   } & Record<string, unknown>;
 }
@@ -70,6 +85,63 @@ describe("the published schema agrees with rules.ts", () => {
     // One source of truth: registry/categories.yml. A frozen enum here would
     // drift the moment a category is added.
     expect(metaProps["civic.category"]?.enum).toBeUndefined();
+  });
+});
+
+/**
+ * The schema is read by a program, not only by a person.
+ *
+ * skills/civic-skills/submit-a-skill fetches this file and asks it what a
+ * submission needs, because a skill running on somebody else's machine cannot
+ * import rules.ts and must not carry a second copy of it (#10). Anything the
+ * schema states only in an English `description` is invisible to it — so the
+ * deployment rules are stated as JSON Schema conditionals, and the one
+ * vocabulary that lives outside this file says where to go and get it.
+ */
+describe("the schema states its conditional rules machine-readably", () => {
+  const conditionals = schema.properties.metadata.allOf ?? [];
+
+  it("declares the organizational-deployment rule", () => {
+    const rule = conditionals.find(
+      (c) => c.if.properties["civic.deployment"]?.enum !== undefined,
+    );
+    expect(rule?.if.properties["civic.deployment"]?.enum?.slice().sort())
+      .toEqual([...ORGANIZATIONAL_DEPLOYMENTS].sort());
+    expect(rule?.then.required?.slice().sort()).toEqual([...DEPLOYMENT_DETAILS].sort());
+  });
+
+  it("declares the never-deployed rule as a prohibition on the same fields", () => {
+    const rule = conditionals.find(
+      (c) => c.if.properties["civic.deployment"]?.const === "none",
+    );
+    const forbidden = rule?.then.not?.anyOf.flatMap((entry) => entry.required) ?? [];
+    expect(forbidden.slice().sort()).toEqual([...DEPLOYMENT_DETAILS].sort());
+  });
+
+  it("declares the localization contradiction", () => {
+    const rule = conditionals.find(
+      (c) => c.if.properties["civic.localization"]?.const === "generalized",
+    );
+    expect(rule?.then.properties?.["civic.jurisdiction"]?.enum?.slice().sort())
+      .toEqual([...GENERALIZED_OK_JURISDICTIONS].sort());
+  });
+
+  it("declares that a source commit needs a source repository", () => {
+    const rule = conditionals.find((c) => c.if.required?.includes("civic.source-commit"));
+    expect(rule?.then.required).toEqual(["civic.source-repo"]);
+  });
+
+  it("carries the deployment patterns rules.ts enforces, not only prose", () => {
+    const inPattern = metaProps["civic.deployed-in"]?.pattern;
+    const sincePattern = metaProps["civic.deployed-since"]?.pattern;
+    expect(inPattern).toBe(DEPLOYED_IN_PATTERN);
+    expect(sincePattern).toBe(DEPLOYED_SINCE_PATTERN);
+  });
+
+  it("marks civic.category as coming from a vocabulary rather than an enum", () => {
+    // Read by a program that has no way to guess which field is the one whose
+    // values live in registry/categories.yml.
+    expect(metaProps["civic.category"]?.["x-vocabulary"]).toBe("categories");
   });
 });
 

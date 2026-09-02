@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://civic-skills.example/schema/skill.schema.json",
-  "title": "Civic Skills Registry \u2014 SKILL.md frontmatter",
-  "description": "The six fields of the Agent Skills specification, plus required civic.* metadata. Fields outside this set are quarantined into metadata by scripts/validate.py rather than rejected, so that skills using vendor extensions still validate.",
+  "title": "Civic Skills Registry — SKILL.md frontmatter",
+  "description": "The six fields of the Agent Skills specification, plus required civic.* metadata. Fields outside this set are quarantined into metadata by validator/src/rules.ts rather than rejected, so that skills using vendor extensions still validate.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -28,7 +28,7 @@
       "type": "string",
       "minLength": 2,
       "maxLength": 64,
-      "description": "Optional in the Agent Skills spec; required here. SPDX identifier by convention \u2014 the spec does not constrain this field, so it is machine-present but not machine-verifiable. License applicability is a human review step."
+      "description": "Optional in the Agent Skills spec; required here. SPDX identifier by convention — the spec does not constrain this field, so it is machine-present but not machine-verifiable. License applicability is a human review step."
     },
     "compatibility": {
       "type": "string",
@@ -36,7 +36,7 @@
       "description": "Network, credential, and platform requirements, stated plainly."
     },
     "allowed-tools": {
-      "description": "Least privilege. This grant applies without a permission prompt and is not gated by workspace trust. Marked EXPERIMENTAL in the Agent Skills spec \u2014 re-verify semantics before relying on it. Wildcard Bash grants are rejected by scripts/scan.py at layer L2.",
+      "description": "Least privilege. This grant applies without a permission prompt and is not gated by workspace trust. Marked EXPERIMENTAL in the Agent Skills spec — re-verify semantics before relying on it. Wildcard Bash grants are rejected by scripts/scan.py at layer L2.",
       "oneOf": [
         {
           "type": "string",
@@ -65,6 +65,95 @@
         "civic.affiliation",
         "civic.deployment"
       ],
+      "allOf": [
+        {
+          "$comment": "Saying a team or an organization uses this is a claim about them, and an unnamed organization is a claim nobody can check. Stated as a conditional, not only in a description, because a program reads this file to find out what a submission needs.",
+          "if": {
+            "properties": {
+              "civic.deployment": {
+                "enum": [
+                  "team",
+                  "organization"
+                ]
+              }
+            },
+            "required": [
+              "civic.deployment"
+            ]
+          },
+          "then": {
+            "required": [
+              "civic.deployed-at",
+              "civic.deployed-in"
+            ]
+          }
+        },
+        {
+          "$comment": "civic.deployment: none says the skill has never been used, so it cannot also name where it was used.",
+          "if": {
+            "properties": {
+              "civic.deployment": {
+                "const": "none"
+              }
+            },
+            "required": [
+              "civic.deployment"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "civic.deployed-at"
+                  ]
+                },
+                {
+                  "required": [
+                    "civic.deployed-in"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "$comment": "A generalized skill has had its jurisdiction specifics lifted out, so it cannot also be shaped for one named jurisdiction. 'generic' means no assumptions and 'intl' says nothing about which, so both are compatible.",
+          "if": {
+            "properties": {
+              "civic.localization": {
+                "const": "generalized"
+              }
+            },
+            "required": [
+              "civic.localization"
+            ]
+          },
+          "then": {
+            "properties": {
+              "civic.jurisdiction": {
+                "enum": [
+                  "generic",
+                  "intl"
+                ]
+              }
+            }
+          }
+        },
+        {
+          "$comment": "A commit on its own names a point in a history nobody can find.",
+          "if": {
+            "required": [
+              "civic.source-commit"
+            ]
+          },
+          "then": {
+            "required": [
+              "civic.source-repo"
+            ]
+          }
+        }
+      ],
       "additionalProperties": {
         "type": "string",
         "maxLength": 500
@@ -72,8 +161,9 @@
       "properties": {
         "civic.category": {
           "type": "string",
-          "$comment": "The permitted values live in registry/categories.yml and are enforced at runtime by scripts/validate.py, so the vocabulary has exactly one source of truth.",
-          "maxLength": 64
+          "$comment": "The permitted values live in registry/categories.yml and are enforced at runtime by validator/src/rules.ts, so the vocabulary has exactly one source of truth. x-vocabulary names the published artifact a program should read them from.",
+          "maxLength": 64,
+          "x-vocabulary": "categories"
         },
         "civic.jurisdiction": {
           "type": "string",
@@ -107,12 +197,12 @@
         "civic.use-when": {
           "type": "string",
           "maxLength": 500,
-          "description": "Optional. The concrete situations where this skill earns its place. Plain text, never markdown \u2014 the site renders it on the landing page, which publishes no submitter-authored markup."
+          "description": "Optional. The concrete situations where this skill earns its place. Plain text, never markdown — the site renders it on the landing page, which publishes no submitter-authored markup."
         },
         "civic.avoid-when": {
           "type": "string",
           "maxLength": 500,
-          "description": "Optional. Where the skill falls down and what it should not be pointed at. The higher-value half of the pair \u2014 nobody but the author can supply it \u2014 so the submission form pushes for it even though it stays optional. Plain text, never markdown."
+          "description": "Optional. Where the skill falls down and what it should not be pointed at. The higher-value half of the pair — nobody but the author can supply it — so the submission form pushes for it even though it stays optional. Plain text, never markdown."
         },
         "civic.maintainer": {
           "type": "string",
@@ -151,17 +241,19 @@
           "type": "string",
           "minLength": 2,
           "maxLength": 200,
-          "description": "The organization where it was used. Required when civic.deployment is 'team' or 'organization' \u2014 those are claims about an organization, and an unnamed one cannot be checked. Not required for 'personal', which asserts nothing about an organization; forbidden for 'none'."
+          "description": "The organization where it was used. Required when civic.deployment is 'team' or 'organization' — those are claims about an organization, and an unnamed one cannot be checked. Not required for 'personal', which asserts nothing about an organization; forbidden for 'none'."
         },
         "civic.deployed-in": {
           "type": "string",
           "maxLength": 120,
-          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Required alongside civic.deployed-at, optional for 'personal', forbidden for 'none'."
+          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Required alongside civic.deployed-at, optional for 'personal', forbidden for 'none'.",
+          "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$"
         },
         "civic.deployed-since": {
           "type": "string",
           "maxLength": 7,
-          "description": "YYYY or YYYY-MM. Optional. Duration of real use is the part of a deployment claim that carries the most weight."
+          "description": "YYYY or YYYY-MM. Optional. Duration of real use is the part of a deployment claim that carries the most weight.",
+          "pattern": "^\\d{4}(-(0[1-9]|1[0-2]))?$"
         },
         "civic.localization": {
           "type": "string",
@@ -169,13 +261,13 @@
             "generalized",
             "localized"
           ],
-          "description": "Where the skill sits on the jurisdiction axis. 'localized' carries one jurisdiction's specifics; 'generalized' has had them lifted out into a context an adopter fills in. Optional \u2014 omit it when the skill has no jurisdiction-specific content either way. See docs/LOCALIZATION.md."
+          "description": "Where the skill sits on the jurisdiction axis. 'localized' carries one jurisdiction's specifics; 'generalized' has had them lifted out into a context an adopter fills in. Optional — omit it when the skill has no jurisdiction-specific content either way. See docs/LOCALIZATION.md."
         },
         "civic.source-repo": {
           "type": "string",
           "pattern": "^[A-Za-z0-9][\\w.-]*/[\\w.-]+$",
           "maxLength": 140,
-          "description": "Where an imported copy came from, as owner/repository. Optional; a skill written here has no upstream. The registry always holds the content \u2014 this records the origin so a reader can look, and nothing in the build resolves it. See docs/ARCHITECTURE.md."
+          "description": "Where an imported copy came from, as owner/repository. Optional; a skill written here has no upstream. The registry always holds the content — this records the origin so a reader can look, and nothing in the build resolves it. See docs/ARCHITECTURE.md."
         },
         "civic.source-commit": {
           "type": "string",
