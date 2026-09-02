@@ -12,10 +12,10 @@ scripts a schema and a vocabulary they have never seen and check that the answer
 changes.
 
 **The namespace is the authenticated user's, and nothing else.** The registry's
-one ownership control is that `civic.category`… no: that the namespace matches
-the pull request author. A skill that could submit under a name its user does
-not own would hand anybody a way through that check, so `submit.py` takes the
-login from `gh api user` and offers no way to say otherwise.
+one ownership control is that a skill's namespace matches the pull request
+author. A skill that could submit under a name its user does not own would hand
+anybody a way past that check, so `submit.py` takes the login from `gh api user`
+and offers no way to say otherwise.
 
 These modules live under the skill's own scripts/ directory, not the top-level
 scripts/ that pytest.ini puts on the path, so they are imported by path.
@@ -324,7 +324,9 @@ def test_the_scripts_carry_no_copy_of_the_vocabulary_or_the_rules(schema, catego
 
 def test_the_contract_names_every_required_field(schema, categories):
     fields = {f["key"] for f in scaffold.contract(schema, categories) if f["required"]}
-    expected = set(schema["required"]) | set(schema["properties"]["metadata"]["required"])
+    # `metadata` is the container the civic fields sit in, not a question.
+    expected = (set(schema["required"]) - {"metadata"}) | set(
+        schema["properties"]["metadata"]["required"])
     assert expected <= fields
 
 
@@ -387,3 +389,104 @@ def test_a_long_answer_is_not_folded_into_something_else(build):
     text = (skill / "SKILL.md").read_text(encoding="utf-8")
     front = yaml.safe_load(text.split("---")[1])
     assert front["metadata"]["civic.use-when"] == long.strip()
+
+
+# --------------------------------------------------------------------------- #
+# submit.py — the pull request.
+#
+# The registry's ownership control is that a skill's namespace matches the pull
+# request author (rules.ts). Everything below exists to make that check
+# unbypassable from here: the login comes from the authenticated session, and
+# there is no way to say otherwise.
+
+
+@pytest.fixture
+def fake_gh(tmp_path, monkeypatch):
+    """A `gh` on PATH that reports a login and records what it was asked."""
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    log = tmp_path / "gh.log"
+    (bin_dir / "gh").write_text(textwrap.dedent(f"""\
+        #!/bin/sh
+        printf '%s\\n' "$*" >> {log}
+        case "$1 $2" in
+          "api user") echo octocat ;;
+          "auth status") exit 0 ;;
+          *) echo "https://github.com/example/pull/1" ;;
+        esac
+        """), encoding="utf-8")
+    (bin_dir / "gh").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{bin_dir}{os.pathsep}{os.environ['PATH']}")
+    return log
+
+
+def test_the_namespace_is_the_authenticated_users_login(fake_gh):
+    assert submit.author_login() == "octocat"
+    assert "api user" in fake_gh.read_text(encoding="utf-8")
+
+
+def test_there_is_no_way_to_submit_under_another_name():
+    """A flag for this would be a way straight past the ownership check."""
+    parser = submit.build_parser()
+    for forbidden in ["--namespace", "--author", "--login", "--as", "--user"]:
+        with pytest.raises(SystemExit):
+            parser.parse_args([forbidden, "somebody-else", "--dir", "x"])
+
+
+def test_the_skill_lands_under_the_authenticated_users_namespace():
+    steps = submit.plan("octocat", "permit-status-explainer", "add-permit-status-explainer")
+    assert steps.destination == Path("skills/octocat/permit-status-explainer")
+
+
+def test_the_branch_is_cut_from_the_registrys_main_not_from_the_fork():
+    """A fork that has drifted behind would otherwise put unrelated commits in
+    the pull request, and a stale one would put the skill on top of old code."""
+    steps = submit.plan("octocat", "permit-status-explainer", "add-permit-status-explainer")
+    clone = next(c for c in steps.commands if c[:2] == ["git", "clone"])
+    assert submit.MARKETPLACE_REPO in " ".join(clone)
+    assert "octocat/civic-skill-exchange" not in " ".join(clone)
+
+
+def test_the_branch_is_pushed_to_the_authors_own_fork():
+    steps = submit.plan("octocat", "permit-status-explainer", "add-permit-status-explainer")
+    push = next(c for c in steps.commands if c[:2] == ["git", "push"])
+    assert "octocat/civic-skill-exchange" in " ".join(push)
+
+
+def test_the_pull_request_opens_against_the_registry_from_that_branch():
+    steps = submit.plan("octocat", "permit-status-explainer", "add-permit-status-explainer")
+    create = next(c for c in steps.commands if c[:3] == ["gh", "pr", "create"])
+    assert "--repo" in create and submit.MARKETPLACE_REPO in create
+    assert "octocat:add-permit-status-explainer" in create
+
+
+def test_a_skill_whose_name_disagrees_with_its_directory_is_refused(tmp_path):
+    """The validator rejects it, and it is a plain mistake to fix before a pull
+    request rather than after one."""
+    skill = tmp_path / "permits"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text('---\nname: "something-else"\n---\n\nBody.\n',
+                                    encoding="utf-8")
+    with pytest.raises(submit.Refused) as refused:
+        submit.read_name(skill)
+    assert "something-else" in str(refused.value)
+
+
+def test_a_directory_with_no_skill_md_is_refused(tmp_path):
+    empty = tmp_path / "permits"
+    empty.mkdir()
+    with pytest.raises(submit.Refused):
+        submit.read_name(empty)
+
+
+def test_the_dry_run_prints_the_commands_and_touches_nothing(tmp_path, fake_gh, capsys):
+    skill = tmp_path / "permit-status-explainer"
+    skill.mkdir()
+    (skill / "SKILL.md").write_text('---\nname: "permit-status-explainer"\n---\n\nBody.\n',
+                                    encoding="utf-8")
+    assert submit.main(["--dir", str(skill), "--dry-run"]) == 0
+    printed = capsys.readouterr().out
+    assert "git clone" in printed and "gh pr create" in printed
+    assert "skills/octocat/permit-status-explainer" in printed
+    # Nothing but `gh api user` was run.
+    assert fake_gh.read_text(encoding="utf-8").strip() == "api user --jq .login"

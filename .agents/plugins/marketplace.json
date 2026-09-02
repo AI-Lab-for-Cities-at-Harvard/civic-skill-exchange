@@ -50,6 +50,18 @@
       "category": "Open Data & Publishing"
     },
     {
+      "name": "civic-skills-submit-a-skill",
+      "source": {
+        "source": "local",
+        "path": "./skills/civic-skills/submit-a-skill"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Open Data & Publishing"
+    },
+    {
       "name": "sgarcese-hbs-civic-analytics-workflow",
       "source": {
         "source": "local",
