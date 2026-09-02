@@ -47,16 +47,29 @@ jobs:
       - name: Regenerate
         run: python scripts/build_marketplace.py
 
+      # Stage every path the generator owns, not one of them. This step named
+      # .claude-plugin/marketplace.json explicitly, and #98 taught the generator
+      # to write .agents/plugins/marketplace.json and a .codex-plugin/plugin.json
+      # per skill — so a merged skill updated the Claude marketplace and silently
+      # left the Codex side behind. Anything the script writes is staged by
+      # asking git what changed rather than by listing paths here again.
       - name: Commit if it changed
         run: |
-          if git diff --quiet -- .claude-plugin/marketplace.json; then
-            echo "Manifest already current — nothing to commit."
+          git add -A .claude-plugin .agents skills
+          if git diff --cached --quiet; then
+            echo "Both manifests already current — nothing to commit."
             exit 0
           fi
+          echo "Staged:"; git diff --cached --name-only
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .claude-plugin/marketplace.json
           # No closing keyword and no issue reference: this commit lands directly
           # on the default branch, where GitHub parses them.
-          git commit -m "Regenerate the marketplace manifest"
+          git commit -m "Regenerate the marketplace manifests"
           git push
+
+      # The job that fixes drift is also the job that can fail to. Today's bug
+      # was this workflow reporting success while leaving half the manifests
+      # stale, so it now asserts its own outcome rather than assuming it.
+      - name: Verify nothing is still stale
+        run: python scripts/build_marketplace.py --check

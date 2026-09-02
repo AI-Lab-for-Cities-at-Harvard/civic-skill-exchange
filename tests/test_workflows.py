@@ -99,3 +99,28 @@ def test_report_still_fences_everything_it_interpolates() -> None:
     know which strings are trusted."""
     report = (ROOT / ".github" / "workflows" / "report.yml").read_text(encoding="utf-8")
     assert "failedSteps.map(safe)" in report
+
+
+def test_the_manifest_job_stages_everything_the_generator_writes() -> None:
+    """It named .claude-plugin/marketplace.json explicitly, and #98 gave the
+    generator two more kinds of file to write — so a merged skill updated the
+    Claude marketplace and left the Codex side stale on main, silently."""
+    wf = (ROOT / ".github" / "workflows" / "manifest.yml").read_text(encoding="utf-8")
+    assert "git add -A .claude-plugin .agents skills" in wf, (
+        "the commit step must stage every path build_marketplace.py owns")
+    assert "git diff --cached --quiet" in wf, (
+        "the has-it-changed guard must ask git, not name one file")
+
+
+def test_something_checks_main_itself() -> None:
+    """manifest.yml repairs drift on merge, and the bug it was written to fix
+    was that same job succeeding while leaving half the manifests stale. So it
+    asserts its own outcome, and the weekly re-scan checks main independently —
+    a failure there means the automation did not work, not that somebody
+    forgot."""
+    manifest = (ROOT / ".github" / "workflows" / "manifest.yml").read_text(encoding="utf-8")
+    rescan = (ROOT / ".github" / "workflows" / "rescan.yml").read_text(encoding="utf-8")
+    assert manifest.count("build_marketplace.py --check") == 1, (
+        "the repair job must verify its own outcome")
+    assert "build_marketplace.py --check" in rescan, (
+        "something has to check main when the repair job never ran")

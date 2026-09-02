@@ -268,6 +268,36 @@ unique across a marketplace and two submitters may publish the same skill name;
 qualifying only on collision would change the first submitter's install command
 the day a stranger arrives.
 
+### Generated files inside skill directories
+
+`.codex-plugin/plugin.json` lives inside every listed skill, and that has
+consequences the rest of the repository has to know about. Three rules, each
+learned by breaking something:
+
+**A generated file is registry-owned, not author-owned.** Regenerating the
+manifests touches every namespace at once, so `discoverChanged` in the validator
+ignores generated paths when deciding which skills a pull request changed.
+Without that, L1's ownership check fires on maintenance work — a maintainer
+regenerating manifests fails because somebody else's namespace is in the diff.
+This does not weaken the rule: it exists to stop somebody writing *a skill* into
+a namespace they do not own, and these files are regenerated on every merge and
+compared against the generator by `--check`.
+
+**Generated is not the same as committed.** `.gitignore` ignored `.agents/` as
+contributor tooling long before a published manifest was written under it, so
+the Codex marketplace was generated, passed every check, and silently never
+entered git — leaving `codex plugin marketplace add` finding nothing. A test
+walks everything the generator writes and asserts git is not ignoring it.
+
+**The outputs are a set, not a list.** Anything that stages, checks or exempts
+them asks `build_marketplace.py` or git rather than restating the paths. The
+workflow that commits them named one path and left two behind for a day.
+
+The general form, worth holding to for anything added later: **a published
+artifact is verified by asking what a clone would have**, not by looking at the
+working tree. Every check that missed the above passed because the file was
+sitting on disk in front of it.
+
 ## The index build
 
 `build_index.py` walks `skills/`, joins each skill against `registry/reviewed.yml`, attaches the latest scan findings, and writes:

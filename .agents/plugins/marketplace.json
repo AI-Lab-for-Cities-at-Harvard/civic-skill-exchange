@@ -1,0 +1,53 @@
+{
+  "name": "civic-skill-exchange",
+  "plugins": [
+    {
+      "name": "civic-skills-generalize-skill",
+      "source": {
+        "source": "local",
+        "path": "./skills/civic-skills/generalize-skill"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Open Data & Publishing"
+    },
+    {
+      "name": "civic-skills-localize-skill",
+      "source": {
+        "source": "local",
+        "path": "./skills/civic-skills/localize-skill"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Open Data & Publishing"
+    },
+    {
+      "name": "civic-skills-plain-language-notice-rewriter",
+      "source": {
+        "source": "local",
+        "path": "./skills/civic-skills/plain-language-notice-rewriter"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Plain Language & Accessibility"
+    },
+    {
+      "name": "sgarcese-hbs-civic-analytics-workflow",
+      "source": {
+        "source": "local",
+        "path": "./skills/sgarcese-hbs/civic-analytics-workflow"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Open Data & Publishing"
+    }
+  ]
+}
