@@ -723,7 +723,7 @@ describe("Submit — the fork is asked for", () => {
       "github.com/sgarcese-hbs/my-registry-copy");
     expect(screen.getByTestId("step-upload")).toHaveAttribute(
       "href",
-      "https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx/permit-status-explainer",
+      "https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx",
     );
   });
 
@@ -741,7 +741,7 @@ describe("Submit — the fork is asked for", () => {
     expect(screen.queryByTestId("step-fork")).not.toBeInTheDocument();
     expect(screen.getByTestId("step-upload")).toHaveAttribute(
       "href",
-      `https://github.com/${REPO}/upload/main/skills/civic-skills/permit-status-explainer`,
+      `https://github.com/${REPO}/upload/main/skills/civic-skills`,
     );
   });
 });

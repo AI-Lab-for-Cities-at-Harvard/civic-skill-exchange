@@ -158,6 +158,19 @@ export function skillPath(draft: Draft): string {
   return `skills/${trim(draft.author)}/${trim(draft.name)}`;
 }
 
+/** The directory the skill goes *into*, which is where an upload must open.
+ *
+ *  GitHub's upload page drops a dragged folder into the directory you are
+ *  looking at, keeping the folder's own name. The folder this page hands back is
+ *  named for the skill — so opening the upload page at the skill directory
+ *  produced `skills/{ns}/{name}/{name}/SKILL.md`. A real submission landed that
+ *  way. The parent is the correct target: drop `{name}` into `skills/{ns}` and
+ *  the result is `skills/{ns}/{name}`.
+ */
+export function namespacePath(draft: Draft): string {
+  return `skills/${trim(draft.author)}`;
+}
+
 /** GitHub's new-file editor, prefilled.
  *
  *  Chosen over the issue-form path because it produces a real pull request, and
@@ -266,7 +279,7 @@ export function parseForkRef(input: string): string | null {
  */
 export function forkUploadUrl(fork: string, draft: Draft): string | null {
   const ref = parseForkRef(fork);
-  return ref ? `https://github.com/${ref}/upload/main/${skillPath(draft)}` : null;
+  return ref ? `https://github.com/${ref}/upload/main/${namespacePath(draft)}` : null;
 }
 
 /** The upload page in the registry itself, for somebody who can write to it.
@@ -280,7 +293,7 @@ export function forkUploadUrl(fork: string, draft: Draft): string | null {
  *  commit time, which is the branch this path needs and never main.
  */
 export function registryUploadUrl(repo: string, draft: Draft): string {
-  return `https://github.com/${repo}/upload/main/${skillPath(draft)}`;
+  return `https://github.com/${repo}/upload/main/${namespacePath(draft)}`;
 }
 
 /** The pull request, opened from the fork back to the registry.

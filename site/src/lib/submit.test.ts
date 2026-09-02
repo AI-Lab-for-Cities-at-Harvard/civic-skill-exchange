@@ -245,17 +245,17 @@ describe("slugify — meeting submitters where their skills are named", () => {
 describe("the fork is asked for, not guessed", () => {
   it("builds the upload link from the fork the submitter pasted", () => {
     expect(forkUploadUrl("https://github.com/sgarcese-hbs/my-registry-copy", D))
-      .toBe("https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx/permit-status");
+      .toBe("https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx");
   });
 
   it("accepts what people actually paste — a bare slug", () => {
     expect(forkUploadUrl("sgarcese-hbs/my-copy", D))
-      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx/permit-status");
+      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx");
   });
 
   it("survives a trailing slash and a .git suffix", () => {
     expect(forkUploadUrl("https://github.com/a/b.git/", D))
-      .toBe("https://github.com/a/b/upload/main/skills/cityofx/permit-status");
+      .toBe("https://github.com/a/b/upload/main/skills/cityofx");
   });
 
   it("returns null rather than a link when the fork is not known yet", () => {
@@ -280,7 +280,7 @@ describe("the fork is asked for, not guessed", () => {
 describe("the write-access path", () => {
   it("uploads into the registry itself for a reserved namespace", () => {
     expect(registryUploadUrl(REPO, { ...D, author: "civic-skills" }))
-      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills/permit-status`);
+      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills`);
   });
 });
 
@@ -298,5 +298,29 @@ describe("parseForkRef", () => {
     for (const input of ["", "   ", "a", "not a repo", "https://gitlab.com/a/b"]) {
       expect(parseForkRef(input)).toBeNull();
     }
+  });
+});
+
+/** The upload page must open the *parent* of the skill directory.
+ *
+ *  GitHub keeps the name of a dragged folder, and the folder this page hands
+ *  back is named for the skill — so opening the upload page at the skill
+ *  directory produced skills/{ns}/{name}/{name}/SKILL.md. A real submission
+ *  landed that way before this was pinned.
+ */
+describe("the upload lands the folder, not a folder inside it", () => {
+  it("opens the namespace directory, so the dragged folder becomes the skill", () => {
+    expect(forkUploadUrl("sgarcese-hbs/my-copy", D))
+      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx");
+  });
+
+  it("does the same for a submitter uploading into the registry itself", () => {
+    expect(registryUploadUrl(REPO, { ...D, author: "civic-skills" }))
+      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills`);
+  });
+
+  it("never names the skill twice", () => {
+    const url = forkUploadUrl("a/b", D) ?? "";
+    expect(url.match(/permit-status/g)).toBeNull();
   });
 });
