@@ -48,6 +48,11 @@ Skills are plain directories. Take one however you like:
 skill folder. Upload it wherever your agent tool takes skills. No git, no Node,
 no account.
 
+**In Claude itself.** claude.ai and Cowork take a skill as a `.zip` uploaded
+under Settings &rarr; Features, which is what the download link on every skill
+page gives you. Needs a paid plan with code execution; skills are per-person
+rather than org-wide, and do not sync to other surfaces.
+
 **In Claude Code, as a plugin marketplace.** The registry is one, so a skill is
 one command:
 

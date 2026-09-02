@@ -9,6 +9,24 @@ Neither needs you to be a developer. Part 1 needs no account at all.
 
 ## Part 1 — Installing a skill
 
+### In Claude itself — claude.ai and Cowork
+
+This is the one most people will use, and it does not involve a terminal.
+
+**Settings → Features → upload the skill as a `.zip`.** The download link on any
+skill page gives you exactly that file, rooted at a single directory, which is
+the shape the upload expects.
+
+Three things worth knowing before you rely on it:
+
+- It needs a **Pro, Max, Team or Enterprise plan with code execution enabled**.
+- **Skills are per-person, not per-organization.** claude.ai has no central
+  management for custom skills, so everybody who wants one uploads it
+  themselves. A city cannot push a skill to its whole team this way.
+- **Nothing syncs between surfaces.** A skill uploaded to claude.ai is not
+  available in Claude Code or through the API, and the reverse. Upload it
+  wherever you want to use it.
+
 ### In Claude Code
 
 The registry is a plugin marketplace, so it is two commands:
