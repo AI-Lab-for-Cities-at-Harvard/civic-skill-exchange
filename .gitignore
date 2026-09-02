@@ -6,6 +6,16 @@ CLAUDE.md
 .agents/
 .github/copilot-instructions.md
 
+# ...except the Codex marketplace manifest, which is a published artifact of
+# this registry rather than somebody's local tooling. `.agents/` was ignored
+# long before #98 put a manifest under it, so the file was generated, checked,
+# and silently never committed — leaving `codex plugin marketplace add` finding
+# nothing, which is the bug #98 existed to fix. Un-ignore the directory first;
+# git will not look inside an ignored one.
+!.agents/
+!.agents/plugins/
+!.agents/plugins/marketplace.json
+
 # Internal working notes
 /notes/
 /private/
