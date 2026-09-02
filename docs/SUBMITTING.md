@@ -37,10 +37,16 @@ name.
 
 Skills here follow the open [Agent Skills](https://agentskills.io) standard — the
 same `SKILL.md` format Claude, ChatGPT, Codex, Gemini CLI, Copilot, Cursor and
-others read. **There is no marketplace to add.** Those tools install a skill at a
-time.
+others read. So a skill from this registry works in all of them. **What differs
+is how you get it there.**
 
-The path that works everywhere: **use the download link on the skill's page.**
+**Codex has its own plugin marketplace**, added with
+`codex plugin marketplace add`. It is a different manifest from Claude's, in a
+different place, and this registry does not publish one yet — see
+[#98](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/98).
+Until it does, the per-skill path below is the way in.
+
+**The path that works everywhere today: the download link on the skill's page.**
 It is a `.zip` of the skill folder rooted at a single directory, which is exactly
 the shape an upload expects.
 
@@ -48,7 +54,8 @@ the shape an upload expects.
   may mark it for review before it will install.
 - **Codex** — `$skill-installer`, or drop the unzipped folder into
   `.agents/skills/` in your project, `$REPO_ROOT/.agents/skills/`, or
-  `~/.agents/skills/`.
+  `~/.agents/skills/`. That last path is shared with Claude Code and Copilot CLI,
+  so one copy serves all three.
 - **Anything else** — check where your tool looks. `.claude/skills/` and
   `.agents/skills/` are the two common answers.
 
