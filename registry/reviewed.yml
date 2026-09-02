@@ -27,4 +27,29 @@
 #     What did you check closely? What would you look at first if it went wrong?
 # ---------------------------------------------------------------------------
 
-attestations: []
+attestations:
+  - skill: "civic-skills/plain-language-notice-rewriter"
+    sha: "17028e1586db11774e5c4a95e890ffa09945fa82"
+    reviewers: ["AI Lab for Cities at Harvard"]
+    reviewed: 2026-09-02
+    expires: 2027-09-02
+    notes: >
+      Lab-authored, in the reserved civic-skills namespace — item 7 was judged
+      on the Lab's own work, which is where that costs most.
+
+      Read-only in practice: no network destination anywhere in the skill, no
+      access outside the working directory, and one executable —
+      scripts/reading_level.py, a dependency-free reading-level calculation.
+      allowed-tools is Read, Write, Grep, all of which it uses. License CC0-1.0.
+
+      Look here first if it goes wrong: the skill preserves the legally
+      required elements the operator lists, and cannot tell them what those
+      elements are. A notice that reads well and has quietly lost a required
+      element is the failure this cannot catch on its own. It is also
+      calibrated for English with a US bias — which does not contradict
+      civic.jurisdiction: generic, since a language bias is not a
+      jurisdiction, but a non-English deployment is untested.
+
+      The pinned commit is a marketplace-manifest regeneration (#99), so the
+      reviewed content is older than the SHA. Nothing in the skill itself has
+      changed since c43c4c1.
