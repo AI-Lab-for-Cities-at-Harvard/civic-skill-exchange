@@ -3,7 +3,8 @@ name: civic-analytics-workflow
 description: "Orchestrator for local government policy analysis and civic innovation. ALWAYS use for any request involving open government data, city, county or town services, neighborhood or ward equity, public policy, government performance, 311 and service request analysis, housing, safety or transportation — even if the user hasn't asked for a 'full analysis'. Routes between five sub-skills: problem framing (Bloomberg-inspired), policy analysis (J-PAL-inspired), communication (GovLab/InnovateUS-inspired), peer benchmarking, and performance management (Results for America / PerformanceStat). Triggers include: 'full analysis', 'policy brief', 'data-driven recommendation', 'service improvement project', 'investigate [issue]', 'compare us to peer cities', 'peer counties', 'similar towns', 'what does the data show', 'help me write a memo about', or any request combining problem definition, data analysis and communication for government or civic purposes."
 license: MIT
 metadata:
-  civic.category: open-data-publishing
+  civic.category: policy
+  civic.category-secondary: data-analysis
   civic.jurisdiction: generic
   civic.localization: generalized
   civic.data-sensitivity: none

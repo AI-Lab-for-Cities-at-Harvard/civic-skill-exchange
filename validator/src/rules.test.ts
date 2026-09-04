@@ -8,7 +8,7 @@ import {
 } from "./rules";
 import type { Finding, Frontmatter, RuleContext } from "./types";
 
-const CATEGORIES = ["budget-finance", "benefits-eligibility", "plain-language-accessibility"];
+const CATEGORIES = ["finance", "benefits-eligibility", "communications"];
 
 function ctx(over: Partial<RuleContext> = {}): RuleContext {
   return { categories: CATEGORIES, ...over };
@@ -16,7 +16,7 @@ function ctx(over: Partial<RuleContext> = {}): RuleContext {
 
 function meta(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    "civic.category": "budget-finance",
+    "civic.category": "finance",
     "civic.jurisdiction": "generic",
     "civic.data-sensitivity": "none",
     "civic.human-review": "none",

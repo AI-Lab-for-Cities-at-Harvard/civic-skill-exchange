@@ -26,7 +26,7 @@ VALID_FRONTMATTER = {
     "license": "MIT",
     "allowed-tools": "Read, Grep",
     "metadata": {
-        "civic.category": "budget-finance",
+        "civic.category": "finance",
         "civic.jurisdiction": "generic",
         "civic.data-sensitivity": "none",
         "civic.human-review": "none",

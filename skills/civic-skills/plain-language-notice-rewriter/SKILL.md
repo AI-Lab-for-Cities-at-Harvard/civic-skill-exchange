@@ -11,7 +11,8 @@ compatibility: >
   files only. Reading-level scoring uses a bundled script with no dependencies.
 allowed-tools: Read, Write, Grep
 metadata:
-  civic.category: plain-language-accessibility
+  civic.category: communications
+  civic.category-secondary: constituent-services
   civic.jurisdiction: generic
   civic.data-sensitivity: none
   civic.human-review: advisory-only

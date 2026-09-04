@@ -11,7 +11,7 @@
         "installation": "AVAILABLE",
         "authentication": "ON_USE"
       },
-      "category": "Open Data & Publishing"
+      "category": "AI Tools"
     },
     {
       "name": "civic-skills-localize-skill",
@@ -23,7 +23,7 @@
         "installation": "AVAILABLE",
         "authentication": "ON_USE"
       },
-      "category": "Open Data & Publishing"
+      "category": "AI Tools"
     },
     {
       "name": "civic-skills-plain-language-notice-rewriter",
@@ -35,7 +35,7 @@
         "installation": "AVAILABLE",
         "authentication": "ON_USE"
       },
-      "category": "Plain Language & Accessibility"
+      "category": "Communications"
     },
     {
       "name": "sgarcese-hbs-civic-analytics-workflow",
@@ -47,7 +47,7 @@
         "installation": "AVAILABLE",
         "authentication": "ON_USE"
       },
-      "category": "Open Data & Publishing"
+      "category": "Policy"
     }
   ]
 }

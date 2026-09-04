@@ -7,7 +7,7 @@ function skill(over: Partial<Skill> = {}): Skill {
     id: "ns/example", name: "example", namespace: "ns",
     description: "An example skill for tests.",
     license: "MIT", compatibility: null, allowed_tools: ["Read"],
-    category: "budget-finance", jurisdiction: "generic", localization: null,
+    category: "finance", jurisdiction: "generic", localization: null,
     data_sensitivity: "none", human_review: "none",
     use_when: null, avoid_when: null, maintainer: "Test", source: null,
     provenance: {
@@ -50,7 +50,7 @@ describe("matchesQuery", () => {
 describe("applyFilters", () => {
   const skills = [
     skill({ id: "a/1", category: "benefits-eligibility", tier: "reviewed", localization: "generalized" }),
-    skill({ id: "b/2", category: "budget-finance", tier: "community", localization: "localized", jurisdiction: "us-state" }),
+    skill({ id: "b/2", category: "finance", tier: "community", localization: "localized", jurisdiction: "us-state" }),
     skill({ id: "c/3", category: "benefits-eligibility", tier: "community", data_sensitivity: "pii" }),
   ];
 
@@ -97,13 +97,13 @@ describe("facetCounts", () => {
   const skills = [
     skill({ id: "a/1", category: "benefits-eligibility" }),
     skill({ id: "b/2", category: "benefits-eligibility" }),
-    skill({ id: "c/3", category: "budget-finance" }),
+    skill({ id: "c/3", category: "finance" }),
   ];
 
   it("counts values for a field", () => {
     expect(facetCounts(skills, "category")).toEqual({
       "benefits-eligibility": 2,
-      "budget-finance": 1,
+      "finance": 1,
     });
   });
 

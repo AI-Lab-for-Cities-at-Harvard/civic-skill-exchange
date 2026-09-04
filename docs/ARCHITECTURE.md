@@ -193,8 +193,8 @@ categories:
     label: Permitting & Licensing
   - id: procurement-contracting
     label: Procurement & Contracting
-  - id: budget-finance
-    label: Budget & Finance
+  - id: finance
+    label: Finance
   - id: public-records-foia
     label: Public Records & FOIA
   - id: open-data-publishing

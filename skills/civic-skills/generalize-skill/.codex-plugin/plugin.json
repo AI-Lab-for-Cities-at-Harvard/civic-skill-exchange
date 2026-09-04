@@ -9,6 +9,6 @@
   "interface": {
     "displayName": "Generalize Skill",
     "shortDescription": "Separates a skill written for one organization into two things a portable generalized skill, and a context file holding…",
-    "category": "Open Data & Publishing"
+    "category": "AI Tools"
   }
 }
