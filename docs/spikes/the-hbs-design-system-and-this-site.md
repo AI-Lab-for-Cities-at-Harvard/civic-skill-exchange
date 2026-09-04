@@ -4,8 +4,12 @@ Analysis for [#101](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-
 Scope as asked: **form elements, badges, and warnings.** No logos, no wordmark,
 no name, and the free typefaces stay.
 
-Ends in numbered decision questions. Two of the three areas have **no upstream
-component at all**, which is the finding that shapes the work.
+**Ruled and built.** The eight questions below are answered in
+[Rulings](#rulings) at the end, and the changes they call for have landed. The
+analysis is kept as the reasoning behind them.
+
+Two of the three areas had **no upstream component at all**, which is the
+finding that shaped the work.
 
 ---
 
@@ -220,3 +224,76 @@ read it as "the grotesque".
 
 De-identification stays a one-line change. Every recommendation above goes
 through a token, and `--brand-accent` remains the only place `#a41034` appears.
+
+---
+
+## Rulings
+
+Owner's answers, recorded here because none of these overturns a decision an ADR
+is holding.
+
+**1. Keep a status palette, and make it solid.** Not one hue at two opacities:
+two contrasting colours, solid fills, from the HBS expanded palette, and legible
+to a reader with colour blindness or low vision. Three things followed.
+
+| | fill | text | ratio | why |
+|---|---|---|---|---|
+| Reviewed | `#026833` Green 1 | white | 6.93 | a hue |
+| Community | `#D5D0CA` Gray 3 | black | 13.7 | **a grey — no colour blindness turns it into the green** |
+| Caution | `#C29D00` Yellow 1 | black | 8.12 | the universal caution pair |
+| Localization | `#3B2883` Blue 1 | white | 11.56 | |
+
+*Community is grey, not amber.* It is not a warning. It means nobody has
+reviewed the skill, which is honest and common, and amber would say something
+about the skill that the registry does not.
+
+*Text is black or white only.* The accessibility guide permits black, crimson or
+white on a swatch and nothing else, marking each pairing 4.5:1 (any size) or
+3:1 (14pt bold / 18pt and larger). Pills are small text, so every pair clears
+4.5. `#AE6429` with white came to 4.51 — one hundredth over the line — and was
+dropped for the yellow at 8.12 rather than shipped on it.
+
+*Lightness carries it too.* The four fills differ in luminance by 0.06, 0.25 and
+0.28, so they separate in greyscale as well as in hue, and each pill carries its
+own word besides. `styles/contrast.test.ts` asserts every part of this.
+
+The fills are theme-independent, because a solid pill's ground is itself. Only
+the rule and border uses vary by theme — `--c-ok-edge`, `--c-warn-edge` — since
+a dark green rule on a dark page is invisible.
+
+**2. The 4px focus ring at 1px offset**, everywhere, replacing the 2px and 3px
+variants. Held to 3:1 against the page *and* a card, in both themes.
+
+**3. `--radius` 2px → 4px.** The house radius.
+
+**4. Underline form fields — against this spike's recommendation.** Chosen for
+consistency, accepting that boxes scan more easily on a form this long.
+Transparent ground, a rule beneath, no left padding, placeholder on
+`--c-text-light`; the select keeps its native arrow. Reverting is one CSS block,
+and the code says so.
+
+**5. Validation is crimson**, through `--c-spot`, never the literal hex. The
+label turns crimson and the control's rule thickens to 2px. Error and brand
+therefore share a colour, as upstream, and `--c-warn` goes back to meaning
+caution rather than error.
+
+**6. Disclaimers are a distinct box, italic at a lighter weight** — the question
+this spike had no recommendation on. Not a coloured alert: the nearest thing
+upstream is a neutral ruled panel, and an amber alert reads as a browser warning
+rather than as the registry being careful. Italic at weight 300 sets them apart
+without hue, so they stay set apart with no colour at all. An error notice keeps
+upright type, being the one notice that is not a caveat.
+
+**7. `--c-highlight`, `--c-accent-dark`, `--c-accent-light`: only when needed.**
+Not added.
+
+**8. `--c-border` stays at `.44`.** Darker than the `.34` upstream because `.34`
+does not clear 3:1 against our grounds, and the contrast gate is a harder
+constraint than fidelity. Now said beside the token.
+
+### Still open
+
+None of the eight. Two things nobody asked about: the wider theme set the
+Storybook shows (`Teal 1`, `Blue 3`, `Orange 3`) against the eight the brand
+guide admits, and the fluid type scale
+`calc(16px + 4 * (100vw - 300px) / 1040)`, which this site does not use.

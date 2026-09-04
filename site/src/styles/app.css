@@ -14,8 +14,8 @@ a { color: var(--c-text-link); text-underline-offset: 2px; }
 a:hover { color: var(--c-spot); }
 
 :where(a, button, input, summary):focus-visible {
-  outline: 3px solid var(--c-outline);
-  outline-offset: 2px;
+  outline: 4px solid var(--c-outline);
+  outline-offset: 1px;
 }
 
 .skip-link {
@@ -294,9 +294,9 @@ a:hover { color: var(--c-spot); }
   background: var(--c-button-bg-subtle); color: var(--c-text-light);
 }
 .badge__note { font-weight: 400; opacity: 0.85; }
-.badge--ok { background: var(--c-ok-bg); color: var(--c-ok); }
-.badge--warn { background: var(--c-warn-bg); color: var(--c-warn); }
-.badge--info { background: var(--c-info-bg); color: var(--c-info); }
+.badge--ok { background: var(--c-ok); color: var(--c-on-ok); }
+.badge--warn { background: var(--c-community); color: var(--c-on-community); }
+.badge--info { background: var(--c-info); color: var(--c-on-info); }
 .badge--plain { border: 1px solid var(--c-border-light); background: transparent; }
 
 /* The one chip that is brand rather than status.
@@ -315,11 +315,24 @@ a:hover { color: var(--c-spot); }
 }
 
 /* ---- notices, footer ---- */
+/* A notice is a distinct box rather than a coloured alert: the nearest thing
+   upstream is Text Callout, a neutral ruled panel, and an amber alert reads as
+   a browser warning rather than as the registry saying something careful.
+   Italic at a lighter weight is what sets it apart instead of hue (#101) —
+   which also means it still reads as set apart with no colour at all. */
 .notice {
-  padding: var(--gap-5); border: 1px dashed var(--c-border);
-  border-radius: var(--radius); color: var(--c-text-light); font-size: var(--t-sm);
+  padding: var(--gap-5); border: 1px solid var(--c-border-light);
+  border-radius: var(--radius); background: var(--c-bg-raised);
+  color: var(--c-text-light); font-size: var(--t-sm);
+  font-style: italic; font-weight: 300;
 }
-.notice--error { border-style: solid; border-color: var(--c-warn); }
+.notice strong, .notice b { font-weight: 500; font-style: normal; }
+/* An error is the one notice that is not a caveat, so it keeps upright type
+   and takes the crimson edge form validation uses. */
+.notice--error {
+  border-color: var(--c-spot); border-left-width: 3px;
+  font-style: normal; font-weight: 400; color: var(--c-text);
+}
 
 .footer {
   border-top: 1px solid var(--c-border-light);
@@ -374,10 +387,10 @@ a:hover { color: var(--c-spot); }
 
 .tiers { display: grid; gap: var(--gap-4); grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
 .tier-card {
-  border: 1px solid var(--c-border-light); border-top: 3px solid var(--c-warn);
+  border: 1px solid var(--c-border-light); border-top: 3px solid var(--c-warn-edge);
   background: var(--c-bg-raised); padding: var(--gap-5); border-radius: var(--radius);
 }
-.tier-card--reviewed { border-top-color: var(--c-ok); }
+.tier-card--reviewed { border-top-color: var(--c-ok-edge); }
 .tier-card p { font-size: var(--t-sm); }
 .tier-card__warn { color: var(--c-text-lighter); }
 
@@ -479,7 +492,7 @@ a:hover { color: var(--c-spot); }
   border-left: 3px solid var(--c-border);
   border-radius: var(--radius);
 }
-.fit__item--avoid { border-left-color: var(--c-warn); }
+.fit__item--avoid { border-left-color: var(--c-warn-edge); }
 .fit dt {
   font-size: var(--t-xs); text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--c-text-lighter);
@@ -497,11 +510,11 @@ a:hover { color: var(--c-spot); }
   border: 1px solid var(--c-border-light);
   font-size: var(--t-sm);
 }
-.tree__item--exec { border-left: 3px solid var(--c-warn); }
+.tree__item--exec { border-left: 3px solid var(--c-warn-edge); }
 .tree__path { font-family: var(--f-mono); font-size: var(--t-xs); flex: 1; word-break: break-all; }
 .tree__tag {
   font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--c-warn); background: var(--c-warn-bg);
+  color: var(--c-on-warn); background: var(--c-warn);
   padding: 0.1rem 0.4rem; border-radius: var(--radius); white-space: nowrap;
 }
 .tree__size {
@@ -529,8 +542,8 @@ a:hover { color: var(--c-spot); }
   font-size: var(--t-sm); line-height: 1.5;
   padding: var(--gap-3); border-radius: var(--radius); margin: 0 0 var(--gap-4);
 }
-.download__warn { background: var(--c-warn-bg); color: var(--c-warn); }
-.download__ok { background: var(--c-ok-bg); color: var(--c-ok); }
+.download__warn { background: var(--c-warn); color: var(--c-on-warn); }
+.download__ok { background: var(--c-ok); color: var(--c-on-ok); }
 
 /* The archive leads the box. It is the only option that needs no tooling, so
    it gets the solid button and the command lines get the quiet treatment. */
@@ -644,20 +657,38 @@ a:hover { color: var(--c-spot); }
 }
 /* The flag is a rule beside the field, not a red fill. A wall of red on a form
    somebody is still filling in reads as failure rather than guidance. */
-.field--flagged { border-left: 2px solid var(--c-warn); padding-left: var(--gap-4); }
+.field--flagged { border-left: 2px solid var(--c-warn-edge); padding-left: var(--gap-4); }
+/* Crimson, via the token, never the literal hex. Upstream a field error turns
+   the label crimson and gives the control a 1px crimson border, which means
+   error and brand share a colour there and now here — accepted deliberately
+   (#101). --c-warn keeps meaning caution rather than error. */
+.field--flagged .field__label { color: var(--c-spot); }
+.field--flagged .input,
+.field--flagged .select,
+.field--flagged .textarea { border-bottom-color: var(--c-spot); border-bottom-width: 2px; }
 .field__finding {
-  margin: var(--gap-2) 0 0; font-size: var(--t-xs); color: var(--c-warn);
+  margin: var(--gap-2) 0 0; font-size: var(--t-xs); color: var(--c-spot);
 }
 
+/* Underline fields, following Primitives/Forms upstream: transparent ground,
+   a single rule beneath, and no left padding so the value sits flush with the
+   label above it. Ruled on #101 against the recommendation in the spike — the
+   boxed alternative is easier to scan on a form this long, so if it reads badly
+   at twenty-odd fields the revert is this block alone. */
 .input, .select, .textarea {
-  width: 100%; padding: 0.5rem 0.65rem;
+  width: 100%; padding: 0.75rem 0.75rem 0.75rem 0;
   font: inherit; font-size: var(--t-sm); color: var(--c-text);
-  background: var(--c-bg-raised);
-  border: 1px solid var(--c-border); border-radius: var(--radius);
+  background: transparent;
+  border: none; border-bottom: 1px solid var(--c-border); border-radius: 0;
+  -webkit-appearance: none; appearance: none;
 }
+.input::placeholder, .textarea::placeholder { color: var(--c-text-light); }
+/* A select still needs its affordance, so it keeps the native arrow. */
+.select { -webkit-appearance: auto; appearance: auto; padding-left: 0; }
+.input:hover, .select:hover, .textarea:hover { border-bottom-color: var(--c-border-dark); }
 .textarea { resize: vertical; }
 .input:focus-visible, .select:focus-visible, .textarea:focus-visible {
-  outline: 2px solid var(--c-outline); outline-offset: 1px;
+  outline: 4px solid var(--c-outline); outline-offset: 1px;
 }
 
 .disclosure { border-top: 1px solid var(--c-border-light); padding-top: var(--gap-4); }
@@ -666,7 +697,7 @@ a:hover { color: var(--c-spot); }
 
 .submit__warn, .submit__blocked {
   padding: var(--gap-4); border-radius: var(--radius);
-  background: var(--c-warn-bg); color: var(--c-warn);
+  background: var(--c-warn); color: var(--c-on-warn);
   font-size: var(--t-sm);
 }
 .submit__ok { color: var(--c-ok); font-size: var(--t-sm); }
@@ -774,7 +805,7 @@ a:hover { color: var(--c-spot); }
   padding: var(--gap-3) var(--gap-4);
   border-left: 3px solid var(--c-info);
   border-radius: 0 var(--radius) var(--radius) 0;
-  background: var(--c-info-bg); color: var(--c-info);
+  background: var(--c-info); color: var(--c-on-info);
   font-size: var(--t-sm);
 }
 .submit__prereq a { color: inherit; }
@@ -822,7 +853,7 @@ a:hover { color: var(--c-spot); }
 .modes__item[aria-current="page"] {
   background: var(--c-bg-inverse); color: var(--c-solid-inverse);
 }
-.modes__item:focus-visible { outline: 2px solid var(--c-outline); outline-offset: 2px; }
+.modes__item:focus-visible { outline: 4px solid var(--c-outline); outline-offset: 1px; }
 
 /* The repo field and its button sit on one line until there is no room. */
 .submit__row { display: flex; flex-wrap: wrap; gap: var(--gap-2); align-items: stretch; }
