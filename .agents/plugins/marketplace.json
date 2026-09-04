@@ -38,10 +38,10 @@
       "category": "Communications"
     },
     {
-      "name": "sgarcese-hbs-civic-analytics-workflow",
+      "name": "sgarcese-civic-analytics-workflow",
       "source": {
         "source": "local",
-        "path": "./skills/sgarcese-hbs/civic-analytics-workflow"
+        "path": "./skills/sgarcese/civic-analytics-workflow"
       },
       "policy": {
         "installation": "AVAILABLE",
