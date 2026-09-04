@@ -42,6 +42,7 @@ const FIELD_LABELS: Record<string, string> = {
   "allowed-tools": "the tools it needs",
   metadata: "the details below",
   "civic.category": "the category",
+  "civic.category-secondary": "the second category",
   "civic.jurisdiction": "where it applies",
   "civic.localization": "how portable it is",
   "civic.data-sensitivity": "the data it touches",
@@ -576,6 +577,18 @@ export function Submit(
           <Choice id="civic.category" label="Category" value={draft.category}
             findings={findings} placeholder="Choose…" onChange={set("category")}
             options={CATEGORIES.map((c) => [c, CATEGORY_LABELS[c] ?? c])} />
+
+          <Choice id="civic.category-secondary" label="A second category, if it fits one"
+            value={draft.categorySecondary} findings={findings}
+            placeholder="None — it sits in one place"
+            onChange={set("categorySecondary")}
+            options={CATEGORIES.filter((c) => c !== draft.category)
+              .map((c) => [c, CATEGORY_LABELS[c]!] as [string, string])}
+            hint={
+              <>The list mixes what a skill is <em>for</em> with whose desk it
+              sits on, so many skills belong in two places. Leave this alone if
+              yours does not.</>
+            } />
 
           <Choice id="civic.jurisdiction" label="Where does it apply?"
             value={draft.jurisdiction} findings={findings} placeholder="Choose…"

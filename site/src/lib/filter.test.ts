@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { applyFilters, facetCounts, matchesQuery } from "./filter";
+import { applyFilters, categoryCounts, facetCounts, matchesQuery } from "./filter";
 import { EMPTY_FILTERS, type Skill } from "./types";
 
 function skill(over: Partial<Skill> = {}): Skill {
@@ -7,7 +7,8 @@ function skill(over: Partial<Skill> = {}): Skill {
     id: "ns/example", name: "example", namespace: "ns",
     description: "An example skill for tests.",
     license: "MIT", compatibility: null, allowed_tools: ["Read"],
-    category: "finance", jurisdiction: "generic", localization: null,
+    category: "finance", category_secondary: null,
+    jurisdiction: "generic", localization: null,
     data_sensitivity: "none", human_review: "none",
     use_when: null, avoid_when: null, maintainer: "Test", source: null,
     provenance: {
@@ -114,5 +115,39 @@ describe("facetCounts", () => {
 
   it("returns an empty object for an empty list", () => {
     expect(facetCounts([], "category")).toEqual({});
+  });
+});
+
+/** A skill can name a second category on the other axis (#102). Browsing has to
+ *  honour it or the field is decoration: a Communications skill that is also
+ *  Constituent Services must appear under both, and be counted under both. */
+describe("the second category is browsable, not decorative", () => {
+  const listings = [
+    skill({ id: "a/1", category: "communications", category_secondary: "constituent-services" }),
+    skill({ id: "b/2", category: "finance", category_secondary: null }),
+    skill({ id: "c/3", category: "constituent-services", category_secondary: null }),
+  ];
+
+  it("finds a skill under its secondary category", () => {
+    const found = applyFilters(listings, { ...EMPTY_FILTERS, category: "constituent-services" });
+    expect(found.map((s) => s.id)).toEqual(["a/1", "c/3"]);
+  });
+
+  it("still finds it under its primary", () => {
+    const found = applyFilters(listings, { ...EMPTY_FILTERS, category: "communications" });
+    expect(found.map((s) => s.id)).toEqual(["a/1"]);
+  });
+
+  it("counts a skill under both of its categories", () => {
+    expect(categoryCounts(listings)).toEqual({
+      communications: 1, "constituent-services": 2, finance: 1,
+    });
+  });
+
+  it("does not count a skill twice under one category", () => {
+    // rules.ts rejects a secondary equal to the primary, but the index is a
+    // published artifact and this must not double-count if one slips through.
+    const odd = [skill({ id: "d/4", category: "finance", category_secondary: "finance" })];
+    expect(categoryCounts(odd)).toEqual({ finance: 1 });
   });
 });

@@ -19,6 +19,8 @@ export interface Skill {
   compatibility: string | null;
   allowed_tools: string[];
   category: string | null;
+  /** The other axis, when the author named one. See #102. */
+  category_secondary: string | null;
   jurisdiction: string | null;
   localization: Localization;
   data_sensitivity: string | null;
