@@ -65,7 +65,7 @@ describe("the published schema agrees with rules.ts", () => {
   it("requires the same civic.* metadata", () => {
     const required = [
       "civic.category", "civic.jurisdiction", "civic.data-sensitivity",
-      "civic.human-review", "civic.maintainer", "civic.contact",
+      "civic.human-review", "civic.maintainer",
       "civic.affiliation", "civic.deployment",
     ];
     expect(schema.properties.metadata.required.slice().sort()).toEqual(required.sort());

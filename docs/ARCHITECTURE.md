@@ -100,7 +100,6 @@ metadata:
     Not for appeals or variance questions — it explains a status, it does not
     advise on what to do about one.
   civic.maintainer: "City of X, Department of Building Safety"
-  civic.contact: "digital@cityofx.gov"
   civic.affiliation: government          # who maintains it
   civic.deployment: organization         # widest scope at which it has ACTUALLY run
   civic.deployed-at: "City of X, Department of Building Safety"
@@ -411,8 +410,13 @@ An index entry, with every field the build actually emits:
 }
 ```
 
-`civic.contact` is deliberately absent. It exists so somebody can be reached
-about a security report, not to be harvested out of a static JSON file.
+Nothing here is withheld. `civic.contact` used to be — it existed so a security
+report could land, and publishing it in a static JSON file was handing it to
+scrapers. [#95](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/95)
+removed the field rather than the exception: the namespace is a GitHub account
+and L1 proves the submitter owns it, so the route to a maintainer is already
+public and already unharvestable. The index still refuses to carry the key if a
+listing yet to be migrated declares it.
 
 The per-skill detail payload is this plus two fields the index does not carry:
 `files`, the tree with sizes and which entries the agent executes rather than

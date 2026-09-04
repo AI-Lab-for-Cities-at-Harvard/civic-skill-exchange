@@ -19,7 +19,6 @@ const front = {
     "civic.data-sensitivity": "none",
     "civic.human-review": "none",
     "civic.maintainer": "Test",
-    "civic.contact": "t@example.com",
     "civic.affiliation": "individual",
     "civic.deployment": "none",
   },

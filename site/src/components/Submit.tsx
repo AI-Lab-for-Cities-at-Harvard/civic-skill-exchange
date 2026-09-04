@@ -50,7 +50,6 @@ const FIELD_LABELS: Record<string, string> = {
   "civic.use-when": "when it is useful",
   "civic.avoid-when": "when it is not useful",
   "civic.maintainer": "who maintains it",
-  "civic.contact": "the contact address",
   "civic.affiliation": "the kind of organization",
   "civic.deployment": "how much you have used it",
   "civic.deployed-at": "the organization",
@@ -626,12 +625,6 @@ export function Submit(
                 ? "Saying a team or an organization uses it is a claim about them, so the details below are needed."
                 : "Using it yourself is a complete answer — nothing else is required."
             } />
-
-          <Field id="civic.contact" label="Contact" findings={findings}
-            hint="How someone reaches you about a problem with the skill.">
-            <input id="civic.contact" className="input" value={draft.contact}
-              onChange={onInput("contact")} />
-          </Field>
 
           <Field id="civic.maintainer" label="Who maintains it?" findings={findings}
             hint="A person or a team — City of X, Department of Innovation.">

@@ -28,7 +28,6 @@ metadata:
     check whether the skill is correct or worth adopting, only that every value
     it wrote is one somebody confirmed.
   civic.maintainer: "AI Lab for Cities at Harvard"
-  civic.contact: "security@civic-skill-exchange.example"
   civic.affiliation: academic
   civic.deployment: none
 ---

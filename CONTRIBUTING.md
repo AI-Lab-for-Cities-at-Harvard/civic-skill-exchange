@@ -71,7 +71,6 @@ metadata:
     Not for appeals or variance questions — it explains a status, it does not
     advise on what to do about one.
   civic.maintainer: "City of X, Department of Building Safety"
-  civic.contact: "digital@cityofx.gov"
   civic.affiliation: government
   civic.deployment: organization
   civic.deployed-at: "City of X, Department of Building Safety"
@@ -108,7 +107,6 @@ metadata:
 | `civic.use-when` | free text, ≤500 | Optional. When the skill earns its place. Plain text — the site renders it as text, never as markdown. |
 | `civic.avoid-when` | free text, ≤500 | Optional, and **the one worth writing.** Where it falls down and what it should not be pointed at. Same plain-text rule. |
 | `civic.maintainer` | free text | Organization or individual accountable for the skill. |
-| `civic.contact` | free text | A working address for security reports. |
 | `civic.affiliation` | `government`, `nonprofit`, `academic`, `vendor`, `individual` | Affiliation of the party in `civic.maintainer`. |
 | `civic.deployment` | `none`, `personal`, `team`, `organization` | The widest scope at which the skill has **actually** run. |
 | `civic.deployed-at` | free text | The organization where it ran. Required for `team` and `organization`; not asked of `personal`; forbidden for `none`. |

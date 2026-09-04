@@ -34,7 +34,6 @@ VALID_FRONTMATTER = {
         "civic.data-sensitivity": "none",
         "civic.human-review": "none",
         "civic.maintainer": "Test Suite",
-        "civic.contact": "test@example.com",
         "civic.affiliation": "individual",
         "civic.deployment": "none",
     },

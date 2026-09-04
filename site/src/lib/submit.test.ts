@@ -36,7 +36,6 @@ function draft(over: Partial<Draft> = {}): Draft {
     dataSensitivity: "none",
     humanReview: "advisory-only",
     maintainer: "City of X",
-    contact: "digital@cityofx.gov",
     affiliation: "government",
     deployment: "none",
     ...over,

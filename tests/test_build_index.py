@@ -102,12 +102,17 @@ def test_allowed_tools_handles_absence():
     assert build_index.normalize_tools(None) == []
 
 
-def test_contact_is_not_published_in_the_index(make_skill):
-    """civic.contact exists so a maintainer can be reached about a security report.
-    Publishing it in a static JSON file is handing it to scrapers."""
-    entry = build_index.build_entry(make_skill(), {}, {})
+def test_no_contact_address_is_published(make_skill):
+    """civic.contact is gone (#95), but a listing may still carry one while it
+    is migrated — an unknown civic.* key is quarantined rather than rejected.
+    Publishing it in a static JSON file would hand it to scrapers, so the index
+    must not pick it up whatever a SKILL.md says."""
+    skill = make_skill(overrides={"metadata": dict(
+        conftest.VALID_FRONTMATTER["metadata"],
+        **{"civic.contact": "harvest-me@example.gov"})})
+    entry = build_index.build_entry(skill, {}, {})
     assert entry is not None
-    assert "test@example.com" not in str(entry)
+    assert "harvest-me@example.gov" not in str(entry)
 
 
 def test_entry_carries_the_fields_the_site_filters_on(make_skill):

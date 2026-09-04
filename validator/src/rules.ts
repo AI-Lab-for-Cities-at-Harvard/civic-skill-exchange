@@ -88,9 +88,15 @@ export const FIT_MAX_LENGTH = 500;
  *  a blocking check would only buy a sentence written to satisfy the check. */
 const FIT_FIELDS = ["civic.use-when", "civic.avoid-when"] as const;
 
+/** civic.contact was here until #95. The namespace is a GitHub account and L1
+ *  proves the submitter owns it, so a typed address was a second and less
+ *  reliable copy of what the registry already held — and the only field the
+ *  index withheld, so it was collected, stored, and never shown. An issue or a
+ *  mention on that account reaches the maintainer and cannot go stale
+ *  independently of it. */
 const REQUIRED_METADATA = [
   "civic.category", "civic.jurisdiction", "civic.data-sensitivity",
-  "civic.human-review", "civic.maintainer", "civic.contact",
+  "civic.human-review", "civic.maintainer",
   "civic.affiliation", "civic.deployment",
 ] as const;
 
