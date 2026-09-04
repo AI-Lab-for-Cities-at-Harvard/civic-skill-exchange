@@ -3,6 +3,7 @@ import {
   LOCALIZATION_LABELS, HUMAN_REVIEW_LABELS, AFFILIATION_LABELS,
   DEPLOYMENT_LABELS,
 } from "../lib/labels";
+import { BETA_SUMMARY } from "./Beta";
 import { aboutHref, skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
 
@@ -16,6 +17,7 @@ const SECTIONS: [string, string][] = [
   ["submitting", "How to submit"],
   ["checks", "What we check"],
   ["review", "What a review checks for"],
+  ["beta", "What Beta means"],
 ];
 
 /** The vocabulary tables, built from the same maps the facets and the form use.
@@ -435,6 +437,46 @@ export function About({ skills = [] }: { skills?: Skill[] }) {
             The full checklist, with what each question rejects{" "}
             <span aria-hidden="true">→</span>
           </a>
+        </p>
+      </section>
+
+      <section className="prose__block" id="beta">
+        <h2 className="h2">What Beta means</h2>
+        <p>{BETA_SUMMARY}</p>
+        <p>
+          This is about the exchange, not about the skills. What a listing means
+          is covered above and has not changed: automated checks can only
+          reject, and a review is a record of what was checked rather than a
+          guarantee. Beta says something narrower — that the registry around
+          those listings is still being built, and you may hit an inconsistency
+          that is ours rather than a skill&rsquo;s.
+        </p>
+        <p>What is moving right now:</p>
+        <ul className="plain-list">
+          <li>
+            <strong>The categories.</strong> Just recut from twelve to fifteen,
+            onto two axes. A listing&rsquo;s category may be relabelled again.
+          </li>
+          <li>
+            <strong>The metadata fields.</strong> Some are being dropped, others
+            added — what level of government a skill is written for, and how a
+            version is declared.
+          </li>
+          <li>
+            <strong>Submitting.</strong> The browser route works; the two paths
+            around it are still settling, and error messages are still being
+            written for people rather than for reviewers.
+          </li>
+          <li>
+            <strong>Review and removal.</strong> Both processes exist and each
+            has run once. Expect the guides to change as they are used.
+          </li>
+        </ul>
+        <p>
+          A field that changes does not invalidate a listing: the validator says
+          what a submission needs at the moment you submit it, and the
+          maintainers migrate what is already listed rather than asking authors
+          to. If something contradicts itself, that is a bug and worth an issue.
         </p>
       </section>
 

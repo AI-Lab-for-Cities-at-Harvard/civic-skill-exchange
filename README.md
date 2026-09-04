@@ -1,5 +1,7 @@
 # Civic Skill Exchange
 
+**Beta** — The exchange itself is new: the category vocabulary, the metadata fields and the submission and review workflows are all still changing. That is a statement about this registry, not about the skills in it; what a listing means is unchanged and described below.
+
 An open catalog of agent skills for civic use — government, public-sector, and nonprofit work.
 
 A **skill** is a small, portable bundle of instructions (and sometimes scripts) that teaches an AI coding agent how to do one job well: explain a permit status in plain language, check a benefits application against eligibility rules, turn a budget spreadsheet into a published open-data file. Skills follow the [Agent Skills open standard](https://agentskills.io/specification), so they work across tools rather than locking you into one vendor.

@@ -56,3 +56,17 @@ describe("the whole page has no axe violations", () => {
     await expectPageClean();
   });
 });
+
+/** The marker qualifies the site identity, so it belongs on every page — not
+ *  only the landing page. Somebody arriving on a skill detail page from a
+ *  search result needs it as much as somebody arriving at the front (#123). */
+describe("the Beta marker is on every page", () => {
+  it.each(["#/", "#/about", "#/submit", "#/skill/ns/example"])(
+    "%s carries it", async (hash) => {
+      window.location.hash = hash;
+      render(<App />);
+      // Exact, not a regex: the About page's own contents list carries a
+      // "What Beta means" link, which a loose match would also find.
+      expect(await screen.findByRole("link", { name: "Beta" })).toBeInTheDocument();
+    });
+});
