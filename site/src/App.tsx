@@ -141,7 +141,7 @@ export default function App() {
 
       {route.page === "about" ? (
         <main id="results" className="page">
-          <About skills={skills} />
+          <About skills={skills} section={route.section} />
         </main>
       ) : route.page === "submit" ? (
         <main id="results" className="page">
