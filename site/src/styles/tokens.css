@@ -34,6 +34,9 @@
   --c-text-light: rgba(0, 0, 0, 0.66);
   --c-text-lighter: rgba(0, 0, 0, 0.55);
   --c-text-link: #000000;
+  /* Deliberately darker than the .34 upstream: .34 does not clear 3:1 against
+   * our page and card grounds, and styles/contrast.test.ts is a harder
+   * constraint than fidelity. Ruled on #101. */
   --c-border: rgba(0, 0, 0, 0.44);
   --c-border-light: rgba(0, 0, 0, 0.08);
   --c-border-dark: rgba(0, 0, 0, 0.45);
@@ -44,12 +47,38 @@
 
   /* Status. Separate from the accent by design — a tier badge must not read as
      brand chrome, and must stay legible if --brand-accent is repointed. */
-  --c-ok: #2c6a4a;
-  --c-ok-bg: #dfeee6;
-  --c-warn: #8a6108;
-  --c-warn-bg: #f5ebd8;
-  --c-info: #2f5c86;
-  --c-info-bg: #dce9f4;
+  /* ---- Status ------------------------------------------------------------
+   * Solid fills from the HBS expanded palette, each with the text painted on
+   * it. Ruled on #101, and three properties are deliberate:
+   *
+   * 1. SOLID, not a hue at low opacity behind the same hue darkened. A tint
+   *    pair carries almost no contrast of its own.
+   * 2. BLACK OR WHITE TEXT ONLY. The HBS accessibility guide permits black,
+   *    crimson or white on a swatch and nothing else, marking each pairing
+   *    4.5:1 (any size) or 3:1 (14pt bold / 18pt and larger). Pills are small
+   *    text, so every pair here clears 4.5 — styles/contrast.test.ts checks it.
+   * 3. COLOUR IS NEVER THE ONLY SIGNAL. Reviewed is a hue and Community is a
+   *    warm grey, so no form of colour blindness can turn one into the other,
+   *    and their lightness differs by 4.5:1 so greyscale separates them too.
+   *    Each pill carries its own word besides.
+   *
+   * Community is grey rather than amber on purpose. A Community listing is not
+   * a warning — it means nobody has reviewed it, which is an honest and common
+   * state. Amber would say something about the skill that the registry does not.
+   */
+  --c-ok: #026833;            /* Green 1  · white at 6.93 */
+  --c-on-ok: #ffffff;
+  --c-community: #d5d0ca;     /* Gray 3   · black at 13.7 */
+  --c-on-community: #000000;
+  --c-warn: #c29d00;          /* Yellow 1 · black at 8.12 — the universal caution pair */
+  --c-on-warn: #000000;
+  --c-info: #3b2883;          /* Blue 1   · white at 11.56 */
+  --c-on-info: #ffffff;
+
+  /* The rule and border uses, whose ground is the page rather than the fill,
+   * so unlike the fills above these need a value per theme. */
+  --c-ok-edge: #026833;
+  --c-warn-edge: #ae6429;     /* Orange 1 — reads as caution at rule weight */
 
   /* ---- Fluid spacing (HBS block-spacing scale) --------------------------- */
   --space-sm: clamp(12px, 2.5vw, 18px);
@@ -109,7 +138,7 @@
      better as a plain width than as a span. */
   --w-center: 62rem;
   --w-wide: 78rem;
-  --radius: 2px;
+  --radius: 4px;              /* the HBS house radius: 30 of 55 uses upstream */
   --radius-pill: 999px;
 }
 
@@ -131,12 +160,11 @@
   --c-button-bg-subtle: rgba(255, 255, 255, 0.12);
   --c-outline: var(--brand-accent-on-dark);
 
-  --c-ok: #75c49b;
-  --c-ok-bg: #142520;
-  --c-warn: #d7a851;
-  --c-warn-bg: #2a2114;
-  --c-info: #8fb8dd;
-  --c-info-bg: #16242f;
+  /* The status fills do NOT change with the theme: a solid pill's ground is
+   * itself, so one value cannot drift from another. Only the edges change,
+   * because a dark green rule on a dark page is invisible. */
+  --c-ok-edge: #52a52e;       /* Green 2  */
+  --c-warn-edge: #ea9b20;     /* Orange 3 */
 }
 
 /* ---- Scoped themes -----------------------------------------------------
@@ -213,6 +241,9 @@
   --c-text-light: rgba(0, 0, 0, 0.66);
   --c-text-lighter: rgba(0, 0, 0, 0.55);
   --c-text-link: #000000;
+  /* Deliberately darker than the .34 upstream: .34 does not clear 3:1 against
+   * our page and card grounds, and styles/contrast.test.ts is a harder
+   * constraint than fidelity. Ruled on #101. */
   --c-border: rgba(0, 0, 0, 0.44);
   --c-border-light: rgba(0, 0, 0, 0.12);
   --c-button-bg: transparent;
