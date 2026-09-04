@@ -30,7 +30,7 @@ VALID_FRONTMATTER = {
     "allowed-tools": "Read, Grep",
     "metadata": {
         "civic.category": "finance",
-        "civic.jurisdiction": "generic",
+        "civic.scope": "any",
         "civic.data-sensitivity": "none",
         "civic.human-review": "none",
         "civic.maintainer": "Test Suite",

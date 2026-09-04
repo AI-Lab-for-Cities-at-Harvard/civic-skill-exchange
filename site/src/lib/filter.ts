@@ -4,6 +4,9 @@ import type { Filters, Skill } from "./types";
  *  "who else has built this" is a question adopters actually ask. */
 const SEARCHABLE: (keyof Skill)[] = [
   "name", "id", "description", "maintainer", "category", "category_secondary",
+  // The place is searchable but never a facet: it is unbounded, and a facet
+  // that does not narrow is not a facet.
+  "jurisdiction",
 ];
 
 /** Both axes a skill sits on, deduplicated. The vocabulary mixes function
@@ -15,7 +18,18 @@ const SEARCHABLE: (keyof Skill)[] = [
  *  secondary equal to the primary, but a facet must not double-count if one
  *  ever slips past. */
 export function categoriesOf(skill: Skill): string[] {
-  const both = [skill.category, skill.category_secondary]
+  return pairOf(skill.category, skill.category_secondary);
+}
+
+/** The same for scope, which took the same primary-plus-optional-second shape
+ *  in #67 and for the same reason: one value forced an answer the author did
+ *  not mean. */
+export function scopesOf(skill: Skill): string[] {
+  return pairOf(skill.scope, skill.scope_secondary);
+}
+
+function pairOf(primary: string | null, secondary: string | null): string[] {
+  const both = [primary, secondary]
     .filter((c): c is string => typeof c === "string" && c.length > 0);
   return [...new Set(both)];
 }
@@ -34,7 +48,7 @@ export function applyFilters(skills: Skill[], filters: Filters): Skill[] {
     (s) =>
       matchesQuery(s, filters.q) &&
       (!filters.category || categoriesOf(s).includes(filters.category)) &&
-      (!filters.jurisdiction || s.jurisdiction === filters.jurisdiction) &&
+      (!filters.scope || scopesOf(s).includes(filters.scope)) &&
       (!filters.localization || s.localization === filters.localization) &&
       (!filters.dataSensitivity || s.data_sensitivity === filters.dataSensitivity) &&
       (!filters.tier || s.tier === filters.tier),
@@ -45,11 +59,19 @@ export function applyFilters(skills: Skill[], filters: Filters): Skill[] {
  *  filtering by that category will return. A skill with two categories is
  *  counted under each, and never twice under one. */
 export function categoryCounts(skills: Skill[]): Record<string, number> {
+  return pairCounts(skills, categoriesOf);
+}
+
+export function scopeCounts(skills: Skill[]): Record<string, number> {
+  return pairCounts(skills, scopesOf);
+}
+
+function pairCounts(
+  skills: Skill[], of: (s: Skill) => string[],
+): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const skill of skills) {
-    for (const category of categoriesOf(skill)) {
-      counts[category] = (counts[category] ?? 0) + 1;
-    }
+    for (const value of of(skill)) counts[value] = (counts[value] ?? 0) + 1;
   }
   return counts;
 }

@@ -263,6 +263,11 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         # It must never order the catalogue: `version: 4.0` means somebody typed
         # 4.0.
         "version": meta.get("version"),
+        # What kind of body, and which place — kept apart since #67. scope is
+        # a closed vocabulary and is what the site facets on; jurisdiction is a
+        # place and is unbounded, so it is shown and never faceted.
+        "scope": meta.get("civic.scope"),
+        "scope_secondary": meta.get("civic.scope-secondary"),
         "jurisdiction": meta.get("civic.jurisdiction"),
         "localization": meta.get("civic.localization"),
         "data_sensitivity": meta.get("civic.data-sensitivity"),

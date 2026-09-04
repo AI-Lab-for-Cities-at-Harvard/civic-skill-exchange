@@ -119,7 +119,7 @@ def test_no_contact_address_is_published(make_skill):
 
 def test_entry_carries_the_fields_the_site_filters_on(make_skill):
     entry = build_index.build_entry(make_skill(), {}, {})
-    for field in ("category", "jurisdiction", "data_sensitivity", "human_review", "tier"):
+    for field in ("category", "scope", "data_sensitivity", "human_review", "tier"):
         assert entry[field] is not None, field
 
 

@@ -58,6 +58,8 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
         ? front["allowed-tools"].map(text).join(", ")
         : text(front["allowed-tools"]),
       category: text(meta["civic.category"]),
+      scope: text(meta["civic.scope"]),
+      scopeSecondary: text(meta["civic.scope-secondary"]),
       jurisdiction: text(meta["civic.jurisdiction"]),
       localization: text(meta["civic.localization"]),
       dataSensitivity: text(meta["civic.data-sensitivity"]) || EMPTY_DRAFT.dataSensitivity,

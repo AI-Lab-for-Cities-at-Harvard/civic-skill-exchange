@@ -14,7 +14,7 @@ compatibility: >
 allowed-tools: Read, Write, Grep, Glob
 metadata:
   civic.category: ai-tools
-  civic.jurisdiction: generic
+  civic.scope: any
   civic.localization: generalized
   civic.data-sensitivity: none
   civic.human-review: none

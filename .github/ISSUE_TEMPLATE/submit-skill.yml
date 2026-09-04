@@ -65,13 +65,27 @@ body:
       required: true
 
   - type: dropdown
-    id: jurisdiction
+    id: scope
     attributes:
-      label: Jurisdiction
-      description: "'Generic' means it makes no jurisdiction-specific assumptions."
-      options: [us-local, us-state, us-federal, intl, generic]
+      label: Level of government
+      description: >
+        What kind of body the skill is written for. 'any' means it makes no
+        assumptions about level — country-neutral, because the specific place is
+        asked separately below.
+      options: [any, municipal, regional, national, supranational]
     validations:
       required: true
+
+  - type: input
+    id: jurisdiction
+    attributes:
+      label: The specific place, if it is written for one
+      description: >
+        Only if the skill carries that place's rules, forms or deadlines — a
+        country code, optionally a state or province, optionally a city after a
+        slash. Leave blank otherwise, which is most skills. A generalized skill
+        never has one.
+      placeholder: US-MA / Boston
 
   - type: dropdown
     id: localization

@@ -21,6 +21,8 @@ export interface Draft {
   category: string;
   categorySecondary: string;
   version: string;
+  scope: string;
+  scopeSecondary: string;
   jurisdiction: string;
   localization: string;
   dataSensitivity: string;
@@ -41,7 +43,7 @@ export interface Draft {
 export const EMPTY_DRAFT: Draft = {
   author: "", name: "", description: "", license: "MIT", compatibility: "",
   tools: "", category: "", categorySecondary: "", version: "",
-  jurisdiction: "", localization: "",
+  scope: "", scopeSecondary: "", jurisdiction: "", localization: "",
   dataSensitivity: "none", humanReview: "none", useWhen: "", avoidWhen: "",
   maintainer: "", affiliation: "", deployment: "none",
   deployedAt: "", deployedIn: "", deployedSince: "",
@@ -71,6 +73,8 @@ export function toFields(draft: Draft): Record<string, string> {
     "civic.category": trim(draft.category),
     "civic.category-secondary": trim(draft.categorySecondary),
     version: trim(draft.version),
+    "civic.scope": trim(draft.scope),
+    "civic.scope-secondary": trim(draft.scopeSecondary),
     "civic.jurisdiction": trim(draft.jurisdiction),
     "civic.localization": trim(draft.localization),
     "civic.data-sensitivity": trim(draft.dataSensitivity),

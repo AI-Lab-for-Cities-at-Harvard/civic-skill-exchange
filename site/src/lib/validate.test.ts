@@ -15,7 +15,7 @@ const front = {
   license: "MIT",
   metadata: {
     "civic.category": "finance",
-    "civic.jurisdiction": "generic",
+    "civic.scope": "any",
     "civic.data-sensitivity": "none",
     "civic.human-review": "none",
     "civic.maintainer": "Test",

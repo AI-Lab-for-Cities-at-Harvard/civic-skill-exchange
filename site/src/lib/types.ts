@@ -21,6 +21,12 @@ export interface Skill {
   category: string | null;
   /** The other axis, when the author named one. See #102. */
   category_secondary: string | null;
+  /** What kind of government body. Closed vocabulary; this is what the site
+   *  facets on. */
+  scope: string | null;
+  scope_secondary: string | null;
+  /** The specific place, ISO-shaped, when the skill is tied to one. Unbounded,
+   *  so it is shown and never faceted. */
   jurisdiction: string | null;
   localization: Localization;
   data_sensitivity: string | null;
@@ -86,7 +92,7 @@ export interface Index {
 export interface Filters {
   q: string;
   category: string | null;
-  jurisdiction: string | null;
+  scope: string | null;
   localization: string | null;
   dataSensitivity: string | null;
   tier: string | null;
@@ -95,7 +101,7 @@ export interface Filters {
 export const EMPTY_FILTERS: Filters = {
   q: "",
   category: null,
-  jurisdiction: null,
+  scope: null,
   localization: null,
   dataSensitivity: null,
   tier: null,

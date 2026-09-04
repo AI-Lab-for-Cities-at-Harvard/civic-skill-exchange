@@ -9,7 +9,8 @@ function skill(over: Partial<Skill> = {}): Skill {
     license: "MIT", compatibility: null, allowed_tools: ["Read"],
     category: "finance", category_secondary: null, version: null,
     history: { first_seen: null, last_changed: null, commits: null, pull_request: null },
-    jurisdiction: "generic", localization: null,
+    scope: "any", scope_secondary: null,
+    jurisdiction: null, localization: null,
     data_sensitivity: "none", human_review: "none",
     use_when: null, avoid_when: null, maintainer: "Test", source: null,
     provenance: {

@@ -46,10 +46,15 @@ budget table formatter works anywhere as written. Omitting the field is the hone
 answer for those, not a gap to fill in.
 
 One rule the validator enforces: `generalized` contradicts a named
-`civic.jurisdiction` like `us-state`. If the specifics have been lifted out, the
-jurisdiction should be `generic` (or `intl`). If they haven't, the skill is
-`localized`. An adopter reading both fields cannot tell which one is wrong, so we
-catch it at submission instead.
+`civic.jurisdiction`. If the specifics have been lifted out, the skill names no
+place and the field is simply absent. If they haven't, the skill is `localized`
+and names the place it carries — `US-VT`, `US-MA / Boston`. An adopter reading
+both fields cannot tell which one is wrong, so we catch it at submission
+instead.
+
+The rule runs one way only. A skill that names no place was not necessarily
+generalized from anything: a reading-level calculator never had specifics to
+lift out.
 
 ## The two skills
 

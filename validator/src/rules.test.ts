@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  PLACE_PATTERN, SCOPES, SCOPE_FIELD, SCOPE_SECONDARY,
   checkFrontmatter,
   checkLocalization,
   checkProvenance,
@@ -17,7 +18,7 @@ function ctx(over: Partial<RuleContext> = {}): RuleContext {
 function meta(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     "civic.category": "finance",
-    "civic.jurisdiction": "generic",
+    "civic.scope": "any",
     "civic.data-sensitivity": "none",
     "civic.human-review": "none",
     "civic.maintainer": "Test Suite",
@@ -62,7 +63,7 @@ describe("checkFrontmatter — required fields", () => {
 
   it.each([
     "civic.category",
-    "civic.jurisdiction",
+    "civic.scope",
     "civic.data-sensitivity",
     "civic.human-review",
     "civic.maintainer",
@@ -168,11 +169,13 @@ describe("checkProvenance", () => {
     expect(messages(f)).toMatch(/civic\.deployed-at/);
   });
 
-  it("requires a deployment claim to name the jurisdiction", () => {
-    const f = checkProvenance(meta({
+  it("does not require a deployment claim to name where the organization is", () => {
+    // civic.deployed-in stopped being required in #67: the checkable part of
+    // "an organization uses this" is the organization's name, and where it
+    // operates is often already implied by civic.jurisdiction.
+    expect(checkProvenance(meta({
       "civic.deployment": "team", "civic.deployed-at": "Example Agency",
-    }));
-    expect(messages(f)).toMatch(/civic\.deployed-in/);
+    }))).toEqual([]);
   });
 
   /* `civic.deployed-at` is "the organization where it was used". Personal use
@@ -257,23 +260,24 @@ describe("checkLocalization", () => {
     expect(checkLocalization(meta())).toEqual([]);
   });
 
-  it.each(["generalized", "localized"])("accepts %s", (value) => {
-    const m = meta({ "civic.localization": value, "civic.jurisdiction": "generic" });
-    expect(checkLocalization(m)).toEqual([]);
+  it.each(["generalized", "localized"])("accepts %s on its own", (value) => {
+    expect(checkLocalization(meta({ "civic.localization": value }))).toEqual([]);
   });
 
-  it("rejects generalized alongside a named jurisdiction", () => {
-    const m = meta({ "civic.localization": "generalized", "civic.jurisdiction": "us-state" });
+  it("rejects generalized alongside a place", () => {
+    const m = meta({ "civic.localization": "generalized", "civic.jurisdiction": "US-VT" });
     expect(messages(checkLocalization(m))).toMatch(/generalized/);
   });
 
-  it.each(["generic", "intl"])("allows generalized with %s", (j) => {
-    const m = meta({ "civic.localization": "generalized", "civic.jurisdiction": j });
-    expect(checkLocalization(m)).toEqual([]);
+  it("reports it against the jurisdiction, which is the field to remove", () => {
+    const m = meta({ "civic.localization": "generalized", "civic.jurisdiction": "US-VT" });
+    expect(checkLocalization(m)[0]?.where).toBe("civic.jurisdiction");
   });
 
-  it("allows localized with a named jurisdiction", () => {
-    const m = meta({ "civic.localization": "localized", "civic.jurisdiction": "us-state" });
+  it("allows localized with a place", () => {
+    const m = meta({
+      "civic.localization": "localized", "civic.jurisdiction": "US-MA / Boston",
+    });
     expect(checkLocalization(m)).toEqual([]);
   });
 });
@@ -490,5 +494,140 @@ describe("a declared version", () => {
     // Nothing here can know the previous value, and a rule that pretends to
     // would be a rule an author works around.
     expect(withVersion("0.1")).toEqual([]);
+  });
+});
+
+/** Scope and jurisdiction, split (#67).
+ *
+ *  One field was doing three jobs — level of government, country-ness, and
+ *  whether any of it applied — and every listing in the catalogue answered
+ *  `generic`, which is what a field asking the wrong question looks like.
+ *
+ *  Now `civic.scope` says what *kind* of government body, and
+ *  `civic.jurisdiction` says *which specific place*, set only when the skill is
+ *  tied to one. Scope is required with an explicit `any`, because an omitted
+ *  scope could not be told apart from an unanswered one.
+ */
+describe("scope", () => {
+  const withScope = (over: Record<string, unknown>) =>
+    checkFrontmatter(front({ metadata: meta(over) }), ctx());
+
+  it("is required — omission would be indistinguishable from 'any'", () => {
+    const m = meta();
+    delete m[SCOPE_FIELD];
+    const findings = checkFrontmatter(front({ metadata: m }), ctx());
+    expect(findings.map((f) => f.where)).toContain(SCOPE_FIELD);
+  });
+
+  it.each(SCOPES)("accepts %s", (value) => {
+    expect(withScope({ [SCOPE_FIELD]: value })).toEqual([]);
+  });
+
+  it.each(["us-local", "us-state", "intl", "generic", "city", "State"])(
+    "rejects %s, which was the old vocabulary or a near miss", (value) => {
+      const findings = withScope({ [SCOPE_FIELD]: value });
+      expect(findings).toHaveLength(1);
+      expect(findings[0]?.where).toBe(SCOPE_FIELD);
+    });
+
+  it("takes an optional second level, for a skill that serves two", () => {
+    expect(withScope({
+      [SCOPE_FIELD]: "municipal", [SCOPE_SECONDARY]: "regional",
+    })).toEqual([]);
+  });
+
+  it("will not repeat the primary", () => {
+    const findings = withScope({
+      [SCOPE_FIELD]: "municipal", [SCOPE_SECONDARY]: "municipal",
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe(SCOPE_SECONDARY);
+  });
+
+  it("will not pair 'any' with a level, which contradicts itself", () => {
+    const findings = withScope({ [SCOPE_FIELD]: "any", [SCOPE_SECONDARY]: "municipal" });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message).toMatch(/any/i);
+  });
+});
+
+describe("jurisdiction is a place now, not a level", () => {
+  const withJurisdiction = (value: string, over: Record<string, unknown> = {}) =>
+    checkFrontmatter(front({
+      metadata: meta({ "civic.jurisdiction": value, ...over }),
+    }), ctx());
+
+  it("is optional — a skill tied to no place says so by omission", () => {
+    expect(checkFrontmatter(front(), ctx())).toEqual([]);
+  });
+
+  it.each(["US-VT", "US-MA / Boston", "GB", "CA-ON / Toronto", "US"])(
+    "accepts %s", (value) => {
+      expect(withJurisdiction(value, { [SCOPE_FIELD]: "municipal" })).toEqual([]);
+    });
+
+  it.each(["us-local", "generic", "Vermont", "usa", "US-massachusetts"])(
+    "rejects %s", (value) => {
+      const findings = withJurisdiction(value, { [SCOPE_FIELD]: "municipal" });
+      expect(findings.map((f) => f.where)).toContain("civic.jurisdiction");
+    });
+
+  it("uses the same shape as civic.deployed-in, because both name a place", () => {
+    expect(new RegExp(PLACE_PATTERN).test("US-MA / Boston")).toBe(true);
+  });
+
+  it("cannot be set when the scope is any level", () => {
+    const findings = withJurisdiction("US-VT", { [SCOPE_FIELD]: "any" });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe("civic.jurisdiction");
+  });
+
+  it("cannot be set on a generalized skill, which had its specifics lifted out", () => {
+    const findings = withJurisdiction("US-VT", {
+      [SCOPE_FIELD]: "municipal", "civic.localization": "generalized",
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe("civic.jurisdiction");
+  });
+
+  it("is fine on a generalized skill when absent", () => {
+    expect(checkFrontmatter(front({
+      metadata: meta({ [SCOPE_FIELD]: "any", "civic.localization": "generalized" }),
+    }), ctx())).toEqual([]);
+  });
+
+  it("does not imply generalized — a skill may never have had specifics", () => {
+    // The rule runs one way only. A reading-level calculator is tied to no
+    // place and was never generalized from anything.
+    expect(checkFrontmatter(front({
+      metadata: meta({ [SCOPE_FIELD]: "any" }),
+    }), ctx())).toEqual([]);
+  });
+});
+
+describe("civic.deployed-in is optional now", () => {
+  it("is not required by an organizational deployment", () => {
+    // The checkable claim is the organization's name; where it operates is
+    // context, and is often already implied by civic.jurisdiction (#67).
+    expect(checkFrontmatter(front({
+      metadata: meta({
+        "civic.deployment": "organization",
+        "civic.deployed-at": "City of Example",
+      }),
+    }), ctx())).toEqual([]);
+  });
+
+  it("is still forbidden by civic.deployment: none", () => {
+    const findings = checkFrontmatter(front({
+      metadata: meta({ "civic.deployment": "none", "civic.deployed-in": "US-MA" }),
+    }), ctx());
+    expect(findings.map((f) => f.where)).toContain("civic.deployed-in");
+  });
+
+  it("still requires the organization to be named", () => {
+    const findings = checkFrontmatter(front({
+      metadata: meta({ "civic.deployment": "team" }),
+    }), ctx());
+    expect(findings.map((f) => f.where)).toContain("civic.deployed-at");
   });
 });

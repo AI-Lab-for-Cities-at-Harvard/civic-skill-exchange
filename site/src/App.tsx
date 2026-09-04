@@ -8,7 +8,7 @@ import { SkillCard } from "./components/SkillCard";
 import { TierBand, ContributeBand } from "./components/Bands";
 import { applyFilters } from "./lib/filter";
 import {
-  CATEGORY_LABELS, JURISDICTION_LABELS, LOCALIZATION_LABELS,
+  CATEGORY_LABELS, SCOPE_LABELS, LOCALIZATION_LABELS,
   SENSITIVITY_LABELS, TIER_LABELS,
 } from "./lib/labels";
 import { parseRoute, type Route } from "./lib/route";
@@ -176,8 +176,9 @@ export default function App() {
           <Facet legend="Portability" field="localization" filterKey="localization"
             labels={LOCALIZATION_LABELS} skills={skills} filters={filters} onChange={setFilter}
             note="Generalized skills have jurisdiction specifics lifted out." />
-          <Facet legend="Jurisdiction" field="jurisdiction" filterKey="jurisdiction"
-            labels={JURISDICTION_LABELS} skills={skills} filters={filters} onChange={setFilter} />
+          <Facet legend="Level of government" field="scope" filterKey="scope"
+            labels={SCOPE_LABELS} skills={skills} filters={filters} onChange={setFilter}
+            note="What kind of body a skill is written for. The specific place, when it has one, is on the skill's own page." />
           <Facet legend="Data touched" field="data_sensitivity" filterKey="dataSensitivity"
             labels={SENSITIVITY_LABELS} skills={skills} filters={filters} onChange={setFilter} />
 

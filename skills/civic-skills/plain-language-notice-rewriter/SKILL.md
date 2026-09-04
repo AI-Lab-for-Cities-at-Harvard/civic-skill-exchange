@@ -13,7 +13,7 @@ allowed-tools: Read, Write, Grep
 metadata:
   civic.category: communications
   civic.category-secondary: constituent-services
-  civic.jurisdiction: generic
+  civic.scope: any
   civic.data-sensitivity: none
   civic.human-review: advisory-only
   civic.use-when: >

@@ -13,7 +13,8 @@ import { dirname, join, resolve } from "node:path";
 import { parse } from "yaml";
 import {
   AFFILIATIONS, DEPLOYED_IN_PATTERN, DEPLOYED_SINCE_PATTERN, DEPLOYMENT_DETAILS,
-  DEPLOYMENTS, GENERALIZED_OK_JURISDICTIONS, HUMAN_REVIEW, JURISDICTIONS,
+  DEPLOYMENTS, HUMAN_REVIEW, ORGANIZATIONAL_DETAILS, PLACE_PATTERN,
+  SCOPES, SCOPE_FIELD, SCOPE_SECONDARY,
   FIT_MAX_LENGTH, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS,
   SECONDARY_CATEGORY, SENSITIVITIES, VERSION_FIELD, VERSION_PATTERN,
   SPEC_FIELDS,
@@ -22,10 +23,10 @@ import {
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 interface Conditional {
-  if: { properties: Record<string, { enum?: string[]; const?: string }>; required?: string[] };
+  if: { properties?: Record<string, { enum?: string[]; const?: string }>; required?: string[] };
   then: {
     required?: string[];
-    not?: { anyOf: { required: string[] }[] };
+    not?: { anyOf?: { required: string[] }[]; required?: string[] };
     properties?: Record<string, { enum?: string[] }>;
   };
 }
@@ -52,7 +53,8 @@ const metaProps = schema.properties.metadata.properties;
 
 describe("the published schema agrees with rules.ts", () => {
   it.each([
-    ["civic.jurisdiction", JURISDICTIONS],
+    [SCOPE_FIELD, SCOPES],
+    [SCOPE_SECONDARY, SCOPES],
     ["civic.data-sensitivity", SENSITIVITIES],
     ["civic.human-review", HUMAN_REVIEW],
     ["civic.affiliation", AFFILIATIONS],
@@ -64,7 +66,7 @@ describe("the published schema agrees with rules.ts", () => {
 
   it("requires the same civic.* metadata", () => {
     const required = [
-      "civic.category", "civic.jurisdiction", "civic.data-sensitivity",
+      "civic.category", SCOPE_FIELD, "civic.data-sensitivity",
       "civic.human-review", "civic.maintainer",
       "civic.affiliation", "civic.deployment",
     ];
@@ -104,27 +106,41 @@ describe("the schema states its conditional rules machine-readably", () => {
 
   it("declares the organizational-deployment rule", () => {
     const rule = conditionals.find(
-      (c) => c.if.properties["civic.deployment"]?.enum !== undefined,
+      (c) => c.if.properties?.["civic.deployment"]?.enum !== undefined,
     );
-    expect(rule?.if.properties["civic.deployment"]?.enum?.slice().sort())
+    expect(rule?.if.properties?.["civic.deployment"]?.enum?.slice().sort())
       .toEqual([...ORGANIZATIONAL_DEPLOYMENTS].sort());
-    expect(rule?.then.required?.slice().sort()).toEqual([...DEPLOYMENT_DETAILS].sort());
+    // civic.deployed-in stopped being required in #67 — the name is the
+    // checkable part of the claim, and where the organization is is often
+    // already implied by civic.jurisdiction.
+    expect(rule?.then.required?.slice().sort()).toEqual([...ORGANIZATIONAL_DETAILS].sort());
   });
 
   it("declares the never-deployed rule as a prohibition on the same fields", () => {
     const rule = conditionals.find(
-      (c) => c.if.properties["civic.deployment"]?.const === "none",
+      (c) => c.if.properties?.["civic.deployment"]?.const === "none",
     );
-    const forbidden = rule?.then.not?.anyOf.flatMap((entry) => entry.required) ?? [];
+    const forbidden = rule?.then.not?.anyOf?.flatMap((entry) => entry.required) ?? [];
     expect(forbidden.slice().sort()).toEqual([...DEPLOYMENT_DETAILS].sort());
   });
 
-  it("declares the localization contradiction", () => {
+  it("declares that a generalized skill names no place", () => {
     const rule = conditionals.find(
-      (c) => c.if.properties["civic.localization"]?.const === "generalized",
+      (c) => c.if.properties?.["civic.localization"]?.const === "generalized",
     );
-    expect(rule?.then.properties?.["civic.jurisdiction"]?.enum?.slice().sort())
-      .toEqual([...GENERALIZED_OK_JURISDICTIONS].sort());
+    expect(rule?.then.not?.required).toEqual(["civic.jurisdiction"]);
+  });
+
+  it("declares that scope 'any' names no place either", () => {
+    const rule = conditionals.find(
+      (c) => c.if.properties?.[SCOPE_FIELD]?.const === "any",
+    );
+    expect(rule?.then.not?.required).toEqual(["civic.jurisdiction"]);
+  });
+
+  it("gives both place fields the same pattern, because both name a place", () => {
+    expect(metaProps["civic.jurisdiction"]?.pattern).toBe(PLACE_PATTERN);
+    expect(metaProps["civic.deployed-in"]?.pattern).toBe(PLACE_PATTERN);
   });
 
   it("declares that a source commit needs a source repository", () => {
