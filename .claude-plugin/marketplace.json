@@ -21,8 +21,8 @@
       "description": "Rewrites a government notice template into plain language at a target reading level, preserving every legally required element. Works on templates, not on filled notices containing a specific person's information. Produces a draft for human review; it does not approve or send anything."
     },
     {
-      "name": "sgarcese-hbs-civic-analytics-workflow",
-      "source": "./skills/sgarcese-hbs/civic-analytics-workflow",
+      "name": "sgarcese-civic-analytics-workflow",
+      "source": "./skills/sgarcese/civic-analytics-workflow",
       "description": "Orchestrator for local government policy analysis and civic innovation. ALWAYS use for any request involving open government data, city, county or town services, neighborhood or ward equity, public policy, government performance, 311 and service request analysis, housing, safety or transportation — even if the user hasn't asked for a 'full analysis'. Routes between five sub-skills: problem framing (Bloomberg-inspired), policy analysis (J-PAL-inspired), communication (GovLab/InnovateUS-inspired), peer benchmarking, and performance management (Results for America / PerformanceStat). Triggers include: 'full analysis', 'policy brief', 'data-driven recommendation', 'service improvement project', 'investigate [issue]', 'compare us to peer cities', 'peer counties', 'similar towns', 'what does the data show', 'help me write a memo about', or any request combining problem definition, data analysis and communication for government or civic purposes."
     }
   ]
