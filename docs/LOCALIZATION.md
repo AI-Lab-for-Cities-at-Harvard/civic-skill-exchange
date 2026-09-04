@@ -90,6 +90,58 @@ Form numbers lead that list for a reason. A missed agency name is obvious to the
 next reader; a missed form number looks perfectly plausible and quietly sends
 someone to a form that does not exist in their jurisdiction.
 
+## The contract between the two skills
+
+`generalize` writes a context file; `localize` reads it and fills it in. That
+file is the whole interface between them, and it is specified in
+`references/contract.md` **inside each skill** rather than here:
+
+```
+skills/civic-skills/generalize-skill/references/contract.md
+skills/civic-skills/localize-skill/references/contract.md
+```
+
+Read that file for the shape — the slot keys, what `what` and `exact` mean, how
+an unfilled value is written. This document deliberately does not restate any of
+it, because a third copy would be a third thing to keep in step.
+
+### Two copies, on purpose
+
+Each skill installs as a self-contained directory. `localize-skill` on somebody
+else's machine has to carry the contract it reads; a pointer to a file in this
+repository would point at something the adopter does not have. So the
+duplication is deliberate, and the two copies are meant to be kept in step by
+hand: change one, change the other.
+
+**There is deliberately no check in this repository for that.** A test
+comparing two listings' reference files would be a skill's own test living in
+the registry's suite, which is what `docs/DEVELOPMENT.md` rules out — the
+registry validates a listing against the contract and has no opinion about a
+skill's internals. It would also gate a legitimate edit to one skill on editing
+the other, and it would protect the wrong thing: the copies do not live in this
+repository once installed, they live on two machines at two versions.
+
+Which is what `contract_version` is for.
+
+### `contract_version`
+
+One integer in every context file, checked by every reader. It is the mechanism
+for drift between the copies, and it works where the copies actually are: an
+adopter running a two-year-old `localize-skill` against a context file written
+last week is the case it makes **detectable** rather than merely unlikely. No
+build-time check in this repository could see that machine.
+
+Bumped only when an old reader would get it wrong — renaming a key, removing
+one, changing what one means. Adding an optional key is not a bump. That rule is
+what keeps the warning meaningful: if every additive change bumped it, every
+adopter would see a warning on every skill, none would mean anything, and they
+would learn to click past the one that did.
+
+The contract file has the table of what a reader does about a mismatch, in both
+directions, which are not symmetrical.
+
+---
+
 ## Why this matters for the registry
 
 A registry of localized skills accumulates. A registry of generalized skills
