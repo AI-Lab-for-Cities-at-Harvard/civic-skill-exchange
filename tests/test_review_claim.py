@@ -193,7 +193,11 @@ def test_the_reviewer_guide_names_the_command_the_build_runs(monkeypatch):
         return Result()
 
     monkeypatch.setattr(build_index.subprocess, "run", fake_run)
-    build_index.head_sha(build_index.ROOT / "skills" / "civic-skills" / "generalize-skill")
+    # The path is irrelevant — subprocess is faked, so nothing is read. It is
+    # built rather than written out because naming a listing here is what broke
+    # the suite when a skill was delisted (#122).
+    somewhere = build_index.ROOT.joinpath(*["skills", "ns", "name"])
+    build_index.head_sha(somewhere)
 
     # Everything but the path: the flags are what a reviewer has to type.
     flags = " ".join(captured[0][:captured[0].index("--") + 1])

@@ -184,9 +184,38 @@ def test_wildcard_bash_grant_blocks(make_skill):
 
 Three rules that keep the suite useful:
 
-**Never assert against a real listing under `skills/`.** A test that reads a real
-skill breaks when someone edits that skill, and the failure tells you nothing.
-Build a fixture.
+**Never read a real listing under `skills/`.** This one is enforced, because
+writing it down was not enough: it was broken twice in two days and each time
+`main` went red on a *deletion* — an orphaned test imported a script that was
+gone, and a site test read a `SKILL.md` from disk. Delisting is a documented,
+no-justification-needed operation and should be `git rm -r` plus a manifest
+regeneration, nothing else.
+
+`tests/test_no_listing_coupling.py` fails on any test file that builds a path
+from the repository root into `skills/` with a literal segment. It applies to
+the TypeScript suites too. Three things it deliberately allows, because none of
+them breaks when a skill is deleted:
+
+| | |
+|---|---|
+| `join(dir, "skills", "testuser", "x")` | a throwaway tree, not the repository |
+| `.../upload/main/skills/civic-skills` | a URL in an expectation, not a path |
+| `ROOT / "skills" / entry["skill"]` | derived from what is being checked |
+
+The third is the ledger check, and it is exempt by falling out of the pattern
+rather than by being named. An attestation whose skill is gone is a badge with
+nothing under it, and failing there is correct.
+
+Using a listing's *name* as a fixture string is fine — that passes whether or
+not the skill exists. Reading it from disk is what couples.
+
+**A skill's own scripts are not unit-tested by this repository.** They are
+scanned at L2 and L3 and read line by line at review, and that is the whole of
+it. Collecting tests from `skills/` would mean importing a submitter's arbitrary
+Python in CI on a pull request, which is precisely what the scanners exist to
+avoid — so `pytest.ini` keeps `testpaths = tests` and nothing widens it. A skill
+that needs a heavily tested body of logic is a sign the logic does not belong in
+a skill.
 
 **Every signature needs both tests.** One proving it fires on the bad case, one
 proving it *doesn't* fire on the legitimate near-miss. The second is the one that

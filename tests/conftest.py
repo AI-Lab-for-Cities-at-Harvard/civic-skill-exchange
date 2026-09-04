@@ -3,7 +3,10 @@ build_index.py only. Frontmatter validation moved to validator/ — see
 docs/DEVELOPMENT.md for why the split runs the way it does.
 
 Every test builds a throwaway skill on disk rather than reaching into skills/ —
-a test that depends on a real listing breaks the moment someone edits it.
+a test that depends on a real listing breaks the moment someone edits it, and
+twice it broke `main` on a deletion instead. That is no longer a convention:
+test_no_listing_coupling.py enforces it, across the TypeScript suites too. See
+"Testing conventions" in docs/DEVELOPMENT.md.
 """
 
 from __future__ import annotations

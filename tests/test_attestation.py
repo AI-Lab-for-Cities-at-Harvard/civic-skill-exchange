@@ -47,12 +47,18 @@ def repo(tmp_path):
 # The value it emits is the value the build compares against.
 
 
-def test_the_sha_is_the_one_the_build_derives():
+def test_the_sha_is_the_one_the_build_derives(repo, monkeypatch):
     """Two implementations of "which commit" is how an attestation comes to be
-    written against a value nothing checks."""
-    emitted = attestation.skill_sha(ROOT / "skills" / "civic-skills" / "generalize-skill")
-    assert emitted == build_index.head_sha(
-        build_index.ROOT / "skills" / "civic-skills" / "generalize-skill")
+    written against a value nothing checks.
+
+    Against a throwaway repository rather than a listed skill: this used to read
+    skills/civic-skills/generalize-skill, which made deleting that skill break
+    the suite (#122)."""
+    skill = repo / "skills" / "cityofx" / "permit-status-explainer"
+    monkeypatch.setattr(build_index, "ROOT", repo)
+
+    emitted = attestation.skill_sha(skill)
+    assert emitted == build_index.head_sha(skill)
     assert len(emitted) == 40
 
 
@@ -77,10 +83,12 @@ def test_the_attestation_expires_a_year_after_the_review():
     assert expires.year == reviewed.year + 1
 
 
-def test_what_it_emits_actually_promotes_the_skill():
+def test_what_it_emits_actually_promotes_the_skill(repo, monkeypatch):
     """The end of the chain: paste this into reviewed.yml and the build derives
     Reviewed. Anything less proves only that a file was written."""
-    skill = ROOT / "skills" / "civic-skills" / "generalize-skill"
+    skill = repo / "skills" / "cityofx" / "permit-status-explainer"
+    monkeypatch.setattr(build_index, "ROOT", repo)
+
     sha = attestation.skill_sha(skill)
     entry = yaml.safe_load(attestation.render(SKILL_ID, sha, notes="x"))[0]
 
