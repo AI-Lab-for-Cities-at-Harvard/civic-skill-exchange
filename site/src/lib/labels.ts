@@ -67,10 +67,8 @@ export const TIER_LABELS: Record<string, string> = {
  *  Only the author knows what data their skill touches or whether its output
  *  reaches a person's rights, so these are asked rather than derived — and
  *  asking them differently in two places is how one skill acquires two
- *  different answers. The submission form reads them from here;
- *  skills/civic-skills/submit-a-skill runs inside a coding agent and cannot
- *  import this module, so its SKILL.md carries the words and judgment.test.ts
- *  makes disagreement a build failure.
+ *  different answers, so the wording lives here rather than inline in the form.
+ *  Submit.test.tsx asserts the form renders what this holds.
  *
  *  These are the plain questions, not the display strings above:
  *  SENSITIVITY_LABELS renders a listing, this asks a submitter. */

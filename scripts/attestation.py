@@ -19,9 +19,9 @@ request, and leaves `notes` for the reviewer, because the note is the only part
 of an attestation that carries judgment. See docs/REVIEW.md.
 
 Usage:
-    attestation.py civic-skills/submit-a-skill
-    attestation.py civic-skills/submit-a-skill --notes "Read-only. No egress."
-    attestation.py civic-skills/submit-a-skill --reviewers "A N Other"
+    attestation.py civic-skills/plain-language-notice-rewriter
+    attestation.py civic-skills/plain-language-notice-rewriter --notes "Read-only. No egress."
+    attestation.py civic-skills/plain-language-notice-rewriter --reviewers "A N Other"
 """
 
 from __future__ import annotations
@@ -126,7 +126,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if "/" not in args.skill:
         parser.error("the skill id is {namespace}/{skill-name}, e.g. "
-                     "civic-skills/submit-a-skill")
+                     "civic-skills/plain-language-notice-rewriter")
     skill = ROOT / "skills" / args.skill
 
     try:

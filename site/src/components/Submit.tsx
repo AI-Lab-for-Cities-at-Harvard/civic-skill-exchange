@@ -72,8 +72,8 @@ const WHERE_LABELS: [string, string][] = [
   ["intl", "Outside the US"],
 ];
 
-/** The two judgment questions live in labels.ts, because submit-a-skill has to
- *  ask them in the same words and cannot import this component. */
+/** The two judgment questions live in labels.ts so their wording has one home
+ *  rather than being written inline here. */
 const DATA = JUDGMENT_QUESTIONS["civic.data-sensitivity"]!;
 const EFFECT = JUDGMENT_QUESTIONS["civic.human-review"]!;
 
