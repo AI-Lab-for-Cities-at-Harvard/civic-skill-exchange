@@ -28,7 +28,6 @@ metadata:
     elements are. It decides nothing: every output is a draft someone else has
     to read, approve, and send.
   civic.maintainer: "Civic Skills Registry maintainers"
-  civic.contact: "security@civic-skill-exchange.example"
   civic.affiliation: academic
   civic.deployment: none
 ---

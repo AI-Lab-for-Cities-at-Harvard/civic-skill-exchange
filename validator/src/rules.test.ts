@@ -21,7 +21,6 @@ function meta(over: Record<string, unknown> = {}): Record<string, unknown> {
     "civic.data-sensitivity": "none",
     "civic.human-review": "none",
     "civic.maintainer": "Test Suite",
-    "civic.contact": "test@example.com",
     "civic.affiliation": "individual",
     "civic.deployment": "none",
     ...over,
@@ -67,7 +66,6 @@ describe("checkFrontmatter — required fields", () => {
     "civic.data-sensitivity",
     "civic.human-review",
     "civic.maintainer",
-    "civic.contact",
     "civic.affiliation",
     "civic.deployment",
   ])("requires %s", (field) => {
@@ -417,5 +415,39 @@ describe("a secondary category", () => {
     expect(findings).toHaveLength(1);
     expect(findings[0]?.where).toBe("civic.category-secondary");
     expect(findings[0]?.message).toMatch(/same as|already/i);
+  });
+});
+
+/** civic.contact is gone (#95).
+ *
+ *  The namespace *is* a GitHub account and L1 proves the submitter owns it, so a
+ *  separately typed address was a second, less reliable copy of something the
+ *  registry already held — and the only field the index deliberately withheld,
+ *  which meant it was collected, stored, and never shown.
+ *
+ *  What a reviewer needs is a route that reaches the maintainer, and an issue or
+ *  a mention on the namespace's account cannot bounce or go stale independently
+ *  of the account. A route that avoids GitHub is the one thing lost, and
+ *  docs/SECURITY.md carries the registry's own reporting address for that.
+ */
+describe("a skill with no contact address", () => {
+  it("validates", () => {
+    const f = front({ metadata: meta({ "civic.contact": undefined }) });
+    delete (f.metadata as Record<string, unknown>)["civic.contact"];
+    expect(checkFrontmatter(f, ctx())).toEqual([]);
+  });
+
+  it("is not asked for it", () => {
+    const f = front({ metadata: meta({ "civic.contact": undefined }) });
+    delete (f.metadata as Record<string, unknown>)["civic.contact"];
+    const findings = checkFrontmatter(f, ctx());
+    expect(findings.map((x) => x.where)).not.toContain("civic.contact");
+  });
+
+  it("keeps one that is already there, rather than rejecting the listing", () => {
+    // An unknown civic.* key is quarantined, not rejected — a listing carrying
+    // the old field stays valid while it is migrated.
+    const f = front({ metadata: meta({ "civic.contact": "old@example.gov" }) });
+    expect(checkFrontmatter(f, ctx())).toEqual([]);
   });
 });

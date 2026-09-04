@@ -10,7 +10,6 @@ metadata:
   civic.data-sensitivity: none
   civic.human-review: none
   civic.maintainer: Santi Garces
-  civic.contact: test@test.org
   civic.affiliation: individual
   civic.deployment: personal
 ---

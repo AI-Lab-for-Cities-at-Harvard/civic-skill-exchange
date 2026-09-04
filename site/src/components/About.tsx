@@ -241,12 +241,11 @@ export function About({ skills = [] }: { skills?: Skill[] }) {
         <h3 className="h3">Who stands behind it</h3>
         <dl className="fields">
           <dt><code>civic.maintainer</code>, <code>civic.affiliation</code></dt>
-          <dd>A person or team, and what kind of organization they are.</dd>
-          <dt><code>civic.contact</code></dt>
           <dd>
-            How to reach them about a problem. Deliberately{" "}
-            <strong>not published</strong> in the index — it exists so a security
-            report can land, not to be harvested.
+            A person or team, and what kind of organization they are. There is
+            no separate contact field: the namespace is a GitHub account, so an
+            issue or a mention reaches whoever owns it, and that cannot go stale
+            independently of the account.
           </dd>
           <dt>
             <code>civic.deployment</code>, <code>civic.deployed-at</code>,{" "}

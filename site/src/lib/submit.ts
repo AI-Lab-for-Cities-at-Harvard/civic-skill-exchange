@@ -27,7 +27,6 @@ export interface Draft {
   useWhen: string;
   avoidWhen: string;
   maintainer: string;
-  contact: string;
   affiliation: string;
   deployment: string;
   deployedAt: string;
@@ -42,7 +41,7 @@ export const EMPTY_DRAFT: Draft = {
   author: "", name: "", description: "", license: "MIT", compatibility: "",
   tools: "", category: "", categorySecondary: "", jurisdiction: "", localization: "",
   dataSensitivity: "none", humanReview: "none", useWhen: "", avoidWhen: "",
-  maintainer: "", contact: "", affiliation: "", deployment: "none",
+  maintainer: "", affiliation: "", deployment: "none",
   deployedAt: "", deployedIn: "", deployedSince: "",
   sourceRepo: "", sourceCommit: "",
 };
@@ -76,7 +75,6 @@ export function toFields(draft: Draft): Record<string, string> {
     "civic.use-when": trim(draft.useWhen),
     "civic.avoid-when": trim(draft.avoidWhen),
     "civic.maintainer": trim(draft.maintainer),
-    "civic.contact": trim(draft.contact),
     "civic.affiliation": trim(draft.affiliation),
     "civic.deployment": trim(draft.deployment),
     "civic.deployed-at": trim(draft.deployedAt),
@@ -219,7 +217,7 @@ export function mailtoUrl(email: string, draft: Draft, yaml: string): string {
   const body =
     `A skill for the Civic Skill Exchange.\n\n` +
     `From: ${trim(draft.maintainer) || "(name)"}\n` +
-    `Contact: ${trim(draft.contact) || "(contact)"}\n\n` +
+    `GitHub: ${trim(draft.author) || "(username)"}\n\n` +
     `${yaml}\n` +
     `The skill body and any scripts are attached.\n`;
   // Built with encodeURIComponent rather than URLSearchParams: the latter

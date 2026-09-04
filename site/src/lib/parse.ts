@@ -65,7 +65,6 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
       useWhen: text(meta["civic.use-when"]),
       avoidWhen: text(meta["civic.avoid-when"]),
       maintainer: text(meta["civic.maintainer"]),
-      contact: text(meta["civic.contact"]),
       affiliation: text(meta["civic.affiliation"]),
       deployment: text(meta["civic.deployment"]) || EMPTY_DRAFT.deployment,
       deployedAt: text(meta["civic.deployed-at"]),

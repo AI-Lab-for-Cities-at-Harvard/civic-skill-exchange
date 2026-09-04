@@ -8,6 +8,8 @@ The manual review determines if the skill supports civic/ public benefit.
 
 You need, on one screen: the scanner findings, the full diff of every file under `scripts/`, the rendered `SKILL.md`, and this list.
 
+**Reaching the maintainer** is an issue or a mention on the namespace's GitHub account. There is no contact field to check: it was removed in [#95](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/95) because L1 already proves the submitter owns that account, and an address typed into frontmatter can bounce or go stale while the account does not. If the account itself is gone, that is disqualifying — see [TIERS.md](TIERS.md). For a security problem, do not open an issue: follow [SECURITY.md](SECURITY.md).
+
 **One reader: the AI Lab for Cities at Harvard.** The rule this replaces asked for two people from separate organizations, working independently and not comparing notes until both had finished — a rule about independence *between* reviewers, which has nothing left to say when there is one. [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) records what that gives up.
 
 The checklist below is unchanged. What changed is who works it and what the badge may therefore claim, and the honest way to hold the difference is to work the list more carefully rather than faster. There is no second pass behind this one.

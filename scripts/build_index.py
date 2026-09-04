@@ -238,8 +238,11 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "signatures": sorted({f["signature"] for f in (scan or {}).get("flags", [])}),
     } if scan else {"last_run": None, "blocking": None, "flags": None, "signatures": []}
 
-    # civic.contact is deliberately omitted from the public index. It exists so a
-    # maintainer can be reached about a security report, not to be harvested.
+    # Nothing here is withheld. civic.contact used to be — it existed so a
+    # security report could land, and publishing it in a static JSON file was
+    # handing it to scrapers — and #95 removed the field instead: the namespace
+    # is a GitHub account, so the route to a maintainer is already public and
+    # already unharvestable.
     return entry
 
 

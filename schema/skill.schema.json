@@ -61,7 +61,6 @@
         "civic.data-sensitivity",
         "civic.human-review",
         "civic.maintainer",
-        "civic.contact",
         "civic.affiliation",
         "civic.deployment"
       ],
@@ -216,12 +215,6 @@
           "minLength": 2,
           "maxLength": 200,
           "description": "Organization or individual accountable for the skill."
-        },
-        "civic.contact": {
-          "type": "string",
-          "minLength": 5,
-          "maxLength": 200,
-          "description": "A working address for security reports. A contact that bounces disqualifies a skill from the Reviewed tier."
         },
         "civic.affiliation": {
           "type": "string",
