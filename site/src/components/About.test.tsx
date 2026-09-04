@@ -103,3 +103,75 @@ describe("About — submitting", () => {
       .toMatch(/GitHub account/i);
   });
 });
+
+/** The section navigation (#136).
+ *
+ *  Eight sections in a horizontal wrapped list read as an undifferentiated row
+ *  of links: no hierarchy, no indication of where the reader is, and a
+ *  different arrangement at every breakpoint. The design system has no
+ *  table-of-contents primitive to copy — the nearest are vertical rails that
+ *  navigate *between* pages — so this borrows the shape without pretending
+ *  there is one.
+ *
+ *  Grouped rather than railed. A rail would cost the page its single column and
+ *  need a separate collapse on a phone, which is more risk than the problem
+ *  warrants; grouping fixes the hierarchy and the wrapping, which is what was
+ *  actually wrong.
+ */
+describe("About — the section navigation", () => {
+  it("still reaches every section at its own URL", () => {
+    render(<About skills={[]} />);
+    const toc = screen.getByTestId("about-toc");
+    for (const id of [
+      "what-this-is", "tiers", "localization", "metadata",
+      "submitting", "checks", "review", "beta",
+    ]) {
+      expect(toc.querySelector(`a[href="#/about/${id}"]`), id).not.toBeNull();
+    }
+  });
+
+  it("groups them, so the substance and the caveats are not one flat row", () => {
+    render(<About skills={[]} />);
+    const groups = screen.getByTestId("about-toc").querySelectorAll("ul");
+    expect(groups.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("labels each group visibly, not only to a screen reader", () => {
+    const { container } = render(<About skills={[]} />);
+    const labels = container.querySelectorAll(".toc__group-label");
+    expect(labels.length).toBeGreaterThanOrEqual(2);
+    for (const l of labels) expect(l.textContent?.trim()).toBeTruthy();
+  });
+
+  it("marks the section the reader is in", () => {
+    render(<About skills={[]} section="metadata" />);
+    const current = screen.getByTestId("about-toc")
+      .querySelector('[aria-current="true"]');
+    expect(current).toHaveAttribute("href", "#/about/metadata");
+  });
+
+  it("marks exactly one, so nothing else reads as current", () => {
+    render(<About skills={[]} section="beta" />);
+    expect(screen.getByTestId("about-toc")
+      .querySelectorAll('[aria-current="true"]')).toHaveLength(1);
+  });
+
+  it("marks nothing when the reader arrived at the page itself", () => {
+    render(<About skills={[]} />);
+    expect(screen.getByTestId("about-toc")
+      .querySelector('[aria-current="true"]')).toBeNull();
+  });
+
+  it("marks nothing for a section that does not exist", () => {
+    // parseRoute lets any slug through; it reaches getElementById and misses.
+    render(<About skills={[]} section="not-a-section" />);
+    expect(screen.getByTestId("about-toc")
+      .querySelector('[aria-current="true"]')).toBeNull();
+  });
+
+  it("says what it is, visibly", () => {
+    const { container } = render(<About skills={[]} />);
+    expect(container.querySelector(".toc__title")?.textContent)
+      .toMatch(/on this page/i);
+  });
+});

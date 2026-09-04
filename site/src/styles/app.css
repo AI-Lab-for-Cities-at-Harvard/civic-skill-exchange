@@ -760,13 +760,40 @@ a:hover { color: var(--c-spot); }
   background: var(--c-bg-raised);
   max-width: none !important;
 }
+.toc__title {
+  margin: 0 0 var(--gap-3);
+  font-size: var(--t-xs); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--c-text-lighter);
+}
+/* The groups sit side by side where there is room and stack where there is
+   not. Within a group the list is vertical, which is what stops eight items of
+   uneven length rearranging themselves at every breakpoint (#136). */
+.toc__groups {
+  display: grid; gap: var(--gap-4) var(--space-xs);
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+}
+.toc__group-label {
+  margin: 0 0 var(--gap-2);
+  font-size: var(--t-sm); font-weight: 600; color: var(--c-text);
+}
 .toc__list {
   list-style: none; margin: 0; padding: 0;
-  display: flex; flex-wrap: wrap; gap: var(--gap-2) var(--gap-4);
+  display: flex; flex-direction: column; gap: var(--gap-1);
   font-size: var(--t-sm);
 }
-.toc__list a { color: var(--c-text-light); text-decoration: none; }
-.toc__list a:hover { color: var(--c-spot); text-decoration: underline; }
+.toc__link {
+  color: var(--c-text-light); text-decoration: none;
+  display: inline-block; padding: 0.1em 0;
+}
+.toc__link:hover { color: var(--c-spot); text-decoration: underline; }
+/* Current is weight and a rule, not colour alone — the same reasoning the tier
+   pills follow, and it survives greyscale. */
+.toc__link--current {
+  color: var(--c-text); font-weight: 600;
+  border-left: 2px solid var(--c-spot);
+  margin-left: -0.6rem; padding-left: 0.45rem;
+}
 
 /* The metadata reference. A description list, because that is what it is —
  * and the browser gives the term/definition relationship for free. */

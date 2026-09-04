@@ -259,8 +259,11 @@ def test_the_published_criteria_say_what_they_are_not():
 
 
 def test_the_section_is_reachable_at_its_own_url():
+    """Asserts the behaviour rather than the shape of the array holding it —
+    the sections were regrouped in #136 and the literal moved."""
     about = _text("site/src/components/About.tsx")
-    assert '["review", ' in about, "the section is not in the table of contents"
+    assert '"review"' in about, "the section is not in the table of contents"
+    assert 'id="review"' in about, "the section itself is gone"
 
 
 def test_the_site_stops_calling_the_pin_a_content_hash():

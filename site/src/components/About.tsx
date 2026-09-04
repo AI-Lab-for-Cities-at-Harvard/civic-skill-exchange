@@ -9,16 +9,38 @@ import type { Skill } from "../lib/types";
 
 const REPO = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
-const SECTIONS: [string, string][] = [
-  ["what-this-is", "What this is"],
-  ["tiers", "Two tiers"],
-  ["localization", "Generalized and localized"],
-  ["metadata", "The civic metadata"],
-  ["submitting", "How to submit"],
-  ["checks", "What we check"],
-  ["review", "What a review checks for"],
-  ["beta", "What Beta means"],
+/** The sections, in two groups (#136).
+ *
+ *  Eight in one flat horizontal row read as an undifferentiated set of links,
+ *  and nothing said which of them were the substance and which were the
+ *  caveats a reader wants *findable* rather than first. Grouped rather than
+ *  railed: the design system's nearest in-page navigation is a vertical rail,
+ *  but a rail would cost this page its single column and need its own collapse
+ *  on a phone — more risk than the problem warrants. Grouping fixes the
+ *  hierarchy and the unpredictable wrapping, which is what was wrong. */
+const GROUPS: { label: string; sections: [string, string][] }[] = [
+  {
+    label: "What this is",
+    sections: [
+      ["what-this-is", "The registry"],
+      ["tiers", "Two tiers"],
+      ["localization", "Generalized and localized"],
+      ["metadata", "The civic metadata"],
+    ],
+  },
+  {
+    label: "What to expect",
+    sections: [
+      ["submitting", "How to submit"],
+      ["checks", "What we check"],
+      ["review", "What a review checks for"],
+      ["beta", "What Beta means"],
+    ],
+  },
 ];
+
+/** Every section id, for anything that needs the flat list. */
+const SECTION_IDS = GROUPS.flatMap((g) => g.sections.map(([id]) => id));
 
 /** The vocabulary tables, built from the same maps the facets and the form use.
  *  Written out by hand once and they would drift the first time a category is
@@ -43,18 +65,37 @@ function skillLink(skills: Skill[], name: string) {
   return match ? skillHref(match.namespace, match.name) : null;
 }
 
-export function About({ skills = [] }: { skills?: Skill[] }) {
+export function About(
+  { skills = [], section }: { skills?: Skill[]; section?: string },
+) {
   const generalize = skillLink(skills, "generalize-skill");
   const localize = skillLink(skills, "localize-skill");
+  // parseRoute lets any slug through — it reaches getElementById and misses —
+  // so an unknown one marks nothing rather than marking the first.
+  const current = section && SECTION_IDS.includes(section) ? section : null;
 
   return (
     <article className="prose">
       <nav className="toc" aria-label="On this page" data-testid="about-toc">
-        <ul className="toc__list">
-          {SECTIONS.map(([id, label]) => (
-            <li key={id}><a href={aboutHref(id)}>{label}</a></li>
+        <p className="toc__title">On this page</p>
+        <div className="toc__groups">
+          {GROUPS.map((group) => (
+            <div className="toc__group" key={group.label}>
+              <p className="toc__group-label">{group.label}</p>
+              <ul className="toc__list">
+                {group.sections.map(([id, label]) => (
+                  <li key={id}>
+                    <a href={aboutHref(id)}
+                      className={id === current ? "toc__link toc__link--current" : "toc__link"}
+                      aria-current={id === current ? "true" : undefined}>
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       </nav>
 
       <section className="prose__block" id="what-this-is">
