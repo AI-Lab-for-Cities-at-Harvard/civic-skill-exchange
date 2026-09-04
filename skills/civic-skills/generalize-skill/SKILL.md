@@ -29,7 +29,6 @@ metadata:
     is genuinely local or merely looks it, which is why anything uncertain is
     reported rather than removed.
   civic.maintainer: "AI Lab for Cities at Harvard"
-  civic.contact: "security@civic-skill-exchange.example"
   civic.affiliation: academic
   civic.deployment: none
 ---

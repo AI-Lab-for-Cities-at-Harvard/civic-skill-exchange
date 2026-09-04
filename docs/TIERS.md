@@ -86,7 +86,7 @@ A skill leaves Reviewed when any of these happen. The first is automatic:
 - **The attestation expires** at one year.
 - **A new scan finding appears** at L2, or at L3–L4 with maintainer judgment.
 - **The Lab withdraws** its sign-off, for any reason.
-- **The maintainer contact goes stale.** A `civic.contact` that bounces means there is nobody to reach about a security report, which is disqualifying on its own.
+- **The maintainer becomes unreachable.** A namespace whose GitHub account is deleted or suspended leaves nobody to reach about a security report, which is disqualifying on its own. There is no separate contact field to go stale — see [#95](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/95).
 
 Demotion is not a punishment and should not be written up as one. It is the mechanism working. The issue template for demotion should say so plainly, because a registry where demotion feels like an accusation is a registry where maintainers avoid demoting.
 
