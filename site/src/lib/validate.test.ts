@@ -7,14 +7,14 @@ import {
   checkStructureCore, checkPathSafety, ALLOWED_SUFFIXES, MAX_FILES_PER_SKILL,
 } from "@civic-skill-exchange/validator";
 
-const CATEGORIES = ["budget-finance"];
+const CATEGORIES = ["finance"];
 
 const front = {
   name: "example-skill",
   description: "An example skill long enough to clear the minimum description length.",
   license: "MIT",
   metadata: {
-    "civic.category": "budget-finance",
+    "civic.category": "finance",
     "civic.jurisdiction": "generic",
     "civic.data-sensitivity": "none",
     "civic.human-review": "none",

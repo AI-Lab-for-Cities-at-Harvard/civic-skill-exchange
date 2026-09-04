@@ -13,7 +13,7 @@ compatibility: >
   local files only.
 allowed-tools: Read, Write, Grep, Glob
 metadata:
-  civic.category: open-data-publishing
+  civic.category: ai-tools
   civic.jurisdiction: generic
   civic.localization: generalized
   civic.data-sensitivity: none

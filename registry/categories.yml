@@ -5,78 +5,109 @@
 # that at least two existing skills are miscategorized without it. Splitting a
 # category later is easy; merging two that never should have been separate is not.
 #
-# scripts/validate.py enforces these ids at runtime, so this file is the single
-# source of truth for the vocabulary.
+# validator/src/rules.ts enforces these ids at runtime, so this file is the single
+# source of truth for the vocabulary. Nothing else writes the list down: the
+# schema points here with x-vocabulary, site/src/lib/labels.ts is held to it by
+# labels.test.ts, and the facets, the About table and both marketplace manifests
+# are generated from it.
+#
+# Two axes on purpose (#102). The first six classify by the function inside the
+# organization — whose desk the work is on — which is what makes internal work
+# listable at all. The rest classify by the public service being delivered, which
+# is what a browsing adopter actually looks for, and is where the stakes are
+# highest. A skill can carry one of each: civic.category is the primary and
+# civic.category-secondary is optional.
 
 categories:
-  - id: constituent-services
-    label: Constituent Services & Casework
+  # --- By function inside the organization ---------------------------------- #
+  - id: policy
+    label: Policy
     description: >
-      Intake, triage, correspondence, case notes, and service requests — the
+      Analysis, research, briefing, and legislative work — the practice of
+      working out what an organization should do and writing it up.
+
+  - id: data-analysis
+    label: Data Analysis
+    description: >
+      Analysing the organization's own data: performance measurement,
+      benchmarking against peers, and reporting.
+
+  - id: communications
+    label: Communications
+    description: >
+      Outbound work — notices, press, translation, plain language, and
+      accessibility. What the organization says to people.
+
+  - id: finance
+    label: Finance
+    description: >
+      Budget, accounting, revenue, and procurement. Procurement sits here
+      deliberately rather than in its own category; see #102.
+
+  - id: hr
+    label: HR
+    description: >
+      Hiring, onboarding, workforce planning, and labour relations.
+
+  - id: technology
+    label: Technology
+    description: >
+      The organization's own IT: operations, systems, helpdesk, and
+      integration. Not skills about AI work — those are AI Tools.
+
+  # --- By public service delivered ------------------------------------------ #
+  - id: constituent-services
+    label: Constituent Services
+    description: >
+      Inbound work — casework, 311, correspondence, and service requests. The
       work of responding to individual residents.
 
   - id: benefits-eligibility
     label: Benefits & Eligibility
     description: >
-      Screening, eligibility rules, application support, notices, and appeals
-      for public benefit programs.
+      Determinations about what a person is entitled to. The highest-stakes
+      work in the catalogue, and the reason civic.human-review exists.
 
   - id: permitting-licensing
     label: Permitting & Licensing
     description: >
-      Applications, plan review, inspections, status explanation, and renewal
-      for permits and licenses.
+      Applications, inspections, approvals, and renewals, with their own
+      workflows and statutory deadlines.
 
-  - id: procurement-contracting
-    label: Procurement & Contracting
+  - id: legal
+    label: Legal
     description: >
-      Solicitations, scopes of work, bid evaluation, vendor questions, and
-      contract administration.
+      City attorney practice — contracts, ordinances, and litigation support.
+      Distinct from Policy, which is analysis rather than practice.
 
-  - id: budget-finance
-    label: Budget & Finance
+  - id: public-records
+    label: Public Records & Transparency
     description: >
-      Budget preparation and presentation, financial reporting, grants
-      accounting, and fiscal analysis.
+      Records requests, FOIA processing, redaction support, and open data
+      publishing. A legal obligation with deadlines.
 
-  - id: public-records-foia
-    label: Public Records & FOIA
+  - id: operations
+    label: Operations & Service Delivery
     description: >
-      Records requests, responsive-document review, redaction support, and
-      response letters.
-
-  - id: open-data-publishing
-    label: Open Data & Publishing
-    description: >
-      Dataset preparation, metadata, data dictionaries, quality checks, and
-      publication workflows.
-
-  - id: policy-legislative
-    label: Policy & Legislative Analysis
-    description: >
-      Bill and ordinance analysis, fiscal notes, comparative policy research,
-      and briefing material.
-
-  - id: grants-development
-    label: Grants & Development
-    description: >
-      Opportunity research, narrative drafting, budget justification, and
-      reporting — for both applicants and funders.
+      Public works, sanitation, transit, and facilities — the largest headcount
+      in most organizations.
 
   - id: emergency-public-safety
     label: Emergency Management & Public Safety
     description: >
-      Incident documentation, public information, after-action review, and
-      preparedness planning.
+      Preparedness, response, and policing and fire administration. A different
+      tempo and a different risk posture from the rest of this list.
 
-  - id: plain-language-accessibility
-    label: Plain Language & Accessibility
+  - id: planning-land-use
+    label: Planning & Land Use
     description: >
-      Rewriting government text for readability, plain-language review, and
-      accessibility remediation.
+      Zoning, development review, and parcel-level work.
 
-  - id: language-access
-    label: Translation & Language Access
+  # --- The exchange's own work ---------------------------------------------- #
+  - id: ai-tools
+    label: AI Tools
     description: >
-      Translation support, terminology consistency, and language-access
-      compliance.
+      Skills whose subject is AI work itself — generalizing a skill, localizing
+      one, evaluating a prompt. Defined by what it operates on, not by the fact
+      that it uses AI: every skill here does that. A skill that uses AI to
+      rewrite a permit notice is Communications.

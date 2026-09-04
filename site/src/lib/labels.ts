@@ -2,18 +2,21 @@
  *  between facets, cards, and detail views. */
 
 export const CATEGORY_LABELS: Record<string, string> = {
-  "constituent-services": "Constituent Services & Casework",
+  policy: "Policy",
+  "data-analysis": "Data Analysis",
+  communications: "Communications",
+  finance: "Finance",
+  hr: "HR",
+  technology: "Technology",
+  "constituent-services": "Constituent Services",
   "benefits-eligibility": "Benefits & Eligibility",
   "permitting-licensing": "Permitting & Licensing",
-  "procurement-contracting": "Procurement & Contracting",
-  "budget-finance": "Budget & Finance",
-  "public-records-foia": "Public Records & FOIA",
-  "open-data-publishing": "Open Data & Publishing",
-  "policy-legislative": "Policy & Legislative Analysis",
-  "grants-development": "Grants & Development",
+  legal: "Legal",
+  "public-records": "Public Records & Transparency",
+  operations: "Operations & Service Delivery",
   "emergency-public-safety": "Emergency Management & Public Safety",
-  "plain-language-accessibility": "Plain Language & Accessibility",
-  "language-access": "Translation & Language Access",
+  "planning-land-use": "Planning & Land Use",
+  "ai-tools": "AI Tools",
 };
 
 export const JURISDICTION_LABELS: Record<string, string> = {

@@ -14,7 +14,8 @@ import { parse } from "yaml";
 import {
   AFFILIATIONS, DEPLOYED_IN_PATTERN, DEPLOYED_SINCE_PATTERN, DEPLOYMENT_DETAILS,
   DEPLOYMENTS, GENERALIZED_OK_JURISDICTIONS, HUMAN_REVIEW, JURISDICTIONS,
-  FIT_MAX_LENGTH, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS, SENSITIVITIES,
+  FIT_MAX_LENGTH, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS,
+  SECONDARY_CATEGORY, SENSITIVITIES,
   SPEC_FIELDS,
 } from "./rules";
 
@@ -180,5 +181,25 @@ describe("the source fields", () => {
     expect(new RegExp(repo!).test("https://github.com/owner/name")).toBe(false);
     expect(new RegExp(commit!).test("a".repeat(40))).toBe(true);
     expect(new RegExp(commit!).test("a".repeat(7))).toBe(false);
+  });
+});
+
+/** The optional second category (#102). The schema is read by a program as well
+ *  as a person, so the field has to be declared and has to point at the
+ *  vocabulary rather than freezing an enum. */
+describe("the secondary category", () => {
+  it("is declared and optional", () => {
+    expect(metaProps[SECONDARY_CATEGORY]).toBeDefined();
+    expect(schema.properties.metadata.required).not.toContain(SECONDARY_CATEGORY);
+  });
+
+  it("reads its values from the same vocabulary as the primary", () => {
+    expect(metaProps[SECONDARY_CATEGORY]?.["x-vocabulary"]).toBe("categories");
+    expect(metaProps[SECONDARY_CATEGORY]?.enum).toBeUndefined();
+  });
+
+  it("is capped like the primary, so neither can carry a sentence", () => {
+    expect(metaProps[SECONDARY_CATEGORY]?.maxLength)
+      .toBe(metaProps["civic.category"]?.maxLength);
   });
 });

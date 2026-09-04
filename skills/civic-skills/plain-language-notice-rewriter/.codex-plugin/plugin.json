@@ -9,6 +9,6 @@
   "interface": {
     "displayName": "Plain Language Notice Rewriter",
     "shortDescription": "Rewrites a government notice template into plain language at a target reading level, preserving every legally required…",
-    "category": "Plain Language & Accessibility"
+    "category": "Communications"
   }
 }

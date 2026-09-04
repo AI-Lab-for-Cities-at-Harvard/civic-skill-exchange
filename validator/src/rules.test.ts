@@ -8,7 +8,7 @@ import {
 } from "./rules";
 import type { Finding, Frontmatter, RuleContext } from "./types";
 
-const CATEGORIES = ["budget-finance", "benefits-eligibility", "plain-language-accessibility"];
+const CATEGORIES = ["finance", "benefits-eligibility", "communications"];
 
 function ctx(over: Partial<RuleContext> = {}): RuleContext {
   return { categories: CATEGORIES, ...over };
@@ -16,7 +16,7 @@ function ctx(over: Partial<RuleContext> = {}): RuleContext {
 
 function meta(over: Record<string, unknown> = {}): Record<string, unknown> {
   return {
-    "civic.category": "budget-finance",
+    "civic.category": "finance",
     "civic.jurisdiction": "generic",
     "civic.data-sensitivity": "none",
     "civic.human-review": "none",
@@ -383,5 +383,39 @@ describe("checkSource", () => {
   it("allows a repository without a commit", () => {
     // Worth less, and still worth recording — it names where to look.
     expect(checkSource({ "civic.source-repo": "owner/name" })).toEqual([]);
+  });
+});
+
+/** A skill can sit in two places in one vocabulary (#102). Two explicit fields
+ *  rather than an ordered list: the cap is structural, there is no parsing, and
+ *  which one is primary is never in question — the marketplace manifests need
+ *  exactly one value and take civic.category.
+ *
+ *  Both are validated against the same vocabulary, because a second category
+ *  that nothing browses by is worse than none. */
+describe("a secondary category", () => {
+  it("is optional — a skill that sits in one place says so by omission", () => {
+    expect(checkFrontmatter(front(), ctx())).toEqual([]);
+  });
+
+  it("is accepted when it is in the vocabulary", () => {
+    const f = front({ metadata: meta({ "civic.category-secondary": "benefits-eligibility" }) });
+    expect(checkFrontmatter(f, ctx())).toEqual([]);
+  });
+
+  it("is rejected when it is not, with the vocabulary named", () => {
+    const f = front({ metadata: meta({ "civic.category-secondary": "moon-permits" }) });
+    const findings = checkFrontmatter(f, ctx());
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe("civic.category-secondary");
+    expect(findings[0]?.message).toContain("benefits-eligibility");
+  });
+
+  it("cannot repeat the primary, which claims nothing and doubles a facet", () => {
+    const f = front({ metadata: meta({ "civic.category-secondary": "finance" }) });
+    const findings = checkFrontmatter(f, ctx());
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe("civic.category-secondary");
+    expect(findings[0]?.message).toMatch(/same as|already/i);
   });
 });

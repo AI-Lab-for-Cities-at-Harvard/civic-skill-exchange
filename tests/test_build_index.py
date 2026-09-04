@@ -11,6 +11,7 @@ import zipfile
 from datetime import date, timedelta
 
 import build_index
+import conftest
 from conftest import VALID_FRONTMATTER
 
 SHA = "a" * 40
@@ -395,3 +396,35 @@ def test_the_published_schema_is_the_repository_schema_byte_for_byte(tmp_path, m
 
     source = build_index.ROOT / "schema" / "skill.schema.json"
     assert (out / "skill.schema.json").read_bytes() == source.read_bytes()
+
+
+# --------------------------------------------------------------------------- #
+# The second category (#102).
+#
+# index.json is a published API, so the field has to appear whether or not a
+# skill sets it — a key that comes and goes makes every consumer defensive.
+
+
+def test_the_entry_carries_the_secondary_category_when_declared(make_skill):
+    skill = make_skill(overrides={"metadata": dict(
+        conftest.VALID_FRONTMATTER["metadata"],
+        **{"civic.category-secondary": "benefits-eligibility"})})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["category"] == "finance"
+    assert entry["category_secondary"] == "benefits-eligibility"
+
+
+def test_the_entry_carries_the_key_even_when_absent(make_skill):
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["category_secondary"] is None
+
+
+def test_the_plugin_manifest_takes_the_primary_only(make_skill):
+    """A plugin manifest carries exactly one category, in Claude and in Codex."""
+    skill = make_skill(overrides={"metadata": dict(
+        conftest.VALID_FRONTMATTER["metadata"],
+        **{"civic.category-secondary": "benefits-eligibility"})})
+    import build_marketplace
+
+    manifest = build_marketplace.codex_plugin(skill)
+    assert manifest["interface"]["category"] == "Finance"

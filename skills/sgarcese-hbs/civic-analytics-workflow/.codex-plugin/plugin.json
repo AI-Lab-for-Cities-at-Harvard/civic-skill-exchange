@@ -9,6 +9,6 @@
   "interface": {
     "displayName": "Civic Analytics Workflow",
     "shortDescription": "Orchestrator for local government policy analysis and civic innovation",
-    "category": "Open Data & Publishing"
+    "category": "Policy"
   }
 }

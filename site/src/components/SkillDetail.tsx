@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DownloadBox } from "./DownloadBox";
+import { categoriesOf } from "../lib/filter";
 import { TierBadge, LabBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
 import {
   label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS,
@@ -167,7 +168,10 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           <section className="facts" aria-labelledby="facts-heading">
             <h2 className="h3" id="facts-heading">At a glance</h2>
             <dl>
-              <div><dt>Category</dt><dd>{label(CATEGORY_LABELS, detail.category)}</dd></div>
+              <div>
+                <dt>{detail.category_secondary ? "Categories" : "Category"}</dt>
+                <dd>{categoriesOf(detail).map((c) => label(CATEGORY_LABELS, c)).join(" · ") || "—"}</dd>
+              </div>
               <div><dt>Jurisdiction</dt><dd>{label(JURISDICTION_LABELS, detail.jurisdiction)}</dd></div>
               {detail.localization && (
                 <div><dt>Portability</dt><dd>{label(LOCALIZATION_LABELS, detail.localization)}</dd></div>

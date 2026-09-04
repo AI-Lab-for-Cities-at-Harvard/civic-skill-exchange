@@ -154,7 +154,7 @@ def test_the_category_is_the_readable_label(make_skill):
     label, so it is read rather than restated."""
     root = make_skill().parents[2]
     plugin = build_marketplace.build_codex(root)["plugins"][0]
-    assert plugin["category"] == "Budget & Finance"
+    assert plugin["category"] == "Finance"
 
 
 def test_a_skill_with_no_category_still_lists(make_skill):
@@ -184,7 +184,7 @@ def test_the_plugin_manifest_carries_what_codex_shows(make_skill):
     assert m["description"].startswith("An example skill")
     assert m["license"] == "MIT"
     assert m["interface"]["displayName"]
-    assert m["interface"]["category"] == "Budget & Finance"
+    assert m["interface"]["category"] == "Finance"
 
 
 def test_no_version_is_invented(make_skill):

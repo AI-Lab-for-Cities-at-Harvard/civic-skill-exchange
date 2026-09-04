@@ -324,3 +324,21 @@ describe("the upload lands the folder, not a folder inside it", () => {
     expect(url.match(/permit-status/g)).toBeNull();
   });
 });
+
+/** The second category (#102). Empty means the skill sits in one place, and an
+ *  empty string must not reach the frontmatter as a value — a key present and
+ *  blank fails validation for a field the author deliberately left alone. */
+describe("the second category", () => {
+  it("is carried into the frontmatter when chosen", () => {
+    const yaml = toYaml(toFrontmatter(draft({
+      category: "communications", categorySecondary: "constituent-services",
+    })));
+    expect(yaml).toContain('civic.category: "communications"');
+    expect(yaml).toContain('civic.category-secondary: "constituent-services"');
+  });
+
+  it("is left out entirely when it was not chosen", () => {
+    expect(toYaml(toFrontmatter(draft({ category: "communications" }))))
+      .not.toContain("civic.category-secondary");
+  });
+});

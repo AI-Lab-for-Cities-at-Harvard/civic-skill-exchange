@@ -22,9 +22,9 @@ describe("SkillCard", () => {
   });
 
   it("puts category and jurisdiction on one meta line", () => {
-    render(<SkillCard skill={makeSkill({ category: "budget-finance", jurisdiction: "us-local" })} />);
+    render(<SkillCard skill={makeSkill({ category: "finance", jurisdiction: "us-local" })} />);
     const meta = screen.getByTestId("card-meta");
-    expect(meta).toHaveTextContent("Budget & Finance");
+    expect(meta).toHaveTextContent("Finance");
     expect(meta).toHaveTextContent("US — local");
   });
 
