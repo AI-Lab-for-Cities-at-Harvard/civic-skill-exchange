@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { DownloadBox } from "./DownloadBox";
 import { History } from "./History";
-import { categoriesOf } from "../lib/filter";
+import { categoriesOf, scopesOf } from "../lib/filter";
 import { TierBadge, LabBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
 import {
-  label, CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS,
+  label, CATEGORY_LABELS, SCOPE_LABELS, SENSITIVITY_LABELS,
   DEPLOYMENT_LABELS, LOCALIZATION_LABELS,
 } from "../lib/labels";
 import { addFieldsHref } from "../lib/route";
@@ -173,7 +173,16 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                 <dt>{detail.category_secondary ? "Categories" : "Category"}</dt>
                 <dd>{categoriesOf(detail).map((c) => label(CATEGORY_LABELS, c)).join(" · ") || "—"}</dd>
               </div>
-              <div><dt>Jurisdiction</dt><dd>{label(JURISDICTION_LABELS, detail.jurisdiction)}</dd></div>
+              <div>
+                <dt>{detail.scope_secondary ? "Levels" : "Level"}</dt>
+                <dd>{scopesOf(detail).map((v) => label(SCOPE_LABELS, v)).join(" · ") || "—"}</dd>
+              </div>
+              {detail.jurisdiction && (
+                <div>
+                  <dt>Written for</dt>
+                  <dd>{detail.jurisdiction}</dd>
+                </div>
+              )}
               {detail.localization && (
                 <div><dt>Portability</dt><dd>{label(LOCALIZATION_LABELS, detail.localization)}</dd></div>
               )}

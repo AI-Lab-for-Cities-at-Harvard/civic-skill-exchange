@@ -61,7 +61,8 @@ compatibility: "Requires no network access and no credentials."
 allowed-tools: Read, Grep
 metadata:
   civic.category: permitting-licensing
-  civic.jurisdiction: us-local
+  civic.scope: municipal
+  civic.jurisdiction: "US-MA / Boston"
   civic.data-sensitivity: none
   civic.human-review: advisory-only
   civic.use-when: >
@@ -102,7 +103,9 @@ metadata:
 | `civic.category` | one of the [category vocabulary](docs/ARCHITECTURE.md#categories) | Closed list. Propose additions in a separate PR. |
 | `version` | `MAJOR.MINOR` or `MAJOR.MINOR.PATCH` | Optional, unprefixed, and your own claim — nothing checks it and it must not be `v`-prefixed. The registry records when a skill arrived and last changed from git, so this is only for saying "this is not what you adopted last year". |
 | `civic.category-secondary` | one of the same vocabulary | Optional. The other axis — the list mixes function inside the organization with public service delivered, and many skills belong to one of each. Must differ from `civic.category`. |
-| `civic.jurisdiction` | `us-local`, `us-state`, `us-federal`, `intl`, `generic` | Who this is shaped for. `generic` means no jurisdiction assumptions. |
+| `civic.scope` | `any`, `municipal`, `regional`, `national`, `supranational` | What kind of government body it is written for. `any` is explicit, not implied by leaving it out. Country-neutral: `regional` covers a state, province, prefecture or canton. |
+| `civic.scope-secondary` | the same values | Optional. A second level, when the skill genuinely serves two. Cannot repeat the primary or be paired with `any`. |
+| `civic.jurisdiction` | ISO 3166: `US-VT`, `US-MA / Boston` | Optional. The specific place, set only when the skill carries its rules, forms or deadlines — most skills leave it blank. A `generalized` skill never has one. Distinct from `civic.deployed-in`, which is where an organization that used it operates. |
 | `civic.data-sensitivity` | `none`, `pii`, `protected` | What the skill is expected to touch. `protected` covers health, benefits, immigration, criminal justice, and anything else with a statutory regime. |
 | `civic.human-review` | `none`, `advisory-only`, `decision-support` | Whether output affects a person's rights, benefits, or legal standing. |
 | `civic.use-when` | free text, ≤500 | Optional. When the skill earns its place. Plain text — the site renders it as text, never as markdown. |

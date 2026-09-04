@@ -1,4 +1,4 @@
-import { categoryCounts, facetCounts } from "../lib/filter";
+import { categoryCounts, facetCounts, scopeCounts } from "../lib/filter";
 import { label } from "../lib/labels";
 import type { Filters, Skill } from "../lib/types";
 
@@ -18,12 +18,13 @@ interface FacetProps {
 export function Facet({
   legend, field, filterKey, labels, skills, filters, onChange, note,
 }: FacetProps) {
-  // Category is the one facet that spans two columns: a skill can name a
-  // second one on the other axis (#102), and filtering finds it under either.
-  // Handled here rather than by the caller so a facet cannot be built with
-  // counts that disagree with what selecting it returns.
-  const counts = field === "category"
-    ? categoryCounts(skills)
+  // Two facets span two columns rather than one: a skill can name a second
+  // category on the other axis (#102) and a second scope when it serves two
+  // levels (#67), and filtering finds it under either. Handled here rather
+  // than by the caller so a facet cannot be built with counts that disagree
+  // with what selecting it returns.
+  const counts = field === "category" ? categoryCounts(skills)
+    : field === "scope" ? scopeCounts(skills)
     : facetCounts(skills, field);
   const values = Object.keys(counts).sort((a, b) =>
     label(labels, a).localeCompare(label(labels, b)),

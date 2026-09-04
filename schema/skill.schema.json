@@ -57,7 +57,7 @@
       "description": "String map, per the Agent Skills spec. Registry fields are namespaced civic.* so they cannot collide with vendor extensions.",
       "required": [
         "civic.category",
-        "civic.jurisdiction",
+        "civic.scope",
         "civic.data-sensitivity",
         "civic.human-review",
         "civic.maintainer",
@@ -66,7 +66,7 @@
       ],
       "allOf": [
         {
-          "$comment": "Saying a team or an organization uses this is a claim about them, and an unnamed organization is a claim nobody can check. Stated as a conditional, not only in a description, because a program reads this file to find out what a submission needs.",
+          "$comment": "Saying a team or an organization uses this is a claim about them, and an unnamed organization is a claim nobody can check. civic.deployed-in is no longer required alongside it (#67): the checkable part is the name, and where the organization operates is often implied by civic.jurisdiction.",
           "if": {
             "properties": {
               "civic.deployment": {
@@ -82,8 +82,7 @@
           },
           "then": {
             "required": [
-              "civic.deployed-at",
-              "civic.deployed-in"
+              "civic.deployed-at"
             ]
           }
         },
@@ -117,7 +116,7 @@
           }
         },
         {
-          "$comment": "A generalized skill has had its jurisdiction specifics lifted out, so it cannot also be shaped for one named jurisdiction. 'generic' means no assumptions and 'intl' says nothing about which, so both are compatible.",
+          "$comment": "A generalized skill has had its jurisdiction specifics lifted out into a context an adopter fills in, so it names no place. One direction only: a skill that names no place was not necessarily generalized from anything.",
           "if": {
             "properties": {
               "civic.localization": {
@@ -129,13 +128,10 @@
             ]
           },
           "then": {
-            "properties": {
-              "civic.jurisdiction": {
-                "enum": [
-                  "generic",
-                  "intl"
-                ]
-              }
+            "not": {
+              "required": [
+                "civic.jurisdiction"
+              ]
             }
           }
         },
@@ -150,6 +146,26 @@
             "required": [
               "civic.source-repo"
             ]
+          }
+        },
+        {
+          "$comment": "civic.scope: any says the skill works at every level of government, so it is not tied to a particular place.",
+          "if": {
+            "properties": {
+              "civic.scope": {
+                "const": "any"
+              }
+            },
+            "required": [
+              "civic.scope"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "civic.jurisdiction"
+              ]
+            }
           }
         }
       ],
@@ -171,16 +187,33 @@
           "x-vocabulary": "categories",
           "description": "Optional. The other axis this skill sits on — the vocabulary mixes function inside the organization with public service delivered, and a skill often belongs to one of each. civic.category is the primary and is what a plugin manifest carries."
         },
-        "civic.jurisdiction": {
+        "civic.scope": {
           "type": "string",
           "enum": [
-            "us-local",
-            "us-state",
-            "us-federal",
-            "intl",
-            "generic"
+            "any",
+            "municipal",
+            "regional",
+            "national",
+            "supranational"
           ],
-          "description": "Who the skill is shaped for. 'generic' means it makes no jurisdiction assumptions."
+          "description": "What kind of government body the skill is written for. Replaces the old civic.jurisdiction enum, which conflated level of government, country-ness and whether any of it applied — and which every listing answered 'generic'. Country-neutral, because civic.jurisdiction now carries the country: 'regional' covers a state, province, prefecture, canton or region, and 'municipal' covers a city, county or town. 'any' is explicit rather than implied by omission, because an omitted scope cannot be told apart from an unanswered one."
+        },
+        "civic.scope-secondary": {
+          "type": "string",
+          "enum": [
+            "any",
+            "municipal",
+            "regional",
+            "national",
+            "supranational"
+          ],
+          "description": "Optional second level, for a skill that genuinely serves two. Must differ from civic.scope, and cannot be paired with 'any', which already means every level. Enforced by validator/src/rules.ts."
+        },
+        "civic.jurisdiction": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$",
+          "maxLength": 120,
+          "description": "Optional. The specific place the skill is written for: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-VT', 'US-MA / Boston', 'CA-ON / Toronto'. Set only when the skill is tied to one place — a skill that is not simply omits it. Distinct from civic.deployed-in, which is where the organization that used it operates; a generalized skill has no jurisdiction and may still have been deployed somewhere. Same shape as that field because both name a place."
         },
         "civic.data-sensitivity": {
           "type": "string",

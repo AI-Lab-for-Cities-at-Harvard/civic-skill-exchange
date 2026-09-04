@@ -90,7 +90,8 @@ compatibility: "Requires no network access and no credentials."
 allowed-tools: Read, Grep              # least privilege; Bash(*) is an auto-reject
 metadata:
   civic.category: permitting-licensing
-  civic.jurisdiction: us-local
+  civic.scope: municipal
+  civic.jurisdiction: "US-MA / Boston"
   civic.data-sensitivity: none
   civic.human-review: advisory-only
   civic.use-when: >                      # optional, ≤500, plain text
@@ -382,7 +383,9 @@ An index entry, with every field the build actually emits:
   "category": "permitting-licensing",
   "category_secondary": "constituent-services",
   "version": "1.2",
-  "jurisdiction": "us-local",
+  "scope": "municipal",
+  "scope_secondary": null,
+  "jurisdiction": "US-MA / Boston",
   "localization": "localized",
   "data_sensitivity": "none",
   "human_review": "advisory-only",

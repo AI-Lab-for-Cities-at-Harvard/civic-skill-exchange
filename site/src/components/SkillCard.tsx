@@ -1,8 +1,8 @@
 import {
   TierBadge, LabBadge, LocalizationBadge, DeploymentBadge, SensitivityBadge,
 } from "./Badges";
-import { categoriesOf } from "../lib/filter";
-import { label, CATEGORY_LABELS, JURISDICTION_LABELS } from "../lib/labels";
+import { categoriesOf, scopesOf } from "../lib/filter";
+import { label, CATEGORY_LABELS, SCOPE_LABELS } from "../lib/labels";
 import { skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
 
@@ -41,7 +41,7 @@ export function SkillCard({ skill }: { skill: Skill }) {
       <p className="card__meta" data-testid="card-meta">
         <span>{categoriesOf(skill).map((c) => label(CATEGORY_LABELS, c)).join(" · ")}</span>
         <span className="card__dot" aria-hidden="true">·</span>
-        <span>{label(JURISDICTION_LABELS, skill.jurisdiction)}</span>
+        <span>{scopesOf(skill).map((v) => label(SCOPE_LABELS, v)).join(" · ")}</span>
       </p>
 
       <p className="card__cta">

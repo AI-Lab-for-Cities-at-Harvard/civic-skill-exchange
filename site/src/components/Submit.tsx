@@ -44,7 +44,9 @@ const FIELD_LABELS: Record<string, string> = {
   "civic.category": "the category",
   version: "the version",
   "civic.category-secondary": "the second category",
-  "civic.jurisdiction": "where it applies",
+  "civic.scope": "the level of government",
+  "civic.scope-secondary": "the second level",
+  "civic.jurisdiction": "the place it is written for",
   "civic.localization": "how portable it is",
   "civic.data-sensitivity": "the data it touches",
   "civic.human-review": "its effect on people",
@@ -65,12 +67,14 @@ function readable(f: Finding): string {
   return label ? f.message.replaceAll(f.where, label) : f.message;
 }
 
-const WHERE_LABELS: [string, string][] = [
-  ["generic", "Anywhere — it makes no assumptions about place"],
-  ["us-local", "A US city or county"],
-  ["us-state", "A US state"],
-  ["us-federal", "US federal"],
-  ["intl", "Outside the US"],
+/** What kind of government body, in the words a submitter would use.
+ *  Country-neutral, because the specific place is asked separately (#67). */
+const SCOPE_CHOICES: [string, string][] = [
+  ["any", "Any level of government — it makes no assumptions"],
+  ["municipal", "A city, county or town"],
+  ["regional", "A state, province or region"],
+  ["national", "A national government"],
+  ["supranational", "A body above national government"],
 ];
 
 /** The two judgment questions live in labels.ts so their wording has one home
@@ -602,9 +606,29 @@ export function Submit(
               onChange={onInput("version")} placeholder="1.0" />
           </Field>
 
-          <Choice id="civic.jurisdiction" label="Where does it apply?"
-            value={draft.jurisdiction} findings={findings} placeholder="Choose…"
-            onChange={set("jurisdiction")} options={WHERE_LABELS} />
+          <Choice id="civic.scope" label="What level of government is it for?"
+            value={draft.scope} findings={findings} placeholder="Choose…"
+            onChange={set("scope")} options={SCOPE_CHOICES} />
+
+          <Choice id="civic.scope-secondary" label="A second level, if it serves two"
+            value={draft.scopeSecondary} findings={findings}
+            placeholder="None — one level"
+            onChange={set("scopeSecondary")}
+            options={SCOPE_CHOICES.filter(
+              ([v]) => v !== draft.scope && v !== "any" && draft.scope !== "any")} />
+
+          <Field id="civic.jurisdiction" label="Is it written for one specific place?"
+            findings={findings}
+            hint={
+              <>Only if the skill carries that place&rsquo;s rules, forms or
+              deadlines — <code>US-VT</code>, <code>US-MA / Boston</code>,{" "}
+              <code>CA-ON / Toronto</code>. Leave it blank otherwise, which is
+              most skills. A country code, optionally a state or province, and
+              optionally a city after a slash.</>
+            }>
+            <input id="civic.jurisdiction" className="input" value={draft.jurisdiction}
+              onChange={onInput("jurisdiction")} placeholder="US-MA / Boston" />
+          </Field>
 
           <Choice
             id="civic.localization"

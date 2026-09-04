@@ -1,5 +1,5 @@
 import {
-  CATEGORY_LABELS, JURISDICTION_LABELS, SENSITIVITY_LABELS,
+  CATEGORY_LABELS, SCOPE_LABELS, SENSITIVITY_LABELS,
   LOCALIZATION_LABELS, HUMAN_REVIEW_LABELS, AFFILIATION_LABELS,
   DEPLOYMENT_LABELS,
 } from "../lib/labels";
@@ -190,8 +190,22 @@ export function About({ skills = [] }: { skills?: Skill[] }) {
             searched. Closed on purpose: a free-text field becomes twelve
             spellings of &ldquo;permits&rdquo;.
           </dd>
+          <dt><code>civic.scope</code>, <code>civic.scope-secondary</code></dt>
+          <dd>
+            What kind of government body it is written for — a city, a state, a
+            national agency. Country-neutral, because the place is a separate
+            field. A skill may serve two levels; one is required, because
+            leaving it out could not be told apart from meaning{" "}
+            <em>any</em>.
+          </dd>
           <dt><code>civic.jurisdiction</code></dt>
-          <dd>What kind of place it was written for, not which one.</dd>
+          <dd>
+            The specific place, when there is one:{" "}
+            <code>US-VT</code>, <code>US-MA / Boston</code>. Left out by a skill
+            that is not tied to a place, which is most of them — and a{" "}
+            <code>generalized</code> skill never has one, since its specifics
+            were lifted out.
+          </dd>
           <dt><code>civic.localization</code></dt>
           <dd>
             Whether the local specifics are still in it. This one changes how
@@ -202,7 +216,7 @@ export function About({ skills = [] }: { skills?: Skill[] }) {
         </dl>
         <div className="vocab-grid">
           <Vocabulary title="civic.category" map={CATEGORY_LABELS} />
-          <Vocabulary title="civic.jurisdiction" map={JURISDICTION_LABELS} />
+          <Vocabulary title="civic.scope" map={SCOPE_LABELS} />
           <Vocabulary title="civic.localization" map={LOCALIZATION_LABELS} />
         </div>
 
@@ -294,7 +308,7 @@ export function About({ skills = [] }: { skills?: Skill[] }) {
             <h3 className="h3">Fill in the frontmatter</h3>
             <p>
               The six fields of the Agent Skills spec, plus{" "}
-              <code>civic.*</code> metadata: category, jurisdiction, what data it
+              <code>civic.*</code> metadata: category, level of government, what data it
               touches, and whether its output affects anyone's rights or
               benefits. Those last two are the questions nobody can answer from
               reading your code.

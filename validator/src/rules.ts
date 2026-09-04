@@ -26,7 +26,25 @@ export const SPEC_FIELDS = [
  *  username match. */
 export const RESERVED_NAMESPACES = new Set(["civic-skills"]);
 
-export const JURISDICTIONS = ["us-local", "us-state", "us-federal", "intl", "generic"] as const;
+/** What kind of government body a skill is written for (#67).
+ *
+ *  Replaces `civic.jurisdiction`'s old enum, which was doing three jobs at
+ *  once — level of government, country-ness, and whether any of it applied —
+ *  and which every listing in the catalogue answered `generic`.
+ *
+ *  Country-neutral, because the specific place is now a separate field that
+ *  carries the country. `regional` covers a state, province, prefecture,
+ *  canton or region; `municipal` covers a city, county or town, since that
+ *  distinction is one only a resident of a particular country draws.
+ *
+ *  `any` is explicit rather than implied by omission. An omitted scope cannot
+ *  be told apart from an unanswered one, so the field is required. */
+export const SCOPES = [
+  "any", "municipal", "regional", "national", "supranational",
+] as const;
+
+export const SCOPE_FIELD = "civic.scope";
+export const SCOPE_SECONDARY = "civic.scope-secondary";
 export const SENSITIVITIES = ["none", "pii", "protected"] as const;
 export const HUMAN_REVIEW = ["none", "advisory-only", "decision-support"] as const;
 export const AFFILIATIONS = ["government", "nonprofit", "vendor", "academic", "individual"] as const;
@@ -52,28 +70,43 @@ const VERSION_RE = new RegExp(VERSION_PATTERN);
  *  civic-specific, so the prefix would namespace something that is not ours. */
 export const VERSION_FIELD = "version";
 
-/** A generalized skill has had its jurisdiction specifics lifted out, so it
- *  cannot also be shaped for one named jurisdiction. These two are compatible:
- *  'generic' means no assumptions, 'intl' says nothing about which. */
-export const GENERALIZED_OK_JURISDICTIONS = ["generic", "intl"] as const;
-const GENERALIZED_OK = new Set<string>(GENERALIZED_OK_JURISDICTIONS);
-
 const NAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 /** Written as strings so the published schema can carry the same patterns
  *  instead of describing them in English. A program reads the schema to find
  *  out what a submission needs (#10) and cannot read a prose description;
  *  schema.test.ts holds the two files to these exact strings. */
-export const DEPLOYED_IN_PATTERN = "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$";
+
+/** A place: ISO 3166 country, optional subdivision, optional locality.
+ *  "US-MA / Boston", "GB", "CA-ON / Toronto".
+ *
+ *  One pattern for both fields that name a place — `civic.jurisdiction`, which
+ *  is where a skill is written for, and `civic.deployed-in`, which is where the
+ *  organization that used it operates. They are different facts in the same
+ *  shape, and two patterns would be two things to keep in step. */
+export const PLACE_PATTERN = "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$";
+export const DEPLOYED_IN_PATTERN = PLACE_PATTERN;
 export const DEPLOYED_SINCE_PATTERN = "^\\d{4}(-(0[1-9]|1[0-2]))?$";
 
 /** ISO 3166 country, optional subdivision, optional locality: "US-MA / Boston". */
-const DEPLOYED_IN_RE = new RegExp(DEPLOYED_IN_PATTERN);
+const PLACE_RE = new RegExp(PLACE_PATTERN);
+const DEPLOYED_IN_RE = PLACE_RE;
 const DEPLOYED_SINCE_RE = new RegExp(DEPLOYED_SINCE_PATTERN);
 
-/** Exported so schema.test.ts can hold the published schema's conditionals to
- *  the same two fields rather than repeating them. */
+/** Both forbidden by `civic.deployment: none`, which says the skill has never
+ *  been used anywhere. Exported so schema.test.ts holds the published schema's
+ *  conditionals to the same fields rather than repeating them. */
 export const DEPLOYMENT_DETAILS = ["civic.deployed-at", "civic.deployed-in"] as const;
+
+/** Required by an organizational deployment — and only this one.
+ *
+ *  `civic.deployed-in` was required alongside it until #67. The checkable part
+ *  of "an organization uses this" is the organization's *name*; where it
+ *  operates is context, and is often already implied by `civic.jurisdiction`.
+ *  It stays optional rather than being removed: a generalized skill has no
+ *  jurisdiction, so for the most persuasive listing there is — place-neutral
+ *  and genuinely deployed — nothing else holds where. */
+export const ORGANIZATIONAL_DETAILS = ["civic.deployed-at"] as const;
 
 /** Deployment values that are a claim *about an organization*, and so have to
  *  name one.
@@ -110,7 +143,7 @@ const FIT_FIELDS = ["civic.use-when", "civic.avoid-when"] as const;
  *  mention on that account reaches the maintainer and cannot go stale
  *  independently of it. */
 const REQUIRED_METADATA = [
-  "civic.category", "civic.jurisdiction", "civic.data-sensitivity",
+  "civic.category", "civic.scope", "civic.data-sensitivity",
   "civic.human-review", "civic.maintainer",
   "civic.affiliation", "civic.deployment",
 ] as const;
@@ -147,7 +180,7 @@ export function checkProvenance(meta: Record<string, unknown>): Finding[] {
       }
     }
   } else if (deployment && ORGANIZATIONAL_DEPLOYMENTS.includes(deployment as never)) {
-    for (const field of DEPLOYMENT_DETAILS) {
+    for (const field of ORGANIZATIONAL_DETAILS) {
       if (!meta[field]) {
         findings.push(finding(field,
           `${field} is required when civic.deployment is '${deployment}'. ` +
@@ -173,7 +206,12 @@ export function checkProvenance(meta: Record<string, unknown>): Finding[] {
   return findings;
 }
 
-/** Catch the one contradiction an adopter cannot resolve on their own. */
+/** Catch the one contradiction an adopter cannot resolve on their own.
+ *
+ *  Runs one way only. Generalized means the specifics were lifted out into a
+ *  context an adopter fills in, so a generalized skill names no place. The
+ *  converse does not hold: a reading-level calculator names no place either and
+ *  was never generalized from anything. */
 export function checkLocalization(meta: Record<string, unknown>): Finding[] {
   const localization = str(meta["civic.localization"]);
   const jurisdiction = str(meta["civic.jurisdiction"]);
@@ -183,15 +221,53 @@ export function checkLocalization(meta: Record<string, unknown>): Finding[] {
       `'${localization}' is not one of: ${LOCALIZATIONS.join(", ")}`)];
   }
 
-  if (localization === "generalized" && jurisdiction &&
-      !GENERALIZED_OK.has(jurisdiction)) {
-    return [finding("civic.localization",
+  if (localization === "generalized" && jurisdiction) {
+    return [finding("civic.jurisdiction",
       `civic.localization: generalized contradicts civic.jurisdiction: ` +
       `${jurisdiction}. A generalized skill has had its jurisdiction specifics ` +
-      `lifted out, so use 'generic' (or 'intl'), or mark the skill 'localized'.`)];
+      `lifted out into a context an adopter fills in, so it names no place — ` +
+      `remove civic.jurisdiction, or mark the skill 'localized'.`)];
   }
 
   return [];
+}
+
+/** What kind of body, and which place — kept apart (#67). */
+export function checkScope(meta: Record<string, unknown>): Finding[] {
+  const findings: Finding[] = [];
+  const scope = str(meta[SCOPE_FIELD]);
+  const secondary = str(meta[SCOPE_SECONDARY]);
+  const jurisdiction = str(meta["civic.jurisdiction"]);
+
+  findings.push(...checkEnum(meta, SCOPE_FIELD, SCOPES));
+  findings.push(...checkEnum(meta, SCOPE_SECONDARY, SCOPES));
+
+  if (secondary && SCOPES.includes(secondary as never)) {
+    if (secondary === scope) {
+      findings.push(finding(SCOPE_SECONDARY,
+        `${SCOPE_SECONDARY} repeats ${SCOPE_FIELD} ('${scope}'), which claims ` +
+        `nothing. Remove it, or name the other level the skill serves.`));
+    } else if (scope === "any" || secondary === "any") {
+      findings.push(finding(SCOPE_SECONDARY,
+        `'any' means every level of government, so it cannot be paired with a ` +
+        `particular one. Use 'any' alone, or name the levels the skill serves.`));
+    }
+  }
+
+  if (jurisdiction && !PLACE_RE.test(jurisdiction)) {
+    findings.push(finding("civic.jurisdiction",
+      `'${jurisdiction}' is not a place. civic.jurisdiction names where a skill ` +
+      `is written for, as an ISO 3166 country with an optional subdivision and ` +
+      `locality — 'US-VT', 'US-MA / Boston', 'CA-ON / Toronto'. What kind of ` +
+      `body it serves is ${SCOPE_FIELD}.`));
+  } else if (jurisdiction && scope === "any") {
+    findings.push(finding("civic.jurisdiction",
+      `${SCOPE_FIELD}: any says the skill works at every level of government, ` +
+      `so it is not tied to ${jurisdiction}. Name the level it is actually for, ` +
+      `or remove civic.jurisdiction.`));
+  }
+
+  return findings;
 }
 
 /** Length only. There is deliberately no rule relating the two fields to each
@@ -367,12 +443,12 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
       `skill twice in one facet — remove it, or name the other axis.`));
   }
 
-  findings.push(...checkEnum(metadata, "civic.jurisdiction", JURISDICTIONS));
   findings.push(...checkEnum(metadata, "civic.data-sensitivity", SENSITIVITIES));
   findings.push(...checkEnum(metadata, "civic.human-review", HUMAN_REVIEW));
   findings.push(...checkEnum(metadata, "civic.affiliation", AFFILIATIONS));
   findings.push(...checkEnum(metadata, "civic.deployment", DEPLOYMENTS));
   findings.push(...checkProvenance(metadata));
+  findings.push(...checkScope(metadata));
   findings.push(...checkLocalization(metadata));
   findings.push(...checkFit(metadata));
   findings.push(...checkSource(metadata));

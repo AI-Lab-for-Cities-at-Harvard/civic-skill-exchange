@@ -5,7 +5,8 @@ license: MIT
 metadata:
   civic.category: policy
   civic.category-secondary: data-analysis
-  civic.jurisdiction: generic
+  civic.scope: municipal
+  civic.scope-secondary: regional
   civic.localization: generalized
   civic.data-sensitivity: none
   civic.human-review: none

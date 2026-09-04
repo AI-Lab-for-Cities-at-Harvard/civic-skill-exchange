@@ -21,11 +21,11 @@ describe("SkillCard", () => {
     expect(screen.getByText(/community/i)).toBeInTheDocument();
   });
 
-  it("puts category and jurisdiction on one meta line", () => {
-    render(<SkillCard skill={makeSkill({ category: "finance", jurisdiction: "us-local" })} />);
+  it("puts category and level of government on one meta line", () => {
+    render(<SkillCard skill={makeSkill({ category: "finance", scope: "municipal" })} />);
     const meta = screen.getByTestId("card-meta");
     expect(meta).toHaveTextContent("Finance");
-    expect(meta).toHaveTextContent("US — local");
+    expect(meta).toHaveTextContent("City, county or town");
   });
 
   it("does not show allowed-tools — that belongs on the detail page", () => {

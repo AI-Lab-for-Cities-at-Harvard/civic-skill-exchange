@@ -19,12 +19,16 @@ export const CATEGORY_LABELS: Record<string, string> = {
   "ai-tools": "AI Tools",
 };
 
-export const JURISDICTION_LABELS: Record<string, string> = {
-  "us-local": "US — local",
-  "us-state": "US — state",
-  "us-federal": "US — federal",
-  intl: "International",
-  generic: "Jurisdiction-neutral",
+/** What kind of government body a skill is written for (#67). Country-neutral,
+ *  because the place is a separate field that carries the country — "regional"
+ *  is a state, province, prefecture, canton or region, and "municipal" is a
+ *  city, county or town. */
+export const SCOPE_LABELS: Record<string, string> = {
+  any: "Any level of government",
+  municipal: "City, county or town",
+  regional: "State, province or region",
+  national: "National",
+  supranational: "Supranational",
 };
 
 export const SENSITIVITY_LABELS: Record<string, string> = {
