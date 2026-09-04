@@ -27,6 +27,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 import sys
 from datetime import date
@@ -45,6 +46,55 @@ NOTES_PLACEHOLDER = (
     "review. What did you check especially closely? What would you look at "
     "first if it went wrong? If the Lab wrote the skill, say so."
 )
+
+
+#: The reviewer's checklist, as headings in the guide. Read rather than
+#: restated: a questionnaire that has drifted from the list a reviewer works is
+#: worse than none, because it looks authoritative.
+ITEM = re.compile(r"^### (\d+)\. (.+)$", re.MULTILINE)
+
+
+def questionnaire() -> str:
+    """The nine items as a markdown block, to paste into the review-request issue.
+
+    The answers belong there and not in `notes` (docs/TIERS.md step 4). The
+    first real review put all nine into `notes`, which crowded out what `notes`
+    is for: what the next reviewer, a year from now, should look at first.
+    """
+    guide = (ROOT / "docs" / "REVIEW.md").read_text(encoding="utf-8")
+    items = ITEM.findall(guide)
+    if not items:
+        raise Unusable(
+            "docs/REVIEW.md has no numbered checklist items. The questionnaire "
+            "is read from the guide rather than restated here, so it cannot be "
+            "built without it.")
+
+    lines = ["## The checklist", ""]
+    for number, heading in items:
+        # The REJECT clause is guidance to the reviewer, not part of the
+        # question, so it goes on its own line rather than into the prompt.
+        question, _, rejects = heading.partition(" — ")
+        lines.append(f"**{number}. {question.strip()}**")
+        if rejects:
+            lines.append(f"<sub>{rejects.strip()}</sub>")
+        lines.append("")
+        lines.append("_")
+        lines.append("")
+    lines += [
+        "## Where has this been used?",
+        "",
+        "_",
+        "",
+        "## What to look at first if something goes wrong",
+        "",
+        "This one goes into the attestation's `notes` as well — it is what the",
+        "next reviewer needs and the only part of an attestation carrying",
+        "judgment.",
+        "",
+        "_",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 class Unusable(Exception):
@@ -119,11 +169,21 @@ def render(skill_id: str, sha: str, notes: str | None = None,
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("skill", help="the listing id, {namespace}/{skill-name}")
+    parser.add_argument("skill", nargs="?",
+                        help="the listing id, {namespace}/{skill-name}")
+    parser.add_argument("--questionnaire", action="store_true",
+                        help="print the nine checklist items to paste into the "
+                             "review-request issue, and stop")
     parser.add_argument("--notes", help="what the next reviewer needs to know")
     parser.add_argument("--reviewers", help="comma-separated attesting parties")
     args = parser.parse_args(argv)
 
+    if args.questionnaire:
+        print(questionnaire(), end="")
+        return 0
+
+    if not args.skill:
+        parser.error("a skill id is required unless --questionnaire is given")
     if "/" not in args.skill:
         parser.error("the skill id is {namespace}/{skill-name}, e.g. "
                      "civic-skills/plain-language-notice-rewriter")
