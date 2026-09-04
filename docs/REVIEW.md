@@ -129,7 +129,22 @@ Each produces an attestation that looks correct and grants no badge. The helper 
 
 ### Writing it down
 
-Comment on the review-request issue with the SHA you reviewed and any conditions. Then open a PR adding to `registry/reviewed.yml`:
+**Two places, and they hold different things.** The nine answers go in the
+review-request issue; `notes` in the attestation goes to the next reviewer a
+year from now. The first review put all nine into `notes`, which is
+understandable — it was the only field in front of the reviewer — and it crowded
+out the one thing `notes` is for.
+
+This prints the nine items as a block to paste into the issue:
+
+```bash
+python scripts/attestation.py --questionnaire
+```
+
+It reads them from this file rather than restating them, so it cannot drift from
+the list above.
+
+Comment on the review-request issue with that write-up, the SHA you reviewed and any conditions. Then open a PR adding to `registry/reviewed.yml` — `?template=attestation.md` gets you a checklist, since GitHub offers no template chooser for pull requests:
 
 ```yaml
 - skill: cityofx/permit-status-explainer
@@ -153,7 +168,7 @@ python3 -c "import json;[print(s['id'],s['tier'],'|',s['reason']) for s in json.
 
 Your skill should come back `reviewed`. If the SHA is wrong the tier stays `community` and `reason` says which of the two values did not match — that is where a mistyped or branch-taken SHA shows up, and it is much easier to see here than after the deploy.
 
-Write `notes` for the next reviewer, a year from now, who has to re-review this and has no memory of the conversation. What did you check especially closely? What would you look at first if something went wrong? If the Lab wrote the skill, say that here too — the site discloses it on the listing, and the note is where the next reader learns what you were careful about because of it.
+Keep `notes` to a few sentences, and write them for the next reviewer, a year from now, who has to re-review this and has no memory of the conversation. It is not the place for the nine answers — those are in the issue. What did you check especially closely? What would you look at first if something went wrong? If the Lab wrote the skill, say that here too — the site discloses it on the listing, and the note is where the next reader learns what you were careful about because of it.
 
 ## Withdrawing a sign-off
 

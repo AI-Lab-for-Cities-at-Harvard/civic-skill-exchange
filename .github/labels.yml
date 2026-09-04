@@ -1,0 +1,33 @@
+# Labels the issue templates may declare.
+#
+# GitHub silently drops a label a form declares but the repository has not
+# defined: the form works, the issue opens, and the label is simply absent.
+# Both templates did that — `review-request` and `submission` were named in
+# forms and never created (#119).
+#
+# tests/test_issue_templates.py holds the templates to this file. Creating the
+# labels on the repository is still manual; what the file buys is that a
+# template cannot name one nobody agreed to.
+
+labels:
+  - name: review-request
+    color: "0e8a16"
+    description: Request for Reviewed-tier consideration
+  - name: submission
+    color: "1d76db"
+    description: A skill being offered to the registry
+  - name: accessibility
+    color: "5319e7"
+    description: Contrast, keyboard, screen reader, or the gates that hold them
+  - name: bug
+    color: "d73a4a"
+    description: Something behaves differently from what is documented
+  - name: documentation
+    color: "0075ca"
+    description: A document that is missing, wrong, or has drifted
+  - name: enhancement
+    color: "a2eeef"
+    description: New behaviour, or existing behaviour made better
+  - name: question
+    color: "d876e3"
+    description: Needs an answer before work can start
