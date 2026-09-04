@@ -23,10 +23,12 @@ metadata:
     Someone has a generalized skill and wants to run it where they work. Run
     this to fit it to their organization and hand back a skill that works.
   civic.avoid-when: >
-    Not for a skill that was never generalized — there is nothing to fill, and
-    editing local values by hand is the better tool. Not a review: it does not
-    check whether the skill is correct or worth adopting, only that every value
-    it wrote is one somebody confirmed.
+    Not for a skill that was never generalized — there is nothing to fill. Run
+    generalize-skill on it first, the other half of this pair: /plugin install
+    civic-skills-generalize-skill@civic-skill-exchange — or edit the local
+    values by hand, which is fine for a small skill. Not a review: it does not
+    check whether the skill is correct or worth adopting, only that every
+    value it wrote is one somebody confirmed.
   civic.maintainer: "AI Lab for Cities at Harvard"
   civic.affiliation: academic
   civic.deployment: none
@@ -175,3 +177,20 @@ never confirmed is worse than one that is obviously unfinished.
 - `LOCALIZE-NOTES.md` lists every unconfirmed or defaulted value, and the
   adopter has seen that list.
 - `<org>.profile.yml` holds everything org-wide, so the next skill asks less.
+
+## The other half
+
+This skill fills in a context file. **Writing one is `generalize-skill`**, which
+takes a skill built for one organization and separates it into a portable skill
+plus the context that was specific to where it was written.
+
+```
+/plugin install civic-skills-generalize-skill@civic-skill-exchange
+```
+
+If somebody hands you a skill that was never generalized, that is the tool for
+it — there is nothing here for this skill to fill.
+
+They share one contract — `references/contract.md` here, and the same file in
+`generalize-skill`. Read it before changing what this expects to find, because
+the other side is what writes it.

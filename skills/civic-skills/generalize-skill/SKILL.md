@@ -20,8 +20,10 @@ metadata:
   civic.human-review: none
   civic.use-when: >
     A skill works in one city, county or state and someone else wants it. Run
-    this to separate what is true everywhere from what is true only where it was
-    written.
+    this to separate what is true everywhere from what is true only where it
+    was written. The context file it writes is filled in by localize-skill,
+    the other half of this pair: /plugin install civic-skills-localize-
+    skill@civic-skill-exchange
   civic.avoid-when: >
     Not for a skill with no organization-specific content — it would find
     nothing and waste the author's time. Not a review: it does not check whether
@@ -163,3 +165,22 @@ Do not resolve an uncertainty by picking. The author knows; a guess does not.
   needs to be.
 - Running this skill again on its own output changes nothing. A second pass that
   finds more means the first was incomplete.
+
+## The other half
+
+This skill writes a context file and stops. **Filling it in is `localize-skill`**,
+which takes a generalized skill plus an organization's answers and produces an
+ordinary self-contained skill that runs without reading any context.
+
+```
+/plugin install civic-skills-localize-skill@civic-skill-exchange
+```
+
+They share one contract — `references/contract.md` here, and the same file in
+`localize-skill`. Read it before changing the shape of what this writes, because
+the other side has to be able to read it.
+
+You do not need both. A skill generalized here can be filled in by hand, and for
+a small one that is the faster route. What `localize-skill` buys is the second
+adoption: it keeps an organization's answers in a profile so the next skill asks
+fewer questions.
