@@ -181,37 +181,68 @@ of its own, is a different question and a much larger one. It is a spike:
 
 ## Categories
 
-A closed vocabulary in `registry/categories.yml`, enforced by schema. Free-text tags make classification unenforceable and faceted browsing impossible.
+A closed vocabulary in `registry/categories.yml`, enforced at runtime by
+`validator/src/rules.ts`. Free-text tags make classification unenforceable and
+faceted browsing impossible.
 
-```yaml
-categories:
-  - id: constituent-services
-    label: Constituent Services & Casework
-  - id: benefits-eligibility
-    label: Benefits & Eligibility
-  - id: permitting-licensing
-    label: Permitting & Licensing
-  - id: procurement-contracting
-    label: Procurement & Contracting
-  - id: finance
-    label: Finance
-  - id: public-records-foia
-    label: Public Records & FOIA
-  - id: open-data-publishing
-    label: Open Data & Publishing
-  - id: policy-legislative
-    label: Policy & Legislative Analysis
-  - id: grants-development
-    label: Grants & Development
-  - id: emergency-public-safety
-    label: Emergency Management & Public Safety
-  - id: plain-language-accessibility
-    label: Plain Language & Accessibility
-  - id: language-access
-    label: Translation & Language Access
-```
+**The list is not written down anywhere else.** The schema points at it with
+`x-vocabulary: categories` rather than freezing an enum, `site/src/lib/labels.ts`
+carries the labels and is held to the file by `labels.test.ts`, and the facets,
+the About page table and both marketplace manifests are generated from it. That
+is why the ids are not reproduced here — a second copy in a document nothing
+runs is a copy that goes stale silently.
 
-Start narrow. Adding a category is a PR against this file, and it should require evidence that at least two existing skills are miscategorized without it. Splitting a category later is easy; merging two that never should have been separate is not.
+### Two axes, and a second category
+
+The vocabulary mixes two ways of classifying a skill, deliberately (#102). The
+first six ids classify by **function inside the organization** — policy, data
+analysis, communications, finance, HR, technology. Without them, internal work
+is unlistable: a skill for drafting a job posting has no home on a
+service-delivery list. The rest classify by **public service delivered**, which
+is what a browsing adopter looks for and where the stakes are highest — folding
+benefits determinations into "Policy" would hide exactly the skills that need
+the most scrutiny.
+
+Because the axes cut differently, a skill often belongs to one of each. So there
+are two fields:
+
+- `civic.category` — required, the primary. This is the one a plugin manifest
+  carries, because Claude and Codex each take a single category.
+- `civic.category-secondary` — optional, from the same vocabulary, and it must
+  differ from the primary.
+
+Two separate fields rather than one list. `metadata` values are strings per the
+Agent Skills specification, so a list is not available; and with two fields the
+cap of two is structural, nothing has to be parsed, and which one is primary is
+never in question. Browsing matches a skill under either, and a facet counts it
+under each — never twice under one.
+
+### Retiring a category
+
+Retiring one is free only while nothing is listed under it, which is how the
+twelve-to-fifteen recut was done: every affected listing was relabelled in the
+same pull request, so no listing ever pointed at an id that did not exist.
+
+Once a listing does depend on an id, that is no longer available, because
+`civic.category` is validated against the file and a removed id fails the check
+for a skill nobody has touched. So a retirement then takes two passes:
+
+1. Add the replacement id. Move every listing onto it — a pull request per
+   namespace, since a maintainer owns their own skills and a relabel is a
+   change to somebody else's declaration.
+2. Remove the old id once nothing references it. The validator is what proves
+   that: `npx tsx validator/src/cli.ts all` fails on any listing still pointing
+   at it.
+
+Never remove an id while a listing uses it. The failure lands on the skill's
+author, who did nothing, and the message says their category is not in the
+vocabulary — which reads as their mistake.
+
+**A relabel demotes a Reviewed skill.** The attestation pins the commit that
+last touched the skill's directory, so changing its category is enough to drop
+the badge with `content changed since review`. That is the pin working as
+designed, and the relabel has to be followed by a re-attestation. See
+`docs/REVIEW.md`.
 
 ---
 
