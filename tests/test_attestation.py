@@ -13,6 +13,7 @@ guards below refuse to emit one the build would reject.
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from datetime import date
@@ -223,3 +224,53 @@ def test_every_attestation_pins_a_commit_that_touched_that_skill(entry: dict):
     assert sha in touched, (
         f"{sha[:12]} is not a commit that ever touched skills/{entry['skill']}. "
         f"The one to attest to is {touched[0][:12]}.")
+
+
+# --------------------------------------------------------------------------- #
+# --questionnaire (#119).
+#
+# The first real review put all nine checklist answers into `notes`, because
+# that was the only field in front of the reviewer. `notes` is for the next
+# reviewer a year from now — what was checked closely, what to look at first —
+# so a transcript crowds out the one thing it is for. docs/TIERS.md step 4
+# already says the answers go in the issue; nothing gave the reviewer a
+# structured place to write them.
+#
+# Read from docs/REVIEW.md rather than restated, so it cannot drift from the
+# checklist a reviewer actually works.
+
+
+def test_the_questionnaire_has_one_entry_per_checklist_item():
+    guide = (ROOT / "docs" / "REVIEW.md").read_text(encoding="utf-8")
+    items = re.findall(r"^### (\d+)\. (.+)$", guide, re.MULTILINE)
+    block = attestation.questionnaire()
+    assert len(items) == 9, "the checklist changed; the questionnaire follows it"
+    for number, _ in items:
+        assert f"{number}." in block
+
+
+def test_it_carries_the_wording_of_each_item_rather_than_a_paraphrase():
+    guide = (ROOT / "docs" / "REVIEW.md").read_text(encoding="utf-8")
+    block = attestation.questionnaire()
+    for _, heading in re.findall(r"^### (\d+)\. (.+)$", guide, re.MULTILINE):
+        # The REJECT clause is guidance to the reviewer, not part of the question.
+        question = heading.split(" — ")[0].strip()
+        assert question in block, question
+
+
+def test_it_is_markdown_ready_to_paste_into_the_issue():
+    block = attestation.questionnaire()
+    assert block.startswith("##"), "needs a heading, since it lands in a comment"
+    assert block.count("\n") > 9
+
+
+def test_it_leaves_room_for_an_answer_under_each():
+    """A block with no space to write in is a block that gets replied to in one
+    paragraph, which is what happened the first time."""
+    block = attestation.questionnaire()
+    assert block.count("_") >= 9 or block.count("<!--") >= 9
+
+
+def test_the_pull_request_template_points_at_it():
+    template = (ROOT / ".github" / "PULL_REQUEST_TEMPLATE" / "attestation.md")
+    assert "--questionnaire" in template.read_text(encoding="utf-8")
