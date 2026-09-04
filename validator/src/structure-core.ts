@@ -132,6 +132,30 @@ export function checkPathSafety(entries: Entry[]): Finding[] {
   return findings;
 }
 
+/** Directories under a skill that hold documentation rather than a loadable
+ *  skill. The Agent Skills specification puts templates and reference material
+ *  here, and no client loads a skill from either — which is the line between a
+ *  second SKILL.md that is a hazard and one that is an example.
+ *
+ *  Exported because layout.ts draws the same line for changed paths, and two
+ *  copies of a rule is how one of them goes stale. */
+export const DOC_DIRECTORIES = ["references", "assets"] as const;
+
+/** A SKILL.md below the skill root that a client would load.
+ *
+ *  One directory is one skill. That became load-bearing rather than
+ *  conventional with #73, whose marketplace generator emits one plugin per
+ *  directory on exactly that assumption: a nested SKILL.md indexed as an
+ *  ordinary file, stayed invisible to search and the detail page, and installed
+ *  as a plugin whose nested skill a client would pick up. The site and the
+ *  client disagreeing about what a listing contains, with nothing saying so, is
+ *  the wrong way to fail (#78). */
+export function isLoadableNestedSkill(rel: string): boolean {
+  if (rel === "SKILL.md" || !rel.endsWith("/SKILL.md")) return false;
+  const first = rel.split("/")[0]!;
+  return !DOC_DIRECTORIES.includes(first as never);
+}
+
 export function checkStructureCore(entries: Entry[]): Finding[] {
   const findings: Finding[] = [];
   let total = 0;
@@ -142,6 +166,16 @@ export function checkStructureCore(entries: Entry[]): Finding[] {
 
     if (entry.kind === "symlink") {
       findings.push(finding(rel, "symlinks are not permitted"));
+      continue;
+    }
+    if (entry.kind === "file" && isLoadableNestedSkill(rel)) {
+      findings.push(finding(rel,
+        `${rel} is a second SKILL.md, and one directory is one skill. A client ` +
+        `installing this would load it as a skill of its own, while the ` +
+        `registry indexes it as an ordinary file — so the catalogue and the ` +
+        `agent would disagree about what this listing contains. Split it into ` +
+        `its own directory under skills/, or move it to ` +
+        `${DOC_DIRECTORIES.join("/ or ")}/ if it is an example rather than a skill.`));
       continue;
     }
     if (entry.kind === "dir") {

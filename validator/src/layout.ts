@@ -11,6 +11,7 @@
  *  which is the point.
  */
 
+import { DOC_DIRECTORIES } from "./structure-core";
 import type { Finding } from "./types";
 
 const finding = (where: string, message: string): Finding => ({ where, message });
@@ -26,7 +27,8 @@ const CORRECT = /^skills\/[^/]+\/[^/]+\/SKILL\.md$/;
  *  #78. `references/` and `assets/` are where the Agent Skills specification puts
  *  documentation and templates, and no client loads a skill from either.
  */
-const EXEMPT = /^skills\/[^/]+\/[^/]+\/(references|assets)\/.*SKILL\.md$/;
+const EXEMPT = new RegExp(
+  `^skills/[^/]+/[^/]+/(${DOC_DIRECTORIES.join("|")})/.*SKILL\\.md$`);
 
 const isSkillFile = (path: string) =>
   path === "SKILL.md" || path.endsWith("/SKILL.md");

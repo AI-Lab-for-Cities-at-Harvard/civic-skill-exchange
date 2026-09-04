@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extname as nodeExtname } from "node:path";
+import { checkChangedLayout } from "./layout";
 import {
   checkStructureCore,
   checkPathSafety,
@@ -189,5 +190,70 @@ describe("isRepositoryFurniture", () => {
     for (const path of ["SKILL.md", "scripts/run.py", "references/notes.md"]) {
       expect(isRepositoryFurniture(path)).toBe(false);
     }
+  });
+});
+
+/** One directory is one skill (#78).
+ *
+ *  Load-bearing rather than conventional since #73: the marketplace generator
+ *  emits one plugin per directory on exactly that assumption. A directory
+ *  holding a second SKILL.md indexed as one skill, showed the nested one as an
+ *  ordinary file, and installed as a plugin whose nested skill a client would
+ *  load — the site and the client disagreeing about what the listing contains,
+ *  with nothing saying so.
+ *
+ *  The line between "a client loads this" and "this is documentation" is the one
+ *  layout.ts already draws for changed paths: `references/` and `assets/` are
+ *  where the Agent Skills specification puts templates, and no client loads a
+ *  skill from either. A skill about writing skills legitimately ships an
+ *  example, and in this registry's domain that is likely rather than
+ *  hypothetical.
+ */
+describe("a second SKILL.md", () => {
+  const nested = (path: string) => [
+    file("SKILL.md", "---\nname: a\n---\n"),
+    file(path, "---\nname: b\n---\n"),
+  ];
+
+  it("is reported when a client would load it", () => {
+    const findings = checkStructureCore(nested("nested/SKILL.md"));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe("nested/SKILL.md");
+    expect(findings[0]?.message).toMatch(/one directory is one skill/i);
+  });
+
+  it("names the path, so the author does not have to hunt for it", () => {
+    expect(checkStructureCore(nested("deep/inside/here/SKILL.md"))[0]?.message)
+      .toContain("deep/inside/here/SKILL.md");
+  });
+
+  it.each(["references/SKILL.md", "references/examples/SKILL.md", "assets/SKILL.md"])(
+    "%s is documentation and still validates", (path) => {
+      expect(checkStructureCore(nested(path))).toEqual([]);
+    });
+
+  it("leaves the skill's own SKILL.md alone", () => {
+    expect(checkStructureCore([file("SKILL.md", "---\nname: a\n---\n")])).toEqual([]);
+  });
+
+  it("reports a nested SKILL.md even with no SKILL.md at the root", () => {
+    // Discovery would not call this a skill at all, but the submission page
+    // runs this module on a dropped folder, where anything is possible.
+    expect(checkStructureCore([file("nested/SKILL.md", "x")])).toHaveLength(1);
+  });
+});
+
+/** layout.ts draws the same line for changed paths. Two copies of a rule is how
+ *  one of them goes stale, so this holds them to each other. */
+describe("the documentation exemption agrees with layout.ts", () => {
+  it.each(["references/SKILL.md", "assets/templates/SKILL.md"])(
+    "%s is exempt in both", (path) => {
+      expect(checkStructureCore([file("SKILL.md", "x"), file(path, "x")])).toEqual([]);
+      expect(checkChangedLayout([`skills/ns/name/${path}`])).toEqual([]);
+    });
+
+  it.each(["nested/SKILL.md", "scripts/SKILL.md"])("%s is rejected by both", (path) => {
+    expect(checkStructureCore([file("SKILL.md", "x"), file(path, "x")])).toHaveLength(1);
+    expect(checkChangedLayout([`skills/ns/name/${path}`])).toHaveLength(1);
   });
 });
