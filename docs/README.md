@@ -45,6 +45,7 @@ the spike stays as the reasoning behind it.
 |---|---|
 | [where-a-backend-would-live.md](spikes/where-a-backend-would-live.md) | If a backend is ever built, where should it run? — [#71](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/71); the platform question is open, the decision to have none for now is [ADR 0003](adr/0003-no-backend-until-the-experience-requires-one.md) |
 | [submitting-a-multi-file-skill.md](spikes/submitting-a-multi-file-skill.md) | How does a skill that is more than one file reach a pull request? — [#70](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/70), ruled and built; the sign-in half is [#71](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/71) |
+| [the-hbs-design-system-and-this-site.md](spikes/the-hbs-design-system-and-this-site.md) | Where does this site agree with the HBS design system, and where did it invent? — [#101](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/101), open; eight numbered questions awaiting a ruling |
 | [lab-as-a-tier.md](spikes/lab-as-a-tier.md) | Should Lab be a third tier? — [#53](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/53), ruled; see [ADR 0002](adr/0002-lab-is-authorship-not-a-tier.md) |
 | [reviewed-tier-definition.md](spikes/reviewed-tier-definition.md) | What should a Reviewed listing mean? — [#38](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/38), ruled; see [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) |
 
