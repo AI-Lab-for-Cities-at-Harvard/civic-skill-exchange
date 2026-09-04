@@ -110,21 +110,26 @@ it, because a third copy would be a third thing to keep in step.
 Each skill installs as a self-contained directory. `localize-skill` on somebody
 else's machine has to carry the contract it reads; a pointer to a file in this
 repository would point at something the adopter does not have. So the
-duplication is deliberate.
+duplication is deliberate, and the two copies are meant to be kept in step by
+hand: change one, change the other.
 
-What was missing was the check. `tests/test_localization_contract.py` holds every
-shared section of the two copies byte-identical, and fails in both directions —
-a reworded explanation in one copy, or shared material added to only one. The one
-allowed difference is the introduction, since each skill says which side of the
-exchange the reader is on, plus the `<org>.profile.yml` section, which is
-localize's own output and which generalize never writes.
+**There is deliberately no check in this repository for that.** A test
+comparing two listings' reference files would be a skill's own test living in
+the registry's suite, which is what `docs/DEVELOPMENT.md` rules out — the
+registry validates a listing against the contract and has no opinion about a
+skill's internals. It would also gate a legitimate edit to one skill on editing
+the other, and it would protect the wrong thing: the copies do not live in this
+repository once installed, they live on two machines at two versions.
+
+Which is what `contract_version` is for.
 
 ### `contract_version`
 
-One integer in every context file, checked by every reader. It exists because the
-two copies will sit on different machines at different versions: an adopter
-running a two-year-old `localize-skill` against a context file written last week
-is the case it makes **detectable** rather than merely unlikely.
+One integer in every context file, checked by every reader. It is the mechanism
+for drift between the copies, and it works where the copies actually are: an
+adopter running a two-year-old `localize-skill` against a context file written
+last week is the case it makes **detectable** rather than merely unlikely. No
+build-time check in this repository could see that machine.
 
 Bumped only when an old reader would get it wrong — renaming a key, removing
 one, changing what one means. Adding an optional key is not a bump. That rule is
