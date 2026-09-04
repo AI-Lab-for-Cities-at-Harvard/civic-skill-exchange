@@ -48,6 +48,29 @@ a:hover { color: var(--c-spot); }
 }
 .topper__mark:hover { color: var(--c-text); text-decoration: underline; }
 
+/* The site identity and its release marker travel together, so the marker
+   cannot be mistaken for a nav item or wrap away from the name it qualifies. */
+.topper__identity {
+  display: inline-flex; align-items: center; gap: var(--gap-3);
+}
+
+/* Deliberately not a .badge. The tier badges are filled and carry status about
+   a skill; this is an outline on the band it sits in and carries status about
+   the exchange (#123). Same tokens as the band, so it introduces no new
+   contrast pair — see styles/contrast.test.ts. */
+.beta {
+  font-weight: 600; font-size: var(--t-xs);
+  letter-spacing: 0.1em; text-transform: uppercase;
+  text-decoration: none; color: var(--c-text);
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  padding: 0.15em 0.6em;
+  white-space: nowrap;
+}
+.beta:hover, .beta:focus-visible {
+  border-color: var(--c-text); text-decoration: none;
+}
+
 .nav { display: flex; align-items: center; gap: var(--gap-5); flex-wrap: wrap; }
 .nav a {
   font-size: var(--t-sm); text-decoration: none; color: var(--c-text-light);

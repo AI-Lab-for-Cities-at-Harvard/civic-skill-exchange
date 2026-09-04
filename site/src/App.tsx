@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { About } from "./components/About";
+import { BetaBadge } from "./components/Beta";
 import { Submit } from "./components/Submit";
 import { SkillDetail } from "./components/SkillDetail";
 import { Facet } from "./components/Facets";
@@ -90,7 +91,10 @@ export default function App() {
       <header className="topper" data-theme="crimson">
         <div className="topper__inner">
           <div className="topper__bar">
-            <a className="topper__mark" href="#/">Civic Skill&nbsp;Exchange</a>
+            <span className="topper__identity">
+              <a className="topper__mark" href="#/">Civic Skill&nbsp;Exchange</a>
+              <BetaBadge />
+            </span>
             <nav className="nav" aria-label="Main">
               <a href="#/" aria-current={route.page === "browse" ? "page" : undefined}>
                 Browse
