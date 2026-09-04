@@ -138,22 +138,6 @@ describe.each(THEMES)("%s theme meets WCAG AA", (_name, theme) => {
   });
 });
 
-/** The status chips carry their own ground, and are the most consequential
- *  thing on a card — a tier badge nobody can read is a tier badge nobody
- *  checks. */
-describe.each([["light", palette(base)], ["dark", palette(base, dark)]] as const)(
-  "status badges in the %s theme",
-  (_name, theme) => {
-    it.each([
-      ["reviewed", "--c-ok", "--c-ok-bg"],
-      ["community", "--c-warn", "--c-warn-bg"],
-      ["informational", "--c-info", "--c-info-bg"],
-    ])("%s", (_label, fgToken, bgToken) => {
-      expect(ratio(theme[fgToken]!, theme[bgToken]!)).toBeGreaterThanOrEqual(AA_TEXT);
-    });
-  },
-);
-
 describe("the Lab badge, which is brand rather than status", () => {
   it("is legible on the accent in either theme, because it is absolute", () => {
     // badge--lab paints white on --brand-accent and does not change with the
@@ -184,4 +168,109 @@ describe("interface borders", () => {
         .toBeGreaterThanOrEqual(AA_LARGE);
     },
   );
+});
+
+/** Status colour, ruled on #101.
+ *
+ *  Solid fills with white on them, not a hue at low opacity behind the same hue
+ *  darkened — a tint pair carries almost no contrast of its own and collapses
+ *  the moment a reader's display or setting differs. Every value is from the HBS
+ *  expanded palette rather than invented.
+ *
+ *  Colour is never the only signal. Reviewed is a hue and Community is a grey,
+ *  so no form of colour blindness can turn one into the other, and each pill
+ *  carries its own word besides. The luminance assertions below are what hold
+ *  that: two status fills a reader cannot tell apart in greyscale are two fills
+ *  telling them nothing.
+ */
+/** Each fill with the text painted on it. The HBS accessibility guide permits
+ *  only black, crimson or white on a swatch, and marks each pairing 4.5:1 (any
+ *  size) or 3:1 (14pt bold / 18pt and larger). Pills are small text, so every
+ *  pair here has to clear 4.5. */
+const STATUS_PAIRS = [
+  ["--c-ok", "--c-on-ok"],
+  ["--c-community", "--c-on-community"],
+  ["--c-warn", "--c-on-warn"],
+  ["--c-info", "--c-on-info"],
+] as const;
+const STATUS_FILLS = STATUS_PAIRS.map(([fill]) => fill);
+
+describe("status pills are solid, and legible on their own fill", () => {
+  it.each(STATUS_PAIRS)("%s carries %s at AA for text of any size", (fillToken, textToken) => {
+    const theme = palette(base);
+    const fill = theme[fillToken];
+    const text = theme[textToken];
+    expect(fill, `${fillToken} is not defined`).toBeDefined();
+    expect(text, `${textToken} is not defined`).toBeDefined();
+    expect(ratio(text!, fill!)).toBeGreaterThanOrEqual(AA_TEXT);
+  });
+
+  it("paints only black or white on a fill, which is the guide's rule", () => {
+    const theme = palette(base);
+    for (const [, textToken] of STATUS_PAIRS) {
+      expect(["#000000", "#ffffff"]).toContain(theme[textToken]);
+    }
+  });
+
+  it("uses one set of fills for both themes, because the ground is the fill", () => {
+    // A solid pill's contrast is against itself, so it does not need a second
+    // value per theme — and not having one removes a way for the two to drift.
+    for (const token of STATUS_FILLS) {
+      expect(palette(base, dark)[token]).toBe(palette(base)[token]);
+    }
+  });
+
+  /** The border and rule uses are a different problem: their ground *is* the
+   *  page, so they do need a value per theme. A dark green rule on a dark page
+   *  is invisible. */
+  it.each([
+    ["--c-ok-edge", "light", "--c-bg"], ["--c-ok-edge", "light", "--c-bg-raised"],
+    ["--c-warn-edge", "light", "--c-bg"], ["--c-warn-edge", "light", "--c-bg-raised"],
+  ] as const)("%s is visible on %s %s", (token, _theme, ground) => {
+    const t = palette(base);
+    expect(ratio(t[token]!, t[ground]!)).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+
+  it.each([
+    ["--c-ok-edge", "--c-bg"], ["--c-ok-edge", "--c-bg-raised"],
+    ["--c-warn-edge", "--c-bg"], ["--c-warn-edge", "--c-bg-raised"],
+  ] as const)("%s is visible on dark %s", (token, ground) => {
+    const t = palette(base, dark);
+    expect(ratio(t[token]!, t[ground]!)).toBeGreaterThanOrEqual(AA_LARGE);
+  });
+});
+
+describe("status is distinguishable without colour", () => {
+  /** Relative luminance, which is what survives greyscale and most forms of
+   *  colour blindness. */
+  const lum = (hex: string) => {
+    const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const lin = c.map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * lin[0]! + 0.7152 * lin[1]! + 0.0722 * lin[2]!;
+  };
+
+  it("separates Reviewed from Community by lightness, not only by hue", () => {
+    const theme = palette(base);
+    expect(ratio(theme["--c-ok"]!, theme["--c-community"]!))
+      .toBeGreaterThanOrEqual(1.4);
+  });
+
+  it("gives every status fill a distinct lightness", () => {
+    const theme = palette(base);
+    const values = STATUS_FILLS.map((t) => lum(theme[t]!)).sort((a, b) => a - b);
+    for (let i = 1; i < values.length; i += 1) {
+      expect(values[i]! - values[i - 1]!,
+        `two status fills are the same lightness: ${values.join(", ")}`)
+        .toBeGreaterThan(0.02);
+    }
+  });
+});
+
+describe("the focus ring is the house 4px", () => {
+  it("is visible against a card as well as the page", () => {
+    for (const theme of [palette(base), palette(base, dark)]) {
+      expect(ratio(theme["--c-outline"]!, theme["--c-bg-raised"]!))
+        .toBeGreaterThanOrEqual(AA_LARGE);
+    }
+  });
 });
