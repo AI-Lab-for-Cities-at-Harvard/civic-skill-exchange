@@ -15,7 +15,7 @@ import {
   AFFILIATIONS, DEPLOYED_IN_PATTERN, DEPLOYED_SINCE_PATTERN, DEPLOYMENT_DETAILS,
   DEPLOYMENTS, GENERALIZED_OK_JURISDICTIONS, HUMAN_REVIEW, JURISDICTIONS,
   FIT_MAX_LENGTH, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS,
-  SECONDARY_CATEGORY, SENSITIVITIES,
+  SECONDARY_CATEGORY, SENSITIVITIES, VERSION_FIELD, VERSION_PATTERN,
   SPEC_FIELDS,
 } from "./rules";
 
@@ -201,5 +201,19 @@ describe("the secondary category", () => {
   it("is capped like the primary, so neither can carry a sentence", () => {
     expect(metaProps[SECONDARY_CATEGORY]?.maxLength)
       .toBe(metaProps["civic.category"]?.maxLength);
+  });
+});
+
+/** The declared version (#77). */
+describe("the version field", () => {
+  it("is unprefixed, optional, and carries the pattern rules.ts enforces", () => {
+    expect(metaProps[VERSION_FIELD]).toBeDefined();
+    expect(schema.properties.metadata.required).not.toContain(VERSION_FIELD);
+    expect(metaProps[VERSION_FIELD]?.pattern).toBe(VERSION_PATTERN);
+  });
+
+  it("is not namespaced civic.*, which would claim a field that is not ours", () => {
+    expect(VERSION_FIELD).toBe("version");
+    expect(metaProps["civic.version"]).toBeUndefined();
   });
 });

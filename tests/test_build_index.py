@@ -10,6 +10,8 @@ from __future__ import annotations
 import zipfile
 from datetime import date, timedelta
 
+import pytest
+
 import build_index
 import conftest
 from conftest import VALID_FRONTMATTER
@@ -433,3 +435,104 @@ def test_the_plugin_manifest_takes_the_primary_only(make_skill):
 
     manifest = build_marketplace.codex_plugin(skill)
     assert manifest["interface"]["category"] == "Finance"
+
+
+# --------------------------------------------------------------------------- #
+# History, derived from git (#77).
+#
+# The declared version is a claim; this is a fact. An adopter reading a listing
+# could not tell a skill maintained last week from one abandoned in March, and
+# the history was already on disk — build.yml checks out with fetch-depth: 0
+# because head_sha() needs it.
+#
+# Every value is null-safe. A shallow clone, a path outside the repository, or a
+# skill whose directory git has never seen all return None rather than raising,
+# because an index that cannot be built is worse than one that says it does not
+# know.
+
+
+@pytest.fixture
+def git_skill(tmp_path, monkeypatch):
+    """A skill with a real history: added, then touched twice."""
+    import subprocess
+
+    def run(*args):
+        subprocess.run(["git", *args], cwd=tmp_path, check=True,
+                       capture_output=True)
+
+    skill = tmp_path / "skills" / "cityofx" / "permit-status-explainer"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text(
+        conftest.render_frontmatter(dict(
+            conftest.VALID_FRONTMATTER, name="permit-status-explainer"))
+        + "\n\nBody.\n", encoding="utf-8")
+    run("init", "-q", "-b", "main")
+    run("-c", "user.email=t@e.x", "-c", "user.name=T", "add", "-A")
+    run("-c", "user.email=t@e.x", "-c", "user.name=T", "commit", "-q",
+        "-m", "Add the permit explainer (#12)")
+    for n in (1, 2):
+        (skill / f"note{n}.md").write_text("x\n", encoding="utf-8")
+        run("-c", "user.email=t@e.x", "-c", "user.name=T", "add", "-A")
+        run("-c", "user.email=t@e.x", "-c", "user.name=T", "commit", "-q",
+            "-m", f"Touch it again ({n})")
+
+    monkeypatch.setattr(build_index, "ROOT", tmp_path)
+    return skill
+
+
+def test_the_entry_says_when_the_skill_arrived(git_skill):
+    entry = build_index.build_entry(git_skill, {}, {})
+    assert entry["history"]["first_seen"] is not None
+    assert entry["history"]["first_seen"].startswith("20")
+
+
+def test_the_entry_says_when_it_last_changed(git_skill):
+    entry = build_index.build_entry(git_skill, {}, {})
+    assert entry["history"]["last_changed"] is not None
+
+
+def test_the_entry_counts_how_many_times_it_has_been_touched(git_skill):
+    entry = build_index.build_entry(git_skill, {}, {})
+    assert entry["history"]["commits"] == 3
+
+
+def test_the_entry_carries_the_pull_request_that_introduced_it(git_skill):
+    """This repository squash-merges and the merge subject ends (#N), so it can
+    be read from the commit message. No network and no token — an index build
+    that needed the GitHub API would fail differently, and more often."""
+    entry = build_index.build_entry(git_skill, {}, {})
+    assert entry["history"]["pull_request"] == 12
+
+
+def test_history_is_null_safe_when_git_cannot_answer(make_skill):
+    """make_skill builds outside any repository. Every value is None and the
+    build completes — an index that cannot be built is worse than one that says
+    it does not know."""
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["history"] == {
+        "first_seen": None, "last_changed": None, "commits": None,
+        "pull_request": None,
+    }
+
+
+def test_nothing_derived_here_can_influence_the_tier(git_skill):
+    """Thirty commits means churn, not care. History must never reach tier."""
+    entry = build_index.build_entry(git_skill, {}, {})
+    assert entry["tier"] == "community"
+    assert entry["history"]["commits"] == 3
+
+    resolved = build_index.resolve_tier("cityofx/permit-status-explainer",
+                                        entry["sha"], None)
+    assert resolved["tier"] == "community"
+
+
+def test_a_declared_version_is_published_as_the_authors_claim(make_skill):
+    skill = make_skill(overrides={"metadata": dict(
+        conftest.VALID_FRONTMATTER["metadata"], version="2.1")})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["version"] == "2.1"
+
+
+def test_a_missing_version_is_published_as_absent_rather_than_invented(make_skill):
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["version"] is None

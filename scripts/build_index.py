@@ -37,6 +37,66 @@ REPO_URL = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
 
 
 
+#: This repository squash-merges and GitHub writes the merge subject as
+#: "Title (#N)", so the pull request that introduced a skill can be read from
+#: its first commit. Parsed rather than fetched: an index build that needed the
+#: GitHub API would need a token, would rate-limit, and would fail more often
+#: than the thing it is describing.
+_PULL_REQUEST = re.compile(r"\(#(\d+)\)\s*$")
+
+
+def _git(args: list[str]) -> str | None:
+    """Ask git, or return None. Never raises.
+
+    A shallow clone, a path outside the repository, or a directory git has never
+    seen all end here. An index that cannot be built is worse than one that says
+    it does not know, so every caller treats None as "unknown" and publishes it.
+    """
+    try:
+        out = subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
+                             text=True, check=True)
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError, OSError):
+        return None
+    return out.stdout.strip() or None
+
+
+def history(path: Path) -> dict:
+    """When a skill arrived, when it last changed, and how often — from git.
+
+    The declared `version` is the author's claim. This is the fact, and it is
+    the more useful half: an adopter could not otherwise tell a skill maintained
+    last week from one abandoned in March.
+
+    **Nothing here may reach `tier`.** Thirty commits means churn, not care, and
+    a listing touched once may be finished rather than abandoned. The build
+    keeps them apart and test_build_index.py asserts it.
+    """
+    unknown = {"first_seen": None, "last_changed": None, "commits": None,
+               "pull_request": None}
+    try:
+        rel = str(path.relative_to(ROOT))
+    except ValueError:
+        return unknown
+
+    first = _git(["log", "--reverse", "--diff-filter=A", "--format=%aI%x00%s",
+                  "--", rel])
+    last = _git(["log", "-1", "--format=%aI", "--", rel])
+    count = _git(["rev-list", "--count", "HEAD", "--", rel])
+    if first is None and last is None and count is None:
+        return unknown
+
+    first_line = first.splitlines()[0] if first else ""
+    first_date, _, subject = first_line.partition("\x00")
+    match = _PULL_REQUEST.search(subject) if subject else None
+
+    return {
+        "first_seen": first_date or None,
+        "last_changed": last,
+        "commits": int(count) if count and count.isdigit() else None,
+        "pull_request": int(match.group(1)) if match else None,
+    }
+
+
 def head_sha(path: Path) -> str | None:
     """The commit that last touched this directory."""
     try:
@@ -198,6 +258,11 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         # index.json is a published API and a key that comes and goes makes
         # every consumer defensive. See #102.
         "category_secondary": meta.get("civic.category-secondary"),
+        # The author's claim about their own version, published as one. The site
+        # renders it as self-reported, the footing `provenance` already sits on.
+        # It must never order the catalogue: `version: 4.0` means somebody typed
+        # 4.0.
+        "version": meta.get("version"),
         "jurisdiction": meta.get("civic.jurisdiction"),
         "localization": meta.get("civic.localization"),
         "data_sensitivity": meta.get("civic.data-sensitivity"),
@@ -217,6 +282,7 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         # — and a listing stays valid when its upstream is deleted or renamed.
         "source": source_of(meta),
         "sha": sha,
+        "history": history(skill_dir),
         "has_scripts": (skill_dir / "scripts").is_dir(),
         "script_files": sorted(
             str(p.relative_to(skill_dir))

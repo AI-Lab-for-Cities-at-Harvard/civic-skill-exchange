@@ -381,6 +381,7 @@ An index entry, with every field the build actually emits:
   "allowed_tools": ["Read", "Grep"],
   "category": "permitting-licensing",
   "category_secondary": "constituent-services",
+  "version": "1.2",
   "jurisdiction": "us-local",
   "localization": "localized",
   "data_sensitivity": "none",
@@ -406,9 +407,30 @@ An index entry, with every field the build actually emits:
   "script_files": [],
   "scan": { "last_run": "2026-09-20", "blocking": 0, "flags": 0, "signatures": [] },
   "path": "skills/cityofx/permit-status-explainer",
-  "download": "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/tree/main/skills/cityofx/permit-status-explainer"
+  "download": "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/tree/main/skills/cityofx/permit-status-explainer",
+  "history": {
+    "first_seen": "2026-03-14T09:22:41+00:00",
+    "last_changed": "2026-08-30T16:04:12+00:00",
+    "commits": 4,
+    "pull_request": 61
+  }
 }
 ```
+
+`version` is the author's claim and `history` is derived from git — the
+distinction matters, so the site renders the first as self-reported and states
+the second flatly. Every value in `history` is `null` when git cannot answer: a
+shallow clone, or a directory git has never seen. **Nothing in `history` may
+reach `tier`.** Thirty commits means churn, not care, and a listing touched once
+may be finished rather than abandoned.
+
+It is also the history of **the path**, not of the skill. `git log --follow`
+tracks a renamed file and cannot track a renamed directory, so moving a skill
+between namespaces resets `first_seen` and `commits` to the move — which is what
+happened to `civic-analytics-workflow` in
+[#126](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/pull/126).
+Preferred to the alternatives: a reconstruction would be wrong silently, and a
+rename is rare and visible in the history itself.
 
 Nothing here is withheld. `civic.contact` used to be — it existed so a security
 report could land, and publishing it in a static JSON file was handing it to
