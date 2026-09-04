@@ -272,7 +272,10 @@ Run them visibly — no piping that hides an exit code.
 - [ ] `npm test --workspaces` passes — the validator and the site, including the
       accessibility and contrast gates
 - [ ] `npm run check -- all` passes, and its report says what you expect
-- [ ] `npm run lint --workspaces` and `npm run build --workspaces` pass
+- [ ] `npm run lint` and `npm run typecheck` pass — both root scripts, which
+      pass `--if-present`. `npm run lint --workspaces` fails with
+      `Missing script: lint`, because the validator has none
+- [ ] `npm run build --workspaces` passes
 - [ ] `python scripts/build_marketplace.py --check` passes, if you touched
       `skills/` or the generator. The merge repairs it, so a submitter sharing a
       skill can skip this; anybody changing how it is generated cannot
