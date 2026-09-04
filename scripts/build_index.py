@@ -194,6 +194,10 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "compatibility": front.get("compatibility"),
         "allowed_tools": normalize_tools(front.get("allowed-tools")),
         "category": meta.get("civic.category"),
+        # The other axis, when the author named one. Always present, because
+        # index.json is a published API and a key that comes and goes makes
+        # every consumer defensive. See #102.
+        "category_secondary": meta.get("civic.category-secondary"),
         "jurisdiction": meta.get("civic.jurisdiction"),
         "localization": meta.get("civic.localization"),
         "data_sensitivity": meta.get("civic.data-sensitivity"),

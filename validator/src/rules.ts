@@ -33,6 +33,10 @@ export const AFFILIATIONS = ["government", "nonprofit", "vendor", "academic", "i
 export const DEPLOYMENTS = ["none", "personal", "team", "organization"] as const;
 export const LOCALIZATIONS = ["generalized", "localized"] as const;
 
+/** The optional second category. Named here so the schema test, the site and
+ *  the index generator all reach for one spelling. */
+export const SECONDARY_CATEGORY = "civic.category-secondary";
+
 /** A generalized skill has had its jurisdiction specifics lifted out, so it
  *  cannot also be shaped for one named jurisdiction. These two are compatible:
  *  'generic' means no assumptions, 'intl' says nothing about which. */
@@ -307,6 +311,23 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   if (category && !context.categories.includes(category)) {
     findings.push(finding("civic.category",
       `'${category}' is not in the vocabulary. One of: ${[...context.categories].sort().join(", ")}`));
+  }
+
+  // A skill can sit in two places in one vocabulary (#102) — the functional
+  // axis and the service axis cut differently, and forcing one answer discards
+  // what the author knows. Two explicit fields rather than an ordered list: the
+  // cap of two is structural, nothing has to be parsed, and which is primary is
+  // never in question. build_marketplace.py takes civic.category, because a
+  // plugin manifest carries exactly one category.
+  const secondary = str(metadata[SECONDARY_CATEGORY]);
+  if (secondary && !context.categories.includes(secondary)) {
+    findings.push(finding(SECONDARY_CATEGORY,
+      `'${secondary}' is not in the vocabulary. One of: ${[...context.categories].sort().join(", ")}`));
+  } else if (secondary && secondary === category) {
+    findings.push(finding(SECONDARY_CATEGORY,
+      `${SECONDARY_CATEGORY} is the same as civic.category ('${category}'). ` +
+      `A second category that repeats the first claims nothing and counts the ` +
+      `skill twice in one facet — remove it, or name the other axis.`));
   }
 
   findings.push(...checkEnum(metadata, "civic.jurisdiction", JURISDICTIONS));

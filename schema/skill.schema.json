@@ -165,6 +165,13 @@
           "maxLength": 64,
           "x-vocabulary": "categories"
         },
+        "civic.category-secondary": {
+          "type": "string",
+          "$comment": "Optional second category, from the same vocabulary as civic.category. Two explicit fields rather than a list because metadata values are strings per the Agent Skills spec, and because the cap of two is then structural. Must differ from civic.category; enforced by validator/src/rules.ts, which JSON Schema cannot express.",
+          "maxLength": 64,
+          "x-vocabulary": "categories",
+          "description": "Optional. The other axis this skill sits on — the vocabulary mixes function inside the organization with public service delivered, and a skill often belongs to one of each. civic.category is the primary and is what a plugin manifest carries."
+        },
         "civic.jurisdiction": {
           "type": "string",
           "enum": [

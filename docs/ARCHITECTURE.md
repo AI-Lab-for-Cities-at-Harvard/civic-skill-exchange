@@ -329,6 +329,7 @@ An index entry, with every field the build actually emits:
   "compatibility": "Requires no network access and no credentials.",
   "allowed_tools": ["Read", "Grep"],
   "category": "permitting-licensing",
+  "category_secondary": "constituent-services",
   "jurisdiction": "us-local",
   "localization": "localized",
   "data_sensitivity": "none",
