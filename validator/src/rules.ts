@@ -37,6 +37,21 @@ export const LOCALIZATIONS = ["generalized", "localized"] as const;
  *  the index generator all reach for one spelling. */
 export const SECONDARY_CATEGORY = "civic.category-secondary";
 
+/** MAJOR.MINOR, optionally MAJOR.MINOR.PATCH. Written as a string so the
+ *  published schema can carry the same pattern rather than describing it.
+ *
+ *  Deliberately loose. Nothing here can know the previous value, so
+ *  monotonicity is unenforceable and a rule that pretended otherwise would be
+ *  a rule an author works around. A skill is not a library. */
+export const VERSION_PATTERN = "^\\d+\\.\\d+(\\.\\d+)?$";
+const VERSION_RE = new RegExp(VERSION_PATTERN);
+
+/** Unprefixed, not `civic.version` (#77). The Agent Skills specification's own
+ *  example writes `metadata: {author, version}`, so any other tool with an
+ *  opinion about skill versions will look at `version` — and a version is not
+ *  civic-specific, so the prefix would namespace something that is not ours. */
+export const VERSION_FIELD = "version";
+
 /** A generalized skill has had its jurisdiction specifics lifted out, so it
  *  cannot also be shaped for one named jurisdiction. These two are compatible:
  *  'generic' means no assumptions, 'intl' says nothing about which. */
@@ -212,6 +227,22 @@ export function checkFit(meta: Record<string, unknown>): Finding[] {
 const SOURCE_REPO_RE = /^[A-Za-z0-9][\w.-]*\/[\w.-]+$/;
 const SOURCE_COMMIT_RE = /^[0-9a-f]{40}$/;
 
+/** The author's own claim about which version of their skill this is.
+ *
+ *  Optional, pattern-checked, and nothing more. It is a claim rather than a
+ *  fact — the registry's derived history is the fact — so the site renders it
+ *  as the author's statement, the same footing `provenance` already sits on
+ *  with `self_reported`. It must never influence tier or order the catalogue:
+ *  `version: 4.0` means somebody typed 4.0. */
+export function checkVersion(meta: Record<string, unknown>): Finding[] {
+  const value = str(meta[VERSION_FIELD]);
+  if (!value || VERSION_RE.test(value)) return [];
+  return [finding(VERSION_FIELD,
+    `'${value}' is not a version this can read. Use MAJOR.MINOR, optionally ` +
+    `MAJOR.MINOR.PATCH — '1.0' or '2.1.3'. No leading 'v', no suffix. It is ` +
+    `optional: leave it out rather than inventing one.`)];
+}
+
 export function checkSource(meta: Record<string, unknown>): Finding[] {
   const findings: Finding[] = [];
   const repo = str(meta["civic.source-repo"]);
@@ -345,6 +376,7 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   findings.push(...checkLocalization(metadata));
   findings.push(...checkFit(metadata));
   findings.push(...checkSource(metadata));
+  findings.push(...checkVersion(metadata));
 
   return findings;
 }

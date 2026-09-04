@@ -451,3 +451,44 @@ describe("a skill with no contact address", () => {
     expect(checkFrontmatter(f, ctx())).toEqual([]);
   });
 });
+
+/** A declared version is a claim; history is a fact (#77).
+ *
+ *  Unprefixed rather than `civic.version`: the Agent Skills specification's own
+ *  example writes `metadata: {author, version}`, any other tool that grows an
+ *  opinion about skill versions will look at `version`, and a version is not
+ *  civic-specific — the `civic.*` prefix would namespace something that is not
+ *  ours to namespace.
+ *
+ *  Loose, and deliberately so. We cannot enforce that it increases, and a skill
+ *  is not a library. What it buys an author is a way to say "this is not what
+ *  you adopted last year" that an adopter can read. */
+describe("a declared version", () => {
+  const withVersion = (value: string) =>
+    checkFrontmatter(front({ metadata: meta({ version: value }) }), ctx());
+
+  it("is optional", () => {
+    expect(checkFrontmatter(front(), ctx())).toEqual([]);
+  });
+
+  it.each(["1.0", "0.1", "2.14", "1.0.0", "10.2.3"])("accepts %s", (value) => {
+    expect(withVersion(value)).toEqual([]);
+  });
+
+  it.each(["v1.0", "1", "1.0-beta", "latest", "2026-09-04", "1.0.0.0"])(
+    "rejects %s", (value) => {
+      const findings = withVersion(value);
+      expect(findings).toHaveLength(1);
+      expect(findings[0]?.where).toBe("version");
+    });
+
+  it("says what shape it wants, since the field is the author's to fill", () => {
+    expect(withVersion("v1")[0]?.message).toMatch(/MAJOR\.MINOR/);
+  });
+
+  it("does not enforce that it increases", () => {
+    // Nothing here can know the previous value, and a rule that pretends to
+    // would be a rule an author works around.
+    expect(withVersion("0.1")).toEqual([]);
+  });
+});

@@ -42,6 +42,7 @@ const FIELD_LABELS: Record<string, string> = {
   "allowed-tools": "the tools it needs",
   metadata: "the details below",
   "civic.category": "the category",
+  version: "the version",
   "civic.category-secondary": "the second category",
   "civic.jurisdiction": "where it applies",
   "civic.localization": "how portable it is",
@@ -588,6 +589,18 @@ export function Submit(
               sits on, so many skills belong in two places. Leave this alone if
               yours does not.</>
             } />
+
+          <Field id="version" label="Version, if you keep one" findings={findings}
+            hint={
+              <>Your own number for it, like <code>1.0</code> or{" "}
+              <code>2.1.3</code>. Optional, and nothing checks it — it is there
+              so an adopter can tell this is not what they took last year. The
+              registry records when a skill arrived and last changed on its
+              own.</>
+            }>
+            <input id="version" className="input" value={draft.version}
+              onChange={onInput("version")} placeholder="1.0" />
+          </Field>
 
           <Choice id="civic.jurisdiction" label="Where does it apply?"
             value={draft.jurisdiction} findings={findings} placeholder="Choose…"

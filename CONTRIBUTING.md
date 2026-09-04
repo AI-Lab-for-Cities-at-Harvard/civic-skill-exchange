@@ -100,6 +100,7 @@ metadata:
 | Field | Values | Meaning |
 |---|---|---|
 | `civic.category` | one of the [category vocabulary](docs/ARCHITECTURE.md#categories) | Closed list. Propose additions in a separate PR. |
+| `version` | `MAJOR.MINOR` or `MAJOR.MINOR.PATCH` | Optional, unprefixed, and your own claim — nothing checks it and it must not be `v`-prefixed. The registry records when a skill arrived and last changed from git, so this is only for saying "this is not what you adopted last year". |
 | `civic.category-secondary` | one of the same vocabulary | Optional. The other axis — the list mixes function inside the organization with public service delivered, and many skills belong to one of each. Must differ from `civic.category`. |
 | `civic.jurisdiction` | `us-local`, `us-state`, `us-federal`, `intl`, `generic` | Who this is shaped for. `generic` means no jurisdiction assumptions. |
 | `civic.data-sensitivity` | `none`, `pii`, `protected` | What the skill is expected to touch. `protected` covers health, benefits, immigration, criminal justice, and anything else with a statutory regime. |

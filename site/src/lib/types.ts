@@ -42,6 +42,15 @@ export interface Skill {
   /** Set when a Reviewed attestation no longer matches the current commit. */
   drift?: boolean;
   sha: string | null;
+  /** The author's own claim about their version. See #77. */
+  version: string | null;
+  /** Derived from git, never declared. Null wherever git could not answer. */
+  history: {
+    first_seen: string | null;
+    last_changed: string | null;
+    commits: number | null;
+    pull_request: number | null;
+  };
   has_scripts: boolean;
   script_files: string[];
   path: string;

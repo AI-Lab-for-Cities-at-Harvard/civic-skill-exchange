@@ -273,6 +273,12 @@
           "type": "string",
           "pattern": "^[0-9a-f]{40}$",
           "description": "The upstream commit the copy was taken from. Full 40-character SHA; a short one stops being unique as a repository grows. Requires civic.source-repo."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
+          "maxLength": 16,
+          "description": "Optional. The author's own claim about which version of the skill this is: MAJOR.MINOR, optionally MAJOR.MINOR.PATCH. Unprefixed because the Agent Skills specification's own example writes metadata.version and a version is not civic-specific. Not validated beyond the shape — monotonicity is unenforceable, since nothing can know the previous value. A claim, not a fact: the registry derives first_seen, last_changed and commits from git, and publishes those flatly. Neither may influence tier or order the catalogue."
         }
       }
     }

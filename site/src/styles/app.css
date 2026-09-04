@@ -582,6 +582,13 @@ a:hover { color: var(--c-spot); }
   padding: var(--gap-5); border-radius: var(--radius);
 }
 .facts h2 { margin-bottom: var(--gap-3); }
+/* An inline caveat beside a value — quieter than the value, and never a
+   different colour, because a number with a coloured note beside it reads as a
+   score (#77). */
+.facts__aside {
+  color: var(--c-text-lighter); font-size: var(--t-xs);
+}
+
 .facts__note {
   margin: 0 0 var(--gap-3); font-size: var(--t-xs); color: var(--c-text-lighter);
 }
