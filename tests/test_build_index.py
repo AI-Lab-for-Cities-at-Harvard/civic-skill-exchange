@@ -372,7 +372,7 @@ def test_a_skill_with_no_upstream_publishes_none(make_skill, monkeypatch):
 # --------------------------------------------------------------------------- #
 # The published contract.
 #
-# skills/civic-skills/submit-a-skill asks the registry what a submission needs
+# A skill that asks the registry what a submission needs
 # rather than carrying a copy of the answer (#10). It runs on somebody else's
 # machine, so "ask" means fetch a published file — the same way search-the-
 # exchange reads index.json rather than the tree.

@@ -17,6 +17,7 @@ import userEvent from "@testing-library/user-event";
 import { zipSync, strToU8 } from "fflate";
 import { Submit, SUBMISSIONS_EMAIL } from "./Submit";
 import { makeSkill } from "../test/fixtures";
+import { JUDGMENT_QUESTIONS } from "../lib/labels";
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
@@ -768,5 +769,37 @@ describe("Submit — the download cannot be skipped by accident", () => {
     await user.paste(SKILL_MD);
     await user.type(screen.getByLabelText(/Who maintains it/i), "City of X");
     expect(screen.getByTestId("added-lines")).toHaveTextContent(/civic.maintainer/);
+  });
+});
+
+/** The two questions no scanner can answer: what data a skill touches, and
+ *  whether its output reaches anyone's rights. Nothing derives them, so the
+ *  form has to ask them, and it asks them in the words `JUDGMENT_QUESTIONS`
+ *  holds.
+ *
+ *  That constant was shared with skills/civic-skills/submit-a-skill, and
+ *  judgment.test.ts held the two surfaces to one wording. With the skill
+ *  withdrawn (#117) there is one surface again, so the pin is replaced by this:
+ *  the constant stays the single source, and these assert the form actually
+ *  renders what it holds rather than leaving it an unread value. */
+describe("Submit — the two questions nothing can derive", () => {
+  const entries = Object.entries(JUDGMENT_QUESTIONS);
+
+  it("covers both fields and no others", () => {
+    expect(entries.map(([key]) => key)).toEqual([
+      "civic.data-sensitivity", "civic.human-review",
+    ]);
+  });
+
+  it.each(entries)("asks %s in the words the constant holds", (_key, field) => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByLabelText(field.question)).toBeInTheDocument();
+  });
+
+  it.each(entries.flatMap(([key, field]) =>
+    field.options.map(([value, label]) => [`${key}: ${value}`, label] as const),
+  ))("offers %s in the words the constant holds", (_id, label) => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByRole("option", { name: label })).toBeInTheDocument();
   });
 });
