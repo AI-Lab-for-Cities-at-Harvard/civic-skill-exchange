@@ -99,7 +99,38 @@ Distinct from demotion. A skill is removed from the registry entirely for:
 - Impersonating another jurisdiction, agency, or organization
 - A legitimate legal complaint
 
+A maintainer may also withdraw their own skill for no reason at all — see [CONTRIBUTING.md](../CONTRIBUTING.md). That is the common case, and it needs no justification.
+
 Removal delists; it does not recall. Anyone who already cloned the skill still has it. When removing for a security reason, publish an advisory — see [SECURITY.md](SECURITY.md).
+
+### What a removal touches
+
+`git rm -r` on the directory, then regenerate the manifests. That should be all of it, and the checklist exists because twice it was not: an orphaned test and a test that read a `SKILL.md` from disk each took `main` red on a deletion. Both are now impossible — `tests/test_no_listing_coupling.py` fails on any test that reads a listing — but the rest of this list is still worth walking.
+
+| | |
+|---|---|
+| `skills/{namespace}/{name}/` | including its generated `.codex-plugin/plugin.json`, which travels with the directory |
+| Both marketplace manifests | `python scripts/build_marketplace.py` — regenerated, never hand-edited |
+| `registry/reviewed.yml` | if the skill carried an attestation. One outliving its skill is a badge with nothing under it, and `tests/test_attestation.py` fails on it |
+| `docs/` | anywhere the skill is named, and especially an install command that will no longer resolve |
+| The namespace directory | if the skill was the last one in it, `git` removes it for you |
+
+Two things need nothing done to them. The **published site** rebuilds `site/public/data` from a clean checkout on every deploy, so a removed skill's JSON and archive disappear rather than lingering. And **a skill's own tests** do not exist in this repository by design — its scripts are scanned and read at review, never unit-tested here, so there is nothing to orphan (see `docs/DEVELOPMENT.md`).
+
+Then verify the way everything else here is verified — by asking what a clone would have, not by looking at the working tree:
+
+```bash
+python -m pytest && npm test --workspaces
+npx tsx validator/src/cli.ts all
+python scripts/build_marketplace.py --check
+python scripts/build_index.py --out /tmp/idx    # the skill should be gone from it
+```
+
+### Recording it
+
+A removal for a security reason gets an advisory in `docs/advisories/` — `SECURITY.md` says what it must cover. A withdrawal at the maintainer's request gets a line in `docs/archive/removals.md` and nothing more: what was withdrawn, when, and that it was the maintainer's decision. No reason is recorded, because none is owed.
+
+The point of the record is not accountability. It is that somebody a year from now can tell a withdrawn skill from one that never existed, and does not rebuild it by accident.
 
 ---
 

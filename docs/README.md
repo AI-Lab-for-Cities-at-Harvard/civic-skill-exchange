@@ -54,5 +54,10 @@ the spike stays as the reasoning behind it.
 Superseded documents keep their content and gain a banner pointing at what
 replaced them. Nothing here describes how the system works today.
 
-Nothing tracked yet — `internal/archive/` holds the retired roadmap, and
-`internal/` is not part of the repository.
+| | |
+|---|---|
+| [archive/removals.md](archive/removals.md) | Skills that were listed and are no longer — one line each, so a withdrawn skill is distinguishable from one that never existed |
+| [advisories/](advisories/) | Advisories for a skill removed for a security reason. Empty, which is the correct state |
+
+`internal/archive/` holds the retired roadmap, and `internal/` is not part of
+the repository.
