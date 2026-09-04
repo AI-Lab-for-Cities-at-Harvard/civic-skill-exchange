@@ -179,6 +179,27 @@ of its own, is a different question and a much larger one. It is a spike:
 
 ---
 
+## One directory is one skill
+
+`skills/{namespace}/{name}/` holds exactly one `SKILL.md`, at its root.
+
+This is load-bearing rather than conventional. `scripts/build_marketplace.py`
+emits one plugin per directory on that assumption, so a directory with a second
+`SKILL.md` installs as a plugin whose nested skill a client loads, while the
+index shows it as an ordinary file. The catalogue and the agent would then
+disagree about what the listing contains, and nothing would say so — validating
+clean while producing two different answers is the wrong way to fail.
+
+`checkStructureCore` rejects a `SKILL.md` below the root, with one exemption:
+`references/` and `assets/`. Those are where the Agent Skills specification puts
+templates and reference material, no client loads a skill from either, and a
+skill about writing skills legitimately ships an example — likely rather than
+hypothetical in this registry's domain. `DOC_DIRECTORIES` is the single source
+of that list; `layout.ts` reads it for the changed-path check rather than
+restating it.
+
+---
+
 ## Categories
 
 A closed vocabulary in `registry/categories.yml`, enforced at runtime by

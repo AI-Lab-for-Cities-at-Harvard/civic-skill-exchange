@@ -803,3 +803,41 @@ describe("Submit — the two questions nothing can derive", () => {
     expect(screen.getByRole("option", { name: label })).toBeInTheDocument();
   });
 });
+
+/** A nested SKILL.md blocks the hand-off in the browser too (#78).
+ *
+ *  The same module CI runs, so a submitter learns before the pull request rather
+ *  than after one. It blocks rather than merely reporting, for the reason every
+ *  structural finding does: it cannot be fixed by editing a field, and CI would
+ *  reject the pull request for something the submitter was already shown. */
+describe("Submit — one directory is one skill", () => {
+  it("blocks a dropped folder carrying a second SKILL.md", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(
+      screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", {
+        "permit-status-explainer/SKILL.md": SKILL_MD,
+        "permit-status-explainer/examples/SKILL.md": SKILL_MD,
+      }),
+    );
+    // `blocked` is the heading; the findings themselves are listed above it.
+    expect(await screen.findByTestId("blocked")).toBeInTheDocument();
+    expect(screen.getByTestId("archive-result"))
+      .toHaveTextContent(/one directory is one skill/i);
+  });
+
+  it("accepts a template under references/, which is documentation", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(
+      screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", {
+        "permit-status-explainer/SKILL.md": SKILL_MD,
+        "permit-status-explainer/references/SKILL.md": SKILL_MD,
+      }),
+    );
+    await screen.findByTestId("archive-result");
+    expect(screen.queryByTestId("blocked")).not.toBeInTheDocument();
+  });
+});
