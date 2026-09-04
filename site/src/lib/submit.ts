@@ -20,6 +20,7 @@ export interface Draft {
   tools: string;
   category: string;
   categorySecondary: string;
+  version: string;
   jurisdiction: string;
   localization: string;
   dataSensitivity: string;
@@ -39,7 +40,8 @@ export interface Draft {
 
 export const EMPTY_DRAFT: Draft = {
   author: "", name: "", description: "", license: "MIT", compatibility: "",
-  tools: "", category: "", categorySecondary: "", jurisdiction: "", localization: "",
+  tools: "", category: "", categorySecondary: "", version: "",
+  jurisdiction: "", localization: "",
   dataSensitivity: "none", humanReview: "none", useWhen: "", avoidWhen: "",
   maintainer: "", affiliation: "", deployment: "none",
   deployedAt: "", deployedIn: "", deployedSince: "",
@@ -68,6 +70,7 @@ export function toFields(draft: Draft): Record<string, string> {
     "allowed-tools": draft.tools.split(",").map(trim).filter(Boolean).join(", "),
     "civic.category": trim(draft.category),
     "civic.category-secondary": trim(draft.categorySecondary),
+    version: trim(draft.version),
     "civic.jurisdiction": trim(draft.jurisdiction),
     "civic.localization": trim(draft.localization),
     "civic.data-sensitivity": trim(draft.dataSensitivity),

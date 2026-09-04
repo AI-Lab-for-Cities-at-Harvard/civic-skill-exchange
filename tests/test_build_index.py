@@ -536,3 +536,17 @@ def test_a_declared_version_is_published_as_the_authors_claim(make_skill):
 def test_a_missing_version_is_published_as_absent_rather_than_invented(make_skill):
     entry = build_index.build_entry(make_skill(), {}, {})
     assert entry["version"] is None
+
+
+def test_history_does_not_order_the_catalogue():
+    """The index is sorted by id and nothing else. Ordering by recency would
+    make the catalogue a leaderboard, which is the same thing #48 must not
+    become and the same reason history may not reach tier."""
+    import inspect
+
+    source = inspect.getsource(build_index.main_with)
+    ordering = [line for line in source.splitlines() if '"skills":' in line]
+    assert ordering, "could not find where the index is ordered"
+    assert 'key=lambda e: e["id"]' in ordering[0], ordering[0]
+    for field in ("history", "first_seen", "last_changed", "commits", "version"):
+        assert field not in ordering[0]

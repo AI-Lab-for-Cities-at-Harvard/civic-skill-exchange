@@ -19,6 +19,8 @@ export function makeSkill(over: Partial<Skill> = {}): Skill {
     allowed_tools: ["Read", "Grep"],
     category: "finance",
     category_secondary: null,
+    version: null,
+    history: { first_seen: null, last_changed: null, commits: null, pull_request: null },
     jurisdiction: "generic",
     localization: null,
     data_sensitivity: "none",

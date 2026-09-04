@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { DownloadBox } from "./DownloadBox";
+import { History } from "./History";
 import { categoriesOf } from "../lib/filter";
 import { TierBadge, LabBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
 import {
@@ -208,6 +209,8 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
               )}
             </dl>
           </section>
+
+          <History history={detail.history} version={detail.version} />
 
           <section className="facts" aria-labelledby="prov-heading">
             <h2 className="h3" id="prov-heading">Where it has been used</h2>
