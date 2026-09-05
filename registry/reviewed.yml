@@ -30,7 +30,7 @@
 attestations:
  - skill: "civic-skills/plain-language-notice-rewriter"
    sha: "4afc76bf891a75271ec5d673e970ec693f75cfe6"
-   reviewers: "AI Lab for Cities at Harvard"
+   reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-09-02
    expires: 2027-09-02
    notes: >
