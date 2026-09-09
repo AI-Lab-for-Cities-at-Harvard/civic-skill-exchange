@@ -551,3 +551,112 @@ def test_the_report_job_holds_no_more_permission_than_before() -> None:
         ("pull-requests", "write"),
         ("actions", "read"),
     }, f"report.yml's permissions changed: {sorted(granted)}"
+
+
+# --------------------------------------------------------------------------- #
+# #157: pip installs were unpinned (`pip install pyyaml`, `pip install pyyaml
+# pytest jsonschema`, ...), so an unrelated pytest release could flip every
+# workflow red with no code change here. `requirements-dev.txt` pins exact
+# versions; every workflow step now installs from it instead of naming
+# packages inline. dependabot.yml is widened from github-actions alone to also
+# watch pip and npm, since pins without an update path just go stale. The site
+# workspace's duplicate lockfile is dropped in favour of the root one, which
+# `npm ci` at the workspace root already resolves from.
+
+REQUIREMENTS_DEV = ROOT / "requirements-dev.txt"
+
+PIP_INSTALL_BARE = re.compile(r"pip install(?!\s+-r\s)[^\n]*\S")
+
+
+@pytest.mark.parametrize("wf", WORKFLOWS, ids=lambda p: p.name)
+def test_no_workflow_pip_installs_a_bare_package_name(wf: Path) -> None:
+    """An unpinned `pip install pytest` (or pyyaml, or jsonschema) can resolve a
+    new release on any run. `tests/test_no_listing_coupling.py` hit exactly
+    this: an unpinned pytest was scheduled to turn a return-value warning into
+    a collection error. Every install must instead reference
+    requirements-dev.txt, which pins versions."""
+    text = wf.read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if "pip install" not in line:
+            continue
+        assert "-r requirements-dev.txt" in line or "-r  requirements-dev.txt" in line, (
+            f"{wf.name}: {line.strip()!r} installs a bare package name instead "
+            "of `pip install -r requirements-dev.txt`"
+        )
+
+
+def test_requirements_dev_txt_exists_and_is_exactly_pinned() -> None:
+    """No hash pinning, no ranges, no comments to skip past — every line is a
+    plain `name==version` pin, the same discipline test_workflows.py already
+    holds actions/checkout to."""
+    assert REQUIREMENTS_DEV.is_file(), (
+        "requirements-dev.txt is missing — nothing pins the Python dependencies"
+    )
+    lines = [
+        line for line in REQUIREMENTS_DEV.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert lines, "requirements-dev.txt has no dependencies pinned"
+    for line in lines:
+        assert re.match(r"^[A-Za-z][A-Za-z0-9_.-]*==[0-9][0-9A-Za-z_.+-]*$", line), (
+            f"requirements-dev.txt: {line!r} is not a plain name==version pin"
+        )
+
+
+def test_requirements_dev_txt_covers_what_the_tests_import() -> None:
+    """pyyaml, pytest and jsonschema are what test.yml installed by name before
+    this change. Losing one silently would only surface as an ImportError deep
+    in CI."""
+    names = {
+        line.split("==")[0].lower()
+        for line in REQUIREMENTS_DEV.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    }
+    for required in ("pytest", "pyyaml", "jsonschema"):
+        assert required in names, (
+            f"requirements-dev.txt no longer pins {required}"
+        )
+
+
+def test_all_workflows_use_the_same_checkout_sha() -> None:
+    """Dependabot bumps every `actions/checkout` pin together because they are
+    grouped, but nothing enforced that a workflow could not be left on an
+    older pin by hand. manifest.yml once was."""
+    pins = set()
+    for wf in WORKFLOWS:
+        pins.update(
+            re.findall(r"actions/checkout@([0-9a-f]{40})", wf.read_text(encoding="utf-8"))
+        )
+    assert len(pins) == 1, (
+        f"actions/checkout is pinned to {len(pins)} different SHAs across "
+        f"workflows, not one: {pins}"
+    )
+
+
+def test_dependabot_also_watches_pip_and_npm() -> None:
+    """github-actions alone leaves the new requirements-dev.txt pins, and the
+    root package-lock.json, to go stale silently — the exact failure mode
+    pinning without an update path was already flagged for."""
+    config = (ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+    ecosystems = re.findall(r'package-ecosystem:\s*"?([\w-]+)"?', config)
+    assert "github-actions" in ecosystems
+    assert "pip" in ecosystems, "dependabot.yml does not watch pip"
+    assert "npm" in ecosystems, "dependabot.yml does not watch npm"
+
+
+def test_site_package_lock_json_is_gone() -> None:
+    """The workspace root's package-lock.json already carries site/'s tree —
+    npm ci at the root resolves it. The site copy is a stale duplicate that
+    only test.yml's cache key was still reading."""
+    assert not (ROOT / "site" / "package-lock.json").exists(), (
+        "site/package-lock.json still exists; delete it, the root lockfile "
+        "already covers the site workspace"
+    )
+
+
+@pytest.mark.parametrize("wf", WORKFLOWS, ids=lambda p: p.name)
+def test_no_workflow_references_the_site_lockfile(wf: Path) -> None:
+    text = wf.read_text(encoding="utf-8")
+    assert "site/package-lock.json" not in text, (
+        f"{wf.name} still references site/package-lock.json"
+    )
