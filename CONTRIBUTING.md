@@ -28,7 +28,7 @@ skills/{your-github-username}/{skill-name}/
 
 Rules the automation enforces:
 
-- The folder namespace must match **your GitHub username** — the account opening the PR.
+- The folder namespace must match **your GitHub username** — the account opening the PR. It must be lowercase: GitHub usernames are case-insensitive, but the directory is the one canonical spelling, so an uppercase character is rejected rather than folded.
 - `{skill-name}` must match the `name` field in `SKILL.md` exactly.
 - Your PR may not touch anything outside your own namespace. Changes to schema, workflows, or documentation are separate PRs and need maintainer review.
 - No symlinks, no binaries, no nested `.git` directories, no compiled artifacts.
