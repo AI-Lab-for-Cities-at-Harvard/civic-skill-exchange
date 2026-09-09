@@ -134,7 +134,7 @@ The AI Lab for Cities at Harvard against [REVIEW.md](REVIEW.md). Required only f
 One reader, and where the skill is Lab-authored the reader is also the author — disclosed on the listing. This layer used to be specified as two people from separate organizations, and dropping to one removes the property that mattered most here: no single account, including a compromised reviewer's, can confer the badge. Nothing structural catches that now, which is why L6 and the SHA pin carry proportionally more weight than they did. [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) sets out the trade in full.
 
 ### L6 — Standing re-scan
-Weekly re-run of L0–L4 across the whole tree, plus SHA-drift detection against `registry/reviewed.yml`. Opens an issue on any new finding.
+Weekly re-run of L0–L4 across the whole tree, plus SHA-drift detection against `registry/reviewed.yml` and a check that the committed marketplace manifests still match the skill tree. Opens an issue on any new finding, a stale manifest, or attestation drift.
 
 This layer exists because everything above it is a *submission-time* gate, and submission-time gates do nothing about the dominant failure mode: a contributor whose account is compromised months after their skill merged.
 

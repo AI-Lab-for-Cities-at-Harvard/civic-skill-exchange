@@ -9,6 +9,7 @@ pattern `tests/test_workflows.py` and `tests/test_review_claim.py` use.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -49,6 +50,54 @@ def test_development_md_build_gate_command_is_runnable() -> None:
         "script and `--workspaces` alone (no --if-present) is not tolerant of that"
     )
     assert "npm run build --workspaces --if-present" in text
+
+
+def _plugin_level_refusals() -> set[str]:
+    """The exact set of plugin-level paths L0 refuses, read from the
+    validator rather than restated by hand (see docs/DEVELOPMENT.md's rule
+    about never restating a generator's output)."""
+    src = _text("validator/src/structure-core.ts")
+    names: set[str] = set()
+    for block in re.findall(r"new Map<string, string>\(\[(.*?)\]\);", src, re.S):
+        names.update(re.findall(r'\["([^"]+)",', block))
+    return names
+
+
+def test_security_md_l0_refused_files_match_the_validator() -> None:
+    refused = _plugin_level_refusals()
+    assert refused == {"hooks", ".claude-plugin", "settings.json",
+                        "settings.local.json", ".lsp.json"}, (
+        "validator/src/structure-core.ts's refused plugin-level paths changed; "
+        "update this test and docs/SECURITY.md together"
+    )
+    doc = _text("docs/SECURITY.md")
+    for name in refused:
+        assert name in doc, f"docs/SECURITY.md's L0 file table is missing {name!r}"
+    assert ".mcp.json" in doc and "executed" in doc
+
+
+def test_contributing_md_lists_the_same_refused_plugin_files() -> None:
+    """CONTRIBUTING.md's own file rules (#151) should name the same set
+    SECURITY.md and the validator agree on, not a stale subset."""
+    refused = _plugin_level_refusals()
+    doc = _text("CONTRIBUTING.md")
+    for name in refused:
+        assert name in doc, f"CONTRIBUTING.md's file rules are missing {name!r}"
+    assert ".mcp.json" in doc
+
+
+def test_security_md_rescan_section_names_the_manifest_check() -> None:
+    """rescan.yml (#156) opens an issue on a stale marketplace manifest as
+    well as SHA drift — SECURITY.md's L6 description should say both, not
+    just the drift half."""
+    rescan = _text(".github/workflows/rescan.yml")
+    assert "build_marketplace.py --check" in rescan
+    doc = _text("docs/SECURITY.md")
+    l6 = doc.split("### L6", 1)[1].split("###", 1)[0]
+    assert "manifest" in l6.lower(), (
+        "docs/SECURITY.md's L6 section doesn't mention the manifest check "
+        "rescan.yml actually runs and opens an issue on"
+    )
 
 
 def test_readme_does_not_repeat_the_project_board_line_twice() -> None:

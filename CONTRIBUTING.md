@@ -32,6 +32,11 @@ Rules the automation enforces:
 - `{skill-name}` must match the `name` field in `SKILL.md` exactly.
 - Your PR may not touch anything outside your own namespace. Changes to schema, workflows, or documentation are separate PRs and need maintainer review.
 - No symlinks, no binaries, no nested `.git` directories, no compiled artifacts.
+- No `hooks/`, `.claude-plugin/`, `settings.json`, `settings.local.json`, or
+  `.lsp.json` — the skill directory is a plugin root a client installs
+  directly, and these are refused outright rather than merely reviewed.
+  `.mcp.json` is the one exception: it stays, and is treated as executed code
+  like anything under `scripts/`. See [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
 - **All four size limits**, so you can check before you hit them:
 
   | Limit | Value |
