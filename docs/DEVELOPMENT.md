@@ -81,7 +81,7 @@ pytest                            # scan.py and build_index.py
 **One branch per feature.** Named `feat/`, `fix/`, `chore/`, or `docs/` plus a short
 slug — `feat/site-browse`, `fix/sha-drift-fail-closed`. `main` is protected by a
 ruleset: no direct pushes, a pull request is required, its status checks must
-pass, and merges are squash-only. CODEOWNERS still requests review on paths
+pass, it needs one approving review, and merges are squash-only. CODEOWNERS still requests review on paths
 outside a contributor's own skill namespace. A pull request merging is not the
 end of it, either: `build.yml` only deploys after `Checks` (`test.yml`)
 completes successfully on `main`, and it checks out exactly the commit `Checks`
