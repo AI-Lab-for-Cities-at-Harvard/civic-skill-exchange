@@ -354,7 +354,7 @@ describe("the namespace is lowercase however the login was typed", () => {
 
   it("lowercases the skill path in the new-file editor", () => {
     // The filename travels URL-encoded in the query string.
-    expect(newFileUrl(REPO, { ...D, author: "CityOfX" })).toContain("skills%2Fcityofx%2F");
-    expect(newFileUrl(REPO, { ...D, author: "CityOfX" })).not.toContain("CityOfX");
+    expect(newFileUrl(REPO, { ...D, author: "CityOfX" }, "")).toContain("skills%2Fcityofx%2F");
+    expect(newFileUrl(REPO, { ...D, author: "CityOfX" }, "")).not.toContain("CityOfX");
   });
 });
