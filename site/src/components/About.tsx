@@ -434,8 +434,10 @@ export function About(
           </li>
           <li>
             <strong>Would we run these scripts?</strong> Every line of every
-            file under <code>scripts/</code> gets read. If we would not run it
-            on our own machine, it does not pass. <em>Rejection.</em>
+            file under <code>scripts/</code> gets read, and of{" "}
+            <code>.mcp.json</code> where a skill declares MCP servers. If we
+            would not run it on our own machine, it does not pass.{" "}
+            <em>Rejection.</em>
           </li>
           <li>
             <strong>Does it ask for more tools than it needs?</strong>{" "}
