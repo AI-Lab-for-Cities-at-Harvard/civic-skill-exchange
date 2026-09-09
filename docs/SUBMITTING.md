@@ -190,6 +190,10 @@ flagged for a human, and which step failed if one did.
   most of them.
 - **Flagged** does not stop anything. Several fire on entirely ordinary skills.
   A maintainer will look.
+- **The marketplace manifest check will fail**, because a submission made
+  through this page never generated one. That is expected: a maintainer adds
+  the generated files to your branch before merging, and you do not need to
+  do anything about it.
 
 What is checked, and what is deliberately not, is in
 [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).

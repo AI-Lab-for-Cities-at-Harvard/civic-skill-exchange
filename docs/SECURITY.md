@@ -244,6 +244,10 @@ rather than the commit's, and the two will not match what the workflow needs.
 - Require 2FA for all organization members
 - Require signed commits from maintainers
 - Never store a publish or deploy token in a workflow that reads `skills/`
+- **No workflow pushes to `main`.** A ruleset requires a pull request for
+  every change and rejects the built-in Actions app as a bypass actor, so
+  nothing — including a regenerated marketplace manifest — reaches `main` any
+  way but a reviewed pull request.
 
 ---
 

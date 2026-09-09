@@ -303,17 +303,29 @@ client while staying where the ownership check needs it.
 forced: `/plugin marketplace add` reads the repository, not the published site.
 `index.json` can be a build output served from Pages; this cannot be.
 
-**The merge maintains it, not the submitter.** `scripts/build_marketplace.py`
-generates it, and `.github/workflows/manifest.yml` runs that on every push to
-`main` that touches `skills/`, committing the result when it differs. A pull
-request that leaves it stale gets a warning and not a failure — asking somebody
-to regenerate a distribution artifact in order to share a skill is friction that
-buys the registry nothing, and it blocked a real submission before this was
-ruled ([#90](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/90)).
+**The pull request carries it, regenerated.** `scripts/build_marketplace.py`
+generates it, and `validate.yml` fails the build if the committed copy is
+stale — no job repairs it afterwards. A post-merge workflow used to do that:
+it pushed a regenerated manifest to `main` after every skill merge. That
+workflow is deleted, because the ruleset on `main` requires a pull request
+for every change and GitHub refuses to let the built-in Actions app bypass
+that ruleset, so its push was already being rejected — it could never have
+run.
 
-That job pushes to a protected branch, so the identity it runs as has to be
-permitted to. If the manifest ever stops tracking the catalogue, check that
-first.
+A manifest regenerated on a branch that is current with `main` is
+byte-identical to what `main` would produce right after the squash: the
+generator is a pure function of the skill tree, nothing from git, and the
+ruleset's strict up-to-date requirement guarantees the branch's tree is
+exactly what `main`'s will be the moment the merge lands. So carrying the
+regenerated files in the pull request, rather than building them after merge,
+changes nothing about what gets published.
+
+Asking a submitter to run a generator is the friction
+([#90](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/90))
+that the deleted job existed to absorb. For a submission that arrived through
+the submission page rather than the command line, a maintainer now
+regenerates and commits it onto the contributor's branch before merging — see
+docs/DEVELOPMENT.md.
 
 Plugin names are `{namespace}-{name}`, unconditionally. Plugin names must be
 unique across a marketplace and two submitters may publish the same skill name;

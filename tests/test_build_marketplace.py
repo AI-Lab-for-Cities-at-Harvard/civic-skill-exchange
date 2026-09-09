@@ -176,8 +176,9 @@ def test_output_is_deterministic(make_skill):
 #
 # It was a property of the checkout rather than of the code, and it failed on
 # every branch that added a skill — which is exactly the friction #87 hit. The
-# merge keeps main current now, via .github/workflows/manifest.yml, and the
-# generator's own unit tests above are what protect the output.
+# pull request that adds or changes a skill carries the regenerated manifest
+# now (#170), checked by validate.yml's `build_marketplace.py --check` step;
+# the generator's own unit tests above are what protect the output.
 
 
 # --------------------------------------------------------------------------- #
