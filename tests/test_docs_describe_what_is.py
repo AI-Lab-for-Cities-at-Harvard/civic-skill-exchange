@@ -12,6 +12,8 @@ import json
 import re
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -97,6 +99,40 @@ def test_security_md_rescan_section_names_the_manifest_check() -> None:
     assert "manifest" in l6.lower(), (
         "docs/SECURITY.md's L6 section doesn't mention the manifest check "
         "rescan.yml actually runs and opens an issue on"
+    )
+
+
+def test_review_request_template_does_not_reference_the_removed_contact_field() -> None:
+    """`civic.contact` was removed from the schema in #95 — REVIEW.md says
+    plainly there is no contact field to check, reachability is the GitHub
+    account L1 already proves ownership of. The review-request issue template
+    used to ask a submitter to attest to a frontmatter field that no longer
+    exists."""
+    schema = _text("schema/skill.schema.json")
+    assert "civic.contact" not in schema
+    template = _text(".github/ISSUE_TEMPLATE/review-request.yml")
+    assert "contact" not in template.lower() or "no separate contact field" in template.lower()
+    assert "maintainer contact in the frontmatter" not in template.lower()
+
+
+def test_submit_skill_template_offers_the_current_category_vocabulary() -> None:
+    """`registry/categories.yml` is the single source of truth for the
+    vocabulary (docs/ARCHITECTURE.md: "the list is not written down anywhere
+    else"). The submit-skill issue form's category dropdown is a hand-written
+    second copy the build does not generate, so it is exactly the kind of
+    copy the project's own docs warn goes stale silently — and it had drifted
+    to an entirely superseded twelve-category list from before the
+    twelve-to-fifteen recut."""
+    categories = yaml.safe_load(_text("registry/categories.yml"))["categories"]
+    current_labels = [c["label"] for c in categories]
+
+    form = yaml.safe_load(_text(".github/ISSUE_TEMPLATE/submit-skill.yml"))
+    field = next(f for f in form["body"] if f.get("id") == "category")
+    offered = field["attributes"]["options"]
+
+    assert offered == current_labels, (
+        "submit-skill.yml's category dropdown does not match "
+        "registry/categories.yml — update the options list"
     )
 
 

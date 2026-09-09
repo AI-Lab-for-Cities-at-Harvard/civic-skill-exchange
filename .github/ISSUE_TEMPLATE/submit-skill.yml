@@ -49,18 +49,21 @@ body:
         one. In frontmatter this becomes a short `civic.category` id (for example
         `permitting-licensing`); the contributor guide lists them.
       options:
-        - Constituent Services & Casework
+        - Policy
+        - Data Analysis
+        - Communications
+        - Finance
+        - HR
+        - Technology
+        - Constituent Services
         - Benefits & Eligibility
         - Permitting & Licensing
-        - Procurement & Contracting
-        - Budget & Finance
-        - Public Records & FOIA
-        - Open Data & Publishing
-        - Policy & Legislative Analysis
-        - Grants & Development
+        - Legal
+        - Public Records & Transparency
+        - Operations & Service Delivery
         - Emergency Management & Public Safety
-        - Plain Language & Accessibility
-        - Translation & Language Access
+        - Planning & Land Use
+        - AI Tools
     validations:
       required: true
 
