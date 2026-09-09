@@ -342,6 +342,71 @@ export function checkSource(meta: Record<string, unknown>): Finding[] {
   return findings;
 }
 
+/** Bare `Bash`, or `Bash(*)` with any whitespace inside the parens — the
+ *  Agent Skills spec's unrestricted grant, however allowed-tools spells it
+ *  (#152). Mirrors scripts/scan.py's `_WILDCARD_BASH_ENTRY` so both runtimes
+ *  agree on which entries count as the wildcard. */
+const WILDCARD_BASH_ENTRY = /^bash(?:\(\s*\*\s*\))?$/i;
+
+/** Split a space- or comma-separated allowed-tools string into entries.
+ *
+ *  The Agent Skills spec allows either separator. A naive split on
+ *  whitespace would break `Bash(git status)` apart at the space inside the
+ *  parentheses, so this tracks paren depth and only splits at depth zero —
+ *  the same approach scan.py takes, so a scoped grant reads the same way in
+ *  both runtimes. */
+function splitAllowedToolsString(text: string): string[] {
+  const entries: string[] = [];
+  let current = "";
+  let depth = 0;
+  for (const ch of text) {
+    if (ch === "(") {
+      depth += 1;
+      current += ch;
+    } else if (ch === ")") {
+      depth = Math.max(0, depth - 1);
+      current += ch;
+    } else if (depth === 0 && (/\s/.test(ch) || ch === ",")) {
+      if (current) {
+        entries.push(current);
+        current = "";
+      }
+    } else {
+      current += ch;
+    }
+  }
+  if (current) entries.push(current);
+  return entries;
+}
+
+/** Normalize a parsed allowed-tools value — string or list, per the Agent
+ *  Skills spec — into individual tool entries. */
+function allowedToolsEntries(value: unknown): string[] {
+  let raw: unknown[];
+  if (Array.isArray(value)) {
+    raw = value;
+  } else if (typeof value === "string") {
+    raw = splitAllowedToolsString(value);
+  } else {
+    return [];
+  }
+  return raw.map((e) => String(e).trim()).filter((e) => e.length > 0);
+}
+
+/** A wildcard Bash grant is rejected automatically (docs/SECURITY.md, L2) —
+ *  and that has to hold for the value as parsed, not just one raw-text
+ *  spelling of it. A YAML list, a space- or comma-separated string, and a
+ *  bare unrestricted `Bash` all grant the same thing `Bash(*)` does. */
+export function checkAllowedTools(frontmatter: Frontmatter): Finding[] {
+  const wildcard = allowedToolsEntries(frontmatter["allowed-tools"])
+    .some((entry) => WILDCARD_BASH_ENTRY.test(entry));
+  if (!wildcard) return [];
+  return [finding("allowed-tools",
+    "Unrestricted Bash grant. allowed-tools applies without a permission " +
+    "prompt and is not gated by workspace trust. Automatic rejection, no " +
+    "exceptions.")];
+}
+
 /** Move non-spec top-level fields into metadata instead of rejecting them.
  *  Some agent tools accept roughly twenty fields beyond the spec's six, and
  *  rejecting those would reject otherwise-working skills. */
@@ -409,6 +474,8 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   if (compatibility && compatibility.length > 500) {
     findings.push(finding("compatibility", "compatibility must be 500 characters or fewer"));
   }
+
+  findings.push(...checkAllowedTools(frontmatter));
 
   const metadata = frontmatter.metadata;
   if (!metadata || typeof metadata !== "object") {

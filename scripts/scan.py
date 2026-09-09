@@ -150,6 +150,83 @@ GENERALIZED_URL = (
 )
 
 
+WILDCARD_BASH_EXPLANATION = (
+    "Unrestricted Bash grant. allowed-tools applies without a permission prompt "
+    "and is not gated by workspace trust. Automatic rejection, no exceptions."
+)
+
+_WILDCARD_BASH_ENTRY = re.compile(r"^bash(?:\(\s*\*\s*\))?$", re.IGNORECASE)
+
+
+def _split_allowed_tools_string(text: str) -> list[str]:
+    """Split a space- or comma-separated allowed-tools string into entries.
+
+    The Agent Skills spec allows either separator. A naive split on
+    whitespace would break `Bash(git status)` apart at the space inside the
+    parentheses, so this tracks paren depth and only splits at depth zero.
+    """
+    entries: list[str] = []
+    current: list[str] = []
+    depth = 0
+    for ch in text:
+        if ch == "(":
+            depth += 1
+            current.append(ch)
+        elif ch == ")":
+            depth = max(0, depth - 1)
+            current.append(ch)
+        elif depth == 0 and (ch.isspace() or ch == ","):
+            if current:
+                entries.append("".join(current))
+                current = []
+        else:
+            current.append(ch)
+    if current:
+        entries.append("".join(current))
+    return entries
+
+
+def allowed_tools_entries(value: object) -> list[str]:
+    """Normalize a parsed allowed-tools frontmatter value into individual tool
+    entries, whether it came back from YAML as a string or a list (#152)."""
+    if isinstance(value, list):
+        raw = value
+    elif isinstance(value, str):
+        raw = _split_allowed_tools_string(value)
+    else:
+        return []
+    return [str(e).strip() for e in raw if str(e).strip()]
+
+
+def has_wildcard_bash_grant(value: object) -> bool:
+    """True when any entry grants unrestricted Bash — a bare `Bash`, or
+    `Bash(*)` with any whitespace inside the parens, however allowed-tools is
+    spelled (string or list) (#152)."""
+    return any(_WILDCARD_BASH_ENTRY.match(entry) for entry in allowed_tools_entries(value))
+
+
+def allowed_tools_of(skill_dir: Path) -> object:
+    """The parsed `allowed-tools` frontmatter value, or None when it is absent
+    or the frontmatter cannot be read.
+
+    Shares build_index's parser rather than adding a second one, the same way
+    localization_of does — the field has to mean the same thing here as it
+    does to the index and to the schema.
+    """
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.is_file():
+        return None
+    try:
+        front = read_frontmatter(skill_md)
+    except Exception:
+        # A malformed SKILL.md is L0's finding to report, not this scanner's
+        # to crash on.
+        return None
+    if not front:
+        return None
+    return front.get("allowed-tools")
+
+
 def localization_of(skill_dir: Path) -> str | None:
     """`civic.localization`, or None when it cannot be read.
 
@@ -222,6 +299,21 @@ def scan_skill(skill_dir: Path) -> dict:
         rel = str(path.relative_to(skill_dir))
         blocking.extend(scan_text(text, HARD, rel))
         flags.extend(scan_text(text, SOFT, rel))
+
+    # The raw-text signature above catches `allowed-tools: Bash(*)` written on
+    # one line, but not a YAML list or a bare, unrestricted `Bash` — this
+    # evaluates the parsed frontmatter value instead, so both forms count as
+    # the wildcard too (#152).
+    if has_wildcard_bash_grant(allowed_tools_of(skill_dir)):
+        blocking.append(
+            {
+                "signature": "wildcard-bash-grant",
+                "file": "SKILL.md",
+                "line": 1,
+                "excerpt": str(allowed_tools_of(skill_dir))[:160],
+                "explanation": WILDCARD_BASH_EXPLANATION,
+            }
+        )
 
     return {
         "blocking": blocking,
