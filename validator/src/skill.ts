@@ -3,7 +3,7 @@
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join, basename, dirname } from "node:path";
 import { parse } from "yaml";
-import { checkFrontmatter, quarantineExtensions } from "./rules";
+import { checkFrontmatter, quarantineExtensions, RESERVED_NAMESPACES } from "./rules";
 import { checkStructure, checkYamlSafety, splitFrontmatter } from "./structure";
 import type { Finding, Frontmatter } from "./types";
 
@@ -81,7 +81,6 @@ export function discoverAll(root: string): string[] {
   return out.sort();
 }
 
-/** Map a list of changed paths to the distinct skill directories they touch. */
 /** Files the registry generates into a skill directory rather than the author
  *  writing them.
  *
@@ -96,14 +95,29 @@ export function discoverAll(root: string): string[] {
  *  somebody writing *a skill* into a namespace they do not own; these files are
  *  registry-owned, regenerated on every merge, and any tampering is caught by
  *  `build_marketplace.py --check`, which compares them against what the
- *  generator produces. */
-const GENERATED_IN_SKILL = /(^|\/)\.codex-plugin\/plugin\.json$/;
+ *  generator produces.
+ *
+ *  The pattern is the exact path the generator writes: one file, at the root of
+ *  a `skills/{namespace}/{name}/` directory. It used to match
+ *  `.codex-plugin/plugin.json` at any depth, which exempted hand-written files
+ *  the generator never touches — and an exemption here stops the ownership
+ *  check seeing a path at all, so "near enough" is a hole rather than a
+ *  convenience. `discover.test.ts` reads `scripts/build_marketplace.py` and
+ *  checks this still describes what it writes, so the shape is asked for rather
+ *  than kept as a second copy of the generator's list. */
+const GENERATED_IN_SKILL = /^skills\/[^/]+\/[^/]+\/\.codex-plugin\/plugin\.json$/;
 
+/** Whether a repository-relative path is one the manifest generator owns. */
+export function isGeneratedInSkill(path: string): boolean {
+  return GENERATED_IN_SKILL.test(path);
+}
+
+/** Map a list of changed paths to the distinct skill directories they touch. */
 export function discoverChanged(root: string, changedFile: string): string[] {
   const dirs = new Set<string>();
   for (const line of readFileSync(changedFile, "utf8").split("\n")) {
     const path = line.trim();
-    if (GENERATED_IN_SKILL.test(path)) continue;
+    if (isGeneratedInSkill(path)) continue;
     const parts = path.split("/");
     if (parts.length >= 3 && parts[0] === "skills") {
       const candidate = join(root, parts[0], parts[1]!, parts[2]!);
@@ -111,4 +125,63 @@ export function discoverChanged(root: string, changedFile: string): string[] {
     }
   }
   return [...dirs].sort();
+}
+
+export interface ChangedOwnership {
+  /** The account that opened the pull request, never the fork's owner. */
+  author?: string;
+  /** Resolved by the workflow, not here — see `.github/workflows/validate.yml`. */
+  maintainer?: boolean;
+}
+
+/** L1 over the changed-path list: every path under `skills/` belongs to the
+ *  pull request author's namespace.
+ *
+ *  `discoverChanged` can only report directories that still exist, so this is
+ *  the only place a *deletion* is visible. A pull request that removed somebody
+ *  else's skill used to validate as "no skill directories" and exit 0, and a
+ *  move out of another namespace looked like an ordinary addition on the side
+ *  the diff kept (#154). Both are path facts, which is what docs/SECURITY.md
+ *  has always claimed L1 checks.
+ *
+ *  Maintainers are exempt, because the exchange has to be able to delist and
+ *  migrate a listing. Whether an account is one is not knowable from a skill
+ *  directory, so it arrives as an input: the workflow resolves it against the
+ *  CODEOWNER-gated maintainers list and passes `--maintainer`. Keeping that
+ *  decision out of here also keeps an access-control list out of a module the
+ *  submission page runs in the browser. */
+export function checkChangedOwnership(
+  paths: string[], { author, maintainer = false }: ChangedOwnership,
+): Finding[] {
+  // No author is the local case — `npm run check` passes none, and inventing a
+  // failure there would make the local run disagree with CI.
+  if (maintainer || !author) return [];
+
+  const findings: Finding[] = [];
+
+  for (const line of paths) {
+    const path = line.trim();
+    if (path === "" || !path.startsWith("skills/")) continue;
+    if (isGeneratedInSkill(path)) continue;
+
+    const parts = path.split("/");
+    if (parts.length < 3 || parts[1] === "") {
+      findings.push(finding(path,
+        `'${path}' is directly under skills/, which belongs to no namespace. ` +
+        `Everything a pull request adds there goes in skills/${author}/`));
+      continue;
+    }
+
+    const namespace = parts[1]!;
+    if (RESERVED_NAMESPACES.has(namespace.toLowerCase())) continue;
+    if (namespace.toLowerCase() === author.toLowerCase()) continue;
+
+    findings.push(finding(path,
+      `namespace '${namespace}' does not match the pull request author ` +
+      `'${author}'. A pull request may only add, change, move or delete files ` +
+      `under skills/${author}/ — removing or migrating another namespace's ` +
+      `skill is a maintainer operation.`));
+  }
+
+  return findings;
 }

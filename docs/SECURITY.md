@@ -34,6 +34,42 @@ Schema validation, `name` matches directory, category in the closed vocabulary, 
 ### L1 — Ownership
 PR author's login matches the touched namespace. PR touches nothing outside `skills/{that-user}/`. Anything else routes to CODEOWNERS. **Blocks.**
 
+The check runs over the changed-path list, not over the skill directories that
+survived the diff — so a **deletion** and **both sides of a move** are covered.
+They were not until #154: discovery iterates existing directories, so a pull
+request that removed somebody else's skill found "no skill directories" and
+exited 0. `changed.txt` is built with `--no-renames` for the same reason, because
+`git diff --name-only` reports a rename as its destination alone and the
+namespace a skill was moved *out of* is the one being taken from.
+
+Two exemptions, and both are narrow:
+
+- **The generated manifest.** `.codex-plugin/plugin.json` at the root of a skill
+  directory is registry-owned — `scripts/build_marketplace.py` rewrites one into
+  every namespace on every merge, so counting it would fail maintenance work.
+  The pattern matches only the path the generator writes, and a validator test
+  reads the generator to keep it that way. Tampering is caught by
+  `build_marketplace.py --check`.
+- **Maintainers**, because the exchange has to be able to delist a skill and to
+  migrate one between namespaces. The validator does not decide who is one: it
+  takes a `--maintainer` flag, and `validate.yml` resolves the author against
+  `.github/maintainers.yml` before calling it. That file is an access-control
+  list, so two things hold it up — CODEOWNERS gates `/.github/`, and the
+  workflow reads the copy on the **base branch**, never the pull request's,
+  since a pull request that added its own author to it would otherwise grant
+  itself the exemption.
+
+Organization team membership is the record the list mirrors, and asking the API
+for it directly would be better. That call needs a token, and this is the job
+that reads attacker-controlled content and therefore holds none — see "CI
+hardening" below. The list is maintained by hand instead; whoever changes the
+maintainers team changes it in the same pass.
+
+The exemption is from the automated check only. Everything else still applies: a
+removal is recorded in [`docs/archive/removals.md`](archive/removals.md), a
+removal for a security reason carries an advisory, and CODEOWNERS still requires
+review on every path outside a contributor's own namespace.
+
 L0 and L1 are implemented in `validator/`, and the submission page runs the same
 module in the browser so a contributor is not told "valid" by the site and then
 rejected here. **The browser result is advisory.** CI re-runs the module and is

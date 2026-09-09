@@ -1,0 +1,34 @@
+# Who may delete or migrate somebody else's listing.
+#
+# L1 checks that every path a pull request touches under skills/ is inside the
+# author's own namespace — deletions and both sides of a move included, which is
+# what #154 closed. The exchange's maintainers still have to be able to delist a
+# skill and to migrate one between namespaces, so `.github/workflows/validate.yml`
+# looks the pull request author up here and passes `--maintainer` to the
+# validator when it finds them.
+#
+# Three things about this file, all of them load-bearing:
+#
+# 1. **It is an access-control list, and CODEOWNERS is what makes it one.**
+#    `/.github/` is owned by the maintainers team, so adding a login here needs
+#    that team's review. Do not move this list anywhere CODEOWNERS does not gate.
+#
+# 2. **The workflow reads the copy on the base branch, never the pull request's.**
+#    The validate job checks out contributor-authored content. A pull request that
+#    added its own author here and deleted a skill in the same diff would
+#    otherwise grant itself the exemption.
+#
+# 3. **It mirrors the teams named in CODEOWNERS; it does not replace them.**
+#    Team membership is the real record, and the ideal check would ask the
+#    GitHub API for it. The validate job holds no token — that is the whole
+#    basis of its split from report.yml (docs/SECURITY.md, "CI hardening") — and
+#    the org-membership endpoints need one. So the list is kept by hand, and
+#    whoever changes the maintainers team changes it here in the same pass.
+#
+# The exemption is from the automated check only. SECURITY.md still asks that a
+# removal be recorded in docs/archive/removals.md, and CODEOWNERS still requires
+# maintainer review on everything outside a contributor's own namespace.
+
+maintainers:
+  - sgarcese-hbs
+  - sgarcese

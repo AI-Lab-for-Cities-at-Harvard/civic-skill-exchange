@@ -12,6 +12,7 @@
  *   validate-skills all
  *   validate-skills skills/octocat/permit-status-explainer
  *   validate-skills --changed changed.txt --author octocat
+ *   validate-skills --changed changed.txt --author octocat --maintainer
  *   validate-skills --layout changed.txt
  *
  * Exit code 0 if every checked skill passes, 1 otherwise.
@@ -20,7 +21,9 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, relative, resolve } from "node:path";
-import { loadCategories, validateSkill, discoverAll, discoverChanged } from "./skill";
+import {
+  loadCategories, validateSkill, discoverAll, discoverChanged, checkChangedOwnership,
+} from "./skill";
 import { checkChangedLayout } from "./layout";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -30,19 +33,24 @@ function parseArgs(argv: string[]) {
   let author: string | undefined;
   let layout: string | undefined;
   let target: string | undefined;
+  let maintainer = false;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--changed") { changed = argv[++i]; }
     else if (arg === "--author") { author = argv[++i]; }
     else if (arg === "--layout") { layout = argv[++i]; }
+    // Set by the workflow when the author maintains the exchange, so that a
+    // delisting or a migration is not read as writing into somebody else's
+    // namespace. Resolved there, never here: see validate.yml.
+    else if (arg === "--maintainer") { maintainer = true; }
     else if (arg && !arg.startsWith("--")) { target = arg; }
   }
-  return { changed, author, layout, target };
+  return { changed, author, layout, target, maintainer };
 }
 
 function main(): number {
-  const { changed, author, layout, target } = parseArgs(process.argv.slice(2));
+  const { changed, author, layout, target, maintainer } = parseArgs(process.argv.slice(2));
 
   // Runs on the raw changed-path list, before anything has been discovered as a
   // skill. It has to: a SKILL.md outside skills/ is invisible to discovery, and
@@ -56,6 +64,26 @@ function main(): number {
     }
     for (const f of findings) console.log(`FAIL  ${f.where}\n        ${f.message}`);
     return 1;
+  }
+
+  // Ownership over the whole diff, before discovery. Discovery can only see
+  // directories that survived, so a pull request deleting or moving somebody
+  // else's skill reached this point as "no skill directories" and passed (#154).
+  if (changed) {
+    if (maintainer) {
+      console.log(
+        "note  the author maintains the exchange, so L1 path ownership is not " +
+        "enforced here — deleting and migrating a listing are theirs to do");
+    }
+    const paths = readFileSync(changed, "utf8").split("\n");
+    const ownership = checkChangedOwnership(paths, { author, maintainer });
+    if (ownership.length > 0) {
+      for (const f of ownership) console.log(`FAIL  ${f.where}\n        ${f.message}`);
+      console.log(
+        "\nOwnership covers every changed path, deletions and moves included. " +
+        "Delisting and migrating a listing are the exchange maintainers' to do.");
+      return 1;
+    }
   }
 
   let targets: string[];

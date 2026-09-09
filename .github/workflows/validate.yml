@@ -44,7 +44,12 @@ jobs:
           BASE_REF: ${{ github.base_ref }}
         run: |
           git fetch --no-tags --depth=50 origin "$BASE_REF"
-          git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
+          # Deletions are in this list, and --no-renames keeps both sides of a
+          # move in it: --name-only prints a detected rename as its destination
+          # alone, so the namespace a skill was moved *out of* was invisible to
+          # the ownership check (#154). L1 is a statement about paths, and a
+          # path that left the tree is still a path the pull request touched.
+          git diff --name-only --no-renames "origin/$BASE_REF...HEAD" > changed.txt
           if grep -q '^skills/' changed.txt; then
             echo "skills=true" >> "$GITHUB_OUTPUT"
           else
@@ -88,6 +93,42 @@ jobs:
         if: steps.changes.outputs.skillmd == 'true'
         run: npx tsx validator/src/cli.ts --layout changed.txt
 
+      # L1 covers deletions and moves, and the exchange's maintainers still have
+      # to be able to delist a skill and migrate one between namespaces — which
+      # the ownership check otherwise reads as writing into a namespace they do
+      # not own. So the exemption is resolved here and handed to the validator
+      # as a flag, which keeps an access-control list out of a module the
+      # submission page also runs in the browser.
+      #
+      # Team membership in the organization is the real record, and the API
+      # would be the direct way to ask for it. This job holds no token — that
+      # split from report.yml is the whole reason it can read contributor
+      # content safely (docs/SECURITY.md, "CI hardening") — and the
+      # org-membership endpoints need one. So the source is
+      # .github/maintainers.yml, which CODEOWNERS gates, and it is read from the
+      # BASE branch: the checkout above is the contributor's tree, so a pull
+      # request that added its own author to that file while deleting somebody
+      # else's skill would otherwise grant itself the exemption.
+      - name: Resolve whether the author maintains the exchange
+        id: maintainer
+        if: steps.changes.outputs.skills == 'true'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -uo pipefail
+          listed=$(git show "origin/$BASE_REF:.github/maintainers.yml" 2>/dev/null |
+            sed -n 's/^[[:space:]]*-[[:space:]]*\([A-Za-z0-9][A-Za-z0-9-]*\)[[:space:]]*$/\1/p' |
+            tr '[:upper:]' '[:lower:]') || listed=""
+          author=$(printf '%s' "$PR_AUTHOR" | tr '[:upper:]' '[:lower:]')
+          if [ -n "$listed" ] && printf '%s\n' "$listed" | grep -qxF "$author"; then
+            echo "maintainer=true" >> "$GITHUB_OUTPUT"
+            echo "On the maintainers list: L1 path ownership is not enforced."
+          else
+            echo "maintainer=false" >> "$GITHUB_OUTPUT"
+            echo "Not on the maintainers list: L1 applies to every changed path."
+          fi
+
       # L0 and L1 run the same module the submission form runs in the browser,
       # so a contributor cannot be told "valid" by the site and rejected here.
       # See validator/src/rules.ts.
@@ -95,7 +136,11 @@ jobs:
         if: steps.changes.outputs.skills == 'true'
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-        run: npx tsx validator/src/cli.ts --changed changed.txt --author "$PR_AUTHOR"
+          IS_MAINTAINER: ${{ steps.maintainer.outputs.maintainer }}
+        run: |
+          args=(--changed changed.txt --author "$PR_AUTHOR")
+          if [ "$IS_MAINTAINER" = "true" ]; then args+=(--maintainer); fi
+          npx tsx validator/src/cli.ts "${args[@]}"
 
       # A warning, not a gate (#90). The manifest is committed rather than built
       # because `/plugin marketplace add` reads the repository — but keeping it

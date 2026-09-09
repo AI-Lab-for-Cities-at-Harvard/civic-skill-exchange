@@ -186,3 +186,82 @@ def test_something_checks_main_itself() -> None:
         "the repair job must verify its own outcome")
     assert "build_marketplace.py --check" in rescan, (
         "something has to check main when the repair job never ran")
+
+
+# --------------------------------------------------------------------------- #
+# #154: L1 promises a submission "touches nothing outside skills/{that-user}/",
+# and the validator could only see paths that survived the diff. Two halves fix
+# that: the changed-path list has to carry deletions and both sides of a move,
+# and the maintainer exemption has to be resolved here rather than in the
+# validator.
+
+CHANGED_PATHS_STEP = [
+    line for line in VALIDATE_YML.splitlines() if "git diff --name-only" in line
+]
+
+
+def test_the_changed_paths_step_lists_deletions_and_both_sides_of_a_move() -> None:
+    """A deleted skill is the case the ownership check exists for, and `git
+    diff --name-only` prints a rename as the destination alone — so the old
+    path, the one in somebody else's namespace, never reached the validator."""
+    assert CHANGED_PATHS_STEP, "no `git diff --name-only` in validate.yml"
+    for line in CHANGED_PATHS_STEP:
+        assert "--no-renames" in line, (
+            "without --no-renames a rename appears as its destination only, so "
+            "the namespace it was moved out of is invisible to L1"
+        )
+        filters = re.findall(r"--diff-filter=(\S+)", line)
+        for spec in filters:
+            assert "D" in spec, (
+                f"--diff-filter={spec} drops deletions from changed.txt"
+            )
+
+
+def test_maintainer_status_is_resolved_in_the_workflow() -> None:
+    """Who maintains the exchange is a fact about the organization, not about a
+    skill. Hardcoding it in the validator would put an access-control list in a
+    module the submission page also runs."""
+    assert re.search(r"^\s+id: maintainer\s*$", VALIDATE_YML, re.M), (
+        "validate.yml has no step resolving maintainer status"
+    )
+    assert "steps.maintainer.outputs" in VALIDATE_YML, (
+        "the resolution step's result is never read"
+    )
+    assert "--maintainer" in VALIDATE_YML, (
+        "the result is never passed to the validator, so the exemption cannot "
+        "apply"
+    )
+
+
+def test_the_maintainers_list_is_read_from_the_base_branch() -> None:
+    """The job checks out the pull request head. Reading the list from there
+    would let a contributor add their own login in the same pull request that
+    deletes somebody else's skill, and grant themselves the exemption."""
+    assert 'git show "origin/$BASE_REF:.github/maintainers.yml"' in VALIDATE_YML, (
+        "the maintainers list must come from the base branch, never the head"
+    )
+
+
+def test_the_maintainers_list_is_codeowner_gated() -> None:
+    """It is an access-control list. What makes it trustworthy is that changing
+    it needs the review that CODEOWNERS requires on `.github/`."""
+    listing = ROOT / ".github" / "maintainers.yml"
+    assert listing.is_file(), "the maintainer exemption resolves against nothing"
+    codeowners = (ROOT / ".github" / "CODEOWNERS").read_text(encoding="utf-8")
+    assert re.search(r"^/\.github/\s+@\S+", codeowners, re.M), (
+        "nothing gates the maintainers list"
+    )
+
+
+def test_the_scanning_job_still_holds_no_credential() -> None:
+    """Resolving maintainer status wanted an org-membership API call, and this
+    is the job whose whole purpose is reading attacker-controlled content. See
+    docs/SECURITY.md — the split with report.yml only works while this side
+    holds nothing."""
+    body = "\n".join(
+        line for line in VALIDATE_YML.splitlines() if not line.lstrip().startswith("#")
+    )
+    for forbidden in ("secrets.", "github.token", "GITHUB_TOKEN"):
+        assert forbidden not in body, (
+            f"validate.yml reads {forbidden} — this job may hold no credential"
+        )
