@@ -257,3 +257,78 @@ describe("the documentation exemption agrees with layout.ts", () => {
     expect(checkChangedLayout([`skills/ns/name/${path}`])).toHaveLength(1);
   });
 });
+
+/** Plugin-level files a client acts on (#151).
+ *
+ *  `build_marketplace.py` makes the skill directory the Claude plugin root, so
+ *  a plugin-level file an author ships is honoured on `/plugin install`. The
+ *  worst of them is `hooks/hooks.json`: it runs shell commands at session start
+ *  with no model in the path, which is the class SECURITY.md §3 says an LLM
+ *  cannot gate. `.json` is allowlisted, so a hook shipped inside a skill passed
+ *  L0 with one soft `external-url` flag.
+ *
+ *  `.mcp.json` is the ruled exception — an MCP server can be useful to a skill,
+ *  so it stays, and `build_index.py` publishes it as executed instead.
+ */
+describe("plugin-level files a skill may not ship", () => {
+  const withRoot = (path: string) =>
+    [file("SKILL.md", "---\nname: a\n---\n"), file(path, "{}\n")];
+
+  it.each([
+    "hooks/hooks.json",
+    "settings.json",
+    "settings.local.json",
+    ".lsp.json",
+    ".claude-plugin/plugin.json",
+  ])("%s is rejected, and the finding names the path", (path) => {
+    const findings = checkStructureCore(withRoot(path));
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe(path);
+    expect(findings[0]?.message.length).toBeGreaterThan(40);
+  });
+
+  it("says why a hook is the one no later check can gate", () => {
+    expect(checkStructureCore(withRoot("hooks/hooks.json"))[0]?.message)
+      .toMatch(/no model/i);
+  });
+
+  it("rejects anything under hooks/, not only hooks.json", () => {
+    expect(checkStructureCore(withRoot("hooks/install.sh"))).toHaveLength(1);
+  });
+
+  it("reports a rejected directory once, not once per file inside it", () => {
+    // The finding lands in a pull request comment. Three lines for one mistake
+    // is how a comment stops being read.
+    expect(checkStructureCore([
+      file("SKILL.md", "x"),
+      { path: "hooks", kind: "dir" },
+      file("hooks/hooks.json", "{}"),
+      file("hooks/run.sh", "x"),
+    ]).map((f) => f.where)).toEqual(["hooks"]);
+  });
+
+  it("still reports the file when no directory entry was passed", () => {
+    // An entry list assembled from an archive may carry no directories at all.
+    expect(checkStructureCore([file("hooks/hooks.json", "{}")])).toHaveLength(1);
+  });
+
+  it("keeps .mcp.json, which the ruling on #151 allows", () => {
+    expect(checkStructureCore(withRoot(".mcp.json"))).toEqual([]);
+  });
+
+  it("leaves the generated .codex-plugin manifest alone", () => {
+    // build_marketplace.py writes one into every listing, so rejecting it
+    // would fail every skill in the registry.
+    expect(checkStructureCore(withRoot(".codex-plugin/plugin.json"))).toEqual([]);
+  });
+
+  it.each([
+    "references/hooks/hooks.json",
+    "references/settings.json",
+    "assets/settings.json",
+  ])("%s is documentation — nothing loads it, so it stays", (path) => {
+    // The same line the second-SKILL.md rule draws. A skill about writing
+    // skills ships examples, and in this registry's domain that is likely.
+    expect(checkStructureCore(withRoot(path))).toEqual([]);
+  });
+});
