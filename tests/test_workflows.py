@@ -325,6 +325,7 @@ def test_build_job_only_runs_after_a_green_checks_run_on_main() -> None:
     assert re.search(
         r"if:\s*.*conclusion\s*==\s*'success'.*head_branch\s*==\s*'main'",
         build_job,
+        re.S,
     ), (
         "the build job must guard on "
         "github.event.workflow_run.conclusion == 'success' and "
@@ -337,6 +338,7 @@ def test_deploy_job_only_runs_after_a_green_checks_run_on_main() -> None:
     assert re.search(
         r"if:\s*.*conclusion\s*==\s*'success'.*head_branch\s*==\s*'main'",
         deploy_job,
+        re.S,
     ), (
         "the deploy job must guard on "
         "github.event.workflow_run.conclusion == 'success' and "
@@ -359,7 +361,9 @@ def test_build_job_checks_out_the_commit_checks_actually_passed() -> None:
 def test_pages_and_id_token_permissions_are_scoped_to_the_deploy_job() -> None:
     build_job = _job_block(BUILD_YML, "build")
     deploy_job = _job_block(BUILD_YML, "deploy")
-    workflow_level = BUILD_YML.split("\njobs:", 1)[0]
+    workflow_preamble = BUILD_YML.split("\njobs:", 1)[0]
+    match = re.search(r"^permissions:\n((?:  .*\n|\n)+)", workflow_preamble, re.M)
+    workflow_level = match.group(1) if match else ""
 
     for scope in (build_job, workflow_level):
         assert "pages: write" not in scope, (
