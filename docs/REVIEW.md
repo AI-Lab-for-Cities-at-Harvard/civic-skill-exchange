@@ -6,7 +6,7 @@ The manual review determines if the skill supports civic/ public benefit.
 
 ## Before you start
 
-You need, on one screen: the scanner findings, the full diff of every file under `scripts/`, the rendered `SKILL.md`, and this list.
+You need, on one screen: the scanner findings, the full diff of every file that runs — everything under `scripts/`, and `.mcp.json` if the skill has one — the rendered `SKILL.md`, and this list.
 
 **Reaching the maintainer** is an issue or a mention on the namespace's GitHub account. There is no contact field to check: it was removed in [#95](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/95) because L1 already proves the submitter owns that account, and an address typed into frontmatter can bounce or go stale while the account does not. If the account itself is gone, that is disqualifying — see [TIERS.md](TIERS.md). For a security problem, do not open an issue: follow [SECURITY.md](SECURITY.md).
 
@@ -44,9 +44,13 @@ The description is the attack surface for autonomous invocation. Agents decide t
 
 Read the description, then read the body. If you'd have expected something different, that's the finding.
 
-### 2. Read every line of every file under `scripts/` — REJECT if you wouldn't run it
+### 2. Read every line of `scripts/` and of `.mcp.json` — REJECT if you wouldn't run it
 
 These are executed by the agent, not read by the model. Reviewing the prose is not reviewing the skill.
+
+`.mcp.json` is the second one, and it is easy to skim past because it is four lines of configuration rather than code. The skill directory is the Claude plugin root, so a client launches the servers it declares on install: read each server's `command`, `args` and `url` as the command it is. A server that fetches a package and runs it at launch — `npx -y`, `uvx`, a `curl` piped into a shell — is not reviewable, because what it resolves next month is not what you read. The scanner blocks that shape; the judgment call left to you is a command the skill ships or the host already has.
+
+Plugin hooks, client settings and `.lsp.json` never reach you: L0 refuses them outright, for the reason in [SECURITY.md](SECURITY.md).
 
 The standard is simple: if you would not run this on your own laptop, it does not enter the Reviewed tier. Length is not an excuse — if it is too long to read, it is too long to attest to.
 
