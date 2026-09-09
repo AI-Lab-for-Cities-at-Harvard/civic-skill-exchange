@@ -126,6 +126,31 @@ def test_duplicate_plugin_name_fails_all_current(make_skill):
         build_marketplace.all_current(root)
 
 
+def test_main_check_fails_on_a_duplicate_plugin_name(make_skill, monkeypatch, capsys):
+    """The acceptance criterion is `--check` itself, not just the functions
+    behind it. `main()` reads the module-level ROOT, so the tree it walks is
+    swapped out here rather than passed as an argument."""
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--check"])
+    assert build_marketplace.main() != 0
+    err = capsys.readouterr().err
+    assert "civic/skills-plain-language-notice-rewriter" in err
+    assert "civic-skills/plain-language-notice-rewriter" in err
+
+
+def test_main_build_fails_on_a_duplicate_plugin_name(make_skill, monkeypatch, capsys):
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py"])
+    assert build_marketplace.main() != 0
+    err = capsys.readouterr().err
+    assert "civic/skills-plain-language-notice-rewriter" in err
+    assert "civic-skills/plain-language-notice-rewriter" in err
+
+
 def test_no_collision_when_namespace_and_name_both_differ(make_skill):
     """The ordinary case — two entirely different listings — must not trip the
     duplicate check."""
