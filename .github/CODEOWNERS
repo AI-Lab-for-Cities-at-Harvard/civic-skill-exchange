@@ -1,6 +1,8 @@
 # Everything is maintainer-owned by default. Contributor namespaces under skills/
 # are the single exception — a PR confined to skills/{your-username}/ needs no
-# CODEOWNER approval, which is what keeps submission cheap.
+# CODEOWNER review beyond that. The ruleset on main still requires one approving
+# review on every pull request; this file decides who must give it for paths
+# outside skills/.
 #
 # CODEOWNERS is last-match-wins, so order matters here.
 

@@ -142,13 +142,14 @@ jobs:
           if [ "$IS_MAINTAINER" = "true" ]; then args+=(--maintainer); fi
           npx tsx validator/src/cli.ts "${args[@]}"
 
-      # A warning, not a gate (#90). The manifest is committed rather than built
-      # because `/plugin marketplace add` reads the repository — but keeping it
-      # current is the merge's job, not the submitter's. Blocking a submission on
-      # a distribution artifact is what #87 hit, and what manifest.yml fixes.
+      # The manifest is committed rather than built, because `/plugin marketplace
+      # add` reads the repository and not the published site — so it has to be
+      # current in the pull request itself; nothing merges a repair afterwards
+      # (#170). When this fails, the fix is: run `python scripts/build_marketplace.py`
+      # and commit the result. For a submission that arrived by web upload, a
+      # maintainer will do that before merging — see docs/DEVELOPMENT.md.
       - name: Marketplace manifest is current
         if: steps.changes.outputs.skills == 'true'
-        continue-on-error: true
         run: python scripts/build_marketplace.py --check
 
       - name: L2 + L3 — signature scan

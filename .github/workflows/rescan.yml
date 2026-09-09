@@ -54,11 +54,11 @@ jobs:
       # Detects attestations whose sha no longer matches the skill's current tree.
       # Those skills are already demoted by the build; this is how a human hears
       # about it.
-      # manifest.yml keeps these in step on every merge, and a workflow that
-      # fixes drift can also fail to — which is how a merged skill sat on main
-      # for a day with no Codex manifest. This is the backstop: it checks main
-      # itself, weekly, and never repairs anything, so a failure here means the
-      # automation did not do its job rather than that somebody forgot.
+      # The manifests are regenerated inside each skill pull request now, and
+      # nothing pushes a repair to main afterwards (#170) — so this is the only
+      # thing that still checks main itself. It never repairs anything, only
+      # reports, so a failure here means a stale manifest reached main, not
+      # that somebody forgot a step.
       - name: Marketplace manifests match the catalogue
         run: python scripts/build_marketplace.py --check
 
