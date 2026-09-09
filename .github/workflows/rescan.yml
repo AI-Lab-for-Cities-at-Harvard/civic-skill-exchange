@@ -60,36 +60,87 @@ jobs:
       # reports, so a failure here means a stale manifest reached main, not
       # that somebody forgot a step.
       - name: Marketplace manifests match the catalogue
+        id: manifest
         run: python scripts/build_marketplace.py --check
 
+      # --drift-out is the machine-readable half of demotion (#156): the index
+      # still builds when an attestation no longer matches — that is the
+      # point — so nothing else here reflects it unless something is asked to.
+      # has_drift lets the issue step's `if:` see the result without parsing
+      # the JSON itself.
       - name: Check attestation drift
         id: drift
+        if: always()
         continue-on-error: true
-        run: python scripts/build_index.py --out /tmp/index --findings findings.json | tee drift.log
+        run: |
+          python scripts/build_index.py --out /tmp/index --findings findings.json \
+            --drift-out drift.json
+          if [ -f drift.json ] && [ "$(cat drift.json)" != "[]" ]; then
+            echo "has_drift=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_drift=false" >> "$GITHUB_OUTPUT"
+          fi
 
+      # Renders the issue body ahead of the step that posts it, through the
+      # same fencing rule the pull request comment already trusts. Without
+      # this, validate.log and scan.log — raw output from a run over
+      # skills/, so contributor-authored text can appear in either — would go
+      # into a triple-backtick fence unescaped, and a matched excerpt
+      # containing three backticks could close it early. See
+      # validator/src/report.ts's `renderRescanReport` and `fence()`.
+      #
+      # Outcomes arrive through env, not `${{ }}` spliced into the script,
+      # even though each is one of a fixed set of words GitHub assigns.
+      - name: Render the issue body
+        if: always()
+        env:
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          SCAN_OUTCOME: ${{ steps.scan.outcome }}
+          MANIFEST_OUTCOME: ${{ steps.manifest.outcome }}
+          DRIFT_OUTCOME: ${{ steps.drift.outcome }}
+        run: |
+          python3 - <<'PY' > failed-steps.json
+          import json, os
+
+          names = []
+          if os.environ.get("VALIDATE_OUTCOME") == "failure":
+              names.append("Validate")
+          if os.environ.get("SCAN_OUTCOME") == "failure":
+              names.append("Scan")
+          if os.environ.get("MANIFEST_OUTCOME") == "failure":
+              names.append("Marketplace manifests match the catalogue")
+          if os.environ.get("DRIFT_OUTCOME") == "failure":
+              names.append("Check attestation drift")
+          print(json.dumps(names))
+          PY
+
+          npx tsx validator/src/report-cli.ts --rescan \
+            --validate-log validate.log --scan-log scan.log \
+            --drift-json drift.json --failed-steps failed-steps.json \
+            --out issue-body.md
+
+      # `always()` so a manifest-check failure — no continue-on-error above,
+      # deliberately — does not abort the job before this ever runs. Without
+      # it a stale manifest was never reported (#156): the condition below
+      # named only validate and scan, and even that never got the chance to
+      # be evaluated once the manifest step failed.
       - name: Open an issue on new findings
-        if: steps.validate.outcome == 'failure' || steps.scan.outcome == 'failure'
+        if: >-
+          always() &&
+          (steps.validate.outcome == 'failure' ||
+           steps.scan.outcome == 'failure' ||
+           steps.manifest.outcome == 'failure' ||
+           steps.drift.outcome == 'failure' ||
+           steps.drift.outputs.has_drift == 'true')
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
-            const read = (p) => fs.existsSync(p)
-              ? fs.readFileSync(p, 'utf8').slice(0, 8000)
-              : '(no output)';
+            const body = fs.existsSync('issue-body.md')
+              ? fs.readFileSync('issue-body.md', 'utf8')
+              : 'The weekly re-scan failed before it could render a report. Check the workflow run.';
 
             const today = new Date().toISOString().slice(0, 10);
-            const body = [
-              `The weekly re-scan found something that was not there at submission time.`,
-              ``,
-              `This is expected behaviour, not an emergency — it is the layer that`,
-              `catches an already-merged skill going bad. Triage against`,
-              `docs/SECURITY.md, and demote or delist per docs/TIERS.md.`,
-              ``,
-              `### Validation`, '```', read('validate.log'), '```',
-              `### Signatures`, '```', read('scan.log'), '```',
-              `### Attestation drift`, '```', read('drift.log'), '```',
-            ].join('\n');
-
             await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,

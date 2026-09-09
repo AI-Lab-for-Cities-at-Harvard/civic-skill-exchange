@@ -424,7 +424,29 @@ def write_outputs(skill_dir: Path, entry: dict, out: Path) -> dict:
     return detail
 
 
-def main_with(out: Path, findings: Path | None = None) -> int:
+def write_drift_report(drifted: list[dict], drift_out: Path) -> None:
+    """The machine-readable half of SHA-drift demotion.
+
+    `main_with`'s print-to-stdout list is for a human reading the build log.
+    Nothing could act on it: `rescan.yml` opens an issue only when the validate
+    or scan step fails, so a demotion that leaves the build green — which is
+    the whole point, "the index must still build when drift is present" — was
+    never reported (#156). This is the other consumer: a small, typed document
+    a workflow step can read without parsing prose.
+
+    Written unconditionally when `drift_out` is given, empty list included, so
+    a caller never has to tell "no drift" apart from "the file did not exist".
+    """
+    drift_out.parent.mkdir(parents=True, exist_ok=True)
+    drift_out.write_text(
+        json.dumps(
+            [{"id": e["id"], "reason": e["reason"]} for e in drifted], indent=2
+        ) + "\n",
+        encoding="utf-8",
+    )
+
+
+def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = None) -> int:
     attestations = load_attestations()
     categories = load_categories()
 
@@ -484,6 +506,9 @@ def main_with(out: Path, findings: Path | None = None) -> int:
         for entry in drifted:
             print(f"  {entry['id']}: {entry['reason']}")
 
+    if drift_out:
+        write_drift_report(drifted, drift_out)
+
     return 0
 
 
@@ -491,8 +516,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", type=Path, default=ROOT / "site" / "data")
     parser.add_argument("--findings", type=Path, help="findings.json from scan.py")
+    parser.add_argument(
+        "--drift-out", type=Path,
+        help="Write demoted skills (SHA drift) as JSON to this path. The index "
+             "still builds when drift is present — this is a report, not a "
+             "build failure.",
+    )
     args = parser.parse_args()
-    return main_with(args.out, args.findings)
+    return main_with(args.out, args.findings, args.drift_out)
 
 
 if __name__ == "__main__":

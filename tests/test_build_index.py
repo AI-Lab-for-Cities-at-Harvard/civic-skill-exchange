@@ -7,6 +7,7 @@ defeats the whole mechanism.
 
 from __future__ import annotations
 
+import json
 import zipfile
 from datetime import date, timedelta
 
@@ -609,3 +610,70 @@ def test_the_index_and_the_detail_agree_on_what_runs(make_skill):
     entry = build_index.build_entry(skill, {}, {})
     detail = build_index.build_detail(skill, entry)
     assert sorted(f["path"] for f in detail["files"] if f["executed"]) == entry["script_files"]
+
+
+# --------------------------------------------------------------------------- #
+# #156: SHA drift demotes a listing silently as far as the build is concerned
+# — the index still has to build, that is the point — but nothing downstream
+# could act on it. `rescan.yml` opened an issue only on a validate or scan
+# failure, so a re-scan that found nothing but a stale attestation reported
+# nothing. `--drift-out` is the machine-readable half: a JSON document a
+# workflow step can read without parsing build output.
+
+
+def _drift_fixture(make_skill, tmp_path, monkeypatch, *, current_sha: str,
+                    attested_sha: str = SHA):
+    """One skill, with git resolution and the attestation ledger both faked so
+    the test controls the join directly rather than needing a real repository
+    and a real registry/reviewed.yml."""
+    skill = make_skill(namespace="cityofx", name="permit-status-explainer",
+                        front=dict(VALID_FRONTMATTER, name="permit-status-explainer"))
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
+    monkeypatch.setattr(build_index, "head_sha", lambda _: current_sha)
+    monkeypatch.setattr(
+        build_index, "load_attestations",
+        lambda: {"cityofx/permit-status-explainer": attestation(sha=attested_sha)},
+    )
+    return skill
+
+
+def test_a_stale_attestation_builds_the_index_and_reports_the_drift(make_skill, tmp_path, monkeypatch):
+    _drift_fixture(make_skill, tmp_path, monkeypatch, current_sha=OTHER_SHA, attested_sha=SHA)
+
+    out = tmp_path / "out"
+    drift_out = tmp_path / "drift.json"
+    code = build_index.main_with(out, drift_out=drift_out)
+
+    assert code == 0, "drift must not fail the build"
+
+    index = json.loads((out / "index.json").read_text(encoding="utf-8"))
+    entry = next(e for e in index["skills"] if e["id"] == "cityofx/permit-status-explainer")
+    assert entry["tier"] == "community"
+
+    drift = json.loads(drift_out.read_text(encoding="utf-8"))
+    assert drift == [{"id": "cityofx/permit-status-explainer", "reason": entry["reason"]}]
+
+
+def test_a_current_attestation_reports_no_drift(make_skill, tmp_path, monkeypatch):
+    _drift_fixture(make_skill, tmp_path, monkeypatch, current_sha=SHA, attested_sha=SHA)
+
+    out = tmp_path / "out"
+    drift_out = tmp_path / "drift.json"
+    build_index.main_with(out, drift_out=drift_out)
+
+    index = json.loads((out / "index.json").read_text(encoding="utf-8"))
+    entry = next(e for e in index["skills"] if e["id"] == "cityofx/permit-status-explainer")
+    assert entry["tier"] == "reviewed"
+
+    assert json.loads(drift_out.read_text(encoding="utf-8")) == []
+
+
+def test_drift_out_is_written_even_when_not_asked_for_nothing_when_absent(make_skill, tmp_path, monkeypatch):
+    """No `--drift-out` means no file — a caller that never passes the flag
+    must not find one anyway, from a previous run or another test."""
+    _drift_fixture(make_skill, tmp_path, monkeypatch, current_sha=SHA, attested_sha=SHA)
+
+    out = tmp_path / "out"
+    build_index.main_with(out)
+
+    assert not (tmp_path / "drift.json").exists()

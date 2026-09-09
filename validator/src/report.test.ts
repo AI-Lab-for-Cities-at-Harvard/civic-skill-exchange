@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { renderReport, type ScanFindings } from "./report";
+import { renderReport, renderRescanReport, type ScanFindings } from "./report";
 
 const FOOTER =
   "---\n<sub>Automated checks verify structure, namespace ownership, and " +
@@ -268,5 +268,73 @@ describe("renderReport", () => {
     const body = renderReport({ findings: findings({}) });
     expect(body).not.toContain("No signatures matched");
     expect(body).toContain("Validation did not pass.");
+  });
+});
+
+// ------------------------------------------------------------------------- //
+// #156: the weekly re-scan's issue body. validateLog and scanLog are raw
+// command output from a run over `skills/`, so contributor-authored text —
+// a matched excerpt scan.py printed, say — can appear in either. The rescan
+// job embedded that output in a code fence unfenced; a value containing a
+// triple backtick could close the fence early and turn the rest of the log
+// into rendered markdown. renderRescanReport reuses the same safe() rule the
+// pull request comment already trusts for exactly this reason.
+
+describe("renderRescanReport", () => {
+  it("fences a triple backtick in a log so it cannot close the block around it", () => {
+    const body = renderRescanReport({
+      validateLog: "before\n```\n## Injected heading\n```\nafter",
+      scanLog: "clean",
+      drift: [],
+    });
+
+    // The whole comment must still open and close in balance: nothing embedded
+    // in either log may introduce a fence of its own.
+    expect((body.match(/```/g) ?? []).length % 2).toBe(0);
+    expect(body).not.toContain("\n## Injected heading\n");
+  });
+
+  it("lists demoted skills by id and reason", () => {
+    const body = renderRescanReport({
+      validateLog: "",
+      scanLog: "",
+      drift: [{ id: "cityofx/permit-status-explainer", reason: "content changed since review" }],
+    });
+
+    expect(body).toContain("### Attestation drift");
+    expect(body).toContain("`cityofx/permit-status-explainer`");
+    expect(body).toContain("`content changed since review`");
+  });
+
+  it("says plainly when nothing drifted", () => {
+    const body = renderRescanReport({ validateLog: "", scanLog: "", drift: [] });
+    expect(body).toContain("(none)");
+  });
+
+  it("caps a log so a huge one cannot bury the issue", () => {
+    const body = renderRescanReport({ validateLog: "A".repeat(9000), scanLog: "", drift: [] }, 8000);
+    expect(body).not.toContain("A".repeat(8001));
+  });
+
+  it("names which step failed, so a maintainer is not left reading three logs to find out", () => {
+    const body = renderRescanReport({
+      validateLog: "",
+      scanLog: "",
+      drift: [],
+      failedSteps: ["Marketplace manifests match the catalogue"],
+    });
+    expect(body).toContain("`Marketplace manifests match the catalogue`");
+  });
+
+  it("fences a failed step's name too, on the same reasoning as everything else here", () => {
+    const body = renderRescanReport({
+      validateLog: "",
+      scanLog: "",
+      drift: [],
+      failedSteps: ["`` [click me](https://evil.example) ``"],
+    });
+    // The link syntax survives, but only inertly inside the code span its
+    // own backticks became — GitHub does not parse markdown inside one.
+    expect(outsideCodeSpans(body)).not.toContain("evil.example");
   });
 });

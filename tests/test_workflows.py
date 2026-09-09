@@ -646,6 +646,16 @@ def test_no_workflow_references_the_site_lockfile(wf: Path) -> None:
 # fails outright, and the docs that described the deleted job describe the new
 # flow instead.
 
+# #156: rescan.yml's issue-opening step used to run only when the validate or
+# scan step failed. The marketplace-manifest check sits before it with no
+# continue-on-error, so that step failing alone aborted the job and skipped
+# the issue step entirely — a stale manifest was never reported. Separately,
+# build_index.py returns 0 when a listing is demoted for attestation drift,
+# so that never surfaced either. Both are fixed here: the issue step runs on
+# `always()` and its condition now covers the manifest and drift checks too,
+# and the log excerpts it posts are rendered through report.ts's fencing
+# rule rather than embedded raw.
+
 RESCAN_YML = (ROOT / ".github" / "workflows" / "rescan.yml").read_text(encoding="utf-8")
 
 
@@ -703,3 +713,113 @@ def test_nothing_still_names_the_deleted_manifest_job(path: Path) -> None:
         f"{path.relative_to(ROOT)} still names manifest.yml, which is deleted "
         "(#170)"
     )
+
+def _rescan_step(name: str) -> str:
+    """One step's YAML, from its `- name: <name>` line up to the next step at
+    the same indentation or end of file."""
+    match = re.search(
+        rf"^(\s*)- name:\s*{re.escape(name)}\s*\n((?:\1  .*\n|\n)*)",
+        RESCAN_YML,
+        re.M,
+    )
+    assert match, f"no step named {name!r} in rescan.yml"
+    return match.group(0)
+
+
+def test_the_manifest_check_step_is_still_present() -> None:
+    """Re-scoped from the original issue: manifest.yml is unaffected here, and
+    the standing re-scan's own manifest check — the backstop that catches main
+    itself drifting — must not be removed while fixing what runs after it."""
+    assert "build_marketplace.py --check" in RESCAN_YML
+
+
+def test_the_issue_step_runs_on_always() -> None:
+    """Without this, the manifest check step (no continue-on-error) failing
+    on its own aborts the job and skips the issue step — a stale manifest is
+    never reported, which is the bug this fixes."""
+    step = _rescan_step("Open an issue on new findings")
+    assert re.search(r"if:\s*[>|]?-?\s*\n?\s*always\(\)", step), (
+        "the issue step's `if:` must start with always(), or it is skipped "
+        "whenever an earlier step without continue-on-error fails"
+    )
+
+
+def test_the_issue_condition_covers_the_manifest_and_drift_checks() -> None:
+    """The original condition named only validate and scan. A manifest
+    failure or a drifted attestation must open the issue too."""
+    step = _rescan_step("Open an issue on new findings")
+    assert "steps.manifest.outcome" in step, (
+        "the issue condition does not reference the manifest check's outcome"
+    )
+    assert "steps.drift" in step, (
+        "the issue condition does not reference the drift check at all"
+    )
+
+
+def test_the_drift_step_has_an_id_the_issue_condition_can_read() -> None:
+    step = _rescan_step("Check attestation drift")
+    assert re.search(r"^\s*id:\s*drift\s*$", step, re.M), (
+        "the drift step needs an id so a later step's `if:` can read its "
+        "outcome or outputs"
+    )
+
+
+def test_the_manifest_step_has_an_id_the_issue_condition_can_read() -> None:
+    step = _rescan_step("Marketplace manifests match the catalogue")
+    assert re.search(r"^\s*id:\s*manifest\s*$", step, re.M), (
+        "the manifest step needs an id so a later step's `if:` can read its "
+        "outcome"
+    )
+
+
+def test_build_index_is_invoked_with_drift_out() -> None:
+    """build_index.py's machine-readable drift report has to actually be
+    asked for, or nothing downstream can read it."""
+    step = _rescan_step("Check attestation drift")
+    assert "--drift-out" in step, (
+        "rescan.yml never asks build_index.py for --drift-out, so the issue "
+        "condition and body have nothing to read"
+    )
+
+
+def test_the_rescan_job_still_holds_only_the_declared_permissions() -> None:
+    """#156 adds no capability the job did not already have — issues: write
+    was already there for the step that opens one."""
+    block = re.search(r"^permissions:\n((?:[ \t]+\S.*\n|[ \t]*#.*\n|\n)+)", RESCAN_YML, re.M)
+    assert block, "rescan.yml declares no permissions block"
+    granted = set(re.findall(r"^\s+([\w-]+):\s*(\w+)\s*$", block.group(1), re.M))
+    assert granted == {("contents", "read"), ("issues", "write")}, (
+        f"rescan.yml's permissions changed: {sorted(granted)}"
+    )
+
+
+def test_the_issue_body_is_rendered_through_report_ts_not_embedded_raw() -> None:
+    """The bug this half of #156 fixes: validate.log and scan.log are raw
+    output from a run over skills/, embedded directly inside triple-backtick
+    fences with no escaping. A matched excerpt containing three backticks
+    could close the fence early. The fix routes them through report.ts's
+    safe()-based renderRescanReport instead of composing markdown inline."""
+    assert "report-cli.ts" in RESCAN_YML, (
+        "rescan.yml must render its issue body through report-cli.ts, which "
+        "calls report.ts's fencing rule, rather than composing it inline"
+    )
+    assert "--rescan" in RESCAN_YML
+
+    issue_step = _rescan_step("Open an issue on new findings")
+    # The step that posts must not itself be reading raw log files into the
+    # comment body — that is exactly the unescaped embedding this fixes.
+    for raw_log in ("validate.log", "scan.log"):
+        assert raw_log not in issue_step, (
+            f"the issue-posting step still reads {raw_log!r} directly; route "
+            "it through report-cli.ts --rescan instead"
+        )
+
+
+def test_no_workflow_expression_is_substituted_into_a_rescan_script() -> None:
+    """Same discipline as validate.yml and report.yml: an outcome or an
+    output belongs in `env:`, not spliced into a `run:` body by `${{ }}`."""
+    for _key, body in _script_bodies(RESCAN_YML):
+        assert "${{" not in body, (
+            "rescan.yml interpolates a workflow expression into a run/script "
+            "body. Pass it through env: instead."
+        )
