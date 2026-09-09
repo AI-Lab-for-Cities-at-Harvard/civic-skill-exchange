@@ -109,3 +109,21 @@ describe("checkChangedOwnership", () => {
     expect(messages(["skills/other/skill/SKILL.md"])).toEqual([]);
   });
 });
+
+/** Namespaces are exact-case (#155): the directory is the one canonical
+ *  spelling and an uppercase character in it is rejected elsewhere. The login
+ *  is case-insensitive, so the author is folded before comparing — an
+ *  account typed as "Alice" owns skills/alice/ and nothing else. */
+describe("checkChangedOwnership is exact-case on the namespace", () => {
+  it("lets an author typed with capitals own the lowercase namespace", () => {
+    expect(messages(["skills/alice/one/SKILL.md"], "Alice")).toEqual([]);
+  });
+
+  it("does not let that author own a namespace spelled with capitals", () => {
+    expect(messages(["skills/Alice/one/SKILL.md"], "Alice")).toHaveLength(1);
+  });
+
+  it("does not treat a differently-cased reserved namespace as reserved", () => {
+    expect(messages(["skills/Civic-Skills/one/SKILL.md"], "alice")).toHaveLength(1);
+  });
+});
