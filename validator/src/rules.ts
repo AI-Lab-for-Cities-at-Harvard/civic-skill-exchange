@@ -105,6 +105,42 @@ export function checkNamespaceCase(namespace: string): Finding[] {
  *  is where a skill is written for, and `civic.deployed-in`, which is where the
  *  organization that used it operates. They are different facts in the same
  *  shape, and two patterns would be two things to keep in step. */
+/** One BCP 47 language tag, conservatively: a 2–3 letter primary subtag, an
+ *  optional titlecase four-letter script, an optional region of two uppercase
+ *  letters or three digits. `en`, `es`, `pt-BR`, `es-419`, `zh-Hant-TW`.
+ *
+ *  A shape check, not a registry lookup. Pulling in a language-tag library
+ *  would put a dependency in the module that has to run in the browser, and it
+ *  would still not answer the question that matters — whether the skill keeps
+ *  its promises in that language, which nothing here can check. What this
+ *  catches is the mistake people actually make: writing the language's name
+ *  ('english') or a locale in the wrong shape ('EN_us') where a tag belongs.
+ *
+ *  Extensions, variants and private-use subtags are deliberately outside it.
+ *  A listing needs to say which language it is written in; `en-u-va-posix` is
+ *  not that answer, and accepting it would make the field harder to render and
+ *  facet than it is to type. */
+const LANGUAGE_TAG = "[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?";
+
+export const LANGUAGE_FIELD = "civic.language";
+export const LANGUAGES_TESTED_FIELD = "civic.languages-tested";
+export const LANGUAGE_PATTERN = `^${LANGUAGE_TAG}$`;
+
+/** The author's claim, as a delimited string.
+ *
+ *  `metadata` values are strings per the Agent Skills spec, which is why the
+ *  second category is a second field rather than a list. That trick does not
+ *  work here: a cap of two languages would be an arbitrary limit on a claim
+ *  that has no natural ceiling, so this is one delimited string and the rule
+ *  is that it parses cleanly. `en,, es` and a trailing comma are rejected
+ *  rather than silently dropped — a list that quietly loses an entry is worse
+ *  than one that fails. */
+export const LANGUAGES_TESTED_PATTERN =
+  `^${LANGUAGE_TAG}(?:\\s*,\\s*${LANGUAGE_TAG})*$`;
+
+const LANGUAGE_RE = new RegExp(LANGUAGE_PATTERN);
+const LANGUAGES_TESTED_RE = new RegExp(LANGUAGES_TESTED_PATTERN);
+
 export const PLACE_PATTERN = "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$";
 export const DEPLOYED_IN_PATTERN = PLACE_PATTERN;
 export const DEPLOYED_SINCE_PATTERN = "^\\d{4}(-(0[1-9]|1[0-2]))?$";
@@ -163,10 +199,17 @@ const FIT_FIELDS = ["civic.use-when", "civic.avoid-when"] as const;
  *  index withheld, so it was collected, stored, and never shown. An issue or a
  *  mention on that account reaches the maintainer and cannot go stale
  *  independently of it. */
-const REQUIRED_METADATA = [
+/** Exported so schema.test.ts can hold the published schema to this list
+ *  rather than repeating it. A field added here and not to the schema has to
+ *  fail a test; a second copy of the list is how it would not. */
+export const REQUIRED_METADATA = [
   "civic.category", "civic.scope", "civic.data-sensitivity",
   "civic.human-review", "civic.maintainer",
   "civic.affiliation", "civic.deployment",
+  // Required rather than defaulted to English: an omitted value cannot be told
+  // apart from an unanswered one, which is what made civic.scope: any explicit
+  // too. ADR 0004, decision 1.
+  LANGUAGE_FIELD,
 ] as const;
 
 const finding = (where: string, message: string): Finding => ({ where, message });
@@ -251,6 +294,61 @@ export function checkLocalization(meta: Record<string, unknown>): Finding[] {
   }
 
   return [];
+}
+
+/** The tags in a `civic.languages-tested` value, in the order written.
+ *
+ *  Only meaningful for a value that passed the shape check — the index build
+ *  and the site both call this, and both are reading a listing CI has already
+ *  validated. */
+export function parseLanguagesTested(value: unknown): string[] {
+  if (typeof value !== "string") return [];
+  return value.split(",").map((t) => t.trim()).filter((t) => t.length > 0);
+}
+
+/** What language the listing is written in, and what the author says they
+ *  tried it in (ADR 0004, decisions 1 and 2).
+ *
+ *  Shape only. Nothing here verifies that the skill works in any of these
+ *  languages — that claim is the author's, and the reviewer's verified list
+ *  lives on the attestation in registry/reviewed.yml, never in frontmatter.
+ *  The site renders the two on different footings and says which is which.
+ *
+ *  The one relation worth enforcing: a skill written in a language has by
+ *  definition been exercised in it, so a tested list that omits
+ *  `civic.language` is a typo rather than a claim. */
+export function checkLanguage(meta: Record<string, unknown>): Finding[] {
+  const findings: Finding[] = [];
+  const language = str(meta[LANGUAGE_FIELD]);
+  const tested = str(meta[LANGUAGES_TESTED_FIELD]);
+
+  if (language && !LANGUAGE_RE.test(language)) {
+    findings.push(finding(LANGUAGE_FIELD,
+      `'${language}' is not a BCP 47 language tag. Use the tag, not the ` +
+      `language's name: 'en', 'es', 'pt-BR', 'es-419'. A two- or ` +
+      `three-letter language, optionally a script like '-Latn', optionally a ` +
+      `region of two uppercase letters or three digits.`));
+  }
+
+  if (tested === undefined) return findings;
+
+  if (!LANGUAGES_TESTED_RE.test(tested)) {
+    findings.push(finding(LANGUAGES_TESTED_FIELD,
+      `'${tested}' is not a comma-separated list of BCP 47 language tags. ` +
+      `Write them separated by commas — 'en, es' — with no empty entry and ` +
+      `no trailing comma. Each tag has the same shape as ${LANGUAGE_FIELD}.`));
+    return findings;
+  }
+
+  const tags = parseLanguagesTested(tested);
+  if (language && LANGUAGE_RE.test(language) && !tags.includes(language)) {
+    findings.push(finding(LANGUAGES_TESTED_FIELD,
+      `${LANGUAGES_TESTED_FIELD} does not include '${language}', the language ` +
+      `the listing is written in. A skill written in a language has been ` +
+      `tried in it — add it, or correct ${LANGUAGE_FIELD}.`));
+  }
+
+  return findings;
 }
 
 /** What kind of body, and which place — kept apart (#67). */
@@ -539,6 +637,7 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   findings.push(...checkProvenance(metadata));
   findings.push(...checkScope(metadata));
   findings.push(...checkLocalization(metadata));
+  findings.push(...checkLanguage(metadata));
   findings.push(...checkFit(metadata));
   findings.push(...checkSource(metadata));
   findings.push(...checkVersion(metadata));
