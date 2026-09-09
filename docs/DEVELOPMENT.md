@@ -79,8 +79,16 @@ pytest                            # scan.py and build_index.py
 ## How we work
 
 **One branch per feature.** Named `feat/`, `fix/`, `chore/`, or `docs/` plus a short
-slug — `feat/site-browse`, `fix/sha-drift-fail-closed`. `main` is protected: no
-direct pushes, one approving review, CODEOWNER review on the paths that matter.
+slug — `feat/site-browse`, `fix/sha-drift-fail-closed`. `main` is protected by a
+ruleset: no direct pushes, a pull request is required, its status checks must
+pass, it needs one approving review, and merges are squash-only. CODEOWNERS still requests review on paths
+outside a contributor's own skill namespace. A pull request merging is not the
+end of it, either: `build.yml` only deploys after `Checks` (`test.yml`)
+completes successfully on `main`, and it checks out exactly the commit `Checks`
+passed rather than whatever `main` is at run time — a red `main` can never
+publish. A direct push once bypassed all of this and deployed a build that
+failed `Tooling — pytest` on both Python versions; the ruleset closed the push
+path, and the `workflow_run` gate closes the other one.
 
 **Test first.** Write the failing test, watch it fail for the reason you expect,
 then make it pass. This is not ceremony here — the first run of this suite caught
@@ -225,9 +233,9 @@ learn to ignore the flag list, and the layer quietly stops working.
 **Test names are sentences.** `test_unverifiable_sha_demotes_rather_than_trusting`
 tells a future reader what the rule is and why. `test_resolve_tier_3` does not.
 
-## The three CI gates
+## The four CI gates
 
-Every pull request gets three checks, and **each one always reports** — including
+Every pull request gets four checks, and **each one always reports** — including
 when it has nothing to do.
 
 | Gate | Covers | Runs when |
@@ -235,6 +243,7 @@ when it has nothing to do.
 | **Skills** | `validator/` and `scan.py` over submitted skills | `skills/**` changed |
 | **Tooling — pytest** | the registry's own scripts and schema | `scripts/`, `schema/`, `registry/`, `tests/`, `skills/` changed |
 | **Site — lint, typecheck, test, build** | the React app | `site/**` changed |
+| **Validator — typecheck, test** | the `validator/` workspace itself | `validator/`, `registry/`, `schema/`, `skills/` changed |
 
 The filtering happens **inside each job**, not with a `paths:` trigger filter.
 This matters: a required status check that `paths:` filters out never reports at

@@ -1,19 +1,31 @@
 # Builds the static JSON index and deploys the site to GitHub Pages.
 #
-# Runs only on main, where content has already passed validate.yml and been merged.
-# This job does hold a deploy token, so it must never run against a fork's head.
+# Runs only after Checks (test.yml) completes on main, and only when it passed.
+# A direct push to main once failed Tooling — pytest on both Python versions and
+# this workflow deployed it anyway, because it ran on every push with no
+# dependency on Checks at all (#160). It now waits on workflow_run and re-checks
+# the conclusion itself: a red main must never deploy.
+#
+# The checkout below takes github.event.workflow_run.head_sha, not whatever
+# main is at run time — main could have moved again between Checks finishing
+# and this workflow starting. The deployed tree is exactly the commit Checks
+# passed.
+#
+# This job holds a deploy token (via pages: write / id-token: write, scoped to
+# the deploy job only), so it must never run against a fork's head — it never
+# checks out a pull request, and workflow_run only fires for runs on branches
+# in this repository.
 
 name: Build and deploy
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -23,9 +35,16 @@ jobs:
   build:
     name: Build index
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
           fetch-depth: 0          # build_index.py needs history to resolve per-skill SHAs
           persist-credentials: false
 
@@ -66,6 +85,13 @@ jobs:
     name: Deploy to Pages
     needs: build
     runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

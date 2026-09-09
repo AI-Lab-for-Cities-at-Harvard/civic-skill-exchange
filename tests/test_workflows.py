@@ -265,3 +265,150 @@ def test_the_scanning_job_still_holds_no_credential() -> None:
         assert forbidden not in body, (
             f"validate.yml reads {forbidden} — this job may hold no credential"
         )
+
+
+# --------------------------------------------------------------------------- #
+# #160: build.yml used to deploy on every push to main with no dependency on
+# Checks (test.yml). On 2026-09-05 a direct push failed pytest on both Python
+# versions and Build and deploy published it anyway. It now runs only after
+# Checks completes successfully on main, and checks out the exact commit
+# Checks passed rather than whatever main is at run time.
+
+BUILD_YML = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+TEST_YML = (ROOT / ".github" / "workflows" / "test.yml").read_text(encoding="utf-8")
+DEVELOPMENT_MD = (ROOT / "docs" / "DEVELOPMENT.md").read_text(encoding="utf-8")
+
+
+def _on_block(text: str) -> str:
+    match = re.search(r"^on:\n((?:  .*\n|\n)+)", text, re.M)
+    assert match, "no top-level `on:` block found in the expected shape"
+    return match.group(1)
+
+
+def _job_block(text: str, job: str) -> str:
+    """The body of one top-level job, from its `  <job>:` line up to (but not
+    including) the next top-level job or end of file."""
+    match = re.search(
+        rf"^  {job}:\n((?:    .*\n|\n)+)",
+        text,
+        re.M,
+    )
+    assert match, f"no {job!r} job found in the expected shape"
+    return match.group(1)
+
+
+def test_build_yml_has_no_push_trigger() -> None:
+    on_block = _on_block(BUILD_YML)
+    assert not re.search(r"^\s*push:\s*$", on_block, re.M), (
+        "build.yml still triggers on push — a red main could deploy again"
+    )
+
+
+def test_build_yml_triggers_on_a_completed_checks_run() -> None:
+    on_block = _on_block(BUILD_YML)
+    assert re.search(r"workflow_run:\s*\n\s*workflows:\s*\[Checks\]", on_block), (
+        "build.yml must trigger on workflow_run of the Checks workflow"
+    )
+    assert re.search(r"workflow_run:.*?types:\s*\[completed\]", on_block, re.S), (
+        "build.yml's workflow_run trigger must fire on completed, not in_progress"
+    )
+
+
+def test_build_yml_keeps_workflow_dispatch() -> None:
+    assert re.search(r"^\s*workflow_dispatch:", _on_block(BUILD_YML), re.M), (
+        "build.yml should keep a manual re-deploy path"
+    )
+
+
+def test_build_job_only_runs_after_a_green_checks_run_on_main() -> None:
+    build_job = _job_block(BUILD_YML, "build")
+    assert re.search(
+        r"if:\s*.*conclusion\s*==\s*'success'.*head_branch\s*==\s*'main'",
+        build_job,
+        re.S,
+    ), (
+        "the build job must guard on "
+        "github.event.workflow_run.conclusion == 'success' and "
+        "github.event.workflow_run.head_branch == 'main'"
+    )
+
+
+def test_deploy_job_only_runs_after_a_green_checks_run_on_main() -> None:
+    deploy_job = _job_block(BUILD_YML, "deploy")
+    assert re.search(
+        r"if:\s*.*conclusion\s*==\s*'success'.*head_branch\s*==\s*'main'",
+        deploy_job,
+        re.S,
+    ), (
+        "the deploy job must guard on "
+        "github.event.workflow_run.conclusion == 'success' and "
+        "github.event.workflow_run.head_branch == 'main', not just inherit "
+        "the build job's skip"
+    )
+
+
+def test_build_job_checks_out_the_commit_checks_actually_passed() -> None:
+    build_job = _job_block(BUILD_YML, "build")
+    assert re.search(
+        r"ref:\s*\$\{\{\s*github\.event\.workflow_run\.head_sha", build_job
+    ), (
+        "the build job must check out github.event.workflow_run.head_sha, so "
+        "the deployed tree is exactly the commit Checks passed, not whatever "
+        "main is at run time"
+    )
+
+
+def test_pages_and_id_token_permissions_are_scoped_to_the_deploy_job() -> None:
+    build_job = _job_block(BUILD_YML, "build")
+    deploy_job = _job_block(BUILD_YML, "deploy")
+    workflow_preamble = BUILD_YML.split("\njobs:", 1)[0]
+    match = re.search(r"^permissions:\n((?:  .*\n|\n)+)", workflow_preamble, re.M)
+    workflow_level = match.group(1) if match else ""
+
+    for scope in (build_job, workflow_level):
+        assert "pages: write" not in scope, (
+            "pages: write must not sit on the build job or workflow-level "
+            "permissions — only the deploy job needs it"
+        )
+        assert "id-token: write" not in scope, (
+            "id-token: write must not sit on the build job or workflow-level "
+            "permissions — only the deploy job needs it"
+        )
+
+    assert "pages: write" in deploy_job, "the deploy job needs pages: write"
+    assert "id-token: write" in deploy_job, "the deploy job needs id-token: write"
+    assert "contents: read" in build_job, "the build job needs contents: read"
+
+
+def test_development_md_names_checks_as_the_deploy_gate() -> None:
+    """The doc used to say only that main was "protected" in the abstract. It
+    must now say what actually gates a deploy: a green run of the Checks
+    workflow on main, not merely a merged pull request."""
+    assert "Checks" in DEVELOPMENT_MD, (
+        "DEVELOPMENT.md must name the Checks workflow as what a deploy waits on"
+    )
+    assert re.search(r"direct push(es)? to `?main`? (are|is) rejected", DEVELOPMENT_MD) or (
+        "no direct pushes" in DEVELOPMENT_MD and "ruleset" in DEVELOPMENT_MD
+    ), "DEVELOPMENT.md must say direct pushes to main are rejected, not just discouraged"
+
+
+def test_development_md_counts_ci_gates_from_the_workflows_not_memory() -> None:
+    """Gate 1 is validate.yml's single job. test.yml, named Checks, holds the
+    rest. Whatever DEVELOPMENT.md claims the total is, it must match."""
+    # validate.yml has exactly one job; test.yml (Checks) holds the others.
+    validate_jobs = len(re.findall(r"^  \w+:\n", VALIDATE_YML.split("jobs:", 1)[1], re.M))
+    checks_jobs = len(re.findall(r"^  \w+:\n", TEST_YML.split("jobs:", 1)[1], re.M))
+    total_gates = validate_jobs + checks_jobs
+
+    assert f"The {_number_word(total_gates)} CI gates" in DEVELOPMENT_MD or (
+        f"gets {_number_word(total_gates)} checks" in DEVELOPMENT_MD
+    ), (
+        f"validate.yml has {validate_jobs} job(s) and test.yml (Checks) has "
+        f"{checks_jobs} job(s) — DEVELOPMENT.md must say {total_gates}, not "
+        "assert a stale number"
+    )
+
+
+def _number_word(n: int) -> str:
+    words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
+    return words.get(n, str(n))
