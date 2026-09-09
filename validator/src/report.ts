@@ -110,17 +110,28 @@ const NOT_THE_CAUSE =
   "**not** the cause.";
 
 /**
- * Fence one untrusted string into an inert code span.
+ * Fence one untrusted string into an inert code span, capped to `cap`
+ * characters.
  *
  * Three hazards, in the order they are dealt with: a backtick would close the
  * span and let what follows be markdown, so it becomes an apostrophe; a newline
  * ends a code span outright, so every whitespace run collapses to one space;
- * and a long excerpt buries the rest of the comment, so it is capped.
+ * and a long value buries the rest of the comment, so it is capped.
  */
-const safe = (value: unknown): string =>
+const fence = (value: unknown, cap: number): string =>
   "`" +
-  String(value).replace(/`/g, "'").replace(/\s+/g, " ").trim().slice(0, EXCERPT_CAP) +
+  String(value).replace(/`/g, "'").replace(/\s+/g, " ").trim().slice(0, cap) +
   "`";
+
+/**
+ * `fence`, capped to the pull request comment's 120 characters. Kept as its
+ * own one-argument function — not `fence` with a default parameter — because
+ * it is called as `.map(safe)` below: a default parameter there would read
+ * `Array.prototype.map`'s index argument as the cap, capping every excerpt
+ * but the first to nothing. `renderRescanReport` calls `fence` directly with
+ * its own, much larger cap instead of adding a second one here.
+ */
+const safe = (value: unknown): string => fence(value, EXCERPT_CAP);
 
 /** A count or line number, or 0 when the field is not one. A non-numeric value
  *  did not come from scan.py, and must not reach the comment as text. */
@@ -219,4 +230,61 @@ export function renderReport(input: ReportInput): string {
   }
 
   return body + FOOTER;
+}
+
+// --------------------------------------------------------------------------- //
+// The weekly re-scan's issue body (L6, #156).
+//
+// validateLog and scanLog are raw stdout from a run of validator/src/cli.ts
+// and scripts/scan.py over the whole tree — the same layers renderReport
+// already renders findings from, just captured as console output rather than
+// findings.json. Contributor-authored content can appear in either: a matched
+// excerpt scan.py prints is exactly the excerpt renderReport already fences.
+// This is that same discipline applied to the log as a whole, so the job that
+// runs it does not need Node dependencies installed to get it — `report-cli.ts`
+// calls this the same way it already calls renderReport.
+
+/** One skill demoted this run, as `build_index.py --drift-out` writes it. */
+export interface DriftEntry {
+  id: string;
+  reason: string;
+}
+
+export interface RescanReportInput {
+  /** stdout from validator/src/cli.ts's run over the whole tree. */
+  validateLog: string;
+  /** stdout from scripts/scan.py's run over the whole tree. */
+  scanLog: string;
+  /** Skills whose attestation no longer matches their current commit. */
+  drift: DriftEntry[];
+}
+
+const RESCAN_INTRO =
+  "The weekly re-scan found something that was not there at submission time.\n\n" +
+  "This is expected behaviour, not an emergency — it is the layer that " +
+  "catches an already-merged skill going bad. Triage against " +
+  "docs/SECURITY.md, and demote or delist per docs/TIERS.md.\n\n";
+
+const renderDrift = (drift: DriftEntry[], cap: number): string =>
+  drift.length
+    ? drift.map((d) => `- ${fence(d.id, cap)} — ${fence(d.reason, cap)}`).join("\n")
+    : "(none)";
+
+/**
+ * The weekly re-scan issue body. `cap` defaults far larger than the pull
+ * request comment's, because a log is not one line — but the fencing rule
+ * fires unchanged: every backtick in either log or in a demoted skill's id
+ * or reason becomes an apostrophe, so nothing embedded in any of them can
+ * close a fence around it.
+ */
+export function renderRescanReport(input: RescanReportInput, cap = 8000): string {
+  const { validateLog, scanLog, drift } = input;
+
+  return (
+    RESCAN_INTRO +
+    `### Validation\n\n${fence(validateLog, cap)}\n\n` +
+    `### Signatures\n\n${fence(scanLog, cap)}\n\n` +
+    `### Attestation drift\n\n${renderDrift(drift, cap)}\n\n` +
+    FOOTER
+  );
 }
