@@ -71,6 +71,42 @@ def test_narrow_bash_grant_does_not_block(make_skill):
     assert "wildcard-bash-grant" not in blocking(skill)
 
 
+# --------------------------------------------------------------------------- #
+# #152 — the wildcard rule evaluates the parsed allowed-tools value, not just a
+# raw-text match on one line. A YAML list and a bare, unrestricted `Bash` grant
+# the same thing `Bash(*)` does and must be treated alike.
+
+
+def test_wildcard_bash_grant_blocks_as_a_yaml_list(make_skill):
+    skill = make_skill(overrides={"allowed-tools": ["Bash(*)"]})
+    assert "wildcard-bash-grant" in blocking(skill)
+
+
+def test_bare_bash_in_a_list_blocks(make_skill):
+    """A bare `Bash` grants everything Bash can do — no less unrestricted than
+    the wildcard argument, just spelled differently."""
+    skill = make_skill(overrides={"allowed-tools": ["Read", "Bash"]})
+    assert "wildcard-bash-grant" in blocking(skill)
+
+
+def test_bare_bash_in_a_space_separated_string_blocks(make_skill):
+    skill = make_skill(overrides={"allowed-tools": "Read Bash"})
+    assert "wildcard-bash-grant" in blocking(skill)
+
+
+def test_scoped_bash_grant_in_a_list_does_not_block(make_skill):
+    skill = make_skill(overrides={"allowed-tools": ["Bash(git status)"]})
+    assert "wildcard-bash-grant" not in blocking(skill)
+
+
+def test_scoped_bash_grant_alongside_another_tool_does_not_block(make_skill):
+    """A space inside the parens is an argument, not a separator between
+    entries — splitting on it would break 'Bash(git status)' into two tokens
+    and lose the very thing that makes the grant narrow."""
+    skill = make_skill(overrides={"allowed-tools": "Bash(git status) Read"})
+    assert "wildcard-bash-grant" not in blocking(skill)
+
+
 def test_environment_access_in_a_script_blocks(make_skill):
     skill = make_skill(files={"scripts/x.py": "import os\nos.environ['SECRET']\n"})
     assert "credential-access" in blocking(skill)
