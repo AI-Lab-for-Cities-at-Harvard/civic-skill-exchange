@@ -232,7 +232,7 @@ Everything below runs on your PR and reports back in a comment. Layers 0–2 fai
 | **L1** | PR author matches the namespace; nothing touched outside it | Blocks |
 | **L2** | Dynamic-context commands invoking network or credential tools; `allowed-tools: Bash(*)`; environment and credential access patterns | Blocks |
 | **L3** | External URLs, network calls in scripts, `eval`/`exec`, base64 blobs, unicode homoglyphs, instructions to suppress output | Flags |
-| **L4** | Dedicated skill scanner plus generic static analysis over `scripts/` | Flags |
+| **L4** | Dedicated skill scanner plus generic static analysis over `scripts/`. Not yet running; the step is commented out in CI | Flags, when built |
 
 A flag is not a rejection. Several of these signatures fire on entirely legitimate skills — a bare external-URL match trips on anything that cites documentation. Flags route to a maintainer, who will ask you about them.
 
