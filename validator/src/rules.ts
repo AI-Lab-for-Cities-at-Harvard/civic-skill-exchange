@@ -72,6 +72,27 @@ export const VERSION_FIELD = "version";
 
 const NAME_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
+const NAMESPACE_UPPERCASE_RE = /[A-Z]/;
+
+/** GitHub logins are case-insensitive — 'alice' and 'ALICE' sign in to the
+ *  same account — but the directory under skills/ is the canonical form of a
+ *  namespace, and every exact-case comparison in the registry (the reserved-
+ *  namespace check just above, the site's Lab badge, the download box's
+ *  self-review disclosure) depends on there being exactly one spelling per
+ *  namespace. Folding to lowercase before comparing, as this registry used to,
+ *  let 'skills/alice/' and 'skills/ALICE/' both exist and both read as the
+ *  same account under two different-looking namespaces. Rejecting the
+ *  uppercase character outright removes the ambiguity rather than papering
+ *  over it. */
+export function checkNamespaceCase(namespace: string): Finding[] {
+  if (!NAMESPACE_UPPERCASE_RE.test(namespace)) return [];
+  return [finding("namespace",
+    `namespace '${namespace}' must be lowercase — the directory under ` +
+    `skills/ is the canonical form of a namespace, even though the GitHub ` +
+    `login it is named for is case-insensitive. Use ` +
+    `skills/${namespace.toLowerCase()}/.`)];
+}
+
 /** Written as strings so the published schema can carry the same patterns
  *  instead of describing them in English. A program reads the schema to find
  *  out what a submission needs (#10) and cannot read a prose description;
@@ -435,7 +456,8 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   // Ownership. Compared against the PR author, never the fork owner — an org
   // fork would otherwise let any member write into that org's namespace.
   const { author, namespace } = context;
-  if (author && namespace && !RESERVED_NAMESPACES.has(namespace.toLowerCase()) &&
+  if (namespace) findings.push(...checkNamespaceCase(namespace));
+  if (author && namespace && !RESERVED_NAMESPACES.has(namespace) &&
       namespace.toLowerCase() !== author.toLowerCase()) {
     findings.push(finding("namespace",
       `namespace '${namespace}' does not match the pull request author ` +
