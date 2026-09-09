@@ -13,6 +13,8 @@ someone lists a second skill.
 from __future__ import annotations
 
 import json
+import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -345,29 +347,36 @@ def test_a_one_sentence_description_is_used_whole(make_skill):
 # every `--check`, and was silently never committed — leaving `codex plugin
 # marketplace add` finding nothing, which is the bug #98 existed to fix.
 #
-# `--check` reads the working tree. These ask git.
+# `--check` reads the working tree, so a generated file that exists on disk
+# but was never committed still reports "current" — exactly the way #98's
+# Codex manifest went missing. These ask git instead, and ask only
+# `generated(ROOT)`, so a future output of the generator is covered
+# automatically rather than by a second, driftable copy of its path list.
 
 
-def test_both_marketplace_manifests_are_tracked_by_git():
-    import subprocess
+# TODO(red): _is_tracked_by_git not yet implemented.
 
-    root = build_marketplace.ROOT
-    for rel in (".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json"):
-        out = subprocess.run(["git", "ls-files", "--error-unmatch", rel],
-                             cwd=root, capture_output=True, text=True)
-        assert out.returncode == 0, (
-            f"{rel} is generated but not tracked — a clone would not have it. "
-            f"Check .gitignore.")
+
+def test_is_tracked_by_git_reports_an_untracked_file(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / "example.txt").write_text("hello", encoding="utf-8")
+    assert not _is_tracked_by_git(tmp_path, "example.txt")
+
+
+def test_is_tracked_by_git_reports_a_tracked_file(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / "example.txt").write_text("hello", encoding="utf-8")
+    subprocess.run(["git", "add", "example.txt"], cwd=tmp_path, check=True)
+    assert _is_tracked_by_git(tmp_path, "example.txt")
 
 
 def test_every_generated_file_is_tracked_by_git():
-    """The general form. A future output of the generator landing in an ignored
-    directory fails here rather than in somebody's agent."""
-    import subprocess
-
+    """The general form, against the real registry. A generated path that a
+    clone would not have — gitignored, or simply never committed — fails here
+    rather than in somebody's agent."""
     root = build_marketplace.ROOT
     for path in build_marketplace.generated(root):
         rel = path.relative_to(root).as_posix()
-        out = subprocess.run(["git", "check-ignore", "-q", rel],
-                             cwd=root, capture_output=True, text=True)
-        assert out.returncode != 0, f"{rel} is generated but git-ignored"
+        assert _is_tracked_by_git(root, rel), (
+            f"{rel} is generated but not tracked by git — a clone would not "
+            f"have it.")
