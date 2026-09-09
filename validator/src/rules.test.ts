@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   PLACE_PATTERN, SCOPES, SCOPE_FIELD, SCOPE_SECONDARY,
+  checkAllowedTools,
   checkFrontmatter,
   checkLocalization,
   checkProvenance,
@@ -629,5 +630,38 @@ describe("civic.deployed-in is optional now", () => {
       metadata: meta({ "civic.deployment": "team" }),
     }), ctx());
     expect(findings.map((f) => f.where)).toContain("civic.deployed-at");
+  });
+});
+
+describe("checkAllowedTools — the wildcard rule reads the parsed value (#152)", () => {
+  // docs/SECURITY.md: a wildcard Bash grant is rejected automatically,
+  // whether allowed-tools is a string or a list, and whether the wildcard is
+  // spelled `Bash(*)` or left bare as `Bash` — both are unrestricted.
+
+  it.each([
+    ["a bare string", "Bash(*)"],
+    ["a one-item list", ["Bash(*)"]],
+    ["a list alongside another tool", ["Read", "Bash"]],
+    ["a space-separated string", "Read Bash"],
+  ])("blocks %s", (_label, value) => {
+    const findings = checkAllowedTools(front({ "allowed-tools": value }));
+    expect(findings.map((f) => f.where)).toContain("allowed-tools");
+  });
+
+  it.each([
+    ["a scoped grant in a list", ["Bash(git status)"]],
+    ["a scoped grant alongside another tool", "Bash(git status) Read"],
+  ])("does not block %s", (_label, value) => {
+    const findings = checkAllowedTools(front({ "allowed-tools": value }));
+    expect(findings).toEqual([]);
+  });
+
+  it("is wired into checkFrontmatter, not just callable on its own", () => {
+    const findings = checkFrontmatter(front({ "allowed-tools": "Bash(*)" }), ctx());
+    expect(findings.map((f) => f.where)).toContain("allowed-tools");
+  });
+
+  it("leaves a well-formed grant out of checkFrontmatter's findings", () => {
+    expect(checkFrontmatter(front({ "allowed-tools": "Read, Grep" }), ctx())).toEqual([]);
   });
 });

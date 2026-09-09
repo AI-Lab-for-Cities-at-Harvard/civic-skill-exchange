@@ -46,7 +46,9 @@ High precision. Safe to fail a build on. Implemented in `scripts/scan.py`.
 # Dynamic-context commands invoking network or credential tools
 grep -rE '!`.*(curl|wget|nc |bash|cat.*env|find.*secret|grep.*password)' skills/
 
-# Unrestricted tool grants
+# Unrestricted tool grants — evaluated against the parsed allowed-tools
+# value, so a YAML list or a bare, unrestricted `Bash` count as the wildcard
+# too, not just this one-line spelling of it
 grep -rE 'allowed-tools:.*Bash\(\*\)' skills/
 
 # Credential and environment access
