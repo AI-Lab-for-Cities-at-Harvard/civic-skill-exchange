@@ -65,11 +65,19 @@ Two constraints on `report.ts` if you edit it:
 
 ## Setup
 
+Python 3.10 or later — CI runs the matrix on 3.10 and 3.12, and that is the
+range to develop against locally too.
+
 ```bash
 npm install                       # workspace root: installs validator/ and site/
 python -m venv .venv && source .venv/bin/activate
-pip install pyyaml jsonschema pytest
+pip install -r requirements-dev.txt
 ```
+
+`requirements-dev.txt` pins exact versions (`pyyaml`, `pytest`, `jsonschema`),
+so a new release of one of them cannot change what a local run or CI installs
+with no code change here. Bump a pin deliberately, in its own commit; Dependabot
+proposes the update the same way it does for `github-actions` and `npm`.
 
 ```bash
 npm run test --workspaces         # validator + site

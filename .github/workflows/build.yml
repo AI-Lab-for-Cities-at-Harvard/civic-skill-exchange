@@ -58,7 +58,7 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: pip install pyyaml
+      - run: pip install -r requirements-dev.txt
 
       - name: Validate everything
         run: npx tsx validator/src/cli.ts all
