@@ -36,7 +36,7 @@ body:
           required: true
         - label: Clean automated results — no blocking signatures.
           required: true
-        - label: The maintainer contact in the frontmatter is monitored and works.
+        - label: My GitHub account is active — there is no separate contact field, and this is how a reviewer reaches the maintainer.
           required: true
 
   - type: textarea

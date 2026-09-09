@@ -292,7 +292,8 @@ Run them visibly — no piping that hides an exit code.
 - [ ] `npm run lint` and `npm run typecheck` pass — both root scripts, which
       pass `--if-present`. `npm run lint --workspaces` fails with
       `Missing script: lint`, because the validator has none
-- [ ] `npm run build --workspaces` passes
+- [ ] `npm run build --workspaces --if-present` passes — the validator has no
+      build script, so the bare `--workspaces` form fails on it
 - [ ] `python scripts/build_marketplace.py --check` passes, if you touched
       `skills/` or the generator. If it fails, run
       `python scripts/build_marketplace.py` and commit the result — the manifest
@@ -401,4 +402,5 @@ reference CSS clusters (-.02em to -.04em).
 
 Logic lives in `src/lib/` as pure functions so it can be unit-tested without a
 DOM — `filter.ts` is the pattern. Components stay thin enough that a rendering
-bug is visible rather than subtle. Accessibility checks arrive with issue #6.
+bug is visible rather than subtle. Accessibility checks run with the rest of
+the suite — see Accessibility above.

@@ -26,7 +26,7 @@ Five properties of agent skills that everything below is designed around. If you
 
 ## The scan layers
 
-Cheapest first. L0–L2 fail the build. L3–L4 flag for a human. L5 is the human gate. L6 runs on a schedule.
+Cheapest first. L0–L2 fail the build. L3 flags for a human. L4 is not yet running. L5 is the human gate. L6 runs on a schedule.
 
 ### L0 — Structure
 Schema validation, `name` matches directory, category in the closed vocabulary, size caps, no symlinks, no binaries, no nested `.git`, no plugin-level files, YAML alias rejection as a billion-laughs defense. **Blocks.**
@@ -123,8 +123,8 @@ Noisy by nature. These route to a human; they do not block.
 - Bidirectional and invisible control characters
 - Instructions to disregard prior instructions, conceal an action, or omit something from a summary
 
-### L4 — Scanners
-A dedicated skill scanner plus generic static analysis over `scripts/`. Findings attach to the PR and publish into the index. **Flags.**
+### L4 — Scanners (not yet running)
+The place for a dedicated skill scanner plus generic static analysis over `scripts/`. The step exists in `validate.yml` commented out, and nothing here runs today. When it does, findings will attach to the PR and publish into the index as flags. Until then no document may promise L4 results, and a listing has never had them.
 
 General-purpose LLM-security products do not cover this artifact type — most are scoped to data-flow analysis over application source and name no skill or manifest format. Use a purpose-built tool.
 
@@ -134,7 +134,7 @@ The AI Lab for Cities at Harvard against [REVIEW.md](REVIEW.md). Required only f
 One reader, and where the skill is Lab-authored the reader is also the author — disclosed on the listing. This layer used to be specified as two people from separate organizations, and dropping to one removes the property that mattered most here: no single account, including a compromised reviewer's, can confer the badge. Nothing structural catches that now, which is why L6 and the SHA pin carry proportionally more weight than they did. [ADR 0001](adr/0001-reviewed-is-a-lab-attestation.md) sets out the trade in full.
 
 ### L6 — Standing re-scan
-Weekly re-run of L0–L4 across the whole tree, plus SHA-drift detection against `registry/reviewed.yml`. Opens an issue on any new finding.
+Weekly re-run of L0–L3 across the whole tree, plus SHA-drift detection against `registry/reviewed.yml` and a check that the committed marketplace manifests still match the skill tree. Opens an issue on any new finding, a stale manifest, or attestation drift.
 
 This layer exists because everything above it is a *submission-time* gate, and submission-time gates do nothing about the dominant failure mode: a contributor whose account is compromised months after their skill merged.
 

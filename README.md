@@ -128,8 +128,6 @@ You can also open a [skill submission issue](../../issues/new?template=submit-sk
 
 What we're building next is on the [project board](https://github.com/orgs/AI-Lab-for-Cities-at-Harvard/projects).
 
-What we're building next is on the [project board](https://github.com/orgs/AI-Lab-for-Cities-at-Harvard/projects).
-
 ## License
 
 Registry infrastructure is licensed under [LICENSE](LICENSE). Each skill carries its own license in its frontmatter and remains the property of its authors.

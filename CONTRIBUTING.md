@@ -32,6 +32,11 @@ Rules the automation enforces:
 - `{skill-name}` must match the `name` field in `SKILL.md` exactly.
 - Your PR may not touch anything outside your own namespace. Changes to schema, workflows, or documentation are separate PRs and need maintainer review.
 - No symlinks, no binaries, no nested `.git` directories, no compiled artifacts.
+- No `hooks/`, `.claude-plugin/`, `settings.json`, `settings.local.json`, or
+  `.lsp.json` — the skill directory is a plugin root a client installs
+  directly, and these are refused outright rather than merely reviewed.
+  `.mcp.json` is the one exception: it stays, and is treated as executed code
+  like anything under `scripts/`. See [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
 - **All four size limits**, so you can check before you hit them:
 
   | Limit | Value |
@@ -227,7 +232,7 @@ Everything below runs on your PR and reports back in a comment. Layers 0–2 fai
 | **L1** | PR author matches the namespace; nothing touched outside it | Blocks |
 | **L2** | Dynamic-context commands invoking network or credential tools; `allowed-tools: Bash(*)`; environment and credential access patterns | Blocks |
 | **L3** | External URLs, network calls in scripts, `eval`/`exec`, base64 blobs, unicode homoglyphs, instructions to suppress output | Flags |
-| **L4** | Dedicated skill scanner plus generic static analysis over `scripts/` | Flags |
+| **L4** | Dedicated skill scanner plus generic static analysis over `scripts/`. Not yet running; the step is commented out in CI | Flags, when built |
 
 A flag is not a rejection. Several of these signatures fire on entirely legitimate skills — a bare external-URL match trips on anything that cites documentation. Flags route to a maintainer, who will ask you about them.
 
