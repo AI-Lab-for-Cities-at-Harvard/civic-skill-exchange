@@ -14,20 +14,27 @@
 # outside CI could produce the comment. It now lives in the validator workspace
 # and the local check calls the same function, so a contributor's local run and
 # their pull request cannot say different things (#8). This file orchestrates:
-# fetch the artifact, ask the run which step failed, render, post. It composes no
-# part of the comment itself.
+# fetch the artifact, ask the run which step failed, resolve which pull request
+# the run belongs to, render, post. It composes no part of the comment itself.
+#
+# It also decides for itself which pull request to comment on. See "Resolve
+# which pull request this run belongs to" below and validator/src/resolve-pr.ts:
+# the artifact is the fork's to write, so the number in it named whatever pull
+# request or issue the fork chose (#153).
 #
 # TWO THINGS ABOUT THE CHECKOUT, since this job holds `pull-requests: write`:
 #
-#   - It takes the DEFAULT BRANCH, never `workflow_run.head_sha` or
+#   - Its `ref:` is the DEFAULT BRANCH, never `workflow_run.head_sha` or
 #     `head_branch`. workflow_run runs the workflow definition from the default
 #     branch precisely so that a fork cannot edit what executes with a token.
 #     Checking out the pull request head would hand that back — a fork could
-#     rewrite report.ts and have this job run it.
-#   - Nothing is installed. report-cli.ts imports one local module and two
-#     `node:` builtins, so `node` runs it as-is (Node strips the types itself).
-#     No `npm ci`, no `npx`, no package fetched at run time into this job. Keep
-#     it that way; see the note at the top of report-cli.ts.
+#     rewrite report.ts and have this job run it. (Those two fields are read
+#     below, to work out which pull request this is. Reading them is the point;
+#     running code from them is what may not happen.)
+#   - Nothing is installed. report-cli.ts and resolve-pr-cli.ts import one local
+#     module and a `node:` builtin or two, so `node` runs them as-is (Node
+#     strips the types itself). No `npm ci`, no `npx`, no package fetched at run
+#     time into this job. Keep it that way; see the notes at the top of both.
 #
 # See docs/SECURITY.md — "CI hardening".
 
@@ -68,7 +75,7 @@ jobs:
       - name: Is there anything to report
         id: artifact
         run: |
-          if [ -f findings.json ] && [ -f pr-number.txt ]; then
+          if [ -f findings.json ]; then
             echo "present=true" >> "$GITHUB_OUTPUT"
           else
             echo "No findings artifact; nothing to report."
@@ -121,6 +128,77 @@ jobs:
             }
             fs.writeFileSync('failed-steps.json', JSON.stringify(failedSteps));
 
+      # WHICH PULL REQUEST. Not the one the artifact names: validate.yml runs on
+      # `pull_request`, so a fork wrote every byte of that artifact, and this job
+      # holds `pull-requests: write`. A fork could therefore have a clean "no
+      # signatures matched" report posted onto any pull request or issue in the
+      # repository (#153).
+      #
+      # So the job asks instead. The event carries three fields that describe
+      # what actually ran and cannot be forged — head_sha, head_repository and
+      # head_branch — and the open pull requests with that head are a question
+      # for the API. `workflow_run.pull_requests[]` would be the direct answer
+      # and is empty for forks, which is every submission the exchange gets.
+      #
+      # The head branch and repository names are contributor-chosen text, and a
+      # branch name may contain quotes, backticks and shell metacharacters. They
+      # reach the script through `env` and are read from `process.env`, never
+      # substituted into its source by `${{ }}`. They are used as API parameters
+      # only.
+      - name: List the open pull requests with this run's head
+        if: steps.artifact.outputs.present == 'true'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+        with:
+          script: |
+            const fs = require('fs');
+            const repo = String(process.env.HEAD_REPO || '');
+            const branch = String(process.env.HEAD_BRANCH || '');
+            const owner = repo.split('/')[0];
+            let candidates = [];
+            if (!owner || !branch) {
+              core.info('The event names no head repository or branch; nothing to look up.');
+            } else {
+              try {
+                candidates = await github.paginate(github.rest.pulls.list, {
+                  ...context.repo, state: 'open', head: `${owner}:${branch}`, per_page: 100,
+                });
+                core.info(`${candidates.length} open pull request(s) with head ${owner}:${branch}.`);
+              } catch (e) {
+                core.info(`Could not list pull requests for ${owner}:${branch}: ${e.message}`);
+                candidates = [];
+              }
+            }
+            // Only the fields the resolver compares. Passing the whole response
+            // through a file would put contributor-authored titles and branch
+            // names in front of a step that has no reason to see them.
+            fs.writeFileSync('candidates.json', JSON.stringify(candidates.map((pr) => ({
+              number: pr.number,
+              head: {
+                sha: pr.head && pr.head.sha,
+                repo: { full_name: pr.head && pr.head.repo && pr.head.repo.full_name },
+              },
+            }))));
+
+      # Exactly one open pull request whose head commit is the commit this run
+      # ran on, or nothing. Zero matches and several matches are the same
+      # answer: not commenting is a nuisance, commenting on the wrong pull
+      # request is the bug. The verdict is validator/src/resolve-pr.ts, where
+      # every one of those cases is a unit test.
+      - name: Resolve which pull request this run belongs to
+        if: steps.artifact.outputs.present == 'true'
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+        run: |
+          node registry/validator/src/resolve-pr-cli.ts \
+            --candidates candidates.json \
+            --head-sha "$HEAD_SHA" \
+            --head-repo "$HEAD_REPO" \
+            --out resolved-pr.txt
+
       - name: Render the comment
         if: steps.artifact.outputs.present == 'true'
         env:
@@ -138,8 +216,13 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const pr = parseInt(fs.readFileSync('pr-number.txt', 'utf8').trim(), 10);
-            if (!Number.isInteger(pr)) { core.setFailed('Bad PR number.'); return; }
+            // Empty means the step above resolved nothing and said why in the
+            // log. There is no fallback: the alternative to the resolved pull
+            // request is no comment, not a guess.
+            const raw = fs.readFileSync('resolved-pr.txt', 'utf8').trim();
+            if (!raw) { core.info('No pull request resolved; posting nothing.'); return; }
+            const pr = Number(raw);
+            if (!Number.isInteger(pr) || pr <= 0) { core.setFailed('Bad PR number.'); return; }
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,

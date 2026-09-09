@@ -425,6 +425,14 @@ def _number_word(n: int) -> str:
 RESOLVER = (ROOT / "validator" / "src" / "resolve-pr.ts").read_text(encoding="utf-8")
 
 
+def _without_comments(text: str) -> str:
+    """A workflow's executable half. These files explain in prose what they no
+    longer do, and a sentence naming `pr-number.txt` is not a use of it."""
+    return "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith("#")
+    )
+
+
 def _script_bodies(text: str) -> list[tuple[str, str]]:
     """Every `run:` and `script:` body in a workflow, as (key, body) pairs.
 
@@ -479,13 +487,14 @@ def test_the_pull_request_is_resolved_before_the_comment_is_posted() -> None:
 def test_the_comment_goes_only_to_the_pull_request_that_was_resolved() -> None:
     """`workflow_run.pull_requests[]` is empty for forks, and the artifact is
     the fork's to write, so neither may name the number that gets commented on."""
-    assert "pr-number.txt" not in REPORT_YML, (
+    body = _without_comments(REPORT_YML)
+    assert "pr-number.txt" not in body, (
         "report.yml is trusting a pull request number from the artifact again"
     )
-    assert "workflow_run.pull_requests" not in REPORT_YML, (
+    assert "workflow_run.pull_requests" not in body, (
         "the event's pull_requests list is empty for forks; resolve instead"
     )
-    assert "resolved-pr.txt" in REPORT_YML, (
+    assert "resolved-pr.txt" in body, (
         "the post step must read the number the resolver wrote, and nothing else"
     )
 
@@ -493,7 +502,7 @@ def test_the_comment_goes_only_to_the_pull_request_that_was_resolved() -> None:
 def test_validate_yml_publishes_no_pull_request_number() -> None:
     """A file a fork writes cannot be a cross-check on anything. Removing it is
     one fewer thing for the privileged job to be tempted by."""
-    assert "pr-number.txt" not in VALIDATE_YML, (
+    assert "pr-number.txt" not in _without_comments(VALIDATE_YML), (
         "validate.yml is uploading a pull request number again — the reporting "
         "job resolves it now, and an attacker-authored copy is only a trap"
     )
