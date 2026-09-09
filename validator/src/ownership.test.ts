@@ -72,8 +72,9 @@ describe("checkChangedOwnership", () => {
     expect(messages(["skills/civic-skills/one/SKILL.md"], "alice")).toEqual([]);
   });
 
-  it("compares logins without regard to case", () => {
-    expect(messages(["skills/Alice/one/SKILL.md"], "alice")).toEqual([]);
+  it("folds the login but not the namespace, which is exact-case (#155)", () => {
+    expect(messages(["skills/alice/one/SKILL.md"], "Alice")).toEqual([]);
+    expect(messages(["skills/Alice/one/SKILL.md"], "alice")).toHaveLength(1);
   });
 
   it("ignores paths outside skills/, and blank lines", () => {
