@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 import build_marketplace
 
 
@@ -83,6 +85,53 @@ def test_check_fails_when_the_committed_copy_is_stale(make_skill):
 def test_check_fails_when_the_file_is_missing(make_skill):
     root = make_skill().parents[2]
     assert not build_marketplace.is_current(root, root / ".claude-plugin" / "marketplace.json")
+
+
+def test_duplicate_plugin_name_fails_the_build(make_skill):
+    """`civic` submitting `skills-plain-language-notice-rewriter` joins to the
+    same plugin name as `civic-skills`'s `plain-language-notice-rewriter` — two
+    different namespace/name splits, one joined string. Silently listing
+    whichever sorts first would let a later submission shadow an existing one,
+    including the Reviewed skill it collides with here."""
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    with pytest.raises(build_marketplace.DuplicatePluginName) as exc:
+        build_marketplace.build(root)
+    message = str(exc.value)
+    assert "civic/skills-plain-language-notice-rewriter" in message
+    assert "civic-skills/plain-language-notice-rewriter" in message
+
+
+def test_duplicate_plugin_name_fails_the_codex_build_too(make_skill):
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    with pytest.raises(build_marketplace.DuplicatePluginName):
+        build_marketplace.build_codex(root)
+
+
+def test_duplicate_plugin_name_fails_write_all(make_skill):
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    with pytest.raises(build_marketplace.DuplicatePluginName):
+        build_marketplace.write_all(root)
+
+
+def test_duplicate_plugin_name_fails_all_current(make_skill):
+    """`all_current` backs `--check`. A tree that cannot even be built is not
+    current — it has to fail loudly rather than report a stale-but-fixable
+    manifest."""
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    with pytest.raises(build_marketplace.DuplicatePluginName):
+        build_marketplace.all_current(root)
+
+
+def test_no_collision_when_namespace_and_name_both_differ(make_skill):
+    """The ordinary case — two entirely different listings — must not trip the
+    duplicate check."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    make_skill(name="beta", namespace="cityofy")
+    assert build_marketplace.build(root)["plugins"]
 
 
 def test_output_is_deterministic(make_skill):
