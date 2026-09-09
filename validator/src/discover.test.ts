@@ -7,10 +7,14 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { discoverChanged } from "./skill";
+import { join, dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { discoverChanged, isGeneratedInSkill } from "./skill";
+
+/** The repository, so the generator can be asked what it writes. */
+const GENERATOR_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 let root: string;
 let changed: string;
@@ -75,4 +79,38 @@ describe("discoverChanged", () => {
   it("ignores paths outside skills/, and blank lines", () => {
     expect(changedPaths(["", "  ", "README.md", "site/src/App.tsx"])).toEqual([]);
   });
+});
+
+/* The exemption has to be exactly what scripts/build_marketplace.py writes into
+   a skill directory. A pattern that matched `.codex-plugin/plugin.json` at any
+   depth exempted a hand-written file the generator never touches, and the
+   exemption is what stops L1 seeing a path at all — so this asks the generator
+   for the shape rather than keeping a second copy of it. */
+describe("the generated-file exemption matches the generator", () => {
+  const source = () => readFileSync(
+    join(GENERATOR_ROOT, "scripts", "build_marketplace.py"), "utf8");
+
+  it("finds the generator's per-skill loop and the file it writes", () => {
+    // Guards the guard: the assertions below pass trivially if these drift.
+    expect(source()).toContain('(root / "skills").glob("*/*")');
+    expect(generatedInSkill()).not.toBeNull();
+  });
+
+  it("exempts the path the generator writes", () => {
+    const [dir, file] = generatedInSkill()!;
+    expect(isGeneratedInSkill(`skills/ns/name/${dir}/${file}`)).toBe(true);
+  });
+
+  it("exempts it nowhere else in the tree", () => {
+    const [dir, file] = generatedInSkill()!;
+    expect(isGeneratedInSkill(`skills/ns/name/nested/${dir}/${file}`)).toBe(false);
+    expect(isGeneratedInSkill(`skills/ns/${dir}/${file}`)).toBe(false);
+    expect(isGeneratedInSkill(`skills/ns/name/${file}`)).toBe(false);
+  });
+
+  /** The `skill_dir / "..." / "..."` the generator writes, as its two segments. */
+  function generatedInSkill(): [string, string] | null {
+    const m = source().match(/skill_dir \/ "([^"]+)" \/ "([^"]+)"/);
+    return m ? [m[1]!, m[2]!] : null;
+  }
 });
