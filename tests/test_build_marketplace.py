@@ -354,7 +354,15 @@ def test_a_one_sentence_description_is_used_whole(make_skill):
 # automatically rather than by a second, driftable copy of its path list.
 
 
-# TODO(red): _is_tracked_by_git not yet implemented.
+def _is_tracked_by_git(repo_root: Path, rel_path: str) -> bool:
+    """True if `rel_path` (relative to `repo_root`) is tracked by git there —
+    i.e. `git ls-files --error-unmatch` finds it. A file can be untracked
+    without being gitignored (nobody ran `git add`), so this is the direct
+    question rather than the proxy `git check-ignore` was answering."""
+    out = subprocess.run(
+        ["git", "ls-files", "--error-unmatch", rel_path],
+        cwd=repo_root, capture_output=True, text=True)
+    return out.returncode == 0
 
 
 def test_is_tracked_by_git_reports_an_untracked_file(tmp_path):
