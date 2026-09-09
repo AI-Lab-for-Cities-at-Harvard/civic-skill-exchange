@@ -27,6 +27,11 @@ const served = (payload: Detail) =>
 
 const structure = () => screen.findByRole("region", { name: /what is in it/i });
 
+/** A row of the file tree. Scoped to the tree, because the paragraph above it
+ *  now names `.mcp.json` too. */
+const row = (path: string) =>
+  screen.getByText(path, { selector: ".tree__path" }).closest("li");
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe("the structure section says what runs", () => {
@@ -45,9 +50,7 @@ describe("the structure section says what runs", () => {
     render(<SkillDetail namespace="ns" name="example-skill" />);
     await structure();
 
-    expect(screen.getByText(".mcp.json").closest("li")?.textContent)
-      .toContain("executed");
-    expect(screen.getByText("references/notes.md").closest("li")?.textContent)
-      .not.toContain("executed");
+    expect(row(".mcp.json")?.textContent).toContain("executed");
+    expect(row("references/notes.md")?.textContent).not.toContain("executed");
   });
 });
