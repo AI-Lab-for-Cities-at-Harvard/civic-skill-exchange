@@ -181,3 +181,24 @@ describe("splitFrontmatter", () => {
     expect(splitFrontmatter("# Heading\n\n---\n\nMore text.\n").raw).toBeNull();
   });
 });
+
+/** #151, over a real directory: the walk produces the `hooks` directory entry
+ *  and the file inside it, which is the shape the de-duplication is for. */
+describe("plugin-level files, over a real directory", () => {
+  it("rejects a hooks directory once, naming it", () => {
+    mkdirSync(join(skill, "hooks"));
+    writeFileSync(join(skill, "hooks", "hooks.json"), "{}\n");
+    expect(checkStructure(skill).map((f) => f.where)).toEqual(["hooks"]);
+  });
+
+  it.each(["settings.json", "settings.local.json", ".lsp.json"])(
+    "rejects %s at the skill root", (name) => {
+      writeFileSync(join(skill, name), "{}\n");
+      expect(messages(checkStructure(skill))).toContain(name);
+    });
+
+  it("accepts .mcp.json, which is allowed and published as executed", () => {
+    writeFileSync(join(skill, ".mcp.json"), '{"mcpServers": {}}\n');
+    expect(checkStructure(skill)).toEqual([]);
+  });
+});

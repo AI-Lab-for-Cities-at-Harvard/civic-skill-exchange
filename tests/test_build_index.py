@@ -550,3 +550,62 @@ def test_history_does_not_order_the_catalogue():
     assert 'key=lambda e: e["id"]' in ordering[0], ordering[0]
     for field in ("history", "first_seen", "last_changed", "commits", "version"):
         assert field not in ordering[0]
+
+
+# --------------------------------------------------------------------------- #
+# What runs rather than what is read (#151).
+#
+# `scripts/` was the whole of it until the ruling on #151 kept `.mcp.json` and
+# refused plugin hooks. The skill directory is the Claude plugin root, so a
+# client launches the servers `.mcp.json` declares on install — a file the page
+# must not describe as one somebody reads.
+
+
+def test_detail_marks_the_mcp_config_as_executed(make_skill):
+    skill = make_skill(files={".mcp.json": '{"mcpServers": {}}\n'})
+    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
+    assert {f["path"]: f["executed"] for f in detail["files"]}[".mcp.json"] is True
+
+
+def test_the_mcp_config_is_listed_beside_scripts(make_skill):
+    skill = make_skill(files={".mcp.json": "{}\n", "scripts/helper.py": "x = 1\n"})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["script_files"] == [".mcp.json", "scripts/helper.py"]
+    assert entry["has_scripts"] is True
+
+
+def test_a_skill_whose_only_executed_file_is_the_mcp_config_still_has_some(make_skill):
+    """`has_scripts` is what the catalogue reads to say a listing runs code, and
+    an MCP server is code the agent launches."""
+    entry = build_index.build_entry(make_skill(files={".mcp.json": "{}\n"}), {}, {})
+    assert entry["has_scripts"] is True
+    assert entry["script_files"] == [".mcp.json"]
+
+
+def test_a_skill_that_runs_nothing_says_so(make_skill):
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["has_scripts"] is False
+    assert entry["script_files"] == []
+
+
+def test_an_mcp_config_below_the_root_is_documentation(make_skill):
+    """The plugin root is the skill directory, so only the root file is loaded.
+    A copy under references/ is an example, and the same exemption applies here
+    as to a second SKILL.md."""
+    skill = make_skill(files={"references/.mcp.json": "{}\n"})
+    entry = build_index.build_entry(skill, {}, {})
+    detail = build_index.build_detail(skill, entry)
+    assert entry["script_files"] == []
+    executed = {f["path"]: f["executed"] for f in detail["files"]}
+    assert executed["references/.mcp.json"] is False
+
+
+def test_the_index_and_the_detail_agree_on_what_runs(make_skill):
+    """Two lists of executed files would drift, and the page and the catalogue
+    would then disagree about what a listing does."""
+    skill = make_skill(files={
+        ".mcp.json": "{}\n", "scripts/a.py": "a\n", "references/b.md": "b\n",
+    })
+    entry = build_index.build_entry(skill, {}, {})
+    detail = build_index.build_detail(skill, entry)
+    assert sorted(f["path"] for f in detail["files"] if f["executed"]) == entry["script_files"]

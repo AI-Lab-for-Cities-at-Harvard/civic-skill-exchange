@@ -156,13 +156,76 @@ export function isLoadableNestedSkill(rel: string): boolean {
   return !DOC_DIRECTORIES.includes(first as never);
 }
 
+/** Plugin-level files a client acts on, which a skill may not ship (#151).
+ *
+ *  `build_marketplace.py` makes the skill directory the Claude plugin root, so
+ *  anything here is honoured on `/plugin install` — and honoured by code, not
+ *  by a model. `hooks/hooks.json` is the sharp end: it runs shell commands at
+ *  session start with nothing between the install and the command, which is the
+ *  class SECURITY.md §3 says an LLM cannot gate. Every one of these carries an
+ *  allowlisted suffix, so before this rule they passed L0 unremarked.
+ *
+ *  Keyed on the first path segment, because the plugin root is the skill
+ *  directory: a copy under `references/` or `assets/` is documentation and no
+ *  client loads it, the same line `isLoadableNestedSkill` already draws.
+ *
+ *  `.mcp.json` is deliberately absent. An MCP server can be genuinely useful to
+ *  a skill, so the ruling on #151 keeps it and treats it as executed instead:
+ *  `build_index.py` publishes it beside `scripts/`, and `scan.py` reads the
+ *  commands it launches.
+ */
+const PLUGIN_DIRECTORIES = new Map<string, string>([
+  ["hooks", "plugin hooks run shell commands at session start with no model in " +
+    "the path, so nothing downstream can refuse them — the skill directory is " +
+    "the plugin root, and a client would run these on install. A skill may not " +
+    "ship hooks."],
+  [".claude-plugin", "the registry generates this directory from the listing " +
+    "itself, so an author's copy would shadow it and describe the plugin as " +
+    "something other than what the catalogue shows."],
+]);
+
+const PLUGIN_FILES = new Map<string, string>([
+  ["settings.json", "this is a client configuration file, not skill content. " +
+    "Installing a skill must not change the host's settings — permissions and " +
+    "hooks among them — as a side effect."],
+  ["settings.local.json", "this is a client configuration file, not skill " +
+    "content. Installing a skill must not change the host's settings — " +
+    "permissions and hooks among them — as a side effect."],
+  [".lsp.json", "this declares language servers a client launches, so it is a " +
+    "command that runs with no model in the path rather than content anybody " +
+    "reads."],
+]);
+
+/** Why this path is refused, or null. `where` carries the path itself. */
+export function rejectedPluginPath(rel: string): string | null {
+  const first = rel.split("/")[0]!;
+  return PLUGIN_DIRECTORIES.get(first)
+    ?? (rel === first ? PLUGIN_FILES.get(first) ?? null : null);
+}
+
 export function checkStructureCore(entries: Entry[]): Finding[] {
   const findings: Finding[] = [];
+  const reportedDirectories = new Set<string>();
   let total = 0;
   let files = 0;
 
   for (const entry of entries) {
     const rel = entry.path;
+
+    const plugin = rejectedPluginPath(rel);
+    if (plugin) {
+      // Once per directory rather than once per file inside it: the finding
+      // lands in a pull request comment, and three lines for one mistake is
+      // how a comment stops being read. Entries arrive sorted, so the
+      // directory precedes its contents — and a caller that passes no
+      // directory entries at all still gets the file reported.
+      const first = rel.split("/")[0]!;
+      if (entry.kind === "dir" && rel === first) reportedDirectories.add(rel);
+      if (!(rel !== first && reportedDirectories.has(first))) {
+        findings.push(finding(rel, plugin));
+      }
+      continue;
+    }
 
     if (entry.kind === "symlink") {
       findings.push(finding(rel, "symlinks are not permitted"));

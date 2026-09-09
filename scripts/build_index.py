@@ -32,6 +32,13 @@ SKILLS_DIR = ROOT / "skills"
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 
+#: The MCP server declaration a client reads at the plugin root. Allowed in a
+#: skill by the ruling on #151 — an MCP server can be genuinely useful — and
+#: therefore published as executed: the skill directory *is* the Claude plugin
+#: root, so a client launches what this file names on install. Only the root
+#: copy is loaded; one under references/ is an example.
+MCP_CONFIG = ".mcp.json"
+
 REPO_URL = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange"
 
 
@@ -182,6 +189,27 @@ def source_of(meta: dict) -> dict | None:
     return {"repo": repo, "commit": commit} if commit else {"repo": repo, "commit": None}
 
 
+def is_executed(rel: str) -> bool:
+    """Does the agent run this file rather than read it?
+
+    Two answers, and they are the same question: `scripts/` is the skill's own
+    code, and `.mcp.json` launches servers on install. Both are published as
+    executed, and the detail page and the index derive their lists from this one
+    predicate so they cannot come to disagree about what a listing does.
+    """
+    return rel.startswith("scripts/") or rel == MCP_CONFIG
+
+
+def executed_files(skill_dir: Path) -> list[str]:
+    """Every file in the skill the agent runs, sorted, relative to its root."""
+    return sorted(
+        rel for rel in (
+            p.relative_to(skill_dir).as_posix()
+            for p in skill_dir.rglob("*") if p.is_file() and not p.is_symlink()
+        ) if is_executed(rel)
+    )
+
+
 def normalize_tools(value) -> list[str]:
     if value is None:
         return []
@@ -244,6 +272,7 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
     skill_id = f"{namespace}/{name}"
     meta = front.get("metadata") or {}
     sha = head_sha(skill_dir)
+    runs = executed_files(skill_dir)
 
     entry = {
         "id": skill_id,
@@ -288,12 +317,12 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "source": source_of(meta),
         "sha": sha,
         "history": history(skill_dir),
-        "has_scripts": (skill_dir / "scripts").is_dir(),
-        "script_files": sorted(
-            str(p.relative_to(skill_dir))
-            for p in (skill_dir / "scripts").rglob("*")
-            if p.is_file()
-        ) if (skill_dir / "scripts").is_dir() else [],
+        # What the agent runs: scripts/, and the MCP servers .mcp.json declares
+        # (#151). Both keys are derived from one list, so a listing whose only
+        # executed file is an MCP config is not published as one that runs
+        # nothing.
+        "has_scripts": bool(runs),
+        "script_files": runs,
         "path": f"skills/{namespace}/{name}",
         "download": f"{REPO_URL}/tree/main/skills/{namespace}/{name}",
     }
@@ -335,8 +364,8 @@ def build_detail(skill_dir: Path, entry: dict) -> dict:
         files.append({
             "path": rel,
             "size": path.stat().st_size,
-            # Anything under scripts/ is run, not read. The page says so.
-            "executed": rel.startswith("scripts/"),
+            # Run, not read — scripts/, and the MCP config. The page says so.
+            "executed": is_executed(rel),
         })
 
     return {**entry, "files": files}

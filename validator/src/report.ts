@@ -56,7 +56,7 @@ export interface ReportInput {
 }
 
 /**
- * The signature vocabulary, mirroring `HARD` and `SOFT` in `scripts/scan.py`.
+ * The signature vocabulary, mirroring `HARD`, `SOFT` and `MCP` in `scripts/scan.py`.
  *
  * The signature name is the one field rendered as markdown rather than fenced —
  * it is bold, so it cannot be a code span. It does not need to be, because it is
@@ -79,6 +79,8 @@ export const SIGNATURE_NAMES: readonly string[] = [
   "encoded-blob",
   "bidi-or-invisible",
   "instruction-suppression",
+  // L2, over the MCP servers a skill declares rather than over file text.
+  "mcp-remote-execution",
 ];
 
 const KNOWN = new Set(SIGNATURE_NAMES);

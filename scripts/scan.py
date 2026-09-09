@@ -282,6 +282,118 @@ def scan_text(text: str, signatures: list[Signature], rel: str) -> list[dict]:
     return findings
 
 
+# --------------------------------------------------------------------------- #
+# MCP servers (#151).
+#
+# `build_marketplace.py` makes the skill directory the Claude plugin root, so a
+# plugin-level file an author ships is honoured on install. L0 refuses all of
+# them but one: `.mcp.json` stays, because an MCP server can be genuinely useful
+# to a skill. The cost of keeping it is that a client launches what it declares,
+# so the fields a client executes are read as commands rather than left as text.
+#
+# The shape this catches is fetch-and-run: a server whose command pulls a
+# package off the network and runs it at launch. There is no model between the
+# install and that command, and the package resolved a week from now is not the
+# package a reviewer read — so it blocks, the same way a dynamic-context command
+# does.
+#
+# Parsed, not grepped. This is a blocking signature and the file also carries
+# prose — a description mentioning `npx -y` is not a command, and a blocker that
+# fires on prose is one people learn to route around.
+#
+# URLs need nothing new here. `.mcp.json` carries an allowlisted suffix, so the
+# text scan above already gives it `external-url` on the same terms a script
+# gets it, including the localization disposition.
+
+MCP_CONFIG = ".mcp.json"
+
+MCP: list[Signature] = [
+    (
+        "mcp-remote-execution",
+        re.compile(
+            r"(?:^|\s)(?:"
+            # Package runners that install on demand. `npx` without a yes-flag
+            # prompts before it installs; with one, nothing is asked.
+            r"npx\s+(?:-y|--yes)(?:\s|$)"
+            r"|(?:uvx|bunx|dlx|curl|wget)(?:\s|$)"
+            r"|pipx\s+run(?:\s|$)"
+            r"|(?:pip3?|uv\s+pip|npm|pnpm|yarn)\s+(?:install|add)(?:\s|$)"
+            # A shell wrapping a URL: whatever it fetches is what runs.
+            r"|(?:ba|z)?sh\s+-c\s+.*https?://"
+            r")",
+            re.IGNORECASE,
+        ),
+        "MCP server command that fetches code from the network and runs it when "
+        "the server starts. The skill directory is the plugin root, so this runs "
+        "on install with no model in the path, and what it resolves later is not "
+        "what a reviewer read. Name a command the skill ships or the host "
+        "already has.",
+    ),
+]
+
+
+def mcp_servers(text: str) -> dict[str, dict]:
+    """The `mcpServers` mapping, or nothing when the file is not that shape.
+
+    A malformed `.mcp.json` is L0's finding to report, not this scanner's to
+    crash on — the same call `localization_of` makes about frontmatter.
+    """
+    try:
+        doc = json.loads(text)
+    except ValueError:
+        return {}
+    servers = doc.get("mcpServers") if isinstance(doc, dict) else None
+    if not isinstance(servers, dict):
+        return {}
+    return {str(k): v for k, v in servers.items() if isinstance(v, dict)}
+
+
+def server_command(server: dict) -> str:
+    """`command`, `args` and `url` as one whitespace-separated string.
+
+    Only the fields a client runs or connects to. Joining on whitespace is what
+    lets a pattern require a token boundary, so `curl` as the command matches
+    and a URL path ending in `/curl` does not.
+    """
+    args = server.get("args")
+    parts = [server.get("command"), *(args if isinstance(args, list) else []),
+             server.get("url")]
+    return " ".join(p for p in parts if isinstance(p, str))
+
+
+def server_line(text: str, name: str) -> int:
+    """The line the server is declared on, so a finding points somewhere."""
+    match = re.search(rf'"{re.escape(name)}"\s*:', text)
+    return text.count("\n", 0, match.start()) + 1 if match else 1
+
+
+def scan_mcp(skill_dir: Path) -> list[dict]:
+    """Blocking findings from the MCP servers a skill declares.
+
+    One finding per server rather than one per file: each server is a separate
+    decision by the author, and fixing one to discover the next on resubmission
+    is a loop worth not building.
+    """
+    path = skill_dir / MCP_CONFIG
+    if not path.is_file() or path.is_symlink():
+        return []
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return []
+
+    findings = []
+    for name, server in mcp_servers(text).items():
+        command = server_command(server)
+        if not command:
+            continue
+        for f in scan_text(command, MCP, MCP_CONFIG):
+            findings.append({**f,
+                             "line": server_line(text, name),
+                             "excerpt": f"{name}: {command}"[:160]})
+    return findings
+
+
 def scan_skill(skill_dir: Path) -> dict:
     blocking: list[dict] = []
     flags: list[dict] = []
@@ -316,6 +428,10 @@ def scan_skill(skill_dir: Path) -> dict:
                 "explanation": WILDCARD_BASH_EXPLANATION,
             }
         )
+
+    # The MCP servers this skill launches on install (#151), read as commands
+    # rather than as the text the loop above already scanned.
+    blocking.extend(scan_mcp(skill_dir))
 
     return {
         "blocking": blocking,
