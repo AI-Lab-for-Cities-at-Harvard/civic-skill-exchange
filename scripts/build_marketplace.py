@@ -54,6 +54,34 @@ def plugin_name(namespace: str, name: str) -> str:
     return f"{namespace}-{name}"
 
 
+class DuplicatePluginName(Exception):
+    """Two listings under skills/ joined namespace and name into the same
+    plugin name.
+
+    `namespace-name` is not injective: `civic` submitting
+    `skills-plain-language-notice-rewriter` joins to the same string as
+    `civic-skills`'s `plain-language-notice-rewriter`. Nothing upstream of
+    this generator can catch that — the registry's real identity is the
+    namespace/name pair, and the join is a lossy projection of it done only
+    here, at marketplace-manifest time."""
+
+
+def _assert_unique_plugin_names(entries: list[tuple[str, str]]) -> None:
+    """`entries` is `(namespace, name)` per listing, in the order they will be
+    written. Raises naming both listings on the first collision found."""
+    seen: dict[str, tuple[str, str]] = {}
+    for namespace, name in entries:
+        name_joined = plugin_name(namespace, name)
+        other = seen.get(name_joined)
+        if other is not None:
+            raise DuplicatePluginName(
+                f"duplicate plugin name '{name_joined}': "
+                f"skills/{other[0]}/{other[1]} and skills/{namespace}/{name} "
+                "both produce it. Plugin names must be unique across the "
+                "marketplace.")
+        seen[name_joined] = (namespace, name)
+
+
 # --------------------------------------------------------------------------- #
 # Codex (#98).
 #
@@ -136,23 +164,27 @@ def codex_plugin(skill_dir: Path, labels: dict[str, str] | None = None) -> dict:
 def build_codex(root: Path = ROOT) -> dict:
     labels = category_labels(root)
     plugins = []
+    entries = []
     for skill_dir in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
         front = read_frontmatter(skill_dir / "SKILL.md")
         if not front:
             continue
         meta = front.get("metadata") or {}
         namespace, name = skill_dir.parent.name, skill_dir.name
+        entries.append((namespace, name))
         plugins.append({
             "name": plugin_name(namespace, name),
             "source": {"source": "local", "path": f"./skills/{namespace}/{name}"},
             "policy": dict(CODEX_POLICY),
             "category": labels.get(str(meta.get("civic.category")), FALLBACK_CATEGORY),
         })
+    _assert_unique_plugin_names(entries)
     return {"name": MARKETPLACE_NAME, "plugins": plugins}
 
 
 def build(root: Path = ROOT) -> dict:
     plugins = []
+    entries = []
     for skill_dir in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
         front = read_frontmatter(skill_dir / "SKILL.md")
         if not front:
@@ -160,12 +192,14 @@ def build(root: Path = ROOT) -> dict:
             # rather than allowed to break the manifest. L0 fails it in CI.
             continue
         namespace, name = skill_dir.parent.name, skill_dir.name
+        entries.append((namespace, name))
         plugins.append({
             "name": plugin_name(namespace, name),
             "source": f"./skills/{namespace}/{name}",
             "description": (front.get("description") or "").strip(),
         })
 
+    _assert_unique_plugin_names(entries)
     return {"name": MARKETPLACE_NAME, "owner": OWNER, "plugins": plugins}
 
 
@@ -229,8 +263,12 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.check:
-        stale = [p for p, c in generated(ROOT).items()
-                 if not p.is_file() or p.read_text(encoding="utf-8") != c]
+        try:
+            stale = [p for p, c in generated(ROOT).items()
+                     if not p.is_file() or p.read_text(encoding="utf-8") != c]
+        except DuplicatePluginName as exc:
+            print(f"error {exc}", file=sys.stderr)
+            return 1
         if not stale:
             print(f"ok    both marketplace manifests are current")
             return 0
@@ -239,8 +277,12 @@ def main() -> int:
         print("      Run: python scripts/build_marketplace.py", file=sys.stderr)
         return 1
 
-    written = write_all(ROOT)
-    count = len(build(ROOT)["plugins"])
+    try:
+        written = write_all(ROOT)
+        count = len(build(ROOT)["plugins"])
+    except DuplicatePluginName as exc:
+        print(f"error {exc}", file=sys.stderr)
+        return 1
     print(f"{len(written)} file{'' if len(written) == 1 else 's'} written — "
           f"{count} plugin{'' if count == 1 else 's'} in each marketplace")
     for path in written:

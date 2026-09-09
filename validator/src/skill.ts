@@ -173,8 +173,12 @@ export function checkChangedOwnership(
     }
 
     const namespace = parts[1]!;
-    if (RESERVED_NAMESPACES.has(namespace.toLowerCase())) continue;
-    if (namespace.toLowerCase() === author.toLowerCase()) continue;
+    // Exact-case on the namespace (#155): the directory is the one canonical
+    // spelling, and an uppercase character in it is rejected by
+    // checkNamespaceCase. Only the login is folded, because GitHub treats
+    // logins case-insensitively and people type them as they like.
+    if (RESERVED_NAMESPACES.has(namespace)) continue;
+    if (namespace === author.toLowerCase()) continue;
 
     findings.push(finding(path,
       `namespace '${namespace}' does not match the pull request author ` +

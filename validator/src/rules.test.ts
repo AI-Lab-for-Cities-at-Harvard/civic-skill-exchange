@@ -4,6 +4,7 @@ import {
   checkAllowedTools,
   checkFrontmatter,
   checkLocalization,
+  checkNamespaceCase,
   checkProvenance,
   quarantineExtensions,
   checkSource,
@@ -152,6 +153,51 @@ describe("checkFrontmatter — namespace ownership", () => {
 
   it("skips the check when no author is supplied, as in the browser", () => {
     expect(checkFrontmatter(front(), ctx({ namespace: "alice" }))).toEqual([]);
+  });
+
+  it("only the exact reserved string is exempt — a same-looking uppercase variant is not", () => {
+    const f = checkFrontmatter(front(), ctx({ author: "anyone", namespace: "Civic-Skills" }));
+    expect(messages(f)).toMatch(/author/);
+  });
+});
+
+/** #155: GitHub logins are case-insensitive, but the directory under skills/
+ *  is the canonical form of a namespace and every exact-case comparison in the
+ *  registry — the reserved-namespace check here, the Lab badge, the download
+ *  box's self-review disclosure — depends on there being exactly one spelling
+ *  per namespace. An uppercase character makes that impossible to promise, so
+ *  it is rejected outright rather than folded to lowercase. */
+describe("checkNamespaceCase", () => {
+  it("rejects an uppercase character anywhere in the namespace", () => {
+    expect(checkNamespaceCase("Civic-Skills").length).toBeGreaterThan(0);
+    expect(checkNamespaceCase("ALICE").length).toBeGreaterThan(0);
+    expect(checkNamespaceCase("aliCe").length).toBeGreaterThan(0);
+  });
+
+  it("accepts an all-lowercase namespace", () => {
+    expect(checkNamespaceCase("civic-skills")).toEqual([]);
+    expect(checkNamespaceCase("alice")).toEqual([]);
+  });
+
+  it("names the lowercase form as the fix", () => {
+    const f = checkNamespaceCase("Civic-Skills");
+    expect(f[0]?.message).toContain("civic-skills");
+  });
+});
+
+describe("checkFrontmatter — namespace case", () => {
+  it("rejects an uppercase namespace even with no author to compare against", () => {
+    const f = checkFrontmatter(front(), ctx({ namespace: "Civic-Skills" }));
+    expect(messages(f)).toMatch(/lowercase/);
+  });
+
+  it("fires independently of the ownership check", () => {
+    const f = checkFrontmatter(front(), ctx({ author: "ALICE", namespace: "ALICE" }));
+    expect(messages(f)).toMatch(/lowercase/);
+  });
+
+  it("accepts an all-lowercase namespace", () => {
+    expect(checkFrontmatter(front(), ctx({ namespace: "civic-skills" }))).toEqual([]);
   });
 });
 

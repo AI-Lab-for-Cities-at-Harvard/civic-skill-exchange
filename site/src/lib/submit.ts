@@ -161,8 +161,16 @@ export function slugify(input: string): string {
     .replace(/-+$/, "");  // the slice may have landed mid-word
 }
 
+/** The namespace is the login in lowercase. Logins are case-insensitive, the
+ *  directory is the one canonical spelling, and the validator rejects an
+ *  uppercase character in it (#155), so the page never hands back a folder CI
+ *  would refuse. */
+export function namespaceOf(draft: Draft): string {
+  return trim(draft.author).toLowerCase();
+}
+
 export function skillPath(draft: Draft): string {
-  return `skills/${trim(draft.author)}/${trim(draft.name)}`;
+  return `skills/${namespaceOf(draft)}/${trim(draft.name)}`;
 }
 
 /** The directory the skill goes *into*, which is where an upload must open.
@@ -175,7 +183,7 @@ export function skillPath(draft: Draft): string {
  *  the result is `skills/{ns}/{name}`.
  */
 export function namespacePath(draft: Draft): string {
-  return `skills/${trim(draft.author)}`;
+  return `skills/${namespaceOf(draft)}`;
 }
 
 /** GitHub's new-file editor, prefilled.

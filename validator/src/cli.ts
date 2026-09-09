@@ -24,7 +24,7 @@ import { dirname, relative, resolve } from "node:path";
 import {
   loadCategories, validateSkill, discoverAll, discoverChanged, checkChangedOwnership,
 } from "./skill";
-import { checkChangedLayout } from "./layout";
+import { checkChangedLayout, checkNamespaceCollisions } from "./layout";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -57,7 +57,7 @@ function main(): number {
   // that invisibility is exactly what let three of them through (#85).
   if (layout) {
     const paths = readFileSync(layout, "utf8").split("\n");
-    const findings = checkChangedLayout(paths);
+    const findings = [...checkChangedLayout(paths), ...checkNamespaceCollisions(paths)];
     if (findings.length === 0) {
       console.log("ok    every changed SKILL.md is in a place the registry reads");
       return 0;

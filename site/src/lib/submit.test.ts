@@ -341,3 +341,20 @@ describe("the second category", () => {
       .not.toContain("civic.category-secondary");
   });
 });
+
+/** The namespace is lowercase (#155). GitHub logins are case-insensitive and
+ *  people type them as they like; the directory is the one canonical spelling,
+ *  and the validator rejects an uppercase character in it. The page must not
+ *  hand somebody a folder CI will refuse. */
+describe("the namespace is lowercase however the login was typed", () => {
+  it("lowercases the upload target", () => {
+    expect(forkUploadUrl("a/b", { ...D, author: "CityOfX" }))
+      .toBe("https://github.com/a/b/upload/main/skills/cityofx");
+  });
+
+  it("lowercases the skill path in the new-file editor", () => {
+    // The filename travels URL-encoded in the query string.
+    expect(newFileUrl(REPO, { ...D, author: "CityOfX" }, "")).toContain("skills%2Fcityofx%2F");
+    expect(newFileUrl(REPO, { ...D, author: "CityOfX" }, "")).not.toContain("CityOfX");
+  });
+});

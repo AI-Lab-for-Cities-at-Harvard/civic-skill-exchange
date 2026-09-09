@@ -15,7 +15,7 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
   // reviewer the Lab can be both author and reviewer, and the sentence that
   // makes the review claim is the sentence that has to say so.
   const selfReviewed =
-    skill.tier === "reviewed" && RESERVED_NAMESPACES.has(skill.namespace.toLowerCase());
+    skill.tier === "reviewed" && RESERVED_NAMESPACES.has(skill.namespace);
 
   const repo = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
