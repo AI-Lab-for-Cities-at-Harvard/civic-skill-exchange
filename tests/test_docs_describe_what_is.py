@@ -142,3 +142,28 @@ def test_readme_does_not_repeat_the_project_board_line_twice() -> None:
     assert count == 1, (
         f"README.md repeats the project-board line {count} times; it should appear once"
     )
+
+
+def _validate_yml_runs_l4() -> bool:
+    """True only if validate.yml has an *active* (uncommented) L4 step."""
+    active = "\n".join(
+        line for line in _text(".github/workflows/validate.yml").splitlines()
+        if not line.lstrip().startswith("#")
+    )
+    return bool(re.search(r"name:\s*L4", active))
+
+
+def test_docs_do_not_describe_l4_as_running_while_the_workflow_comments_it_out() -> None:
+    """SECURITY.md is the document a city IT director reads to decide what the
+    Community tier's checks mean. L4, a purpose-built skill scanner, is a
+    commented-out step in validate.yml and has never run. Until it does, every
+    place that lists the layers says so, and nothing promises L4 results."""
+    if _validate_yml_runs_l4():
+        return
+    security = _text("docs/SECURITY.md")
+    assert "### L4 — Scanners (not yet running)" in security
+    assert "L0–L3 fail" in security or "L0–L2 fail the build. L3 flags" in security
+    assert "Weekly re-run of L0–L3" in security
+    assert "L0–L4" not in _text("docs/TIERS.md")
+    assert "L3–L4" not in _text("docs/TIERS.md")
+    assert "not yet running" in _text("CONTRIBUTING.md")
