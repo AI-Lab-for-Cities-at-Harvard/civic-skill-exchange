@@ -166,4 +166,4 @@ def test_docs_do_not_describe_l4_as_running_while_the_workflow_comments_it_out()
     assert "Weekly re-run of L0–L3" in security
     assert "L0–L4" not in _text("docs/TIERS.md")
     assert "L3–L4" not in _text("docs/TIERS.md")
-    assert "not yet running" in _text("CONTRIBUTING.md")
+    assert "not yet running" in _text("CONTRIBUTING.md").lower()
