@@ -257,6 +257,13 @@ export interface RescanReportInput {
   scanLog: string;
   /** Skills whose attestation no longer matches their current commit. */
   drift: DriftEntry[];
+  /** Names of the steps that failed this run (validate, scan, the manifest
+   *  check, or the drift check itself), so the issue says which rather than
+   *  leaving a maintainer to read three logs to find out. Ours, not a
+   *  contributor's — fenced anyway, on the same reasoning as `renderReport`'s
+   *  step names: the next person editing this should not have to know which
+   *  strings are trusted. */
+  failedSteps?: string[];
 }
 
 const RESCAN_INTRO =
@@ -273,15 +280,22 @@ const renderDrift = (drift: DriftEntry[], cap: number): string =>
 /**
  * The weekly re-scan issue body. `cap` defaults far larger than the pull
  * request comment's, because a log is not one line — but the fencing rule
- * fires unchanged: every backtick in either log or in a demoted skill's id
- * or reason becomes an apostrophe, so nothing embedded in any of them can
- * close a fence around it.
+ * fires unchanged: every backtick in either log, in a demoted skill's id or
+ * reason, or in a failed step's name becomes an apostrophe, so nothing
+ * embedded in any of them can close a fence around it.
  */
 export function renderRescanReport(input: RescanReportInput, cap = 8000): string {
-  const { validateLog, scanLog, drift } = input;
+  const { validateLog, scanLog, drift, failedSteps } = input;
+
+  const named = (Array.isArray(failedSteps) ? failedSteps : [])
+    .filter((s) => typeof s === "string" && s.trim() !== "")
+    .map((s) => fence(s, cap))
+    .join(", ");
+  const lead = named ? `Failed: ${named}.\n\n` : "";
 
   return (
     RESCAN_INTRO +
+    lead +
     `### Validation\n\n${fence(validateLog, cap)}\n\n` +
     `### Signatures\n\n${fence(scanLog, cap)}\n\n` +
     `### Attestation drift\n\n${renderDrift(drift, cap)}\n\n` +

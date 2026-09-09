@@ -65,6 +65,19 @@ function readDrift(path: string | undefined): DriftEntry[] {
   }
 }
 
+/** A JSON array of step names, or none — shared by both modes below. A
+ *  missing or unreadable file means "we could not tell", which the report
+ *  already has wording for. */
+function readFailedSteps(path: string | undefined): string[] {
+  if (!path) return [];
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
 const out = arg("out");
 
 if (arg("rescan") !== undefined) {
@@ -72,6 +85,7 @@ if (arg("rescan") !== undefined) {
     validateLog: readOr(arg("validate-log"), "(no output)"),
     scanLog: readOr(arg("scan-log"), "(no output)"),
     drift: readDrift(arg("drift-json")),
+    failedSteps: readFailedSteps(arg("failed-steps")),
   });
 
   if (out) writeFileSync(out, body, "utf8");
@@ -89,17 +103,7 @@ if (arg("rescan") !== undefined) {
   // A findings document that will not parse is not a clean run. Fail loudly
   // here rather than posting a comment that says nothing matched.
   const findings = JSON.parse(readFileSync(findingsPath, "utf8")) as ScanFindings;
-
-  let failedSteps: string[] = [];
-  const stepsPath = arg("failed-steps");
-  if (stepsPath) {
-    try {
-      const parsed: unknown = JSON.parse(readFileSync(stepsPath, "utf8"));
-      if (Array.isArray(parsed)) failedSteps = parsed.map(String);
-    } catch {
-      // Which step failed is a nicety; the report degrades to naming the run.
-    }
-  }
+  const failedSteps = readFailedSteps(arg("failed-steps"));
 
   const body = renderReport({ findings, conclusion: arg("conclusion"), failedSteps });
 

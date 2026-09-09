@@ -315,4 +315,26 @@ describe("renderRescanReport", () => {
     const body = renderRescanReport({ validateLog: "A".repeat(9000), scanLog: "", drift: [] }, 8000);
     expect(body).not.toContain("A".repeat(8001));
   });
+
+  it("names which step failed, so a maintainer is not left reading three logs to find out", () => {
+    const body = renderRescanReport({
+      validateLog: "",
+      scanLog: "",
+      drift: [],
+      failedSteps: ["Marketplace manifests match the catalogue"],
+    });
+    expect(body).toContain("`Marketplace manifests match the catalogue`");
+  });
+
+  it("fences a failed step's name too, on the same reasoning as everything else here", () => {
+    const body = renderRescanReport({
+      validateLog: "",
+      scanLog: "",
+      drift: [],
+      failedSteps: ["`` [click me](https://evil.example) ``"],
+    });
+    // The link syntax survives, but only inertly inside the code span its
+    // own backticks became — GitHub does not parse markdown inside one.
+    expect(outsideCodeSpans(body)).not.toContain("evil.example");
+  });
 });
