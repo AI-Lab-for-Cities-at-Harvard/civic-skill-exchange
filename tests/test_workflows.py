@@ -412,3 +412,142 @@ def test_development_md_counts_ci_gates_from_the_workflows_not_memory() -> None:
 def _number_word(n: int) -> str:
     words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
     return words.get(n, str(n))
+
+
+# #153: validate.yml runs on `pull_request`, so a fork controls every byte it
+# uploads — including the file that used to name the pull request to comment on.
+# report.yml holds `pull-requests: write`, so trusting that file let a fork put
+# a clean "no signatures matched" report on any pull request or issue in the
+# repository. `safe()` stops markdown injection; it cannot stop misattribution.
+# The privileged job now resolves the pull request itself, from the head SHA the
+# workflow_run event gives it, and posts only to what it resolved.
+
+RESOLVER = (ROOT / "validator" / "src" / "resolve-pr.ts").read_text(encoding="utf-8")
+
+
+def _without_comments(text: str) -> str:
+    """A workflow's executable half. These files explain in prose what they no
+    longer do, and a sentence naming `pr-number.txt` is not a use of it."""
+    return "\n".join(
+        line for line in text.splitlines() if not line.lstrip().startswith("#")
+    )
+
+
+def _script_bodies(text: str) -> list[tuple[str, str]]:
+    """Every `run:` and `script:` body in a workflow, as (key, body) pairs.
+
+    Both are code the runner executes. A `${{ }}` in either is substituted into
+    the source before anything runs, so a branch name carrying a quote or a
+    backtick escapes the string it was meant to sit in.
+    """
+    bodies: list[tuple[str, str]] = []
+    lines = text.splitlines()
+    key = re.compile(r"^(\s*)(?:-\s*)?(run|script):\s*(.*)$")
+    i = 0
+    while i < len(lines):
+        m = key.match(lines[i])
+        i += 1
+        if not m:
+            continue
+        indent, name, rest = m.group(1), m.group(2), m.group(3).strip()
+        if rest and rest[0] not in "|>":
+            bodies.append((name, rest))
+            continue
+        block: list[str] = []
+        while i < len(lines):
+            line = lines[i]
+            if line.strip() and len(line) - len(line.lstrip()) <= len(indent):
+                break
+            block.append(line)
+            i += 1
+        bodies.append((name, "\n".join(block)))
+    return bodies
+
+
+def test_the_report_resolves_the_pull_request_from_the_runs_head_sha() -> None:
+    """The head SHA is the one thing about the pull request that the event
+    carries and a fork cannot forge: it is what the run actually ran on."""
+    assert re.search(r"HEAD_SHA:\s*\$\{\{\s*github\.event\.workflow_run\.head_sha", REPORT_YML), (
+        "report.yml must take the head SHA from the workflow_run event"
+    )
+    assert "resolve-pr-cli.ts" in REPORT_YML, (
+        "report.yml must resolve the pull request through the tested resolver"
+    )
+    assert "pulls.list" in REPORT_YML, (
+        "the resolution has to ask the API which pull request has that head"
+    )
+
+
+def test_the_pull_request_is_resolved_before_the_comment_is_posted() -> None:
+    assert REPORT_YML.index("resolve-pr-cli.ts") < REPORT_YML.index("createComment"), (
+        "the resolution step must come before the step that posts"
+    )
+
+
+def test_the_comment_goes_only_to_the_pull_request_that_was_resolved() -> None:
+    """`workflow_run.pull_requests[]` is empty for forks, and the artifact is
+    the fork's to write, so neither may name the number that gets commented on."""
+    body = _without_comments(REPORT_YML)
+    assert "pr-number.txt" not in body, (
+        "report.yml is trusting a pull request number from the artifact again"
+    )
+    assert "workflow_run.pull_requests" not in body, (
+        "the event's pull_requests list is empty for forks; resolve instead"
+    )
+    assert "resolved-pr.txt" in body, (
+        "the post step must read the number the resolver wrote, and nothing else"
+    )
+
+
+def test_validate_yml_publishes_no_pull_request_number() -> None:
+    """A file a fork writes cannot be a cross-check on anything. Removing it is
+    one fewer thing for the privileged job to be tempted by."""
+    assert "pr-number.txt" not in _without_comments(VALIDATE_YML), (
+        "validate.yml is uploading a pull request number again — the reporting "
+        "job resolves it now, and an attacker-authored copy is only a trap"
+    )
+
+
+def test_the_resolver_matches_on_the_head_sha_and_insists_on_exactly_one() -> None:
+    """The unit tests in validator/src/resolve-pr.test.ts own the behaviour.
+    This keeps the two properties the trust boundary rests on visible here: the
+    comparison is against the run's head SHA, and anything other than a single
+    match resolves to nothing."""
+    assert "headSha" in RESOLVER, "the resolver does not look at a head SHA"
+    assert re.search(r"matched\.length\s*(?:!==\s*1|>\s*1|===\s*0)", RESOLVER), (
+        "the resolver must count its matches and refuse any count but one"
+    )
+    assert "pr: null" in RESOLVER, "there is no no-pull-request outcome to return"
+
+
+@pytest.mark.parametrize("wf", ["report.yml", "validate.yml"], ids=lambda n: n)
+def test_no_workflow_expression_is_substituted_into_a_script(wf: str) -> None:
+    """Branch and repository names are contributor-controlled data. Through
+    `env` they are data; through `${{ }}` they are source, in a shell or in the
+    JavaScript of a github-script step."""
+    text = (ROOT / ".github" / "workflows" / wf).read_text(encoding="utf-8")
+    for key, body in _script_bodies(text):
+        assert "${{" not in body, (
+            f"{wf}: a {key}: block interpolates a workflow expression. Pass the "
+            "value through env: and read it from the environment."
+        )
+
+
+def test_the_untrusted_event_fields_arrive_through_the_environment() -> None:
+    assert "process.env.HEAD_REPO" in REPORT_YML and "process.env.HEAD_BRANCH" in REPORT_YML, (
+        "the head repository and branch must be read from the environment"
+    )
+
+
+def test_the_report_job_holds_no_more_permission_than_before() -> None:
+    """#153 is about what the existing token may be pointed at, not about
+    needing a bigger one. Resolving the pull request reads public metadata that
+    `contents: read` already covers."""
+    block = re.search(r"^permissions:\n((?:[ \t]+\S.*\n|[ \t]*#.*\n|\n)+)", REPORT_YML, re.M)
+    assert block, "report.yml declares no permissions block"
+    granted = set(re.findall(r"^\s+([\w-]+):\s*(\w+)\s*$", block.group(1), re.M))
+    assert granted == {
+        ("contents", "read"),
+        ("pull-requests", "write"),
+        ("actions", "read"),
+    }, f"report.yml's permissions changed: {sorted(granted)}"

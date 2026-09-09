@@ -187,8 +187,17 @@ check and their pull request comment come from one implementation rather than tw
 that drift. Its `safe()` fences every free-text field in a code span, neutralises
 the backticks that would close it, flattens newlines, and caps the length.
 
-Two rules for the job that runs it, both under test in `tests/test_workflows.py`:
+Three rules for the job that runs it, all under test in `tests/test_workflows.py`:
 
+- **It resolves the pull request itself.** `validate.yml` runs on the fork's
+  tree, so everything in the artifact is the fork's to write — including, once,
+  the number saying which pull request to comment on. The reporting job now
+  takes `head_sha`, `head_repository` and `head_branch` from the `workflow_run`
+  event, asks the API for the open pull requests with that head, and comments
+  only if exactly one of them is at that commit; zero matches or several resolve
+  to no comment, with the reason in the job log. The verdict is
+  `validator/src/resolve-pr.ts`, unit-tested case by case.
+  (`workflow_run.pull_requests[]` is not used: it is empty for forks.)
 - **It checks out the default branch, never the triggering run's head.**
   `workflow_run` executes the workflow definition from the default branch
   precisely so a fork cannot edit what runs beside a token. Checking out the pull

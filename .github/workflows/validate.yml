@@ -162,20 +162,19 @@ jobs:
       # - name: L4 — skill scanner
       #   run: uvx skillspector scan skills/ --format json --out l4.json
 
-      - name: Record the PR number for the reporting job
-        if: always() && steps.changes.outputs.skills == 'true'
-        env:
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: echo "$PR_NUMBER" > pr-number.txt
-
       # Only uploaded when skills actually changed, so report.yml stays silent on
       # tooling and site pull requests instead of commenting "nothing found".
+      #
+      # findings.json alone. This artifact used to carry a pr-number.txt saying
+      # which pull request to comment on, and this job runs on `pull_request`
+      # from a fork's tree — so the number was the fork's to choose, and the
+      # privileged reporting job posted wherever it pointed (#153). report.yml
+      # resolves the pull request from the workflow_run event now, so there is
+      # nothing here for it to trust or to cross-check.
       - name: Upload findings
         if: always() && steps.changes.outputs.skills == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: findings
-          path: |
-            findings.json
-            pr-number.txt
+          path: findings.json
           retention-days: 7
