@@ -139,7 +139,8 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           <section aria-labelledby="structure-heading" className="detail__section">
             <h2 className="h2" id="structure-heading">What is in it</h2>
             <p>
-              Files under <code>scripts/</code> are <strong>executed by the
+              Files under <code>scripts/</code>, and <code>.mcp.json</code> where
+              a skill declares MCP servers, are <strong>executed by the
               agent</strong>, not read by the model. Read them before you run this
               skill — the descriptions above tell you what it claims to do, and
               only the code tells you what it does.
