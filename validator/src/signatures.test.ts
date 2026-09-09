@@ -12,6 +12,10 @@
  *
  * Reading the Python is blunt, and it is the same trade purity.test.ts makes:
  * the check fires every time, which is the only property a guardrail has.
+ *
+ * Every list scan.py emits from has to be here. `MCP` arrived with #151 and was
+ * a third one: a signature list the vocabulary check does not read is a
+ * signature that reaches a pull request as `unrecognised-signature`.
  */
 
 import { describe, it, expect } from "vitest";
@@ -23,8 +27,11 @@ import { SIGNATURE_NAMES } from "./report";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
+/** Every list of signatures scan.py scans with. */
+const LISTS = ["HARD", "SOFT", "MCP"] as const;
+
 /** The first element of each `(name, pattern, explanation)` tuple in one list. */
-const namesIn = (list: "HARD" | "SOFT"): string[] => {
+const namesIn = (list: (typeof LISTS)[number]): string[] => {
   const src = readFileSync(join(ROOT, "scripts", "scan.py"), "utf8");
   const start = src.indexOf(`${list}: list[Signature] = [`);
   expect(start, `${list} not found in scan.py — has the shape changed?`).toBeGreaterThan(-1);
@@ -33,14 +40,13 @@ const namesIn = (list: "HARD" | "SOFT"): string[] => {
 };
 
 describe("the report's signature vocabulary matches the scanner's", () => {
-  it("finds signatures to compare against", () => {
+  it.each(LISTS)("finds the %s signatures to compare against", (list) => {
     // Guards the guard: a regex that matches nothing passes the test below.
-    expect(namesIn("HARD").length).toBeGreaterThan(0);
-    expect(namesIn("SOFT").length).toBeGreaterThan(0);
+    expect(namesIn(list).length).toBeGreaterThan(0);
   });
 
   it("knows every signature scan.py can emit", () => {
-    const missing = [...namesIn("HARD"), ...namesIn("SOFT")]
+    const missing = LISTS.flatMap(namesIn)
       .filter((name) => !SIGNATURE_NAMES.includes(name));
     expect(
       missing,
@@ -52,7 +58,7 @@ describe("the report's signature vocabulary matches the scanner's", () => {
   it("claims no signature the scanner cannot emit", () => {
     // The other direction matters less, but a name left behind after a rename
     // is how the list stops being a description of anything.
-    const known = new Set([...namesIn("HARD"), ...namesIn("SOFT")]);
+    const known = new Set(LISTS.flatMap(namesIn));
     expect(SIGNATURE_NAMES.filter((name) => !known.has(name))).toEqual([]);
   });
 });
