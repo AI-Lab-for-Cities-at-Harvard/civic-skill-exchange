@@ -1,11 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
   PLACE_PATTERN, SCOPES, SCOPE_FIELD, SCOPE_SECONDARY,
+  LANGUAGE_FIELD, LANGUAGES_TESTED_FIELD,
   checkAllowedTools,
   checkFrontmatter,
+  checkLanguage,
   checkLocalization,
   checkNamespaceCase,
   checkProvenance,
+  parseLanguagesTested,
   quarantineExtensions,
   checkSource,
 } from "./rules";
@@ -26,6 +29,7 @@ function meta(over: Record<string, unknown> = {}): Record<string, unknown> {
     "civic.maintainer": "Test Suite",
     "civic.affiliation": "individual",
     "civic.deployment": "none",
+    "civic.language": "en",
     ...over,
   };
 }
@@ -71,6 +75,7 @@ describe("checkFrontmatter — required fields", () => {
     "civic.maintainer",
     "civic.affiliation",
     "civic.deployment",
+    "civic.language",
   ])("requires %s", (field) => {
     const m = meta();
     delete m[field];
@@ -709,5 +714,92 @@ describe("checkAllowedTools — the wildcard rule reads the parsed value (#152)"
 
   it("leaves a well-formed grant out of checkFrontmatter's findings", () => {
     expect(checkFrontmatter(front({ "allowed-tools": "Read, Grep" }), ctx())).toEqual([]);
+  });
+});
+
+/** The language a listing is written in, and the languages its author says
+ *  they tried it in (#145, ADR 0004 decisions 1 and 2). */
+describe("civic.language", () => {
+  it("names the field when it is missing, so the form can put the error on it", () => {
+    const m = meta();
+    delete m[LANGUAGE_FIELD];
+    const findings = checkFrontmatter(front({ metadata: m }), ctx());
+    expect(findings.some((f) => f.where === LANGUAGE_FIELD)).toBe(true);
+    expect(messages(findings)).toContain("civic.language is required");
+  });
+
+  it.each(["en", "es", "pt-BR", "es-419", "zh-Hant-TW", "yue"])("accepts %s", (tag) => {
+    expect(checkFrontmatter(front({ metadata: meta({ [LANGUAGE_FIELD]: tag }) }), ctx()))
+      .toEqual([]);
+  });
+
+  it.each([
+    "english", "EN_us", "en-", "EN", "e", "en-us", "en-Latn-", "pt-br", "-en",
+    "en,es", "en US",
+  ])("rejects %s", (tag) => {
+    const findings = checkLanguage(meta({ [LANGUAGE_FIELD]: tag }));
+    expect(findings.map((f) => f.where)).toContain(LANGUAGE_FIELD);
+  });
+
+  it("says what shape it wants rather than only that the value is wrong", () => {
+    const findings = checkLanguage(meta({ [LANGUAGE_FIELD]: "english" }));
+    expect(messages(findings)).toContain("BCP 47");
+    expect(messages(findings)).toContain("en");
+  });
+});
+
+describe("civic.languages-tested", () => {
+  it("is optional", () => {
+    expect(checkLanguage(meta())).toEqual([]);
+  });
+
+  it("accepts a comma-separated list that includes the written language", () => {
+    expect(checkLanguage(meta({
+      [LANGUAGE_FIELD]: "en", [LANGUAGES_TESTED_FIELD]: "en, es",
+    }))).toEqual([]);
+  });
+
+  it("accepts the written language on its own", () => {
+    expect(checkLanguage(meta({
+      [LANGUAGE_FIELD]: "en", [LANGUAGES_TESTED_FIELD]: "en",
+    }))).toEqual([]);
+  });
+
+  it("rejects a list that leaves out the language the listing is written in", () => {
+    // A skill written in English has by definition been tried in English.
+    const findings = checkLanguage(meta({
+      [LANGUAGE_FIELD]: "en", [LANGUAGES_TESTED_FIELD]: "es",
+    }));
+    expect(findings.map((f) => f.where)).toEqual([LANGUAGES_TESTED_FIELD]);
+    expect(messages(findings)).toContain("en");
+  });
+
+  it.each(["en,, es", "en, es,", ",en", "en, english", "en,", " en, es", "en, es "])(
+    "rejects %s", (value) => {
+      const findings = checkLanguage(meta({
+        [LANGUAGE_FIELD]: "en", [LANGUAGES_TESTED_FIELD]: value,
+      }));
+      expect(findings.map((f) => f.where)).toContain(LANGUAGES_TESTED_FIELD);
+    });
+
+  it("reports the malformed list once rather than also complaining it omits the language", () => {
+    const findings = checkLanguage(meta({
+      [LANGUAGE_FIELD]: "en", [LANGUAGES_TESTED_FIELD]: "en,, es",
+    }));
+    expect(findings).toHaveLength(1);
+  });
+
+  it("reaches checkFrontmatter, not only its own function", () => {
+    const findings = checkFrontmatter(front({
+      metadata: meta({ [LANGUAGE_FIELD]: "en", [LANGUAGES_TESTED_FIELD]: "es" }),
+    }), ctx());
+    expect(findings.map((f) => f.where)).toContain(LANGUAGES_TESTED_FIELD);
+  });
+
+  it("parses to the tags a consumer publishes", () => {
+    expect(parseLanguagesTested("en, es")).toEqual(["en", "es"]);
+    expect(parseLanguagesTested("en,es")).toEqual(["en", "es"]);
+    expect(parseLanguagesTested("")).toEqual([]);
+    expect(parseLanguagesTested(undefined)).toEqual([]);
   });
 });
