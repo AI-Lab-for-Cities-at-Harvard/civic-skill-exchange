@@ -191,9 +191,13 @@ describe("LabBadge", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("does not care how the namespace was cased", () => {
-    render(<LabBadge namespace="Civic-Skills" />);
-    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+  /** #155: a same-looking uppercase variant is a different, unreserved
+   *  namespace — folding to lowercase before comparing was exactly what let
+   *  skills/Civic-Skills/ carry the Lab's badge without being the reserved
+   *  namespace CODEOWNERS actually gates. */
+  it("does not badge a same-looking uppercase namespace", () => {
+    const { container } = render(<LabBadge namespace="Civic-Skills" />);
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("claims authorship and nothing about review", () => {

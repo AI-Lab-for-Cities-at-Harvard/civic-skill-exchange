@@ -81,6 +81,17 @@ describe("DownloadBox discloses self-review", () => {
     expect(screen.getByText(/read this exact commit/)).toBeInTheDocument();
   });
 
+  /** #155: a same-looking uppercase namespace is not the reserved one — it is
+   *  a different, unreserved directory that happens to read the same to a
+   *  human. Folding to lowercase before comparing was exactly what let it
+   *  claim self-review disclosure it had not earned. */
+  it("does not disclose self-review for a same-looking uppercase namespace", () => {
+    render(<DownloadBox skill={detail({
+      tier: "reviewed", namespace: "Civic-Skills", reviewed: attested,
+    })} />);
+    expect(screen.queryByText(/by its own author/i)).not.toBeInTheDocument();
+  });
+
   it("still names the attesting party rather than a count", () => {
     render(<DownloadBox skill={detail({ tier: "reviewed", reviewed: attested })} />);
     expect(screen.getByText(/AI Lab for Cities at Harvard read this exact commit/))

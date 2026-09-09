@@ -22,7 +22,7 @@ import type { Skill } from "../lib/types";
  *  chrome; this one is brand chrome — it is the Lab's name on the listing. It
  *  follows the crimson band's rule and looks the same in either theme. */
 export function LabBadge({ namespace }: { namespace: Skill["namespace"] }) {
-  if (!RESERVED_NAMESPACES.has(namespace.toLowerCase())) return null;
+  if (!RESERVED_NAMESPACES.has(namespace)) return null;
   return <span className="badge badge--lab">Written by the AI Lab</span>;
 }
 
