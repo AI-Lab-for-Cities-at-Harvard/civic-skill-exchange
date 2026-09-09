@@ -18,3 +18,28 @@ updates:
         patterns: ["*"]
     commit-message:
       prefix: ci
+
+  # requirements-dev.txt pins pyyaml, pytest and jsonschema (#157) so that an
+  # unrelated release cannot flip CI red with no code change here. A pin
+  # without an update path just goes stale, same as an unpinned action would.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      python:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
+
+  # The workspace root package-lock.json is the one lockfile now — the site/
+  # duplicate is gone (#157).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      javascript:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci

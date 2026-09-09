@@ -76,7 +76,7 @@ jobs:
         # jsonschema is a test-only dependency: it holds the skill's partial
         # schema reader to a real implementation. Nothing shipped uses it.
         run: |
-          pip install pyyaml pytest jsonschema
+          pip install -r requirements-dev.txt
           npm ci
 
       - name: Test
@@ -124,7 +124,7 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: site/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install
         if: steps.changes.outputs.site == 'true'

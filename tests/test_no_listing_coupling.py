@@ -50,7 +50,7 @@ TS_LITERAL = re.compile(r'\bROOT\s*,\s*"skills"\s*,\s*["\']')
 SELF = Path(__file__).name
 
 
-def test_files() -> list[Path]:
+def _test_files() -> list[Path]:
     out: list[Path] = []
     out += sorted(p for p in ROOT.glob("tests/*.py") if p.name != SELF)
     for pattern in ("*.test.ts", "*.test.tsx", "*.a11y.test.tsx"):
@@ -61,11 +61,11 @@ def test_files() -> list[Path]:
 
 def test_there_are_test_files_to_check():
     """A glob that silently matches nothing is a check that always passes."""
-    found = test_files()
+    found = _test_files()
     assert len(found) > 20, f"only found {len(found)} test files"
 
 
-@pytest.mark.parametrize("path", test_files(), ids=lambda p: str(p.relative_to(ROOT)))
+@pytest.mark.parametrize("path", _test_files(), ids=lambda p: str(p.relative_to(ROOT)))
 def test_no_test_reads_a_listed_skill_from_disk(path: Path):
     pattern = PY_LITERAL if path.suffix == ".py" else TS_LITERAL
     text = path.read_text(encoding="utf-8")

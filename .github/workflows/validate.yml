@@ -84,7 +84,7 @@ jobs:
         if: steps.changes.outputs.skills == 'true' || steps.changes.outputs.skillmd == 'true'
         run: |
           npm ci --workspace @civic-skill-exchange/validator
-          pip install pyyaml          # scan.py only; validation is TypeScript now
+          pip install -r requirements-dev.txt   # scan.py only; validation is TypeScript now
 
       # Before L0, because L0 cannot see a skill that is not where skills live.
       # A submission outside skills/{namespace}/{name}/ used to skip every check
