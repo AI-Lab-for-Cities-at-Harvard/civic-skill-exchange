@@ -303,8 +303,10 @@ def scan_skill(skill_dir: Path) -> dict:
     # The raw-text signature above catches `allowed-tools: Bash(*)` written on
     # one line, but not a YAML list or a bare, unrestricted `Bash` — this
     # evaluates the parsed frontmatter value instead, so both forms count as
-    # the wildcard too (#152).
-    if has_wildcard_bash_grant(allowed_tools_of(skill_dir)):
+    # the wildcard too (#152). Guarded so a grant the raw signature already
+    # caught is not reported twice under the same name.
+    already_caught = any(f["signature"] == "wildcard-bash-grant" for f in blocking)
+    if not already_caught and has_wildcard_bash_grant(allowed_tools_of(skill_dir)):
         blocking.append(
             {
                 "signature": "wildcard-bash-grant",
