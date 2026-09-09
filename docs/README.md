@@ -30,6 +30,7 @@ superseded by a later one.
 | [0001](adr/0001-reviewed-is-a-lab-attestation.md) | Reviewed means the Lab read it — single reviewer, self-review with disclosure |
 | [0002](adr/0002-lab-is-authorship-not-a-tier.md) | Lab is authorship, not a tier — and the Lab waives the waiting period on its own namespace |
 | [0003](adr/0003-no-backend-until-the-experience-requires-one.md) | No backend — a preference tested against the experience, with the conditions that would overturn it named in advance |
+| [0004](adr/0004-language-is-metadata-and-verification-not-translation.md) | Language is metadata and verification, not translation — a listing declares its language, the ledger records what a reviewer verified, and the site ships in Spanish |
 
 ## Spikes
 
@@ -43,6 +44,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
+| [the-exchange-in-more-than-one-language.md](spikes/the-exchange-in-more-than-one-language.md) | What changes when the exchange speaks more than one language? — [#143](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/143), ruled on seven of eight; see [ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md) |
 | [where-a-backend-would-live.md](spikes/where-a-backend-would-live.md) | If a backend is ever built, where should it run? — [#71](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/71); the platform question is open, the decision to have none for now is [ADR 0003](adr/0003-no-backend-until-the-experience-requires-one.md) |
 | [submitting-a-multi-file-skill.md](spikes/submitting-a-multi-file-skill.md) | How does a skill that is more than one file reach a pull request? — [#70](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/70), ruled and built; the sign-in half is [#71](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/71) |
 | [the-hbs-design-system-and-this-site.md](spikes/the-hbs-design-system-and-this-site.md) | Where does this site agree with the HBS design system, and where did it invent? — [#101](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/101), ruled and built; the rulings are recorded at the end of the spike |
