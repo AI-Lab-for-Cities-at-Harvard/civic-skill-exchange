@@ -294,14 +294,34 @@ Run them visibly — no piping that hides an exit code.
       `Missing script: lint`, because the validator has none
 - [ ] `npm run build --workspaces` passes
 - [ ] `python scripts/build_marketplace.py --check` passes, if you touched
-      `skills/` or the generator. The merge repairs it, so a submitter sharing a
-      skill can skip this; anybody changing how it is generated cannot
+      `skills/` or the generator. If it fails, run
+      `python scripts/build_marketplace.py` and commit the result — the manifest
+      has to be current in the pull request itself, since nothing regenerates it
+      after merge
 - [ ] New behaviour has a test that fails without the change
 - [ ] Docs updated if you changed the contract contributors rely on
 - [ ] Security-sensitive changes flagged in the description
 
 After merging more than one pull request that touched the same area, run the
 whole list again on `main`. Cross-pull-request seams are invisible per-pull-request.
+
+## Merging a submission with a stale manifest
+
+`validate.yml`'s manifest check fails a pull request whose committed
+`.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`, or
+`.codex-plugin/plugin.json` no longer matches the skill tree. A contributor
+working from the command line fixes this themselves. A submission that
+arrived through the web submission page did not generate these files at all,
+so a maintainer does it as part of merging:
+
+1. Check out the contributor's branch.
+2. Run `python scripts/build_marketplace.py`.
+3. Commit the result.
+4. Push to their branch.
+
+If the fork does not allow maintainer edits, push is not available: branch
+from the contributor's head commit inside this registry instead, run the same
+three steps there, and merge that branch in place of theirs.
 
 ## Accessibility
 

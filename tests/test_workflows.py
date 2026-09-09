@@ -163,31 +163,6 @@ def test_report_yml_never_checks_out_the_pull_request_head() -> None:
         )
 
 
-def test_the_manifest_job_stages_everything_the_generator_writes() -> None:
-    """It named .claude-plugin/marketplace.json explicitly, and #98 gave the
-    generator two more kinds of file to write — so a merged skill updated the
-    Claude marketplace and left the Codex side stale on main, silently."""
-    wf = (ROOT / ".github" / "workflows" / "manifest.yml").read_text(encoding="utf-8")
-    assert "git add -A .claude-plugin .agents skills" in wf, (
-        "the commit step must stage every path build_marketplace.py owns")
-    assert "git diff --cached --quiet" in wf, (
-        "the has-it-changed guard must ask git, not name one file")
-
-
-def test_something_checks_main_itself() -> None:
-    """manifest.yml repairs drift on merge, and the bug it was written to fix
-    was that same job succeeding while leaving half the manifests stale. So it
-    asserts its own outcome, and the weekly re-scan checks main independently —
-    a failure there means the automation did not work, not that somebody
-    forgot."""
-    manifest = (ROOT / ".github" / "workflows" / "manifest.yml").read_text(encoding="utf-8")
-    rescan = (ROOT / ".github" / "workflows" / "rescan.yml").read_text(encoding="utf-8")
-    assert manifest.count("build_marketplace.py --check") == 1, (
-        "the repair job must verify its own outcome")
-    assert "build_marketplace.py --check" in rescan, (
-        "something has to check main when the repair job never ran")
-
-
 # --------------------------------------------------------------------------- #
 # #154: L1 promises a submission "touches nothing outside skills/{that-user}/",
 # and the validator could only see paths that survived the diff. Two halves fix
@@ -621,7 +596,7 @@ def test_requirements_dev_txt_covers_what_the_tests_import() -> None:
 def test_all_workflows_use_the_same_checkout_sha() -> None:
     """Dependabot bumps every `actions/checkout` pin together because they are
     grouped, but nothing enforced that a workflow could not be left on an
-    older pin by hand. manifest.yml once was."""
+    older pin by hand."""
     pins = set()
     for wf in WORKFLOWS:
         pins.update(
@@ -659,4 +634,72 @@ def test_no_workflow_references_the_site_lockfile(wf: Path) -> None:
     text = wf.read_text(encoding="utf-8")
     assert "site/package-lock.json" not in text, (
         f"{wf.name} still references site/package-lock.json"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# #170: the manifests are regenerated inside the skill pull request rather than
+# by a post-merge push to main. `manifest.yml` — the job that made that push —
+# is deleted, since the ruleset on main requires a pull request for every
+# change and rejects the Actions app as a bypass actor. Nothing may push to
+# main; the validate step that used to warn and let the merge repair drift now
+# fails outright, and the docs that described the deleted job describe the new
+# flow instead.
+
+RESCAN_YML = (ROOT / ".github" / "workflows" / "rescan.yml").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("wf", WORKFLOWS, ids=lambda p: p.name)
+def test_no_workflow_pushes_to_a_branch(wf: Path) -> None:
+    """The Actions app cannot be a bypass actor on the ruleset that protects
+    main, so nothing in this repository may push at all — not just to main."""
+    text = wf.read_text(encoding="utf-8")
+    assert "git push" not in text, (
+        f"{wf.name} runs `git push` — no workflow may push to a branch; the "
+        "pull request itself carries any regenerated file"
+    )
+
+
+def test_the_validate_manifest_step_no_longer_tolerates_drift() -> None:
+    """Manifests are regenerated inside the skill pull request now, not
+    repaired by a post-merge job, so a stale manifest is a real failure rather
+    than a warning the merge will fix."""
+    lines = VALIDATE_YML.splitlines()
+    for i, line in enumerate(lines):
+        if "build_marketplace.py --check" in line:
+            window = "\n".join(lines[max(0, i - 6):i])
+            assert "continue-on-error" not in window, (
+                "the marketplace manifest step in validate.yml must not carry "
+                "continue-on-error — a stale manifest should fail the build"
+            )
+            return
+    pytest.fail("validate.yml no longer runs build_marketplace.py --check")
+
+
+def test_rescan_still_checks_the_manifests_on_its_own() -> None:
+    """The weekly re-scan is the only thing left that checks main directly,
+    since nothing merges a repair to it any more."""
+    assert "build_marketplace.py --check" in RESCAN_YML, (
+        "rescan.yml must still run build_marketplace.py --check"
+    )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        ROOT / "docs" / "ARCHITECTURE.md",
+        ROOT / "docs" / "DEVELOPMENT.md",
+        ROOT / "docs" / "SUBMITTING.md",
+        ROOT / "docs" / "SECURITY.md",
+        ROOT / "docs" / "REVIEW.md",
+        *WORKFLOWS,
+    ],
+    ids=lambda p: str(p.relative_to(ROOT)),
+)
+def test_nothing_still_names_the_deleted_manifest_job(path: Path) -> None:
+    """`manifest.yml` no longer exists. A doc or a workflow comment still
+    naming it would describe a job nobody can look up."""
+    assert "manifest.yml" not in path.read_text(encoding="utf-8"), (
+        f"{path.relative_to(ROOT)} still names manifest.yml, which is deleted "
+        "(#170)"
     )
