@@ -162,6 +162,10 @@ def render(skill_id: str, sha: str, notes: str | None = None,
         f"  reviewers: [{names}]\n"
         f"  reviewed: {reviewed.isoformat()}\n"
         f"  expires: {expires.isoformat()}\n"
+        # Commented out rather than filled in: languages is optional, and
+        # "verified in Spanish" can only honestly come from typing it in
+        # because it was actually checked (#146, ADR 0004 ruling 2).
+        f'  # languages: ["en", "es"]   # optional — BCP 47 tags you verified\n'
         f"  notes: >\n"
         + "".join(f"    {line}\n" for line in body.splitlines())
     )

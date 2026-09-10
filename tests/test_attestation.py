@@ -74,6 +74,18 @@ def test_the_block_it_prints_is_the_shape_reviewed_yml_documents():
     assert entry["notes"].strip() == "Read-only."
 
 
+def test_the_block_documents_the_optional_languages_field():
+    """`languages:` is optional, so the printed block shows it commented out
+    rather than filled in with a guess — the reviewer types it in only when
+    they actually verified something beyond content (#146)."""
+    block = attestation.render(SKILL_ID, "a" * 40, notes="Read-only.")
+    assert "languages" in block
+    # Still exactly one entry: a commented-out line must not parse as YAML.
+    parsed = yaml.safe_load(block)
+    assert isinstance(parsed, list) and len(parsed) == 1
+    assert "languages" not in parsed[0]
+
+
 def test_the_attestation_expires_a_year_after_the_review():
     entry = yaml.safe_load(attestation.render(SKILL_ID, "a" * 40, notes="x"))[0]
     reviewed = entry["reviewed"]
