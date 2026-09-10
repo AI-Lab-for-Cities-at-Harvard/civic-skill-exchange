@@ -162,6 +162,8 @@ export const strings: Strings = {
       submit: "[es] Submit",
       github: "[es] GitHub",
     },
+    docsInEnglish: "[es] in English",
+
     language: {
       label: "[es] Language",
     },
