@@ -1,3 +1,9 @@
+// One timezone for every test run. The rendered-text snapshots include a date
+// the page formats in the visitor's zone, and a snapshot recorded in Boston
+// disagreed with CI in UTC by a day (#149). Node re-reads TZ when it changes,
+// so setting it here, before any Date is formatted, is enough.
+process.env.TZ = "UTC";
+
 /** Component-test harness.
  *
  * The lib/ tests are pure and were fine in the node environment; jsdom is a
