@@ -41,10 +41,13 @@ SURFACES = [
     ".github/CODEOWNERS",
 ]
 
+# The site's own copy. `.ts` as well as `.tsx`, because since #149 every string
+# the site shows a person lives in site/src/i18n/en.ts — a glob for components
+# alone would scan the markup and miss all of the words in it.
 SURFACES += sorted(
     str(p.relative_to(ROOT))
-    for p in (ROOT / "site" / "src").rglob("*.tsx")
-    if not p.name.endswith(".test.tsx")
+    for p in (ROOT / "site" / "src").rglob("*.ts*")
+    if not p.name.endswith((".test.ts", ".test.tsx"))
 )
 
 # Each pattern is one way of saying the thing that is no longer true. They are
@@ -228,10 +231,40 @@ ITEM_SUBJECTS = [
 ]
 
 
+_BRACKETS = {"{": "}", "[": "]"}
+
+
+def _block(text: str, key: str) -> str:
+    """The braced or bracketed value of `key`, matched to its close.
+
+    The site's copy is a TypeScript object literal (#149), and reading it needs
+    more than a string search: the About page's sections are nested groups, and
+    `index("}")` would stop at the first one. Every brace inside these strings
+    is balanced, so counting is enough and a parser is not."""
+    at = text.index(key)
+    while text[at] not in _BRACKETS:
+        at += 1
+    opener = text[at]
+    closer = _BRACKETS[opener]
+    depth = 0
+    for end in range(at, len(text)):
+        if text[end] == opener:
+            depth += 1
+        elif text[end] == closer:
+            depth -= 1
+            if depth == 0:
+                return text[at:end + 1]
+    raise AssertionError(f"{key} is not balanced in the string table")
+
+
+def _about_page_copy() -> str:
+    """Everything the About page says, which since #149 is a group in the
+    string table rather than text inside the component."""
+    return _block(_text("site/src/i18n/en.ts"), "about: {")
+
+
 def _about_review_section() -> str:
-    about = _text("site/src/components/About.tsx")
-    start = about.index('id="review"')
-    return about[start:about.index("</section>", start)]
+    return _block(_about_page_copy(), "review: {")
 
 
 def test_the_checklist_still_has_nine_items():
@@ -242,8 +275,10 @@ def test_the_checklist_still_has_nine_items():
 
 
 def test_the_about_page_publishes_one_item_for_each_checklist_item():
-    section = _about_review_section()
-    assert section.count("<li>") == len(ITEM_SUBJECTS)
+    # Each of the nine opens with its question in bold, which is the one thing
+    # about their shape that is load-bearing: a reader scans the questions.
+    questions = _block(_about_review_section(), "questions: [")
+    assert questions.count('"**') == len(ITEM_SUBJECTS)
 
 
 @pytest.mark.parametrize("subject", ITEM_SUBJECTS)
@@ -269,4 +304,4 @@ def test_the_section_is_reachable_at_its_own_url():
 def test_the_site_stops_calling_the_pin_a_content_hash():
     """#110 corrected this in the documents and missed the site. The pin is the
     commit that last touched the directory, which is stricter."""
-    assert "content hash" not in _text("site/src/components/About.tsx").lower()
+    assert "content hash" not in _about_page_copy().lower()
