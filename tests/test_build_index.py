@@ -677,3 +677,81 @@ def test_drift_out_is_written_even_when_not_asked_for_nothing_when_absent(make_s
     build_index.main_with(out)
 
     assert not (tmp_path / "drift.json").exists()
+
+
+# --------------------------------------------------------------------------- #
+# The declared language (#145)
+#
+# index.json is a published API, so both keys appear whether or not a listing
+# fills them in — a key that comes and goes makes every consumer defensive.
+# Neither is verification: languages_tested is the author's claim, and the
+# reviewer's verified list lives on the attestation.
+
+
+def _with_meta(make_skill, **extra):
+    return make_skill(overrides={"metadata": dict(
+        conftest.VALID_FRONTMATTER["metadata"], **extra)})
+
+
+def test_the_entry_carries_the_language_the_listing_is_written_in(make_skill):
+    skill = _with_meta(make_skill, **{"civic.language": "es"})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["language"] == "es"
+
+
+def test_the_language_key_is_present_even_when_the_listing_omits_it(make_skill):
+    """A listing predating the field, or one that slipped past the validator.
+    The site reads the key either way."""
+    front = dict(VALID_FRONTMATTER)
+    front["metadata"] = {
+        k: v for k, v in VALID_FRONTMATTER["metadata"].items()
+        if k != "civic.language"
+    }
+    entry = build_index.build_entry(make_skill(front=front), {}, {})
+    assert entry["language"] is None
+
+
+def test_the_tested_languages_are_published_as_a_list(make_skill):
+    skill = _with_meta(
+        make_skill, **{"civic.language": "en", "civic.languages-tested": "en, es"})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["languages_tested"] == ["en", "es"]
+
+
+def test_tested_languages_are_null_when_the_author_claimed_nothing(make_skill):
+    """Null rather than an empty list: 'I did not answer' and 'I tested it in
+    nothing' are different statements, and only one of them is honest."""
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["languages_tested"] is None
+
+
+def test_a_single_tested_language_is_still_a_list(make_skill):
+    skill = _with_meta(
+        make_skill, **{"civic.language": "en", "civic.languages-tested": "en"})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["languages_tested"] == ["en"]
+
+
+def test_tested_languages_tolerate_the_spacing_an_author_used(make_skill):
+    skill = _with_meta(
+        make_skill, **{"civic.language": "en", "civic.languages-tested": "en,es"})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["languages_tested"] == ["en", "es"]
+
+
+def test_the_detail_payload_carries_both_language_fields(make_skill):
+    skill = _with_meta(
+        make_skill, **{"civic.language": "es", "civic.languages-tested": "es, en"})
+    entry = build_index.build_entry(skill, {}, {})
+    detail = build_index.build_detail(skill, entry)
+    assert detail["language"] == "es"
+    assert detail["languages_tested"] == ["es", "en"]
+
+
+def test_the_declared_language_cannot_reach_the_tier(make_skill):
+    """A language is metadata, not verification. ADR 0004."""
+    skill = _with_meta(
+        make_skill, **{"civic.language": "es", "civic.languages-tested": "es, en"})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["tier"] == "community"
+    assert entry["reason"] == "no review attestation"

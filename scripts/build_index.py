@@ -189,6 +189,25 @@ def source_of(meta: dict) -> dict | None:
     return {"repo": repo, "commit": commit} if commit else {"repo": repo, "commit": None}
 
 
+def languages_tested_of(meta: dict) -> list[str] | None:
+    """The author's claim about which languages they tried the skill in.
+
+    `metadata` values are strings per the Agent Skills spec, so the field is one
+    comma-separated string; the index publishes it split, because a consumer
+    should not have to reimplement the delimiter. validator/src/rules.ts rejects
+    a ragged list, so anything reaching here has already been checked.
+
+    None rather than `[]` when the author claimed nothing: "did not answer" and
+    "tried it in no language" are different statements, and only one is honest.
+    Nothing verifies the claim — the reviewer's verified list is `languages:` on
+    the attestation in registry/reviewed.yml. See ADR 0004.
+    """
+    raw = meta.get("civic.languages-tested")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return [tag.strip() for tag in raw.split(",") if tag.strip()]
+
+
 def is_executed(rel: str) -> bool:
     """Does the agent run this file rather than read it?
 
@@ -299,6 +318,12 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "scope_secondary": meta.get("civic.scope-secondary"),
         "jurisdiction": meta.get("civic.jurisdiction"),
         "localization": meta.get("civic.localization"),
+        # What language the listing is written in, and what its author says
+        # they tried it in (#145). The first is a required declaration and is
+        # what the catalogue facets on; the second is a claim nothing checks,
+        # and the site renders it as one. Both keys are always present.
+        "language": meta.get("civic.language"),
+        "languages_tested": languages_tested_of(meta),
         "data_sensitivity": meta.get("civic.data-sensitivity"),
         "human_review": meta.get("civic.human-review"),
         # Plain text, never rendered as markdown. The detail page stopped

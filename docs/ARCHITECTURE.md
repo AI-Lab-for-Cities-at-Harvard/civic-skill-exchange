@@ -399,6 +399,8 @@ An index entry, with every field the build actually emits:
   "scope_secondary": null,
   "jurisdiction": "US-MA / Boston",
   "localization": "localized",
+  "language": "en",
+  "languages_tested": ["en", "es"],
   "data_sensitivity": "none",
   "human_review": "advisory-only",
   "use_when": "A resident asks why their permit is stuck and the status codes...",
