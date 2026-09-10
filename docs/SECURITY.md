@@ -121,7 +121,7 @@ Noisy by nature. These route to a human; they do not block.
 - `eval`, `exec`, dynamic imports
 - Encoded blobs above a length threshold
 - Bidirectional and invisible control characters
-- Instructions to disregard prior instructions, conceal an action, or omit something from a summary
+- Instructions to disregard prior instructions, conceal an action, or omit something from a summary — matched in **English and Spanish**. This is parity, not protection ([ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md) decision 6): the phrase shapes are hand-picked per language, so a submission written in a third language is screened more weakly by this signature, silently, until a language is added for it
 
 ### L4 — Scanners (not yet running)
 The place for a dedicated skill scanner plus generic static analysis over `scripts/`. The step exists in `validate.yml` commented out, and nothing here runs today. When it does, findings will attach to the PR and publish into the index as flags. Until then no document may promise L4 results, and a listing has never had them.
