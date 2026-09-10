@@ -219,6 +219,451 @@ export const en = {
     empty: "No skills match these filters. [Clear them](clear) to see the whole catalog.",
   },
 
+  /** The submission wizard.
+   *
+   *  Two modes, one page each: adding a listing and updating one. The wording
+   *  here is doing more work than anywhere else on the site — it is the only
+   *  surface that asks somebody for something — so the questions are plain
+   *  language rather than field names, and the hints say why a field is being
+   *  asked for rather than what shape the answer takes. */
+  submit: {
+    heading: "Share a skill",
+    lede: "Fill this in and we will put it in the right shape for you. It takes a few minutes.",
+
+    /** Before the form, not after it. Every path this page offers ends on
+     *  GitHub, and somebody could otherwise fill in twenty fields before
+     *  finding that out. */
+    prereq:
+      "You will need a **GitHub account** to finish — it is free, and it is " +
+      "what records the skill as yours. [Create one](signup) if you do not " +
+      "have one; it takes a couple of minutes and you can come back to this " +
+      "page afterwards.",
+
+    modes: {
+      label: "What do you want to do?",
+      new: "Add a new skill",
+      update: "Update one you already listed",
+    },
+
+    communityWarn: "The skill will be listed as a community skill until it is reviewed.",
+
+    /** Upload and paste first, because most people arrive with a skill already
+     *  written and should not retype it. */
+    intake: {
+      heading: "Submit a new skill",
+      lede:
+        "Already have one? Drop it here and the rest of this page fills itself " +
+        "in. If your skill lives in its own repository, GitHub\u2019s **Code → " +
+        "Download ZIP** gives you the file to drop.",
+
+      repoLabel: "Your skill's GitHub repository",
+      repoHint:
+        "Public repositories only. We read the file list and SKILL.md, and " +
+        "hand the folder back for you to upload — the listing records where " +
+        "the copy came from.",
+      repoPlaceholder: "github.com/you/your-skill",
+      read: "Read it",
+      reading: "Reading…",
+      /** `repo` is `owner/name` and `commit` an abbreviated sha. */
+      imported: (files: number, repo: string, commit: string) =>
+        `Read ${files} file${files === 1 ? "" : "s"} from \`${repo}\` at ` +
+        `\`${commit}\`.`,
+
+      archiveLabel: "Or upload the skill folder as a .zip",
+      archiveHint: "Unpacked in your browser. It is not sent anywhere.",
+
+      pasteLabel: "Or paste your SKILL.md",
+
+      /** `name` is the uploaded file's own name, or `owner/name` for an import. */
+      archiveResult: (name: string, files: number) =>
+        `**${name}** — ${files} file${files === 1 ? "" : "s"}.`,
+      nothingElse: "Nothing else to fix.",
+      blocked: "Fix these before continuing. They cannot be corrected below.",
+    },
+
+    /** The form. `fieldNames` are the plain questions a finding is rewritten to
+     *  name; the labels below them are what the boxes are called. */
+    form: {
+      heading: "About the skill",
+
+      /** Answered already, by the file. Shown rather than hidden, because a
+       *  description read out of somebody's repository is exactly the thing
+       *  they may want to improve before it is listed. `fields` is a list of
+       *  `fieldNames` values, already joined. */
+      fromFile: (fields: string) =>
+        `Read from your file: ${fields}. Everything below is already filled in ` +
+        "where it could be — change anything that is wrong.",
+
+      /** Plain questions, not field names. The schema keys stay as element ids
+       *  because that is how a finding is matched to its input, but no
+       *  submitter should have to learn what `civic.human-review` means to
+       *  answer it. A finding names the raw key, and it is swapped for one of
+       *  these. */
+      fieldNames: {
+        namespace: "your GitHub username",
+        name: "the skill name",
+        description: "the description",
+        license: "the license",
+        "allowed-tools": "the tools it needs",
+        metadata: "the details below",
+        "civic.category": "the category",
+        version: "the version",
+        "civic.category-secondary": "the second category",
+        "civic.scope": "the level of government",
+        "civic.scope-secondary": "the second level",
+        "civic.jurisdiction": "the place it is written for",
+        "civic.localization": "how portable it is",
+        "civic.language": "the language it is written in",
+        "civic.languages-tested": "the languages you have tried it in",
+        "civic.data-sensitivity": "the data it touches",
+        "civic.human-review": "its effect on people",
+        "civic.use-when": "when it is useful",
+        "civic.avoid-when": "when it is not useful",
+        "civic.maintainer": "who maintains it",
+        "civic.affiliation": "the kind of organization",
+        "civic.deployment": "how much you have used it",
+        "civic.deployed-at": "the organization",
+        "civic.deployed-in": "where it operates",
+        "civic.deployed-since": "since when",
+      },
+
+      /** The empty option a select opens on. Not a value. */
+      choose: "Choose…",
+
+      namespaceLabel: "Your GitHub username",
+      namespaceHint:
+        "This has to match your login exactly — your skill goes in a folder of " +
+        "that name, and only you can write there.",
+      reservedNamespace: (namespace: string) =>
+        `\`${namespace}\` is the Lab\u2019s own folder, so this does not have ` +
+        "to match your login. It needs approval from a maintainer instead, and " +
+        "the listing carries the Lab\u2019s badge.",
+      noSuchUser: (login: string) =>
+        `No GitHub user called ${login}. A submission whose folder does not ` +
+        "match the account that opens the pull request is rejected.",
+
+      nameLabel: "Skill name",
+      namePlaceholder: "Permit Status Explainer",
+      nameHint: "Type it however you like; we will tidy the spacing and capitals.",
+      /** What was typed, beside the slug it becomes. Rewriting the box under
+       *  the cursor would eat a hyphen the moment it is typed, so the
+       *  conversion is shown rather than imposed. */
+      nameSlug: (slug: string) =>
+        `Listed as \`${slug}\` — names are lowercase with hyphens instead of ` +
+        "spaces.",
+
+      descriptionLabel: "Description",
+      descriptionHint:
+        "What the skill does, in a couple of sentences. This is what an agent " +
+        "reads to decide whether to use it.",
+
+      categoryLabel: "Category",
+      categorySecondaryLabel: "A second category, if it fits one",
+      categorySecondaryNone: "None — it sits in one place",
+      categorySecondaryHint:
+        "The list mixes what a skill is *for* with whose desk it sits on, so " +
+        "many skills belong in two places. Leave this alone if yours does not.",
+
+      versionLabel: "Version, if you keep one",
+      versionPlaceholder: "1.0",
+      versionHint:
+        "Your own number for it, like `1.0` or `2.1.3`. Optional, and nothing " +
+        "checks it — it is there so an adopter can tell this is not what they " +
+        "took last year. The registry records when a skill arrived and last " +
+        "changed on its own.",
+
+      scopeLabel: "What level of government is it for?",
+      /** What kind of government body, in the words a submitter would use.
+       *  Country-neutral, because the specific place is asked separately (#67). */
+      scopeChoices: [
+        ["any", "Any level of government — it makes no assumptions"],
+        ["municipal", "A city, county or town"],
+        ["regional", "A state, province or region"],
+        ["national", "A national government"],
+        ["supranational", "A body above national government"],
+      ] as Choices,
+      scopeSecondaryLabel: "A second level, if it serves two",
+      scopeSecondaryNone: "None — one level",
+
+      jurisdictionLabel: "Is it written for one specific place?",
+      jurisdictionPlaceholder: "US-MA / Boston",
+      jurisdictionHint:
+        "Only if the skill carries that place\u2019s rules, forms or deadlines " +
+        "— `US-VT`, `US-MA / Boston`, `CA-ON / Toronto`. Leave it blank " +
+        "otherwise, which is most skills. A country code, optionally a state or " +
+        "province, and optionally a city after a slash.",
+
+      localizationLabel: "Is it set up for one place, or does it work anywhere?",
+      localizationChoices: [
+        ["localized", "Set up for one place — it has our forms, deadlines and rules in it"],
+        ["generalized", "Works anywhere — the local specifics have been lifted out"],
+      ] as Choices,
+      localizationNone: "Not sure yet",
+      localizationHint:
+        "[What this means](about) — a localized skill carries one " +
+        "jurisdiction\u2019s specifics; a generalized one has had them taken " +
+        "out so another city can fill in its own.",
+
+      languageLabel: "What language is it written in?",
+      /** A select over the two languages the exchange itself ships in, plus a
+       *  tag box for everything else — the field is required, and a form that
+       *  could only answer it in English or Spanish would stop a Portuguese
+       *  author submitting at all (#145). `other` is not a value the schema
+       *  accepts; it reveals the box. */
+      languageChoices: [
+        ["en", "English"],
+        ["es", "Spanish"],
+        ["other", "Another language — I will give the tag"],
+      ] as Choices,
+      languageHint:
+        "The language of the `SKILL.md` itself. It is not a limit on who can " +
+        "use the skill — a model reads a skill in one language and follows it " +
+        "in another. It is so a reader knows what they are about to open.",
+      languageOtherLabel: "Its language tag",
+      languageOtherPlaceholder: "pt-BR",
+      languageOtherHint:
+        "A BCP 47 tag, not the language\u2019s name: `pt-BR`, `fr`, `de`, " +
+        "`es-419`.",
+
+      deploymentLabel: "Have you used it?",
+      deploymentChoices: [
+        ["none", "Not yet — I have not used it in real work"],
+        ["personal", "I use it myself"],
+        ["team", "My team uses it"],
+        ["organization", "My whole organization uses it"],
+      ] as Choices,
+      deploymentHintClaim:
+        "Saying a team or an organization uses it is a claim about them, so the " +
+        "details below are needed.",
+      deploymentHintPersonal:
+        "Using it yourself is a complete answer — nothing else is required.",
+
+      maintainerLabel: "Who maintains it?",
+      maintainerHint: "A person or a team — City of X, Department of Innovation.",
+
+      affiliationLabel: "What kind of organization?",
+      affiliationChoices: [
+        ["government", "Government"], ["nonprofit", "Nonprofit"], ["vendor", "Vendor"],
+        ["academic", "Academic"], ["individual", "Just me"],
+      ] as Choices,
+    },
+
+    optional: {
+      summary: "A few optional things",
+      useWhenLabel: "When is this useful?",
+      avoidWhenLabel: "When is it not?",
+      avoidWhenHint:
+        "The one only you can answer. A skill honest about its limits gets " +
+        "adopted faster.",
+      languagesTestedLabel: "What languages have you tried it in?",
+      languagesTestedPlaceholder: "en, es",
+      languagesTestedHint:
+        "Comma-separated tags, including the one above — `en, es`. Your own " +
+        "claim: nothing here checks it, and the page shows it as something you " +
+        "said rather than something anybody verified.",
+      toolsLabel: "Tools it needs",
+      toolsPlaceholder: "Read, Grep",
+      toolsHint:
+        "Comma separated. These are granted without asking the person who runs " +
+        "it, so list the least it needs.",
+      licenseLabel: "License",
+      deployedAtLabel: "Which organization uses it?",
+      deployedAtHint:
+        "Leave this blank if it is just you — personal use names no organization.",
+      deployedInLabel: "Where does that organization operate?",
+      deployedInPlaceholder: "US-MA / Boston",
+      deployedInHint: "Like US-MA / Boston.",
+      deployedSinceLabel: "Roughly since when?",
+      deployedSincePlaceholder: "2026-03",
+    },
+
+    send: {
+      heading: "Send it",
+
+      /** What the page wrote into the submitter's own file, on every path. #82:
+       *  asserting that the download matters did not stop somebody uploading
+       *  their original folder instead and losing all of it. */
+      addedSummary: (lines: number) =>
+        `What we added to your SKILL.md — ${lines} line${lines === 1 ? "" : "s"}`,
+      addedNote:
+        "Written into the copy this page hands you. Your original file on disk " +
+        "still does not have these.",
+
+      findingsNote: (n: number) =>
+        `${n} thing${n === 1 ? "" : "s"} still to fill in, marked above. You ` +
+        "can send it anyway — the checks that count run after you do, and you " +
+        "can fix things then.",
+
+      /** Four steps, because a folder cannot be put in a link. Each one is a
+       *  real URL the submitter can open, and the page never asks them to type
+       *  a path. */
+      multiFileNote: (files: number) =>
+        `Your skill is ${files} files. GitHub takes a whole folder, but only ` +
+        "from its own upload page — so the last steps happen there, with the " +
+        "folder this page hands back.",
+
+      folderTitle: "Take the corrected folder",
+      folderBody:
+        "Your files, unchanged, with the answers above written into `SKILL.md`. " +
+        "This folder — not your original — is what you upload: the answers " +
+        "exist only in this copy. Unzip it first.",
+      /** `folder` is the directory the zip unpacks to. */
+      downloadFolder: (folder: string) => `Download ${folder}.zip`,
+
+      forkTitle: "Make your own copy of the registry",
+      forkBody:
+        "One button on GitHub, then come back and paste the address it gives " +
+        "you. We cannot guess it — you may rename the copy, or keep it under a " +
+        "different account.",
+      forkCta: "Fork the registry",
+      forkLabel: "The address of your copy",
+      forkPlaceholder: "github.com/you/civic-skill-exchange",
+      forkHint: "Paste it from your browser's address bar, or type owner/name.",
+      forkUnparsed:
+        "That does not look like a GitHub repository. It should be like " +
+        "`github.com/you/civic-skill-exchange`.",
+
+      uploadTitle: "Drag the folder in",
+      /** `reserved` is a namespace CODEOWNERS gates rather than a person, whose
+       *  submitter can write to the registry itself and has no fork. */
+      uploadBody: (
+        folder: string, reserved: boolean, namespacePath: string, skillPath: string,
+      ) =>
+        `Drop in the whole folder you **downloaded** in step 1 — unzipped, ` +
+        `named \`${folder}\`, subfolders and all. Do not open it first: ` +
+        "GitHub keeps the folder\u2019s name, which is how it lands in the " +
+        "right place. Then **Commit changes**, choosing *create a new branch " +
+        "and start a pull request* rather than committing to `main`." +
+        (reserved ? " This opens the registry at " : " This opens your copy at ") +
+        `\`${namespacePath}\`, so the result is \`${skillPath}\`.`,
+      uploadCta: "Upload the folder",
+      uploadWaiting:
+        "Paste the address of your copy above and this becomes a link. A " +
+        "guessed one would send you to the wrong place.",
+
+      pullRequestTitle: "Open the pull request",
+      pullRequestBody:
+        "If GitHub already offered you one at the end of step 3, that is this " +
+        "step done. The checks run on it, and a maintainer takes it from there.",
+      pullRequestCta: "Open the pull request",
+
+      handoff: "Continue on GitHub",
+      urlTooLong:
+        "This is too long to carry in a link. Copy it below and paste it into " +
+        "GitHub instead.",
+      copy: "Copy it",
+      copied: "Copied",
+
+      /** The path for somebody without a GitHub account. A maintainer receives
+       *  it and opens the pull request, which means the Lab is the committer —
+       *  so the skill lands in the reserved namespace with the sender credited
+       *  as maintainer. That is a real difference and the page says so. */
+      emailHandoff:
+        "No GitHub account? [Email it to us](email) and we will add it for " +
+        "you. It goes in under the project\u2019s name rather than yours, with " +
+        "you credited as the maintainer — attach the skill file and anything " +
+        "it needs.",
+      emailTooLong: (address: string) =>
+        "Too long to send by email link. Copy it above and mail it to " +
+        `[${address}](email) with the skill file attached.`,
+      /** No inbox yet, so this cannot say "email it to us" — and going quiet
+       *  instead would leave somebody who will not make an account with no idea
+       *  whether that is a dead end. It is, for now, and saying so beats
+       *  letting them find out. */
+      noAccountPath:
+        "Every route from here goes through GitHub, so an account is required " +
+        "— the checks that admit a skill work by confirming the account that " +
+        "submitted it owns the folder it went into. If that is a problem, open " +
+        "an [issue](issues) or ask whoever pointed you at this page; a " +
+        "maintainer can submit on your behalf, and the listing will credit you " +
+        "as the maintainer.",
+
+      seeYaml: "See what will be added",
+      commandLine: "Or do it from the command line",
+    },
+
+    update: {
+      heading: "Update a skill you already listed",
+      lede:
+        "Choose it and we will show you what to add. You paste two lines into " +
+        "the file on GitHub, and nothing else changes.",
+      nothingListed: "Nothing is listed here yet.",
+      pick: "Your skill",
+      choose: "Choose a listing…",
+      pasteHint:
+        "Paste these into the `metadata:` block, keeping the indentation, and " +
+        "change the text.",
+      /** `id` is `{namespace}/{name}`. */
+      editCta: (id: string) => `Edit ${id} on GitHub`,
+      notFinding:
+        "Not finding it? Only skills already in this catalog appear here. If " +
+        "yours is not listed yet, [submit it as a new skill](new) first.",
+    },
+
+    /** What went wrong reading what somebody brought.
+     *
+     *  Read by a submitter mid-hand-off, so they say what to do next rather
+     *  than what failed. `import.ts`, `zip.ts`, `parse.ts` and `patch.ts`
+     *  compose from these. */
+    problems: {
+      notARepo:
+        "That does not look like a GitHub repository. Paste its address, like " +
+        "github.com/you/your-skill.",
+      notFound:
+        "No public repository there. If it is private, download it and upload " +
+        "the zip instead.",
+      rateLimited:
+        "GitHub is rate-limiting anonymous requests from here. Wait a few " +
+        "minutes, or upload the zip instead.",
+      tooBig:
+        "That repository has too many files to read this way. Upload the skill " +
+        "folder as a zip instead.",
+      noSkillMdInRepo:
+        "No SKILL.md at the top of that repository. A skill is a folder with " +
+        "SKILL.md in it.",
+      offline: "Could not reach GitHub. Check your connection, or upload the zip instead.",
+
+      noSkillMdInZip:
+        "No SKILL.md at the root of the archive. A skill is a directory with " +
+        "SKILL.md at its top level.",
+      notAZip: "This file could not be read as a zip archive.",
+      /** Left out is not the same as wrong: these name what was skipped so
+       *  nothing vanishes quietly, and they do not stop the hand-off. */
+      pathEscape: (path: string) =>
+        `${path} — path escapes the skill directory, so it was skipped.`,
+      fileTooBig: (path: string, kb: number, capKb: number) =>
+        `${path} — too large at ${kb} KB. The cap is ${capKb} KB per file.`,
+      archiveTooBig: (capMb: number) =>
+        `The archive declares more than ${capMb} MB uncompressed, which is ` +
+        "over the cap for a whole skill.",
+
+      noFrontmatter:
+        "This does not start with a --- block, so there is nothing to read yet.",
+      emptyFrontmatter: "The --- block is empty.",
+      noFrontmatterToAmend:
+        "This file does not start with a --- block, so there is nothing to amend.",
+      invalidYaml: (reason: string) => `The --- block is not valid YAML: ${reason}`,
+    },
+  },
+
+  /** The mail somebody without a GitHub account sends, which a maintainer
+   *  reads and opens the pull request from. Composed rather than typed, so
+   *  nothing has to be retyped out of an email — and read by a person, so it
+   *  follows the locale they filled the form in. */
+  email: {
+    subject: (name: string) => `Skill submission: ${name}`,
+    /** Where the form had nothing. */
+    noName: "untitled",
+    noMaintainer: "(name)",
+    noLogin: "(username)",
+    body: (maintainer: string, login: string, yaml: string) =>
+      "A skill for the Civic Skill Exchange.\n\n" +
+      `From: ${maintainer}\n` +
+      `GitHub: ${login}\n\n` +
+      `${yaml}\n` +
+      "The skill body and any scripts are attached.\n",
+  },
+
   /** What a page says when it cannot show what was asked for.
    *
    *  These are the site's own errors. A finding on a submission comes from the

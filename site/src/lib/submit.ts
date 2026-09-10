@@ -9,6 +9,7 @@
  */
 
 import type { Frontmatter } from "@civic-skill-exchange/validator";
+import { strings } from "../i18n/strings";
 
 export interface Draft {
   /** GitHub login. The namespace, and what L1 checks the commit author against. */
@@ -236,13 +237,15 @@ export function uploadUrl(repo: string, draft: Draft): string {
  *  Mail clients truncate long bodies without warning, so this is measured
  *  against the same budget as the editor link. */
 export function mailtoUrl(email: string, draft: Draft, yaml: string): string {
-  const subject = `Skill submission: ${trim(draft.name) || "untitled"}`;
-  const body =
-    `A skill for the Civic Skill Exchange.\n\n` +
-    `From: ${trim(draft.maintainer) || "(name)"}\n` +
-    `GitHub: ${trim(draft.author) || "(username)"}\n\n` +
-    `${yaml}\n` +
-    `The skill body and any scripts are attached.\n`;
+  // A person reads this, so the wording is in the string table (#149). The
+  // frontmatter it carries is not: that is the file, and it does not translate.
+  const say = strings().email;
+  const subject = say.subject(trim(draft.name) || say.noName);
+  const body = say.body(
+    trim(draft.maintainer) || say.noMaintainer,
+    trim(draft.author) || say.noLogin,
+    yaml,
+  );
   // Built with encodeURIComponent rather than URLSearchParams: the latter
   // encodes a space as `+`, which is correct for a form body and wrong here —
   // mail clients show the plus signs.

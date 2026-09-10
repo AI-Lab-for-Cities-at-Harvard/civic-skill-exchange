@@ -17,6 +17,7 @@
 
 import { parseDocument, isMap } from "yaml";
 import { checkYamlSafety } from "@civic-skill-exchange/validator";
+import { strings } from "../i18n/strings";
 
 /** The same rule as the validator's `splitFrontmatter` — frontmatter opens the
  *  file, and a `---` further down is a horizontal rule — but it consumes
@@ -67,7 +68,7 @@ export function patchSkillMd(
   if (raw === null) {
     return {
       skillMd: source, present: [],
-      problems: ["This file does not start with a --- block, so there is nothing to amend."],
+      problems: [strings().submit.problems.noFrontmatterToAmend],
     };
   }
 
@@ -81,7 +82,7 @@ export function patchSkillMd(
   if (doc.errors.length > 0) {
     return {
       skillMd: source, present: [],
-      problems: [`The --- block is not valid YAML: ${doc.errors[0]?.message}`],
+      problems: [strings().submit.problems.invalidYaml(doc.errors[0]?.message ?? "")],
     };
   }
 

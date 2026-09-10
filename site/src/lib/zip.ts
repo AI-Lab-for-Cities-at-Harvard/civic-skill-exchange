@@ -20,6 +20,7 @@ import { unzipSync } from "fflate";
 import {
   MAX_FILE_BYTES, MAX_SKILL_BYTES, isRepositoryFurniture, type Entry,
 } from "@civic-skill-exchange/validator";
+import { strings } from "../i18n/strings";
 
 export interface SkillArchive {
   entries: Entry[];
@@ -47,6 +48,8 @@ function commonRoot(paths: string[]): string | undefined {
 }
 
 export function readSkillZip(bytes: Uint8Array): SkillArchive {
+  // What a submitter is told was left out, in their language (#149).
+  const say = strings().submit.problems;
   const problems: string[] = [];
   let declaredTotal = 0;
   let overBudget = false;
@@ -55,13 +58,15 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
     filter: (file) => {
       if (file.name.endsWith("/")) return false; // directory records carry no bytes
       if (unsafe(file.name)) {
-        problems.push(`${file.name} — path escapes the skill directory, so it was skipped.`);
+        problems.push(say.pathEscape(file.name));
         return false;
       }
       if (file.originalSize && file.originalSize > MAX_FILE_BYTES) {
-        problems.push(
-          `${file.name} — too large at ${Math.round(file.originalSize / 1024)} KB. ` +
-          `The cap is ${MAX_FILE_BYTES / 1024} KB per file.`);
+        problems.push(say.fileTooBig(
+          file.name,
+          Math.round(file.originalSize / 1024),
+          MAX_FILE_BYTES / 1024,
+        ));
         return false;
       }
       declaredTotal += file.originalSize ?? 0;
@@ -69,9 +74,7 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
         // Refused before inflating, which is the point — the declared size is
         // the only thing a bomb cannot lie its way past cheaply.
         if (!overBudget) {
-          problems.push(
-            `The archive declares more than ${MAX_SKILL_BYTES / (1024 * 1024)} MB ` +
-            `uncompressed, which is over the cap for a whole skill.`);
+          problems.push(say.archiveTooBig(MAX_SKILL_BYTES / (1024 * 1024)));
           overBudget = true;
         }
         return false;
@@ -111,11 +114,7 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
   const skillMd = skill && skill.kind === "file"
     ? new TextDecoder().decode(skill.bytes)
     : null;
-  if (!skillMd) {
-    problems.push(
-      "No SKILL.md at the root of the archive. A skill is a directory with " +
-      "SKILL.md at its top level.");
-  }
+  if (!skillMd) problems.push(say.noSkillMdInZip);
 
   return { entries, directoryName: root, skillMd, problems };
 }
