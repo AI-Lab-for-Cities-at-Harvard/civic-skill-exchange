@@ -73,6 +73,72 @@ HARD: list[Signature] = [
 ]
 
 # --------------------------------------------------------------------------- #
+# Instruction-override and concealment phrase shapes (#147).
+#
+# ADR 0004 decision 6: automated screening names the languages it covers, and
+# this is where the exchange first draws that line. English was the only
+# language this signature recognised; a submission written in Spanish was
+# screened more weakly, silently. The Spanish set below covers the same two
+# classes — overriding stated instructions, concealing an action from the
+# user reading the output — with the same handful of phrase shapes and the
+# same precision standard as the English list. It does not attempt broader
+# coverage than that gives it, the same way the English list never did.
+#
+# Accent-insensitive where it costs nothing: 'instruccion' with no tilde is
+# ordinary typing, not evasion, so `instrucci[oó]n` accepts either.
+#
+# Kept as one signature, `instruction-suppression`, not two — a Spanish match
+# is the same class of finding as an English one, and report.ts's vocabulary
+# should not grow just because the phrase was in another language. Which
+# language matched is folded into the explanation (see
+# `_instruction_suppression_language` below) rather than added as a new field.
+
+_INSTRUCTION_SUPPRESSION_EN = (
+    r"ignore\s+(?:all\s+)?previous\s+instructions"
+    r"|disregard\s+(?:the\s+)?(?:above|prior|previous)"
+    r"|do\s+not\s+(?:tell|inform|mention\s+to)\s+the\s+user"
+    r"|without\s+(?:telling|informing|notifying)\s+the\s+user"
+    r"|don't\s+(?:mention|report|summarize)\s+this"
+)
+
+_INSTRUCTION_SUPPRESSION_ES = (
+    r"ignora(?:r)?\s+las\s+instrucci[oó]n(?:es)?\s+(?:anteriores|previas)"
+    r"|haz\s+caso\s+omiso\s+de"
+    r"|no\s+le\s+digas\s+al\s+usuario"
+    r"|sin\s+(?:informar|avisar)\s+al\s+usuario"
+    r"|no\s+mencion(?:es)?\s+esto"
+    r"|oculta(?:r)?\s+esto"
+)
+
+# Compiled on its own, separately from the combined pattern below, so a match
+# can be re-tested against it after the fact to say which language it was —
+# see `_instruction_suppression_language`.
+_INSTRUCTION_SUPPRESSION_ES_PATTERN = re.compile(_INSTRUCTION_SUPPRESSION_ES, re.IGNORECASE)
+
+
+def _instruction_suppression_language(excerpt: str) -> str:
+    """Which language an `instruction-suppression` match was in.
+
+    Folded into the explanation rather than a new finding field: a Spanish
+    match is the same class of finding as an English one, just recognised in
+    the other language this signature now covers.
+    """
+    return "Spanish" if _INSTRUCTION_SUPPRESSION_ES_PATTERN.search(excerpt) else "English"
+
+
+def apply_instruction_suppression_language(flags: list[dict]) -> list[dict]:
+    """Append which language matched to every `instruction-suppression`
+    finding's explanation. Everything else passes through unchanged."""
+    labeled = []
+    for f in flags:
+        if f["signature"] == "instruction-suppression":
+            language = _instruction_suppression_language(f["excerpt"])
+            f = {**f, "explanation": f"{f['explanation']} Matched in {language}."}
+        labeled.append(f)
+    return labeled
+
+
+# --------------------------------------------------------------------------- #
 # L3 — soft signatures. Noisy. These route to a human and never block.
 
 SOFT: list[Signature] = [
@@ -106,16 +172,15 @@ SOFT: list[Signature] = [
     (
         "instruction-suppression",
         re.compile(
-            r"(?:ignore\s+(?:all\s+)?previous\s+instructions"
-            r"|disregard\s+(?:the\s+)?(?:above|prior|previous)"
-            r"|do\s+not\s+(?:tell|inform|mention\s+to)\s+the\s+user"
-            r"|without\s+(?:telling|informing|notifying)\s+the\s+user"
-            r"|don't\s+(?:mention|report|summarize)\s+this)",
+            r"(?:" + _INSTRUCTION_SUPPRESSION_EN + r"|" + _INSTRUCTION_SUPPRESSION_ES + r")",
             re.IGNORECASE,
         ),
         "Language instructing the agent to disregard instructions or conceal an "
-        "action. Legitimate skills never need to hide work from the person running "
-        "them — treat as disqualifying regardless of stated rationale.",
+        "action, matched in English or Spanish (docs/SECURITY.md names the "
+        "languages this covers; a submission in a third language is screened "
+        "more weakly here). Legitimate skills never need to hide work from the "
+        "person running them — treat as disqualifying regardless of stated "
+        "rationale or language.",
     ),
 ]
 
@@ -435,7 +500,9 @@ def scan_skill(skill_dir: Path) -> dict:
 
     return {
         "blocking": blocking,
-        "flags": apply_localization(flags, localization_of(skill_dir)),
+        "flags": apply_localization(
+            apply_instruction_suppression_language(flags), localization_of(skill_dir)
+        ),
     }
 
 
