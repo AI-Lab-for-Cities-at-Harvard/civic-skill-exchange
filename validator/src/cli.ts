@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, relative, resolve } from "node:path";
 import {
   loadCategories, validateSkill, discoverAll, discoverChanged, checkChangedOwnership,
+  authorForSkillCheck,
 } from "./skill";
 import { checkChangedLayout, checkNamespaceCollisions } from "./layout";
 
@@ -105,7 +106,8 @@ function main(): number {
 
   for (const skillDir of targets) {
     const rel = relative(ROOT, skillDir) || skillDir;
-    const { findings, notes } = validateSkill(skillDir, categories, author);
+    const { findings, notes } = validateSkill(
+      skillDir, categories, authorForSkillCheck(author, maintainer));
 
     for (const note of notes) console.log(`note  ${rel}: ${note}`);
 
