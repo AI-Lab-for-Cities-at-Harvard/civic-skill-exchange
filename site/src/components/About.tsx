@@ -254,6 +254,24 @@ export function About(
             <code>localized</code> skill is the skill working, and in a{" "}
             <code>generalized</code> one it is a leftover.
           </dd>
+          <dt><code>civic.language</code></dt>
+          <dd>
+            The language the <code>SKILL.md</code> is written in, as one BCP 47
+            tag — <code>en</code>, <code>es</code>, <code>pt-BR</code>. Not a
+            limit on who can use the skill: a model reads an English skill and
+            follows it in Spanish. It is so you know what you are about to open,
+            and so the catalogue can be browsed by it. Required, because an
+            omitted tag could not be told apart from an unanswered one.
+          </dd>
+          <dt><code>civic.languages-tested</code></dt>
+          <dd>
+            Optional, and the author&rsquo;s own claim about which languages they
+            have exercised the skill in. <strong>Nothing checks it.</strong> The
+            verified list is a different field in a different file —{" "}
+            <code>languages:</code> on the review attestation in{" "}
+            <code>registry/reviewed.yml</code> — and the skill&rsquo;s page keeps
+            the two apart rather than merging them into one badge.
+          </dd>
         </dl>
         <div className="vocab-grid">
           <Vocabulary title="civic.category" map={CATEGORY_LABELS} />

@@ -68,6 +68,7 @@ metadata:
   civic.category: permitting-licensing
   civic.scope: municipal
   civic.jurisdiction: "US-MA / Boston"
+  civic.language: en
   civic.data-sensitivity: none
   civic.human-review: advisory-only
   civic.use-when: >
@@ -111,6 +112,8 @@ metadata:
 | `civic.scope` | `any`, `municipal`, `regional`, `national`, `supranational` | What kind of government body it is written for. `any` is explicit, not implied by leaving it out. Country-neutral: `regional` covers a state, province, prefecture or canton. |
 | `civic.scope-secondary` | the same values | Optional. A second level, when the skill genuinely serves two. Cannot repeat the primary or be paired with `any`. |
 | `civic.jurisdiction` | ISO 3166: `US-VT`, `US-MA / Boston` | Optional. The specific place, set only when the skill carries its rules, forms or deadlines — most skills leave it blank. A `generalized` skill never has one. Distinct from `civic.deployed-in`, which is where an organization that used it operates. |
+| `civic.language` | one BCP 47 tag: `en`, `es`, `pt-BR`, `es-419` | The language the SKILL.md is written in. Required — an omitted tag cannot be told apart from an unanswered one. Not a limit on who can use the skill: a model reads it in one language and follows it in another. |
+| `civic.languages-tested` | comma-separated tags: `en, es` | Optional, and **your own claim** — nothing checks it, and the skill's page says so. Must include `civic.language`. A reviewer's verified list is separate and lives on the attestation. |
 | `civic.data-sensitivity` | `none`, `pii`, `protected` | What the skill is expected to touch. `protected` covers health, benefits, immigration, criminal justice, and anything else with a statutory regime. |
 | `civic.human-review` | `none`, `advisory-only`, `decision-support` | Whether output affects a person's rights, benefits, or legal standing. |
 | `civic.use-when` | free text, ≤500 | Optional. When the skill earns its place. Plain text — the site renders it as text, never as markdown. |

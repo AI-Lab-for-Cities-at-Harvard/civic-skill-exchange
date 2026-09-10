@@ -62,6 +62,23 @@ describe("About — the civic metadata", () => {
     expect(document.getElementById("metadata")!.textContent)
       .toMatch(/self-reported|derived/i);
   });
+
+  /** #145. The page explains every civic.* field, so it has to explain these
+   *  two — and has to keep the claim and the verification apart, which is the
+   *  distinction a reader is most likely to collapse. */
+  it("explains both language fields", () => {
+    render(<About skills={[]} />);
+    const section = document.getElementById("metadata")!.textContent!;
+    expect(section).toMatch(/civic\.language(?![s-])/);
+    expect(section).toMatch(/civic\.languages-tested/);
+  });
+
+  it("says the tested languages are a claim and points at where verification lives", () => {
+    render(<About skills={[]} />);
+    const section = document.getElementById("metadata")!.textContent!;
+    expect(section).toMatch(/reviewed\.yml|attestation/);
+    expect(section).toMatch(/nothing (?:checks|verifies)|verified by nothing/i);
+  });
 });
 
 describe("About — navigation", () => {
