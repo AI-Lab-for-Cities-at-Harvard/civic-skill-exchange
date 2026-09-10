@@ -162,6 +162,9 @@ export const strings: Strings = {
       submit: "[es] Submit",
       github: "[es] GitHub",
     },
+    language: {
+      label: "[es] Language",
+    },
     theme: {
       toLight: "[es] Light",
       toDark: "[es] Dark",
