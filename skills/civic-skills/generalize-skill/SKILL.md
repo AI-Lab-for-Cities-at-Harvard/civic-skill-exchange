@@ -137,14 +137,23 @@ it everywhere.
 Rewrite them as organization-neutral prose, and put the specific versions in the
 context under their own keys. Localizing writes them back.
 
-**6. Stamp the contract version.** Both context files open with
+**6. Set the language slot.** `language` is optional and different from the
+four above: it does not decide whether the skill gets invoked, it says what
+language the *localized skill's output* should be written in. Fill it with the
+source skill's own language — its `civic.language` if the frontmatter has one,
+otherwise whatever the body is actually written in. Write it as a default, not
+a question: say in `GENERALIZE-NOTES.md` that the adopter may change it, and
+leave it changeable, but do not leave it blank or `TODO` — the source always
+has an answer. Adding it does not touch `contract_version`.
+
+**7. Stamp the contract version.** Both context files open with
 `contract_version`, copied from `references/contract.md`. A context file without
 it cannot be safely read later — a reader finding no version does not know
 whether the file is old or merely unmarked, and must stop and ask rather than
 assume. Writing the number is the cheapest thing in this skill and the only
 thing that makes a future mismatch legible.
 
-**7. Record what was uncertain**, in `GENERALIZE-NOTES.md`: everything
+**8. Record what was uncertain**, in `GENERALIZE-NOTES.md`: everything
 extracted; everything that could not be confidently sorted, with which way the
 evidence leaned; and anything local-looking that was deliberately kept, with the
 reason. Methodology named after its source institution is the common case.
@@ -162,6 +171,8 @@ Do not resolve an uncertainty by picking. The author knows; a guess does not.
 - `scope` records the tier and the reach, and nothing above the reach line was
   extracted.
 - Both context files open with `contract_version`, matching the contract.
+- `language` is filled with the source skill's own language, not left blank or
+  `TODO`.
 - Every slot is a question worth asking, and each says how exact its answer
   needs to be.
 - Running this skill again on its own output changes nothing. A second pass that
