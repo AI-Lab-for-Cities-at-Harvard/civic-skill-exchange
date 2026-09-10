@@ -1,7 +1,6 @@
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
-import {
-  label, TIER_LABELS, LOCALIZATION_LABELS, DEPLOYMENT_LABELS, SENSITIVITY_LABELS,
-} from "../lib/labels";
+import { useStrings } from "../i18n/strings";
+import { label } from "../lib/labels";
 import type { Skill } from "../lib/types";
 
 /** Who wrote it, when we did (#51, ADR 0001 ruling 2).
@@ -22,8 +21,9 @@ import type { Skill } from "../lib/types";
  *  chrome; this one is brand chrome — it is the Lab's name on the listing. It
  *  follows the crimson band's rule and looks the same in either theme. */
 export function LabBadge({ namespace }: { namespace: Skill["namespace"] }) {
+  const s = useStrings();
   if (!RESERVED_NAMESPACES.has(namespace)) return null;
-  return <span className="badge badge--lab">Written by the AI Lab</span>;
+  return <span className="badge badge--lab">{s.badges.lab}</span>;
 }
 
 /** Tier is the most consequential thing on a card, so it reads as a status
@@ -35,52 +35,35 @@ export function LabBadge({ namespace }: { namespace: Skill["namespace"] }) {
  *  the rule it came from: true only until the rule changed, and then false on
  *  every card at once (ADR 0001, ruling 4). A note derived from the ledger
  *  cannot drift from it. */
-/** The badge says a skill was reviewed, names who reviewed it, and stops.
- *
- *  It used to say "{reviewers} read this commit", which undersold nine
- *  questions covering scripts, tool grants, egress, credentials and
- *  instruction-suppression — and meant nothing to a reader who does not know
- *  what a commit is. The obvious repair, "reviewed for safety", is the one
- *  claim the registry refuses everywhere else: a pass is never a statement
- *  that a skill is safe.
- *
- *  So the questions moved to the About page, where there is room to say which
- *  they are and what they do not amount to, and the badge stopped
- *  characterising the review at all (#113). One line cannot hold the
- *  difference between "these were asked" and "this is safe". */
-const REVIEWED_TITLE =
-  "Read against the published nine-item checklist, at this exact version. " +
-  "A record of what was checked, not a warranty.";
-
 export function TierBadge(
   { tier, reviewed }: { tier: Skill["tier"]; reviewed?: Skill["reviewed"] },
 ) {
+  const s = useStrings();
   const isReviewed = tier === "reviewed";
   const reviewers = reviewed?.reviewers ?? [];
   return (
     <span className={`badge ${isReviewed ? "badge--ok" : "badge--warn"}`}
-      title={isReviewed ? REVIEWED_TITLE : undefined}>
-      {label(TIER_LABELS, tier)}
+      title={isReviewed ? s.badges.tier.reviewedTitle : undefined}>
+      {label(s.vocabulary.tier, tier)}
       <span className="badge__note">
-        {!isReviewed ? "automated checks only"
-          // No names in the ledger is a malformed attestation, not a stronger
-          // claim. Say the least that is still true rather than nothing.
-          : reviewers.length === 0 ? "read against the published checklist"
-          : reviewers.join(" and ")}
+        {!isReviewed ? s.badges.tier.communityNote
+          : reviewers.length === 0 ? s.badges.tier.reviewedNote
+          : s.badges.tier.reviewers(reviewers)}
       </span>
     </span>
   );
 }
 
 export function LocalizationBadge({ value }: { value: Skill["localization"] }) {
+  const s = useStrings();
   if (!value) return null;
   return (
     <span className="badge badge--info" title={
       value === "generalized"
-        ? "Jurisdiction specifics lifted out into a context you fill in"
-        : "Carries one jurisdiction's citations, forms and deadlines"
+        ? s.badges.localization.generalized
+        : s.badges.localization.localized
     }>
-      {label(LOCALIZATION_LABELS, value)}
+      {label(s.vocabulary.localization, value)}
     </span>
   );
 }
@@ -94,15 +77,17 @@ export function LocalizationBadge({ value }: { value: Skill["localization"] }) {
 export function DeploymentBadge(
   { provenance, detail = false }: { provenance: Skill["provenance"]; detail?: boolean },
 ) {
+  const s = useStrings();
   const { deployment, deployed_at } = provenance;
   if (!deployment || deployment === "none") return null;
   return (
     <span
       className="badge badge--plain"
-      title={deployed_at ? `${deployed_at} — self-reported by the submitter`
-                         : "Self-reported by the submitter"}
+      title={deployed_at
+        ? s.badges.deployment.selfReportedSince(deployed_at)
+        : s.badges.deployment.selfReported}
     >
-      {label(DEPLOYMENT_LABELS, deployment)}
+      {label(s.vocabulary.deployment, deployment)}
       {detail && deployed_at ? ` · ${deployed_at}` : ""}
     </span>
   );
@@ -114,17 +99,16 @@ export function DeploymentBadge(
  * chrome that trains people to stop reading chips. Silence means 'none' here;
  * a badge means there is something to think about before you run it. */
 export function SensitivityBadge({ value }: { value: Skill["data_sensitivity"] }) {
+  const s = useStrings();
   if (!value || value === "none") return null;
   return (
     <span
       className={`badge ${value === "protected" ? "badge--warn" : "badge--info"}`}
-      title={
-        value === "protected"
-          ? "Health, benefits, immigration, criminal justice, or another statutory regime"
-          : "Expected to handle personally identifiable information"
-      }
+      title={value === "protected"
+        ? s.badges.sensitivity.protected
+        : s.badges.sensitivity.pii}
     >
-      {label(SENSITIVITY_LABELS, value)}
+      {label(s.vocabulary.sensitivity, value)}
     </span>
   );
 }

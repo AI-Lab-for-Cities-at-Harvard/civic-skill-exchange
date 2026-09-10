@@ -1,4 +1,5 @@
 import { categoryCounts, facetCounts, scopeCounts } from "../lib/filter";
+import { useStrings } from "../i18n/strings";
 import { label } from "../lib/labels";
 import type { Filters, Skill } from "../lib/types";
 
@@ -18,6 +19,7 @@ interface FacetProps {
 export function Facet({
   legend, field, filterKey, labels, skills, filters, onChange, note,
 }: FacetProps) {
+  const s = useStrings();
   // Two facets span two columns rather than one: a skill can name a second
   // category on the other axis (#102) and a second scope when it serves two
   // levels (#67), and filtering finds it under either. Handled here rather
@@ -45,7 +47,7 @@ export function Facet({
             checked={selected === null}
             onChange={() => onChange(filterKey, null)}
           />
-          <span>Any</span>
+          <span>{s.facets.any}</span>
         </label>
         {values.map((value) => (
           <label className="facet__option" key={value}>

@@ -167,4 +167,192 @@ export const en = {
     kilobytes: "KB",
     megabytes: "MB",
   },
+
+  /** The chips on a card and at the top of a detail page.
+   *
+   *  Each one owns exactly one fact and its `title` says what that fact is
+   *  worth. The tier chip's note is the load-bearing one: "Community" alone
+   *  invites a reader to assume something was checked. */
+  badges: {
+    /** Who wrote it. Derived from the reserved namespace, not a field (#51). */
+    lab: "Written by the AI Lab",
+
+    tier: {
+      /** The badge says a skill was reviewed, names who reviewed it, and stops.
+       *
+       *  It used to say "{reviewers} read this commit", which undersold nine
+       *  questions covering scripts, tool grants, egress, credentials and
+       *  instruction-suppression — and meant nothing to a reader who does not
+       *  know what a commit is. The obvious repair, "reviewed for safety", is
+       *  the one claim the registry refuses everywhere else: a pass is never a
+       *  statement that a skill is safe.
+       *
+       *  So the questions moved to the About page, where there is room to say
+       *  which they are and what they do not amount to, and the badge stopped
+       *  characterising the review at all (#113). */
+      reviewedTitle:
+        "Read against the published nine-item checklist, at this exact " +
+        "version. A record of what was checked, not a warranty.",
+      communityNote: "automated checks only",
+      /** No names in the ledger is a malformed attestation, not a stronger
+       *  claim. Say the least that is still true rather than nothing. */
+      reviewedNote: "read against the published checklist",
+      /** The conjunction is language, so the joining happens here rather than
+       *  in the three components that name reviewers. */
+      reviewers: (names: string[]) => names.join(" and "),
+    },
+
+    localization: {
+      generalized: "Jurisdiction specifics lifted out into a context you fill in",
+      localized: "Carries one jurisdiction's citations, forms and deadlines",
+    },
+
+    deployment: {
+      selfReported: "Self-reported by the submitter",
+      selfReportedSince: (since: string) => `${since} — self-reported by the submitter`,
+    },
+
+    sensitivity: {
+      protected:
+        "Health, benefits, immigration, criminal justice, or another " +
+        "statutory regime",
+      pii: "Expected to handle personally identifiable information",
+    },
+
+    /** The Beta marker. One sentence, shared with README.md and held to it by a
+     *  test — leaving Beta should not be an archaeology exercise (#123).
+     *
+     *  It says only that the *exchange* is new. The registry already carries
+     *  three statements about what a *listing* means; a fourth disclaimer in
+     *  the same voice would dilute all of them. */
+    beta: {
+      label: "Beta",
+      summary:
+        "The exchange itself is new: the category vocabulary, the metadata " +
+        "fields and the submission and review workflows are all still changing.",
+    },
+  },
+
+  /** A tease, not a summary: who vouched for it, what it is called, what it
+   *  does, and roughly where it belongs. */
+  card: {
+    cta: "View this skill",
+  },
+
+  /** The filters down the side of the catalogue.
+   *
+   *  A facet's `note` is where the vocabulary gets explained, because the
+   *  legend has room for two words and some of these need a sentence. */
+  facets: {
+    label: "Filter skills",
+    /** The option that clears one facet, as against the button that clears all. */
+    any: "Any",
+    clear: "Clear filters",
+    search: {
+      label: "Search",
+      placeholder: "permit, benefits, Boston…",
+    },
+    tier: {
+      legend: "Tier",
+      note: "Community listings passed automated checks only.",
+    },
+    category: { legend: "Category" },
+    localization: {
+      legend: "Portability",
+      note: "Generalized skills have jurisdiction specifics lifted out.",
+    },
+    scope: {
+      legend: "Level of government",
+      note:
+        "What kind of body a skill is written for. The specific place, when " +
+        "it has one, is on the skill's own page.",
+    },
+    language: {
+      legend: "Language",
+      note:
+        "The language the listing is written in. A model reads a skill in " +
+        "one language and follows it in another, so this is not a limit on " +
+        "who can use it.",
+    },
+    sensitivity: { legend: "Data touched" },
+  },
+
+  /** The full-bleed sections above and below the catalogue. */
+  bands: {
+    tiers: {
+      heading: "What a listing here does and does not mean",
+      communityTerm: "Community",
+      community:
+        "Well-formed, and nothing mechanical is wrong with it. Merged once it " +
+        "passes structural, ownership and signature checks.",
+      reviewedTerm: "Reviewed",
+      reviewed:
+        "The AI Lab for Cities read every line of one specific commit against " +
+        "a published checklist and put its name on it. One reader, not an " +
+        "independent audit. Pinned to a content hash, so any change drops it " +
+        "back to Community.",
+    },
+    contribute: {
+      heading: "Have one of these already?",
+      lede:
+        "A city that solves a problem once should be able to hand the " +
+        "solution to the next hundred cities. Submitting is a pull request, " +
+        "or a form if you would rather not work in git.",
+      guide: "Read the contributor guide",
+      security: "What we check, and the security model",
+    },
+  },
+
+  /** The standing Community notice.
+   *
+   *  This replaced a paragraph repeated verbatim on every Community card —
+   *  eight identical warnings on a ten-card page, which is how a warning
+   *  becomes wallpaper. Said once, above the grid, it has to be accurate, so
+   *  the lead sentence is counted from the catalogue rather than written in
+   *  advance. The consequence sentence never varies: it is the part that
+   *  matters and it is true regardless of the mix. */
+  notices: {
+    community: {
+      /** `community` is at least one, and at most `total`. */
+      lead: (community: number, total: number) => community === total
+        ? "Every skill here is a Community listing."
+        : community === 1
+          ? `1 of the ${total} skills here is a Community listing.`
+          : `${community} of the ${total} skills here are Community listings.`,
+      body:
+        "That means automated checks passed — not that anybody read the code. " +
+        "Automated checks can only ever reject. Read a skill and its scripts " +
+        "before you run it.",
+    },
+  },
+
+  /** When a skill arrived, when it last changed, and the version its author
+   *  claims (#77).
+   *
+   *  Two kinds of statement, worded differently on purpose. The dates and the
+   *  count are derived from git and stated flatly. The version is the author's
+   *  claim and is labelled as one. Neither may read as a quality signal, which
+   *  is why the count says outright that it is not a measure. */
+  history: {
+    heading: "Version and history",
+    /** Month and year. A precise timestamp invites reading a week's difference
+     *  as meaningful, which it is not. The locale tag is part of the wording,
+     *  so it lives with it. */
+    when: (iso: string) => new Date(iso).toLocaleDateString(
+      "en-US", { month: "long", year: "numeric", timeZone: "UTC" }),
+    version: "Version",
+    versionAside:
+      "— the author’s own number for it. Self-reported, and not checked " +
+      "against anything.",
+    firstSeen: "Listed since",
+    lastChanged: "Last changed",
+    commits: "Times changed",
+    commitsAside:
+      "— a count, not a measure. It says nothing about whether the skill is " +
+      "well maintained: one change may mean finished.",
+    note:
+      "Dates come from this repository’s own history, for this path. A skill " +
+      "moved between namespaces starts again here, so an early date is " +
+      "reliable and a recent one may just mean it was renamed.",
+  },
 };

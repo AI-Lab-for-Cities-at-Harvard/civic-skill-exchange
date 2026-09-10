@@ -7,6 +7,7 @@
  * hardcoded colour.
  */
 
+import { useStrings } from "../i18n/strings";
 import { communityNotice, type Counts } from "../lib/notice";
 
 /** Above the results: what the two tiers mean, and the standing Community
@@ -16,32 +17,23 @@ import { communityNotice, type Counts } from "../lib/notice";
  *  topper from the catalogue, and a dark band on a dark page separates
  *  nothing. It inverts against whatever theme the reader chose. */
 export function TierBand({ counts }: { counts: Counts }) {
+  const s = useStrings().bands.tiers;
   const notice = communityNotice(counts);
 
   return (
     <section className="band" data-theme="contrast" aria-labelledby="tiers-band-heading">
       <div className="canvas">
         <div className="band__inner span-full">
-        <h2 className="h3 band__heading" id="tiers-band-heading">
-          What a listing here does and does not mean
-        </h2>
+        <h2 className="h3 band__heading" id="tiers-band-heading">{s.heading}</h2>
 
         <div className="band__cols">
           <div className="band__col">
-            <h3 className="band__term">Community</h3>
-            <p>
-              Well-formed, and nothing mechanical is wrong with it. Merged once
-              it passes structural, ownership and signature checks.
-            </p>
+            <h3 className="band__term">{s.communityTerm}</h3>
+            <p>{s.community}</p>
           </div>
           <div className="band__col">
-            <h3 className="band__term">Reviewed</h3>
-            <p>
-              The AI Lab for Cities read every line of one specific commit
-              against a published checklist and put its name on it. One reader,
-              not an independent audit. Pinned to a content hash, so any change
-              drops it back to Community.
-            </p>
+            <h3 className="band__term">{s.reviewedTerm}</h3>
+            <p>{s.reviewed}</p>
           </div>
         </div>
 
@@ -59,24 +51,19 @@ export function TierBand({ counts }: { counts: Counts }) {
 /** Below the results, for the reader who got to the end of the catalogue and
  *  wants to add to it — or to know what we checked before they run anything. */
 export function ContributeBand({ repo }: { repo: string }) {
+  const s = useStrings().bands.contribute;
   return (
     <section className="band" data-theme="crimson" aria-labelledby="contribute-band-heading">
       <div className="canvas">
         <div className="band__inner span-full">
-        <h2 className="h3 band__heading" id="contribute-band-heading">
-          Have one of these already?
-        </h2>
-        <p className="band__lede">
-          A city that solves a problem once should be able to hand the solution
-          to the next hundred cities. Submitting is a pull request, or a form if
-          you would rather not work in git.
-        </p>
+        <h2 className="h3 band__heading" id="contribute-band-heading">{s.heading}</h2>
+        <p className="band__lede">{s.lede}</p>
         <p className="band__links">
           <a className="arrow-link" href={`${repo}/blob/main/CONTRIBUTING.md`}>
-            Read the contributor guide <span aria-hidden="true">&rarr;</span>
+            {s.guide} <span aria-hidden="true">&rarr;</span>
           </a>
           <a className="arrow-link" href={`${repo}/blob/main/docs/SECURITY.md`}>
-            What we check, and the security model <span aria-hidden="true">&rarr;</span>
+            {s.security} <span aria-hidden="true">&rarr;</span>
           </a>
         </p>
         </div>

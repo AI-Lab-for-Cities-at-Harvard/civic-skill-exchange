@@ -16,25 +16,31 @@
  *  About page, where there is room to list what is actually in flux. A tooltip
  *  would not do: it is invisible on a touch device, and this is the first thing
  *  an early adopter should be able to read.
+ *
+ *  The wording is in `i18n/en.ts` with the rest of the site's strings (#149).
+ *  The two constants stay exported: README.md is held to the summary by a test,
+ *  and that check is about the English text, not about whatever locale a reader
+ *  happens to have chosen.
  */
 
+import { en } from "../i18n/en";
+import { useStrings } from "../i18n/strings";
 import { aboutHref } from "../lib/route";
 
 /** The one lever. Set to "stable" to leave Beta. */
 export const RELEASE_STAGE: "beta" | "stable" = "beta";
 
-export const BETA_LABEL = "Beta";
+export const BETA_LABEL = en.badges.beta.label;
 
 /** One sentence, shared with README.md and held to it by a test. */
-export const BETA_SUMMARY =
-  "The exchange itself is new: the category vocabulary, the metadata fields " +
-  "and the submission and review workflows are all still changing.";
+export const BETA_SUMMARY = en.badges.beta.summary;
 
 export function BetaBadge() {
+  const { beta } = useStrings().badges;
   if (RELEASE_STAGE !== "beta") return null;
   return (
-    <a className="beta" href={aboutHref("beta")} title={BETA_SUMMARY}>
-      {BETA_LABEL}
+    <a className="beta" href={aboutHref("beta")} title={beta.summary}>
+      {beta.label}
     </a>
   );
 }

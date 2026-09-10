@@ -2,7 +2,8 @@ import {
   TierBadge, LabBadge, LocalizationBadge, DeploymentBadge, SensitivityBadge,
 } from "./Badges";
 import { categoriesOf, scopesOf } from "../lib/filter";
-import { label, CATEGORY_LABELS, SCOPE_LABELS } from "../lib/labels";
+import { useStrings } from "../i18n/strings";
+import { label } from "../lib/labels";
 import { skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
 
@@ -20,6 +21,7 @@ import type { Skill } from "../lib/types";
  * words of monospace.
  */
 export function SkillCard({ skill }: { skill: Skill }) {
+  const s = useStrings();
   const href = skillHref(skill.namespace, skill.name);
 
   return (
@@ -42,14 +44,14 @@ export function SkillCard({ skill }: { skill: Skill }) {
       <p className="card__desc" lang={skill.language ?? undefined}>{skill.description}</p>
 
       <p className="card__meta" data-testid="card-meta">
-        <span>{categoriesOf(skill).map((c) => label(CATEGORY_LABELS, c)).join(" · ")}</span>
+        <span>{categoriesOf(skill).map((c) => label(s.vocabulary.category, c)).join(" · ")}</span>
         <span className="card__dot" aria-hidden="true">·</span>
-        <span>{scopesOf(skill).map((v) => label(SCOPE_LABELS, v)).join(" · ")}</span>
+        <span>{scopesOf(skill).map((v) => label(s.vocabulary.scope, v)).join(" · ")}</span>
       </p>
 
       <p className="card__cta">
         <a className="arrow-link" href={href} data-testid="card-cta">
-          View this skill <span aria-hidden="true">&rarr;</span>
+          {s.card.cta} <span aria-hidden="true">&rarr;</span>
         </a>
       </p>
     </article>
