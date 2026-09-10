@@ -1,0 +1,5 @@
+{
+  "comment": "The English entry chunk in bytes, from `npm run build` on this branch. Re-record with `node scripts/size.mjs --record`, and say why in the commit.",
+  "bytes": 402381,
+  "marginPercent": 3
+}
