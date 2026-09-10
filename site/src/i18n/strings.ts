@@ -31,10 +31,28 @@ type Locale = { strings: Strings };
 
 export const DEFAULT_LOCALE = "en";
 
-/** The seam. English resolves without a fetch because it is already here; a
- *  second entry is `es: () => import("./es")` and nothing else. */
+/** The seam. English resolves without a fetch because it is already here; every
+ *  other locale is one line, and the `import()` is what gives it its own chunk.
+ *
+ *  Nothing else in the site names a locale. The switcher offers what `locales()`
+ *  reports, so a third language is this line and a table. */
 const LOCALES: Record<string, () => Promise<Locale>> = {
   [DEFAULT_LOCALE]: () => Promise.resolve({ strings: en }),
+  es: () => import("./es"),
+};
+
+/** Each locale in its own language, for the switcher.
+ *
+ *  Not in the string tables, and deliberately: a language's own name is the
+ *  same in every locale — a Spanish reader looking for English looks for
+ *  "English" — so translating it would be wrong rather than missing. It also
+ *  cannot live in the tables, because the switcher has to name every locale
+ *  without loading every locale's chunk to do it.
+ *
+ *  A tag with no entry falls back to the tag, which is terse and correct. */
+export const LOCALE_NAMES: Record<string, string> = {
+  en: "English",
+  es: "Español",
 };
 
 export function locales(): string[] {
