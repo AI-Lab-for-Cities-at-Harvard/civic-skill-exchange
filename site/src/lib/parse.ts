@@ -62,6 +62,8 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
       scopeSecondary: text(meta["civic.scope-secondary"]),
       jurisdiction: text(meta["civic.jurisdiction"]),
       localization: text(meta["civic.localization"]),
+      language: text(meta["civic.language"]),
+      languagesTested: text(meta["civic.languages-tested"]),
       dataSensitivity: text(meta["civic.data-sensitivity"]) || EMPTY_DRAFT.dataSensitivity,
       humanReview: text(meta["civic.human-review"]) || EMPTY_DRAFT.humanReview,
       useWhen: text(meta["civic.use-when"]),

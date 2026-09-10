@@ -50,6 +50,11 @@ export function applyFilters(skills: Skill[], filters: Filters): Skill[] {
       (!filters.category || categoriesOf(s).includes(filters.category)) &&
       (!filters.scope || scopesOf(s).includes(filters.scope)) &&
       (!filters.localization || s.localization === filters.localization) &&
+      // Single-valued: a listing is written in one language, so this needs
+      // none of the pair machinery category and scope have. languages_tested
+      // is the author's claim and is deliberately not faceted — a skill
+      // written in English is an English listing whatever its author tried.
+      (!filters.language || s.language === filters.language) &&
       (!filters.dataSensitivity || s.data_sensitivity === filters.dataSensitivity) &&
       (!filters.tier || s.tier === filters.tier),
   );

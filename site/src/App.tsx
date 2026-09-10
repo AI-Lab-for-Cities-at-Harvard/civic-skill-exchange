@@ -8,7 +8,7 @@ import { SkillCard } from "./components/SkillCard";
 import { TierBand, ContributeBand } from "./components/Bands";
 import { applyFilters } from "./lib/filter";
 import {
-  CATEGORY_LABELS, SCOPE_LABELS, LOCALIZATION_LABELS,
+  CATEGORY_LABELS, SCOPE_LABELS, LANGUAGE_LABELS, LOCALIZATION_LABELS,
   SENSITIVITY_LABELS, TIER_LABELS,
 } from "./lib/labels";
 import { parseRoute, type Route } from "./lib/route";
@@ -179,6 +179,9 @@ export default function App() {
           <Facet legend="Level of government" field="scope" filterKey="scope"
             labels={SCOPE_LABELS} skills={skills} filters={filters} onChange={setFilter}
             note="What kind of body a skill is written for. The specific place, when it has one, is on the skill's own page." />
+          <Facet legend="Language" field="language" filterKey="language"
+            labels={LANGUAGE_LABELS} skills={skills} filters={filters} onChange={setFilter}
+            note="The language the listing is written in. A model reads a skill in one language and follows it in another, so this is not a limit on who can use it." />
           <Facet legend="Data touched" field="data_sensitivity" filterKey="dataSensitivity"
             labels={SENSITIVITY_LABELS} skills={skills} filters={filters} onChange={setFilter} />
 

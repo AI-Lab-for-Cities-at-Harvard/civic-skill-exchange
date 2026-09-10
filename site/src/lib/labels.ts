@@ -31,6 +31,18 @@ export const SCOPE_LABELS: Record<string, string> = {
   supranational: "Supranational",
 };
 
+/** The two languages the exchange itself ships in, and nothing more.
+ *
+ *  Deliberately not a language-name table. A full one is hundreds of entries
+ *  in each locale the site speaks, it would go stale, and a tag the map does
+ *  not hold renders as the tag — which is a correct, if terse, answer. `label`
+ *  already falls back that way, so a Portuguese listing reads `pt-BR` rather
+ *  than an empty cell. */
+export const LANGUAGE_LABELS: Record<string, string> = {
+  en: "English",
+  es: "Spanish",
+};
+
 export const SENSITIVITY_LABELS: Record<string, string> = {
   none: "No personal data",
   pii: "Personal data (PII)",
