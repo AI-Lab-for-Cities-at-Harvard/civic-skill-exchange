@@ -31,26 +31,34 @@ import { Fragment, type AnchorHTMLAttributes, type ReactNode } from "react";
 const MARKER =
   /\*\*([\s\S]+?)\*\*|\*([\s\S]+?)\*|`([\s\S]+?)`|\[([\s\S]+?)\]\(([^)]+?)\)/;
 
-/** An href, or the whole anchor's props where one needs more than that —
- *  `target`, `rel`, a `data-testid` a test hangs off. */
-export type Link = string | AnchorHTMLAttributes<HTMLAnchorElement>;
+/** An href; or the whole anchor's props, where one needs more than that —
+ *  `target`, `rel`, a `data-testid` a test hangs off; or a function wrapping
+ *  the label in whatever element the sentence needs. The last form is for the
+ *  places where the thing in the middle of a sentence is not a link at all: the
+ *  empty-results notice offers a button, because clearing the filters is not
+ *  navigation. */
+export type Link =
+  | string
+  | AnchorHTMLAttributes<HTMLAnchorElement>
+  | ((label: ReactNode) => ReactNode);
 export type Links = Record<string, Link>;
 
 /** Thrown rather than swallowed while developing, so a marker whose link the
  *  component does not supply fails in the test suite instead of rendering a
  *  paragraph with a dead phrase in it. In production the label is rendered as
  *  plain text: a mistyped locale should cost a link, never the page. */
-function anchor(
-  name: string, links: Links | undefined,
-): AnchorHTMLAttributes<HTMLAnchorElement> | undefined {
+function linked(
+  name: string, label: ReactNode, links: Links | undefined,
+): ReactNode {
   const value = links?.[name];
   if (value === undefined) {
     if (import.meta.env.DEV) {
       throw new Error(`rich(): no link named "${name}" was supplied`);
     }
-    return undefined;
+    return label;
   }
-  return typeof value === "string" ? { href: value } : value;
+  if (typeof value === "function") return value(label);
+  return <a {...(typeof value === "string" ? { href: value } : value)}>{label}</a>;
 }
 
 export function rich(text: string, links?: Links): ReactNode {
@@ -71,10 +79,9 @@ export function rich(text: string, links?: Links): ReactNode {
       // is an asterisk.
       parts.push(<code key={key++}>{code}</code>);
     } else if (label !== undefined && name !== undefined) {
-      const props = anchor(name, links);
-      parts.push(props === undefined
-        ? <Fragment key={key++}>{rich(label, links)}</Fragment>
-        : <a key={key++} {...props}>{rich(label, links)}</a>);
+      parts.push(
+        <Fragment key={key++}>{linked(name, rich(label, links), links)}</Fragment>,
+      );
     }
 
     rest = rest.slice(match.index + whole.length);

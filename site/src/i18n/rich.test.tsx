@@ -65,3 +65,11 @@ describe("rich", () => {
     expect(() => rich("[somewhere](nowhere)")).toThrow(/no link named "nowhere"/);
   });
 });
+
+describe("rich, where the thing in the middle of a sentence is not a link", () => {
+  it("wraps the label in whatever element the component supplies", () => {
+    expect(html(rich("filters. [Clear them](clear) to see the catalog.", {
+      clear: (kids) => <button className="linkish">{kids}</button>,
+    }))).toBe('<p>filters. <button class="linkish">Clear them</button> to see the catalog.</p>');
+  });
+});

@@ -168,6 +168,70 @@ export const en = {
     megabytes: "MB",
   },
 
+  /** The frame every page sits in: the skip link, the identity, the navigation,
+   *  the statement at the top and the footing at the bottom. */
+  chrome: {
+    skipToContent: "Skip to content",
+    /** A non-breaking space, so the two words of the name never split across a
+     *  line on a narrow screen. */
+    brand: "Civic Skill\u00a0Exchange",
+    nav: {
+      label: "Main",
+      browse: "Browse",
+      about: "About",
+      submit: "Submit",
+      github: "GitHub",
+    },
+    theme: {
+      toLight: "Light",
+      toDark: "Dark",
+      switchToLight: "Switch to light theme",
+      switchToDark: "Switch to dark theme",
+    },
+    title: "Agent skills for government, public-sector and nonprofit work",
+    lede:
+      "A city that solves a problem once should be able to hand the solution " +
+      "to the next hundred cities.",
+    /** The counts under the statement. The bold is on the number. */
+    stats: {
+      skills: (n: number) => `**${n}** skill${n === 1 ? "" : "s"}`,
+      reviewed: (n: number) => `**${n}** reviewed`,
+      community: (n: number) => `**${n}** community`,
+    },
+    footer: {
+      disclaimer:
+        "Inclusion in this registry is not an endorsement. Automated checks " +
+        "can only reject — a pass is never a statement that a skill is safe.",
+      /** `generated` is already formatted for the reader. */
+      meta: (generated: string) =>
+        `Catalog generated ${generated} · ` +
+        "[Source and submissions on GitHub](repo) · [About this project](about)",
+      /** The date under the catalogue, formatted the reader's own way. */
+      date: (iso: string) => new Date(iso).toLocaleDateString(),
+    },
+  },
+
+  /** The catalogue itself: how many matched, and what to do when none did. */
+  results: {
+    loading: "Loading the catalog…",
+    all: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,
+    some: (shown: number, total: number) => `${shown} of ${total} skills`,
+    empty: "No skills match these filters. [Clear them](clear) to see the whole catalog.",
+  },
+
+  /** What a page says when it cannot show what was asked for.
+   *
+   *  These are the site's own errors. A finding on a submission comes from the
+   *  validator, which speaks its own language and is out of this table's
+   *  reach. */
+  errors: {
+    catalogUnavailable: "The catalog could not be loaded. Try reloading the page.",
+    loading: "Loading…",
+    /** `id` is `{namespace}/{name}` as it appeared in the URL. */
+    noSuchSkill: (id: string) => `No skill called ${id} is listed here.`,
+    backToCatalog: "Back to the catalog",
+  },
+
   /** The chips on a card and at the top of a detail page.
    *
    *  Each one owns exactly one fact and its `title` says what that fact is
