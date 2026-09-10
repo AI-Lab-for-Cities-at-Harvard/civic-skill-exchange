@@ -11,6 +11,17 @@
 # labels.test.ts, and the facets, the About table and both marketplace manifests
 # are generated from it.
 #
+# The vocabulary is one list in every language the site speaks (#150). label_es
+# and description_es sit beside their English counterparts rather than in a
+# second file, and site/src/i18n/es.ts is held to label_es exactly as en.ts is
+# held to label. Anything machine-facing reads `label`: the ids never translate,
+# and both marketplace manifests are English.
+#
+# NOT TRANSLATED YET. Every _es value is the English text behind the marker
+# "[es] ". Delete the marker as each one is written. The gate is indirect and
+# real: labels.test.ts holds es.ts's category map to label_es, so a translated
+# es.ts with an untranslated label_es here fails the site suite.
+#
 # Two axes on purpose (#102). The first six classify by the function inside the
 # organization — whose desk the work is on — which is what makes internal work
 # listable at all. The rest classify by the public service being delivered, which
@@ -22,92 +33,152 @@ categories:
   # --- By function inside the organization ---------------------------------- #
   - id: policy
     label: Policy
+    label_es: "[es] Policy"
     description: >
       Analysis, research, briefing, and legislative work — the practice of
+      working out what an organization should do and writing it up.
+    description_es: >
+      [es] Analysis, research, briefing, and legislative work — the practice of
       working out what an organization should do and writing it up.
 
   - id: data-analysis
     label: Data Analysis
+    label_es: "[es] Data Analysis"
     description: >
       Analysing the organization's own data: performance measurement,
+      benchmarking against peers, and reporting.
+    description_es: >
+      [es] Analysing the organization's own data: performance measurement,
       benchmarking against peers, and reporting.
 
   - id: communications
     label: Communications
+    label_es: "[es] Communications"
     description: >
       Outbound work — notices, press, translation, plain language, and
+      accessibility. What the organization says to people.
+    description_es: >
+      [es] Outbound work — notices, press, translation, plain language, and
       accessibility. What the organization says to people.
 
   - id: finance
     label: Finance
+    label_es: "[es] Finance"
     description: >
       Budget, accounting, revenue, and procurement. Procurement sits here
+      deliberately rather than in its own category; see #102.
+    description_es: >
+      [es] Budget, accounting, revenue, and procurement. Procurement sits here
       deliberately rather than in its own category; see #102.
 
   - id: hr
     label: HR
+    label_es: "[es] HR"
     description: >
       Hiring, onboarding, workforce planning, and labour relations.
+    description_es: >
+      [es] Hiring, onboarding, workforce planning, and labour relations.
 
   - id: technology
     label: Technology
+    label_es: "[es] Technology"
     description: >
       The organization's own IT: operations, systems, helpdesk, and
+      integration. Not skills about AI work — those are AI Tools.
+    description_es: >
+      [es] The organization's own IT: operations, systems, helpdesk, and
       integration. Not skills about AI work — those are AI Tools.
 
   # --- By public service delivered ------------------------------------------ #
   - id: constituent-services
     label: Constituent Services
+    label_es: "[es] Constituent Services"
     description: >
       Inbound work — casework, 311, correspondence, and service requests. The
+      work of responding to individual residents.
+    description_es: >
+      [es] Inbound work — casework, 311, correspondence, and service requests. The
       work of responding to individual residents.
 
   - id: benefits-eligibility
     label: Benefits & Eligibility
+    label_es: "[es] Benefits & Eligibility"
     description: >
       Determinations about what a person is entitled to. The highest-stakes
+      work in the catalogue, and the reason civic.human-review exists.
+    description_es: >
+      [es] Determinations about what a person is entitled to. The highest-stakes
       work in the catalogue, and the reason civic.human-review exists.
 
   - id: permitting-licensing
     label: Permitting & Licensing
+    label_es: "[es] Permitting & Licensing"
     description: >
       Applications, inspections, approvals, and renewals, with their own
+      workflows and statutory deadlines.
+    description_es: >
+      [es] Applications, inspections, approvals, and renewals, with their own
       workflows and statutory deadlines.
 
   - id: legal
     label: Legal
+    label_es: "[es] Legal"
     description: >
       City attorney practice — contracts, ordinances, and litigation support.
+      Distinct from Policy, which is analysis rather than practice.
+    description_es: >
+      [es] City attorney practice — contracts, ordinances, and litigation support.
       Distinct from Policy, which is analysis rather than practice.
 
   - id: public-records
     label: Public Records & Transparency
+    label_es: "[es] Public Records & Transparency"
     description: >
       Records requests, FOIA processing, redaction support, and open data
+      publishing. A legal obligation with deadlines.
+    description_es: >
+      [es] Records requests, FOIA processing, redaction support, and open data
       publishing. A legal obligation with deadlines.
 
   - id: operations
     label: Operations & Service Delivery
+    label_es: "[es] Operations & Service Delivery"
     description: >
       Public works, sanitation, transit, and facilities — the largest headcount
+      in most organizations.
+    description_es: >
+      [es] Public works, sanitation, transit, and facilities — the largest headcount
       in most organizations.
 
   - id: emergency-public-safety
     label: Emergency Management & Public Safety
+    label_es: "[es] Emergency Management & Public Safety"
     description: >
       Preparedness, response, and policing and fire administration. A different
+      tempo and a different risk posture from the rest of this list.
+    description_es: >
+      [es] Preparedness, response, and policing and fire administration. A different
       tempo and a different risk posture from the rest of this list.
 
   - id: planning-land-use
     label: Planning & Land Use
+    label_es: "[es] Planning & Land Use"
     description: >
       Zoning, development review, and parcel-level work.
+    description_es: >
+      [es] Zoning, development review, and parcel-level work.
 
   # --- The exchange's own work ---------------------------------------------- #
   - id: ai-tools
     label: AI Tools
+    label_es: "[es] AI Tools"
     description: >
       Skills whose subject is AI work itself — generalizing a skill, localizing
+      one, evaluating a prompt. Defined by what it operates on, not by the fact
+      that it uses AI: every skill here does that. A skill that uses AI to
+      rewrite a permit notice is Communications.
+    description_es: >
+      [es] Skills whose subject is AI work itself — generalizing a skill, localizing
       one, evaluating a prompt. Defined by what it operates on, not by the fact
       that it uses AI: every skill here does that. A skill that uses AI to
       rewrite a permit notice is Communications.

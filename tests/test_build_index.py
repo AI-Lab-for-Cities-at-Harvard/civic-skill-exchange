@@ -838,3 +838,55 @@ def test_the_detail_payload_carries_verified_languages(make_skill, monkeypatch):
     )
     detail = build_index.build_detail(skill, entry)
     assert detail["verified_languages"] == ["en", "es"]
+
+
+# --------------------------------------------------------------------------- #
+# The vocabulary in two languages (#150).
+#
+# ADR 0004 decision 4 puts the site in Spanish, and the category vocabulary is
+# the one set of reader-facing strings that is not in the site's string table:
+# registry/categories.yml is the single source of truth for it, and the site is
+# held to that file rather than allowed to keep its own copy. So the Spanish
+# labels go beside the English ones in the same file, and are published in the
+# same categories.json — one vocabulary, two languages, not two vocabularies.
+
+
+def _vocabulary() -> list[dict]:
+    return build_index.load_categories()
+
+
+def test_every_category_carries_a_spanish_label_and_description():
+    missing = [
+        c["id"] for c in _vocabulary()
+        if not c.get("label_es") or not c.get("description_es")
+    ]
+    assert missing == [], (
+        "these categories have no Spanish label or description in "
+        "registry/categories.yml: " + ", ".join(missing)
+    )
+
+
+def test_the_english_label_and_description_are_still_there():
+    """The Spanish keys are additive. build_marketplace.py reads `label`, the
+    schema points at this file, and both manifests are generated from it — a
+    rename here is a manifest rewrite, which is not what #150 is."""
+    for c in _vocabulary():
+        assert c.get("label"), c["id"]
+        assert c.get("description"), c["id"]
+
+
+def test_the_published_vocabulary_carries_both_languages(tmp_path, monkeypatch):
+    """categories.json is what the browser reads. The About page's field tables
+    render the reader's own language, so the published file has to carry it."""
+    out = tmp_path / "out"
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "empty")
+    build_index.main_with(out)
+
+    published = json.loads((out / "categories.json").read_text(encoding="utf-8"))
+    assert published["categories"] == _vocabulary(), (
+        "categories.json is not the vocabulary file's own content — a "
+        "transformed copy is a second source of truth"
+    )
+    for c in published["categories"]:
+        assert c["label_es"], c["id"]
+        assert c["description_es"], c["id"]

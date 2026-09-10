@@ -4,6 +4,11 @@
  * deliberate — the site renders synchronously and does not fetch the vocabulary
  * before painting a facet — but an unchecked duplicate is just drift waiting to
  * happen, so these tests make disagreement a build failure.
+ *
+ * Every locale is held to the same file. The Spanish labels live beside the
+ * English ones as `label_es` (#150), so the vocabulary stays one list in one
+ * place no matter how many languages the site speaks — and es.ts's category map
+ * is checked against them exactly as en.ts's is.
  */
 
 import { describe, it, expect } from "vitest";
@@ -12,12 +17,13 @@ import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
 import { parse } from "yaml";
 import { CATEGORY_LABELS } from "./labels";
+import { strings as es } from "../i18n/es";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
 const vocabulary = (
   parse(readFileSync(join(ROOT, "registry", "categories.yml"), "utf8")) as {
-    categories: { id: string; label: string }[];
+    categories: { id: string; label: string; label_es: string }[];
   }
 ).categories;
 
@@ -46,5 +52,24 @@ describe("category labels are title case", () => {
 
   it("keeps ids in kebab-case — the vocabulary is machine-facing and must not move", () => {
     for (const c of vocabulary) expect(c.id).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+  });
+});
+
+describe("the Spanish category labels agree with the vocabulary file", () => {
+  it("covers every id, and invents none", () => {
+    expect(Object.keys(es.vocabulary.category).sort())
+      .toEqual(vocabulary.map((c) => c.id).sort());
+  });
+
+  it.each(vocabulary.map((c) => [c.id, c.label_es]))(
+    "%s renders the vocabulary's Spanish label", (id, label) => {
+      expect(es.vocabulary.category[id as keyof typeof es.vocabulary.category])
+        .toBe(label);
+    });
+
+  it("keeps the two languages in the same order, so the file reads as one list", () => {
+    // Not a formatting nicety: the About page renders the map in table order,
+    // and two locales in different orders is two different tables.
+    expect(Object.keys(es.vocabulary.category)).toEqual(Object.keys(CATEGORY_LABELS));
   });
 });
