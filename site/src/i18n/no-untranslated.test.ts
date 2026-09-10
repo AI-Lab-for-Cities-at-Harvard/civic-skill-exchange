@@ -49,7 +49,11 @@ function untranslated(): string[] {
     const declares = /^\s*("?[\w.$-]+"?)\s*:/.exec(line);
     if (declares) key = declares[1]!.replace(/"/g, "");
     if (!line.includes(MARKER)) continue;
-    const text = line.slice(line.indexOf(MARKER) + MARKER.length).trim().slice(0, 60);
+    const text = line
+      .slice(line.indexOf(MARKER) + MARKER.length)
+      .replace(/["`]\s*[+,]?\s*$/, "")
+      .trim()
+      .slice(0, 60);
     found.push(`es.ts:${i + 1} ${key} — ${text}`);
   }
   return found;
