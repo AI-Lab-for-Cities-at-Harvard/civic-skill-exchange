@@ -890,3 +890,61 @@ def test_the_published_vocabulary_carries_both_languages(tmp_path, monkeypatch):
     for c in published["categories"]:
         assert c["label_es"], c["id"]
         assert c["description_es"], c["id"]
+
+
+# --------------------------------------------------------------------------- #
+# A locale reaches no skill archive (#150).
+#
+# ADR 0004 decision 5: a skill archive is byte-identical whether the site has
+# one locale or five. Skills are what people download, and a zip that changed
+# because somebody added a language would be a change nobody could explain.
+#
+# The guarantee is structural rather than a recorded hash: the archive is built
+# from the skill directory, its entries carry a fixed timestamp, and this script
+# reads no part of the site. So what is asserted is that last clause, which is
+# the only one a future change could quietly break.
+
+
+def test_the_build_reads_nothing_from_the_site():
+    """Read as syntax, not as text: `--out` defaults to a directory under
+    site/, which is where the build *writes*, and a grep for the word would
+    flag it."""
+    import ast
+
+    tree = ast.parse((conftest.ROOT / "scripts" / "build_index.py").read_text(
+        encoding="utf-8"))
+
+    imported = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imported += [a.name for a in node.names]
+        elif isinstance(node, ast.ImportFrom):
+            imported.append(node.module or "")
+    assert [m for m in imported if "site" in m or "i18n" in m] == [], imported
+
+    named = [
+        node.value for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str)
+        and ("site/src" in node.value or "i18n" in node.value)
+    ]
+    assert named == [], (
+        "build_index.py names something under site/src, so a change to the "
+        "site could change a skill archive: " + " | ".join(named)
+    )
+
+
+def test_the_archive_is_built_from_the_skill_directory_alone(make_skill, tmp_path,
+                                                             monkeypatch):
+    """Two builds of the same skill produce the same bytes, and the only input
+    is the directory. A wall-clock timestamp in the zip would fail this."""
+    make_skill(files={"scripts/run.py": "print('hello')\n"})
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
+
+    first, second = tmp_path / "one", tmp_path / "two"
+    build_index.main_with(first)
+    build_index.main_with(second)
+
+    archives = sorted(p.relative_to(first) for p in first.rglob("*.zip"))
+    assert archives, "no archive was written, so this test is checking nothing"
+    for name in archives:
+        assert (first / name).read_bytes() == (second / name).read_bytes(), name
