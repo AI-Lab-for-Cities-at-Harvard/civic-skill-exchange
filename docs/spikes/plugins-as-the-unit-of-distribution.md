@@ -52,18 +52,25 @@ two formats can coexist in one directory without collision. Whether Claude
 Code reads a root `plugin.json` is not confirmed; its validator did not treat
 one as a manifest.
 
-**3. The desktop symptom is silence, not an error.** The owner reports that
-Codex lists and loads every skill, that the Claude desktop app's plugin browser
-shows nothing from this marketplace, and that it reports no error. The desktop
-assistant, asked to inspect the repository, attributed it to the missing
-`plugin.json` structure. That is a plausible reading, not a confirmed cause:
-the desktop app reads the same marketplaces from the same configuration, no
-document says it validates manifests more strictly than the CLI, and three
-closed Claude Code issues (#39897, #64763, #39400) reproduce empty or broken
-plugin lists for marketplace plugins with textbook layouts, including
-Anthropic's own, working fine in the CLI. The cheapest way to settle it is the
-experiment in option A: generate `.claude-plugin/plugin.json` beside each
-`SKILL.md` on a branch and point the desktop app at it.
+**3. The desktop app rejects the shape, and says why in its log.** Codex lists
+and loads every skill; the Claude desktop app's plugin browser shows nothing
+from this marketplace and shows no error. Its log does. The desktop app does
+not read a marketplace itself: it syncs the marketplace to a remote service,
+and that service validated the four plugins and failed all of them:
+
+```
+MARKETPLACE_ERROR:REMOTE_SYNC_FAILED sync did not succeed (status: failed_content)
+Plugin 'civic-skills-generalize-skill' requires .claude-plugin/plugin.json or a
+top-level SKILL.md declaring plugin components (set strict: false in
+marketplace.json to use inline manifest)
+error_code: marketplace_sync_plugin_missing_manifest
+```
+
+So the CLI's rule that a root `SKILL.md` is a single-skill plugin is not
+applied by the desktop's validator, and no document says so. A generated
+`.claude-plugin/plugin.json` per plugin (option A) is the direct fix; whether
+the remote also accepts it is being tested from a GitHub branch, since the
+remote cannot fetch a local-directory marketplace.
 
 So the decision is not "Claude broke us". It is "a cross-vendor standard has
 arrived that our shape does not satisfy, Codex has adopted it, and we have few
