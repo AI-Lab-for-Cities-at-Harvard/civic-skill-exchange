@@ -90,6 +90,17 @@ describe("the detail page says what language the listing is in", () => {
     expect(claim.textContent).not.toMatch(/verified|confirmed|checked by/i);
   });
 
+  it("marks the fit fields too, since they are the author's prose as well", async () => {
+    served(detail({
+      language: "es",
+      use_when: "Cuando un residente pregunta por su permiso.",
+      avoid_when: "No para apelaciones.",
+    }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const fit = await screen.findByRole("region", { name: /when to use this/i });
+    expect(fit.querySelector(".fit")).toHaveAttribute("lang", "es");
+  });
+
   it("says nothing about tested languages when the author claimed none", async () => {
     served(detail({ language: "en", languages_tested: null }));
     render(<SkillDetail namespace="ns" name="example-skill" />);

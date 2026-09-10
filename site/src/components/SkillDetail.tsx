@@ -108,7 +108,10 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                 Written by whoever submitted the skill, about their own work.
                 Nobody has checked it against what the skill actually does.
               </p>
-              <dl className="fit">
+              {/* The author's own prose, in the listing's language — the same
+                  reason the description is marked. On the list, so both items
+                  inherit it. */}
+              <dl className="fit" lang={detail.language ?? undefined}>
                 {detail.use_when && (
                   <div className="fit__item">
                     <dt>Use it when</dt>
