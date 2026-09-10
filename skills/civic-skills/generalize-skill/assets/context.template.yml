@@ -29,6 +29,15 @@ description: TODO
 use_when: TODO
 avoid_when: TODO
 
+# Optional. The language the localized skill's output should be written in,
+# one BCP 47 tag (en, es, pt-BR). Fill this with the language this skill's
+# body is actually written in — its civic.language, if the frontmatter names
+# one. An adopter may change it later; you are recording a default, not
+# asking a question. Delete the line instead of filling it if you would
+# rather leave it unset — the localized skill then answers in its own
+# language.
+language: TODO
+
 # Facts about one organization. Each appears in the skill body as {{key}}.
 #
 # `exact: true`  — consumed by machinery; one right answer. A field name, an

@@ -153,6 +153,12 @@ organization. Remove `context.template.yml` from the skill directory. What ships
 should look like a skill someone wrote for this organization, because that is
 now what it is.
 
+If the context's `language` key is set, add or update an explicit instruction
+in the skill body that it must produce its output in that language — the
+skill's own text is not translated, only what it is told to answer in. If
+`language` is absent, change nothing: the skill already answers in its own
+language, and that is a decision already made, not a gap to fill.
+
 **7. Write the record.** `<org>.context.yml` with every value and where it came
 from — profile, derived, asked, defaulted. `<org>.profile.yml` updated with
 anything org-wide, so the next skill starts most of the way filled.
@@ -174,6 +180,9 @@ never confirmed is worse than one that is obviously unfinished.
   organization's own systems. None was inferred and written silently.
 - `description`, `civic.use-when` and `civic.avoid-when` name the organization
   and would fire on a local request.
+- If the context set `language`, the skill body says explicitly to produce
+  output in that language. If `language` was absent, nothing was changed —
+  absent is not a mismatch, just an unset default.
 - The skill runs without reading any context file.
 - `LOCALIZE-NOTES.md` lists every unconfirmed or defaulted value, and the
   adopter has seen that list.
