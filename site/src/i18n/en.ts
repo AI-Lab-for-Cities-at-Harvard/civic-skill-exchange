@@ -390,6 +390,156 @@ export const en = {
     },
   },
 
+  /** One skill's own page. */
+  detail: {
+    breadcrumb: "Breadcrumb",
+    catalog: "Catalog",
+    maintainedBy: (who: string) => `Maintained by ${who}`,
+
+    /** Flow 2 on #24, shown only where the fields are actually absent — so it
+     *  is an offer to the maintainer rather than chrome on every listing. */
+    nudge: "This listing does not say when the skill fits and when it does not.",
+    nudgeCta: "Maintain it? Add that",
+
+    fit: {
+      heading: "When to use this",
+      caveat:
+        "Written by whoever submitted the skill, about their own work. Nobody " +
+        "has checked it against what the skill actually does.",
+      use: "Use it when",
+      avoid: "Don’t use it when",
+    },
+
+    tools: {
+      heading: "What it can do",
+      /** The grant is the most security-relevant thing on the page, so the
+       *  sentence that says it happens without asking carries the emphasis. */
+      caveat:
+        "These tools are granted **without prompting you** when the skill is " +
+        "invoked, and the grant is not gated by workspace trust. Check that " +
+        "each one is necessary for what the skill claims to do.",
+      none: "No tools declared.",
+    },
+
+    structure: {
+      heading: "What is in it",
+      caveat:
+        "Files under `scripts/`, and `.mcp.json` where a skill declares MCP " +
+        "servers, are **executed by the agent**, not read by the model. Read " +
+        "them before you run this skill — the descriptions above tell you " +
+        "what it claims to do, and only the code tells you what it does.",
+      /** The tag on a file the agent runs rather than reads. */
+      executed: "executed",
+      source: "Read the source on GitHub",
+    },
+
+    /** The facts panel. Each `dt` is two words because the column is narrow;
+     *  where a fact needs a caveat, the caveat is its own entry. */
+    facts: {
+      heading: "At a glance",
+      category: "Category",
+      categories: "Categories",
+      scope: "Level",
+      scopes: "Levels",
+      jurisdiction: "Written for",
+      localization: "Portability",
+      /** The declared language, and separately the author's claim about what
+       *  they tried it in. Never merged: the reviewer's verified list lives on
+       *  the attestation in registry/reviewed.yml, and a reader who cannot tell
+       *  the two apart will over-trust the claim. ADR 0004. */
+      language: "Written in",
+      languagesTested: "Author reports testing in",
+      languagesTestedNote:
+        "Self-reported. Nobody has run it in these languages on our behalf.",
+      verifiedLanguages: "Verified in review",
+      verifiedLanguagesNote: (reviewers: string) =>
+        `Confirmed by ${reviewers} against this exact commit.`,
+      /** Where the ledger names nobody. */
+      someReviewer: "the reviewer",
+      sensitivity: "Data",
+      humanReview: "Affects people",
+      license: "License",
+      compatibility: "Requires",
+      commit: "Commit",
+      source: "Copied from",
+    },
+
+    /** Longer than `vocabulary.humanReview`, because this is the one place with
+     *  room to say what the answer means for the person on the other end. */
+    humanReview: {
+      none: "Output does not affect any individual's rights, benefits or standing.",
+      "advisory-only": "Informs a person. Does not determine anything on its own.",
+      "decision-support": "Feeds a determination someone acts on. Review its output.",
+    },
+
+    provenance: {
+      heading: "Where it has been used",
+      note: "Self-reported by the submitter.",
+      deployment: "Use",
+      at: "At",
+      in: "In",
+      since: "Since",
+    },
+  },
+
+  /** The panel beside the skill, where somebody is about to act.
+   *
+   *  The disclaimer sits here rather than in a footer for that reason: a
+   *  Community listing is not an endorsement, and the place to say so is next
+   *  to the button. */
+  download: {
+    heading: "Use this skill",
+
+    community:
+      "**Nobody has reviewed this skill.** It passed automated structural and " +
+      "signature checks, which can only ever reject — a pass is not a " +
+      "statement that it is safe. Read the source on GitHub before you run it, " +
+      "particularly anything under `scripts/`.",
+
+    /** `selfReviewed` is a Lab-authored skill in the Reviewed tier. Under one
+     *  reviewer the Lab can be both author and reviewer, and the sentence that
+     *  makes the review claim is the sentence that has to say so. */
+    reviewed: (reviewers: string, date: string, selfReviewed: boolean) =>
+      `**Reviewed${selfReviewed ? " — by its own author" : ""}.** ` +
+      `${reviewers} read this exact commit against the published checklist` +
+      `${date ? ` on ${date}` : ""}. That is a statement about this content, ` +
+      "not a warranty." +
+      (selfReviewed
+        ? " The AI Lab for Cities wrote and reviewed this skill. Nobody " +
+          "outside the Lab has read it."
+        : ""),
+
+    /** First, and deliberately. degit needs Node and clone needs git; the
+     *  archive is the only path open to somebody with a browser and nothing
+     *  else. `size` is already formatted. */
+    archive: (size: string) => `Download the skill (${size})`,
+    archiveNote:
+      "A zip of this folder. Upload it wherever your agent tool takes skills " +
+      "— no git, no command line.",
+
+    /** The registry is a Claude Code plugin marketplace (#73), which is the
+     *  shortest path in and needs no knowledge of where a tool keeps its
+     *  skills. The commands themselves are not prose. */
+    commands: {
+      marketplace: "Add the marketplace, once",
+      install: "Install it",
+      degit: "Just this skill",
+      clone: "The whole registry",
+    },
+    copy: "Copy",
+    copied: "Copied",
+
+    formatNote:
+      "In Claude Code the two `/plugin` lines are all you need. Skills here " +
+      "follow the open [Agent Skills](spec) format, so they also work in " +
+      "ChatGPT, Codex, Gemini CLI, Copilot, Cursor and others — those take a " +
+      "skill at a time, so use the download above.",
+    pathsNote:
+      "Install paths differ across agent tools — `.claude/skills/`, " +
+      "`.agents/skills/`, and others. Check your tool's docs for where it looks.",
+    github: "View on GitHub",
+  },
+
   /** When a skill arrived, when it last changed, and the version its author
    *  claims (#77).
    *

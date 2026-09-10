@@ -3,28 +3,24 @@ import { DownloadBox } from "./DownloadBox";
 import { History } from "./History";
 import { categoriesOf, scopesOf } from "../lib/filter";
 import { TierBadge, LabBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
-import {
-  label, CATEGORY_LABELS, SCOPE_LABELS, SENSITIVITY_LABELS,
-  DEPLOYMENT_LABELS, LOCALIZATION_LABELS, LANGUAGE_LABELS,
-} from "../lib/labels";
+import { rich } from "../i18n/rich";
+import { useStrings } from "../i18n/strings";
+import { label } from "../lib/labels";
 import { addFieldsHref } from "../lib/route";
 import { bytes } from "../lib/format";
 import type { SkillDetail as Detail } from "../lib/types";
 
-const HUMAN_REVIEW_NOTE: Record<string, string> = {
-  none: "Output does not affect any individual's rights, benefits or standing.",
-  "advisory-only": "Informs a person. Does not determine anything on its own.",
-  "decision-support": "Feeds a determination someone acts on. Review its output.",
-};
-
 export function SkillDetail({ namespace, name }: { namespace: string; name: string }) {
+  const s = useStrings();
   // Keyed by the skill being viewed rather than reset on navigation: clearing
   // state synchronously inside the effect would cascade an extra render, and
   // deriving staleness gives the same loading behaviour for free.
   const key = `${namespace}/${name}`;
+  // `missing` records that the fetch failed, not what to say about it: the
+  // wording is read at render time, so it follows the locale the reader is on.
   const [loaded, setLoaded] = useState<{
-    key: string; detail: Detail | null; error: string | null;
-  }>({ key: "", detail: null, error: null });
+    key: string; detail: Detail | null; missing: boolean;
+  }>({ key: "", detail: null, missing: false });
 
   useEffect(() => {
     let cancelled = false;
@@ -36,33 +32,40 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
         if (!r.ok) throw new Error(String(r.status));
         return r.json() as Promise<Detail>;
       })
-      .then((d) => { if (!cancelled) setLoaded({ key, detail: d, error: null }); })
+      .then((d) => { if (!cancelled) setLoaded({ key, detail: d, missing: false }); })
       .catch(() => {
-        if (!cancelled) {
-          setLoaded({ key, detail: null, error: `No skill called ${key} is listed here.` });
-        }
+        if (!cancelled) setLoaded({ key, detail: null, missing: true });
       });
     return () => { cancelled = true; };
   }, [key, namespace, name]);
 
   const fresh = loaded.key === key;
   const detail = fresh ? loaded.detail : null;
-  const error = fresh ? loaded.error : null;
+  const missing = fresh && loaded.missing;
 
-  if (error) {
+  if (missing) {
     return (
       <div className="page">
-        <p className="notice notice--error">{error}</p>
-        <p><a className="arrow-link" href="#/">Back to the catalog <span aria-hidden="true">→</span></a></p>
+        <p className="notice notice--error">{s.errors.noSuchSkill(key)}</p>
+        <p>
+          <a className="arrow-link" href="#/">
+            {s.errors.backToCatalog} <span aria-hidden="true">→</span>
+          </a>
+        </p>
       </div>
     );
   }
-  if (!detail) return <div className="page"><p className="notice">Loading…</p></div>;
+  if (!detail) return <div className="page"><p className="notice">{s.errors.loading}</p></div>;
+
+  const d = s.detail;
+  const reviewers = detail.reviewed?.reviewers.length
+    ? s.badges.tier.reviewers(detail.reviewed.reviewers)
+    : d.facts.someReviewer;
 
   return (
     <div className="page detail">
-      <nav className="crumbs" aria-label="Breadcrumb">
-        <a href="#/">Catalog</a>
+      <nav className="crumbs" aria-label={d.breadcrumb}>
+        <a href="#/">{d.catalog}</a>
         <span aria-hidden="true">/</span>
         <span>{detail.namespace}</span>
       </nav>
@@ -82,7 +85,7 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           {detail.description}
         </p>
         <p className="detail__maintainer">
-          Maintained by {detail.maintainer ?? "—"}
+          {d.maintainedBy(detail.maintainer ?? s.vocabulary.missing)}
         </p>
       </header>
 
@@ -93,34 +96,30 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                so it is an offer to the maintainer rather than chrome on every
                listing. */
             <p className="detail__nudge" data-testid="fit-nudge">
-              This listing does not say when the skill fits and when it does
-              not.{" "}
+              {d.nudge}{" "}
               <a className="arrow-link" href={addFieldsHref(detail.namespace, detail.name)}>
-                Maintain it? Add that <span aria-hidden="true">&rarr;</span>
+                {d.nudgeCta} <span aria-hidden="true">&rarr;</span>
               </a>
             </p>
           )}
 
           {(detail.use_when || detail.avoid_when) && (
             <section aria-labelledby="fit-heading" className="detail__section">
-              <h2 className="h2" id="fit-heading">When to use this</h2>
-              <p>
-                Written by whoever submitted the skill, about their own work.
-                Nobody has checked it against what the skill actually does.
-              </p>
+              <h2 className="h2" id="fit-heading">{d.fit.heading}</h2>
+              <p>{d.fit.caveat}</p>
               {/* The author's own prose, in the listing's language — the same
                   reason the description is marked. On the list, so both items
                   inherit it. */}
               <dl className="fit" lang={detail.language ?? undefined}>
                 {detail.use_when && (
                   <div className="fit__item">
-                    <dt>Use it when</dt>
+                    <dt>{d.fit.use}</dt>
                     <dd>{detail.use_when}</dd>
                   </div>
                 )}
                 {detail.avoid_when && (
                   <div className="fit__item fit__item--avoid">
-                    <dt>Don&rsquo;t use it when</dt>
+                    <dt>{d.fit.avoid}</dt>
                     <dd>{detail.avoid_when}</dd>
                   </div>
                 )}
@@ -129,15 +128,11 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           )}
 
           <section aria-labelledby="tools-heading" className="detail__section">
-            <h2 className="h2" id="tools-heading">What it can do</h2>
-            <p>
-              These tools are granted <strong>without prompting you</strong> when
-              the skill is invoked, and the grant is not gated by workspace trust.
-              Check that each one is necessary for what the skill claims to do.
-            </p>
+            <h2 className="h2" id="tools-heading">{d.tools.heading}</h2>
+            <p>{rich(d.tools.caveat)}</p>
             <ul className="tools">
               {detail.allowed_tools.length === 0 ? (
-                <li className="tools__none">No tools declared.</li>
+                <li className="tools__none">{d.tools.none}</li>
               ) : (
                 detail.allowed_tools.map((t) => <li key={t}><code>{t}</code></li>)
               )}
@@ -145,20 +140,14 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           </section>
 
           <section aria-labelledby="structure-heading" className="detail__section">
-            <h2 className="h2" id="structure-heading">What is in it</h2>
-            <p>
-              Files under <code>scripts/</code>, and <code>.mcp.json</code> where
-              a skill declares MCP servers, are <strong>executed by the
-              agent</strong>, not read by the model. Read them before you run this
-              skill — the descriptions above tell you what it claims to do, and
-              only the code tells you what it does.
-            </p>
+            <h2 className="h2" id="structure-heading">{d.structure.heading}</h2>
+            <p>{rich(d.structure.caveat)}</p>
 
             <ul className="tree">
               {detail.files.map((f) => (
                 <li className={f.executed ? "tree__item tree__item--exec" : "tree__item"} key={f.path}>
                   <code className="tree__path">{f.path}</code>
-                  {f.executed && <span className="tree__tag">executed</span>}
+                  {f.executed && <span className="tree__tag">{d.structure.executed}</span>}
                   <span className="tree__size">{bytes(f.size)}</span>
                 </li>
               ))}
@@ -166,7 +155,7 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
 
             <p>
               <a className="arrow-link" href={detail.download}>
-                Read the source on GitHub <span aria-hidden="true">&rarr;</span>
+                {d.structure.source} <span aria-hidden="true">&rarr;</span>
               </a>
             </p>
           </section>
@@ -176,24 +165,29 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           <DownloadBox skill={detail} />
 
           <section className="facts" aria-labelledby="facts-heading">
-            <h2 className="h3" id="facts-heading">At a glance</h2>
+            <h2 className="h3" id="facts-heading">{d.facts.heading}</h2>
             <dl>
               <div>
-                <dt>{detail.category_secondary ? "Categories" : "Category"}</dt>
-                <dd>{categoriesOf(detail).map((c) => label(CATEGORY_LABELS, c)).join(" · ") || "—"}</dd>
+                <dt>{detail.category_secondary ? d.facts.categories : d.facts.category}</dt>
+                <dd>{categoriesOf(detail).map((c) => label(s.vocabulary.category, c)).join(" · ")
+                  || s.vocabulary.missing}</dd>
               </div>
               <div>
-                <dt>{detail.scope_secondary ? "Levels" : "Level"}</dt>
-                <dd>{scopesOf(detail).map((v) => label(SCOPE_LABELS, v)).join(" · ") || "—"}</dd>
+                <dt>{detail.scope_secondary ? d.facts.scopes : d.facts.scope}</dt>
+                <dd>{scopesOf(detail).map((v) => label(s.vocabulary.scope, v)).join(" · ")
+                  || s.vocabulary.missing}</dd>
               </div>
               {detail.jurisdiction && (
                 <div>
-                  <dt>Written for</dt>
+                  <dt>{d.facts.jurisdiction}</dt>
                   <dd>{detail.jurisdiction}</dd>
                 </div>
               )}
               {detail.localization && (
-                <div><dt>Portability</dt><dd>{label(LOCALIZATION_LABELS, detail.localization)}</dd></div>
+                <div>
+                  <dt>{d.facts.localization}</dt>
+                  <dd>{label(s.vocabulary.localization, detail.localization)}</dd>
+                </div>
               )}
               {/* The declared language, and separately the author's claim about
                   what they tried it in. Never merged: the reviewer's verified
@@ -201,17 +195,16 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                   reader who cannot tell the two apart will over-trust the
                   claim. ADR 0004. */}
               <div>
-                <dt>Written in</dt>
-                <dd>{label(LANGUAGE_LABELS, detail.language)}</dd>
+                <dt>{d.facts.language}</dt>
+                <dd>{label(s.vocabulary.language, detail.language)}</dd>
               </div>
               {detail.languages_tested && detail.languages_tested.length > 0 && (
                 <div data-testid="languages-tested">
-                  <dt>Author reports testing in</dt>
+                  <dt>{d.facts.languagesTested}</dt>
                   <dd>
                     {detail.languages_tested.join(", ")}
                     <span className="facts__note">
-                      {" "}Self-reported. Nobody has run it in these languages
-                      on our behalf.
+                      {" "}{d.facts.languagesTestedNote}
                     </span>
                   </dd>
                 </div>
@@ -223,34 +216,47 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
               {detail.tier === "reviewed" &&
                 detail.verified_languages && detail.verified_languages.length > 0 && (
                 <div data-testid="verified-languages">
-                  <dt>Verified in review</dt>
+                  <dt>{d.facts.verifiedLanguages}</dt>
                   <dd>
                     {detail.verified_languages.join(", ")}
                     <span className="facts__note">
-                      {" "}Confirmed by {detail.reviewed?.reviewers.join(" and ")
-                        ?? "the reviewer"} against this exact commit.
+                      {" "}{d.facts.verifiedLanguagesNote(reviewers)}
                     </span>
                   </dd>
                 </div>
               )}
-              <div><dt>Data</dt><dd>{label(SENSITIVITY_LABELS, detail.data_sensitivity)}</dd></div>
               <div>
-                <dt>Affects people</dt>
-                <dd>{HUMAN_REVIEW_NOTE[detail.human_review ?? ""] ?? "—"}</dd>
+                <dt>{d.facts.sensitivity}</dt>
+                <dd>{label(s.vocabulary.sensitivity, detail.data_sensitivity)}</dd>
               </div>
-              <div><dt>License</dt><dd>{detail.license ?? "—"}</dd></div>
+              <div>
+                <dt>{d.facts.humanReview}</dt>
+                <dd>{d.humanReview[
+                  (detail.human_review ?? "") as keyof typeof d.humanReview
+                ] ?? s.vocabulary.missing}</dd>
+              </div>
+              <div>
+                <dt>{d.facts.license}</dt>
+                <dd>{detail.license ?? s.vocabulary.missing}</dd>
+              </div>
               {detail.compatibility && (
-                <div><dt>Requires</dt><dd>{detail.compatibility}</dd></div>
+                <div>
+                  <dt>{d.facts.compatibility}</dt>
+                  <dd>{detail.compatibility}</dd>
+                </div>
               )}
               {detail.sha && (
-                <div><dt>Commit</dt><dd className="mono">{detail.sha.slice(0, 12)}</dd></div>
+                <div>
+                  <dt>{d.facts.commit}</dt>
+                  <dd className="mono">{detail.sha.slice(0, 12)}</dd>
+                </div>
               )}
               {detail.source && (
                 /* Where the copy came from. The registry holds the content —
                    this is provenance, and the listing does not depend on that
                    repository still existing. */
                 <div data-testid="source">
-                  <dt>Copied from</dt>
+                  <dt>{d.facts.source}</dt>
                   <dd>
                     <a href={`https://github.com/${detail.source.repo}${
                       detail.source.commit ? `/tree/${detail.source.commit}` : ""
@@ -269,21 +275,21 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           <History history={detail.history} version={detail.version} />
 
           <section className="facts" aria-labelledby="prov-heading">
-            <h2 className="h3" id="prov-heading">Where it has been used</h2>
-            <p className="facts__note">Self-reported by the submitter.</p>
+            <h2 className="h3" id="prov-heading">{d.provenance.heading}</h2>
+            <p className="facts__note">{d.provenance.note}</p>
             <dl>
               <div>
-                <dt>Use</dt>
-                <dd>{label(DEPLOYMENT_LABELS, detail.provenance.deployment)}</dd>
+                <dt>{d.provenance.deployment}</dt>
+                <dd>{label(s.vocabulary.deployment, detail.provenance.deployment)}</dd>
               </div>
               {detail.provenance.deployed_at && (
-                <div><dt>At</dt><dd>{detail.provenance.deployed_at}</dd></div>
+                <div><dt>{d.provenance.at}</dt><dd>{detail.provenance.deployed_at}</dd></div>
               )}
               {detail.provenance.deployed_in && (
-                <div><dt>In</dt><dd>{detail.provenance.deployed_in}</dd></div>
+                <div><dt>{d.provenance.in}</dt><dd>{detail.provenance.deployed_in}</dd></div>
               )}
               {detail.provenance.deployed_since && (
-                <div><dt>Since</dt><dd>{detail.provenance.deployed_since}</dd></div>
+                <div><dt>{d.provenance.since}</dt><dd>{detail.provenance.deployed_since}</dd></div>
               )}
             </dl>
           </section>

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
+import { rich } from "../i18n/rich";
+import { useStrings } from "../i18n/strings";
 import { bytes } from "../lib/format";
 import type { SkillDetail } from "../lib/types";
 
@@ -7,6 +9,7 @@ import type { SkillDetail } from "../lib/types";
  *  someone is about to act. A Community listing is not an endorsement, and the
  *  place to say so is next to the button. */
 export function DownloadBox({ skill }: { skill: SkillDetail }) {
+  const s = useStrings();
   const [copied, setCopied] = useState<string | null>(null);
 
   // Derived, not declared. `civic-skills` is the Lab's seeded namespace and is
@@ -29,22 +32,22 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
   const commands = [
     {
       id: "marketplace",
-      label: "Add the marketplace, once",
+      label: s.download.commands.marketplace,
       value: `/plugin marketplace add ${repo}`,
     },
     {
       id: "install",
-      label: "Install it",
+      label: s.download.commands.install,
       value: `/plugin install ${skill.namespace}-${skill.name}@${marketplace}`,
     },
     {
       id: "degit",
-      label: "Just this skill",
+      label: s.download.commands.degit,
       value: `npx degit ${repo}/${skill.path} ${skill.name}`,
     },
     {
       id: "clone",
-      label: "The whole registry",
+      label: s.download.commands.clone,
       value: `git clone https://github.com/${repo}.git`,
     },
   ];
@@ -62,28 +65,17 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
 
   return (
     <section className="download" aria-labelledby="download-heading">
-      <h2 className="h3" id="download-heading">Use this skill</h2>
+      <h2 className="h3" id="download-heading">{s.download.heading}</h2>
 
       {skill.tier === "community" ? (
-        <p className="download__warn">
-          <strong>Nobody has reviewed this skill.</strong> It passed automated
-          structural and signature checks, which can only ever reject — a pass is
-          not a statement that it is safe. Read the source on GitHub before you
-          run it, particularly anything under <code>scripts/</code>.
-        </p>
+        <p className="download__warn">{rich(s.download.community)}</p>
       ) : (
         <p className="download__ok">
-          <strong>Reviewed{selfReviewed ? " — by its own author" : ""}.</strong>{" "}
-          {skill.reviewed?.reviewers.join(" and ")} read this exact commit
-          against the published checklist
-          {skill.reviewed?.date ? ` on ${skill.reviewed.date}` : ""}. That is a
-          statement about this content, not a warranty.
-          {selfReviewed && (
-            <>
-              {" "}The AI Lab for Cities wrote and reviewed this skill. Nobody
-              outside the Lab has read it.
-            </>
-          )}
+          {rich(s.download.reviewed(
+            s.badges.tier.reviewers(skill.reviewed?.reviewers ?? []),
+            skill.reviewed?.date ?? "",
+            selfReviewed,
+          ))}
         </p>
       )}
 
@@ -96,12 +88,9 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
             href={`${import.meta.env.BASE_URL}${skill.archive.path}`}
             download={`${skill.name}.zip`}
           >
-            Download the skill ({bytes(skill.archive.size)})
+            {s.download.archive(bytes(skill.archive.size))}
           </a>
-          <span>
-            A zip of this folder. Upload it wherever your agent tool takes
-            skills — no git, no command line.
-          </span>
+          <span>{s.download.archiveNote}</span>
         </p>
       )}
 
@@ -110,28 +99,20 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
           <span className="download__cmd-label">{c.label}</span>
           <code>{c.value}</code>
           <button className="btn btn--subtle" onClick={() => copy(c.id, c.value)}>
-            {copied === c.id ? "Copied" : "Copy"}
+            {copied === c.id ? s.download.copied : s.download.copy}
           </button>
         </div>
       ))}
 
       <p className="download__note">
-        In Claude Code the two <code>/plugin</code> lines are all you need. Skills
-        here follow the open{" "}
-        <a href="https://agentskills.io">Agent Skills</a> format, so they also
-        work in ChatGPT, Codex, Gemini CLI, Copilot, Cursor and others — those
-        take a skill at a time, so use the download above.
+        {rich(s.download.formatNote, { spec: "https://agentskills.io" })}
       </p>
 
-      <p className="download__note">
-        Install paths differ across agent tools — <code>.claude/skills/</code>,{" "}
-        <code>.agents/skills/</code>, and others. Check your tool's docs for
-        where it looks.
-      </p>
+      <p className="download__note">{rich(s.download.pathsNote)}</p>
 
       <p className="download__note">
         <a className="arrow-link" href={skill.download}>
-          View on GitHub <span aria-hidden="true">→</span>
+          {s.download.github} <span aria-hidden="true">→</span>
         </a>
       </p>
     </section>
