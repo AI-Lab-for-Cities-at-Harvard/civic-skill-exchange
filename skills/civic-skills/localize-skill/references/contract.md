@@ -69,6 +69,12 @@ able to say what changed, or it can only report that something did.
 Add one entry per bump, saying what a reader must do differently — not what
 changed in the abstract.
 
+No entry above mentions `language` (#148), and none should: it is optional,
+adding an optional key is not a bump, and `contract_version` stays `1`. A
+`localize-skill` old enough to have never heard of `language` simply does not
+look for it and produces output in the source language — the correct
+behaviour for a reader that predates the key, not a mismatch to detect.
+
 ## Two files, not one
 
 `generalize` writes two context files from the same template:
@@ -105,6 +111,8 @@ description: >
   analysis, communication, benchmarking and performance management.
 use_when: "Analysing Boston city data, services or performance."
 avoid_when: "Not for jurisdictions other than Boston without re-localizing."
+language: en                    # optional — the language localized output
+                                # should be written in
 
 slots:
   open_date_field:
@@ -153,6 +161,35 @@ judgment, not a lookup, so say it aloud rather than checking it.
 skill body, by an agent deciding whether to invoke it at all. They cannot carry
 a placeholder, so they are named separately rather than hidden in a list a
 filler might treat uniformly.
+
+## `language` is optional — the one top-level key that may be absent
+
+Everything above it is required: an agent has to have `jurisdiction`,
+`description`, `use_when` and `avoid_when` before it can decide whether to
+invoke the skill at all. `language` answers a different question — what
+language the localized skill's **output** should be written in, one BCP 47 tag
+(`en`, `es`, `pt-BR`) — and plenty of adopters have no opinion about that.
+
+**Present** means the localized skill answers in that language, whatever
+language its own body happens to be written in. That is deliberately a
+separate fact from the skill's own `civic.language` metadata: a skill can stay
+written in English while it is told to produce output in Spanish for a
+Spanish-speaking city.
+
+**Absent** means no opinion was recorded, not an unfilled question. The
+localized skill answers in its own language, the one its `civic.language`
+already names. Absent does not carry `TODO` — the key is simply not written —
+because unlike a real slot, there is nothing wrong with never answering it.
+
+`generalize` writes it once, with the source skill's own language as the
+default: usually its `civic.language`, or whatever the body is actually
+written in if the frontmatter names none. That default is something the
+adopter may change, not a fact carried over the way `jurisdiction` is — writing
+it is recording a starting point, not asking a question.
+
+`localize` produces output in this language when it is set, and in the source
+skill's language when it is not. Adding this key did not bump
+`contract_version`; see the changelog below.
 
 ## Why comparators are separate from slots
 
