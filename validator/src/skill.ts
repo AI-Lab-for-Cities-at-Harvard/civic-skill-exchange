@@ -150,6 +150,19 @@ export interface ChangedOwnership {
  *  CODEOWNER-gated maintainers list and passes `--maintainer`. Keeping that
  *  decision out of here also keeps an access-control list out of a module the
  *  submission page runs in the browser. */
+/** Which author the per-skill check in checkFrontmatter should see (#176).
+ *
+ *  That check fails a skill whose namespace differs from the author, which is
+ *  right for a contributor and wrong for a maintainer migrating or editing a
+ *  listing in somebody else's namespace — the same case checkChangedOwnership
+ *  exempts. The local `npm run check` passes no author and skips the check;
+ *  a resolved maintainer runs the same way, so the two ownership checks agree. */
+export function authorForSkillCheck(
+  author: string | undefined, maintainer: boolean,
+): string | undefined {
+  return maintainer ? undefined : author;
+}
+
 export function checkChangedOwnership(
   paths: string[], { author, maintainer = false }: ChangedOwnership,
 ): Finding[] {

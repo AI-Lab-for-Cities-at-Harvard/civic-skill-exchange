@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { checkChangedOwnership } from "./skill";
+import { checkChangedOwnership, authorForSkillCheck } from "./skill";
 
 const messages = (paths: string[], author?: string, maintainer = false) =>
   checkChangedOwnership(paths, { author, maintainer })
@@ -126,5 +126,24 @@ describe("checkChangedOwnership is exact-case on the namespace", () => {
 
   it("does not treat a differently-cased reserved namespace as reserved", () => {
     expect(messages(["skills/Civic-Skills/one/SKILL.md"], "alice")).toHaveLength(1);
+  });
+});
+
+/** The exemption has to reach both ownership checks (#176). The path-level
+ *  check above takes `maintainer` directly; the per-skill check in
+ *  checkFrontmatter takes an author and fails a namespace that differs from
+ *  it, so for a maintainer it has to see no author at all — which is exactly
+ *  how the local `npm run check` already runs. */
+describe("authorForSkillCheck", () => {
+  it("hands the per-skill check the pull request author when not a maintainer", () => {
+    expect(authorForSkillCheck("alice", false)).toBe("alice");
+  });
+
+  it("hands it no author when the workflow resolved a maintainer", () => {
+    expect(authorForSkillCheck("sgarcese-hbs", true)).toBeUndefined();
+  });
+
+  it("is a no-op locally, where there is no author to begin with", () => {
+    expect(authorForSkillCheck(undefined, false)).toBeUndefined();
   });
 });
