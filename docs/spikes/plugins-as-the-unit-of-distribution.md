@@ -52,14 +52,18 @@ two formats can coexist in one directory without collision. Whether Claude
 Code reads a root `plugin.json` is not confirmed; its validator did not treat
 one as a manifest.
 
-**3. The desktop error is not yet attributed.** The desktop app reads the same
-marketplaces from the same configuration, and no document says it validates
-`plugin.json` more strictly than the CLI. Three closed Claude Code issues
-(#39897, #64763, #39400) reproduce "could not load skill files" and "this
-plugin has no skills" for marketplace plugins with textbook layouts, including
-Anthropic's own, working fine in the CLI. A missing `plugin.json` is a
-hypothesis. The literal error text would settle it, and it is the cheapest
-next step.
+**3. The desktop symptom is silence, not an error.** The owner reports that
+Codex lists and loads every skill, that the Claude desktop app's plugin browser
+shows nothing from this marketplace, and that it reports no error. The desktop
+assistant, asked to inspect the repository, attributed it to the missing
+`plugin.json` structure. That is a plausible reading, not a confirmed cause:
+the desktop app reads the same marketplaces from the same configuration, no
+document says it validates manifests more strictly than the CLI, and three
+closed Claude Code issues (#39897, #64763, #39400) reproduce empty or broken
+plugin lists for marketplace plugins with textbook layouts, including
+Anthropic's own, working fine in the CLI. The cheapest way to settle it is the
+experiment in option A: generate `.claude-plugin/plugin.json` beside each
+`SKILL.md` on a branch and point the desktop app at it.
 
 So the decision is not "Claude broke us". It is "a cross-vendor standard has
 arrived that our shape does not satisfy, Codex has adopted it, and we have few
@@ -92,8 +96,8 @@ but worth designing away.
 
 Generate a Claude manifest beside the root `SKILL.md`, as `.codex-plugin/`
 already is. Validated: with `name` alone it passes; `version` and `author`
-survive `--strict`. Fixes the desktop error if, and only if, the missing
-manifest is its cause. Does nothing for Agent Plugins, and leaves Codex on its
+survive `--strict`. Fixes the desktop app if, and only if, the missing
+manifest is its cause, which the branch that implements it will show. Does nothing for Agent Plugins, and leaves Codex on its
 fallback path. One more generated file per skill directory.
 
 ### B. Plugin per skill, Agent Plugins layout
