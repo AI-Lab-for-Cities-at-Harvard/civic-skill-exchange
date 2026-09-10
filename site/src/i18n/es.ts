@@ -47,6 +47,7 @@
  *  ==========================================================
  */
 
+import { locale } from "./locale";
 import type { Strings } from "./strings";
 
 /** A select's or a radio group's choices, as `[value, label]`. */
@@ -186,7 +187,7 @@ export const strings: Strings = {
         `[es] Catalog generated ${generated} · ` +
         "[Source and submissions on GitHub](repo) · [About this project](about)",
 
-      date: (iso: string) => new Date(iso).toLocaleDateString(),
+      date: (iso: string) => new Date(iso).toLocaleDateString(locale()),
     },
   },
 
@@ -1189,7 +1190,7 @@ export const strings: Strings = {
     heading: "[es] Version and history",
 
     when: (iso: string) => new Date(iso).toLocaleDateString(
-      "en-US", { month: "long", year: "numeric", timeZone: "UTC" }),
+      locale(), { month: "long", year: "numeric", timeZone: "UTC" }),
     version: "[es] Version",
     versionAside:
       "[es] — the author’s own number for it. Self-reported, and not checked " +
