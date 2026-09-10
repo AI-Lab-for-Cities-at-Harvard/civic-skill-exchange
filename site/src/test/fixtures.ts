@@ -27,6 +27,7 @@ export function makeSkill(over: Partial<Skill> = {}): Skill {
     localization: null,
     language: "en",
     languages_tested: null,
+    verified_languages: null,
     data_sensitivity: "none",
     human_review: "none",
     use_when: null,

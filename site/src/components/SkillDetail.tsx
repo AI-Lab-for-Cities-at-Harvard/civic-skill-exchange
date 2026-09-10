@@ -216,6 +216,23 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                   </dd>
                 </div>
               )}
+              {/* The reviewer's verified list — never merged with the claim
+                  above. Only ever present on a Reviewed listing, so the tier
+                  check is belt-and-braces alongside build_index's own
+                  derivation. ADR 0004 ruling 2. */}
+              {detail.tier === "reviewed" &&
+                detail.verified_languages && detail.verified_languages.length > 0 && (
+                <div data-testid="verified-languages">
+                  <dt>Verified in review</dt>
+                  <dd>
+                    {detail.verified_languages.join(", ")}
+                    <span className="facts__note">
+                      {" "}Confirmed by {detail.reviewed?.reviewers.join(" and ")
+                        ?? "the reviewer"} against this exact commit.
+                    </span>
+                  </dd>
+                </div>
+              )}
               <div><dt>Data</dt><dd>{label(SENSITIVITY_LABELS, detail.data_sensitivity)}</dd></div>
               <div>
                 <dt>Affects people</dt>

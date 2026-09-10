@@ -56,6 +56,14 @@ export interface Skill {
   reviewed?: { date: string; expires: string; reviewers: string[]; notes: string };
   /** Set when a Reviewed attestation no longer matches the current commit. */
   drift?: boolean;
+  /** The languages a reviewer actually verified, from `languages:` on the
+   *  attestation in registry/reviewed.yml — never from frontmatter. Present
+   *  only under the same condition as `tier: "reviewed"`: a stale, expired, or
+   *  unresolvable attestation yields null here too, never a stale claim.
+   *  Null also when a current attestation simply names no languages. Distinct
+   *  from `languages_tested`, which is the author's self-reported claim — the
+   *  two are never merged. ADR 0004. */
+  verified_languages: string[] | null;
   sha: string | null;
   /** The author's own claim about their version. See #77. */
   version: string | null;

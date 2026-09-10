@@ -11,6 +11,7 @@ import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { makeSkill } from "../test/fixtures";
 import { SkillDetail } from "./SkillDetail";
+import { findViolations, describeViolations } from "../test/axe";
 import type { SkillDetail as Detail } from "../lib/types";
 
 const detail = (over: Partial<Detail> = {}): Detail => ({
@@ -106,5 +107,67 @@ describe("the detail page says what language the listing is in", () => {
     render(<SkillDetail namespace="ns" name="example-skill" />);
     await screen.findByRole("region", { name: /at a glance/i });
     expect(screen.queryByTestId("languages-tested")).not.toBeInTheDocument();
+  });
+});
+
+/** The languages a reviewer verified, separate from the author's claim (#146).
+ *  "Verified in Spanish" can only honestly come from the reviewer, and it
+ *  lives on the attestation in registry/reviewed.yml — never in frontmatter.
+ *  ADR 0004 ruling 2 requires the two never be merged into one badge. */
+describe("the detail page says which languages a reviewer verified", () => {
+  const reviewed = (over: Partial<Detail> = {}): Detail => detail({
+    tier: "reviewed",
+    reason: "attestation matches current content",
+    reviewed: {
+      date: "2026-09-02", expires: "2027-09-02",
+      reviewers: ["AI Lab for Cities at Harvard"], notes: "",
+    },
+    ...over,
+  });
+
+  it("shows the verified languages in their own element, separately labeled", async () => {
+    served(reviewed({ verified_languages: ["en", "es"], languages_tested: ["en", "es"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const verified = await screen.findByTestId("verified-languages");
+    const claim = screen.getByTestId("languages-tested");
+    expect(verified).not.toBe(claim);
+    expect(verified.textContent).toMatch(/verified/i);
+  });
+
+  it("names who verified it, from the attestation's reviewers", async () => {
+    served(reviewed({ verified_languages: ["en"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const verified = await screen.findByTestId("verified-languages");
+    expect(verified).toHaveTextContent("AI Lab for Cities at Harvard");
+  });
+
+  it("renders nothing when verified_languages is null on a reviewed listing", async () => {
+    served(reviewed({ verified_languages: null }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    await screen.findByRole("region", { name: /at a glance/i });
+    expect(screen.queryByTestId("verified-languages")).not.toBeInTheDocument();
+  });
+
+  it("renders nothing on a community listing, even if the field were set", async () => {
+    served(detail({ tier: "community", reason: "no review attestation",
+      verified_languages: ["en"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    await screen.findByRole("region", { name: /at a glance/i });
+    expect(screen.queryByTestId("verified-languages")).not.toBeInTheDocument();
+  });
+
+  it("keeps the claim's self-reported note even when a verification is shown", async () => {
+    served(reviewed({ verified_languages: ["en"], languages_tested: ["en", "es"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const claim = await screen.findByTestId("languages-tested");
+    expect(claim).toHaveTextContent(/self-reported/i);
+  });
+
+  it("has no axe violations with both the claim and the verification rendered", async () => {
+    served(reviewed({ verified_languages: ["en", "es"], languages_tested: ["en", "es"] }));
+    const { container } = render(<SkillDetail namespace="ns" name="example-skill" />);
+    await screen.findByTestId("verified-languages");
+    const violations = await findViolations(container);
+    expect(violations, describeViolations(violations)).toEqual([]);
   });
 });
