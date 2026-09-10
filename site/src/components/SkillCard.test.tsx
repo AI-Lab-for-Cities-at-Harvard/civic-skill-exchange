@@ -47,3 +47,18 @@ describe("SkillCard", () => {
     expect(cta).toHaveAttribute("href", "#/skill/ns/example-skill");
   });
 });
+
+/** A Spanish description on an English page has to be marked as Spanish, or a
+ *  screen reader reads it in an English voice (#145). The card renders the
+ *  description, so the card carries the attribute too. */
+describe("the card marks the language of what it renders", () => {
+  it("puts lang on the description", () => {
+    render(<SkillCard skill={makeSkill({ language: "es", description: "Una habilidad de ejemplo." })} />);
+    expect(screen.getByText("Una habilidad de ejemplo.")).toHaveAttribute("lang", "es");
+  });
+
+  it("leaves lang off when the listing declares no language", () => {
+    render(<SkillCard skill={makeSkill({ language: null, description: "No language declared." })} />);
+    expect(screen.getByText("No language declared.")).not.toHaveAttribute("lang");
+  });
+});
