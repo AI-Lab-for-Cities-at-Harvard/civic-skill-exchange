@@ -158,8 +158,17 @@ Comment on the review-request issue with that write-up, the SHA you reviewed and
   reviewers: ["AI Lab for Cities at Harvard"]
   reviewed: 2026-09-14
   expires: 2027-09-14
+  # languages: ["en", "es"]   # optional — BCP 47 tags you verified
   notes: "Read-only. No network egress. No PII handling."
 ```
+
+**`languages` is optional.** Leave it out and the listing means "the language
+it is written in, and no other" — nothing more was checked. When you fill it
+in, it is a verified list a reader can act on, in a way `civic.languages-tested`
+never can be: that field is the author's own claim, checked by nobody. What
+you should actually do to earn a language entry is not decided yet — see
+[ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md).
+This checklist does not change until that question is ruled.
 
 **The SHA is the attestation.** You are signing off on one exact commit, not on a skill name and not on a person. If the content changes, your attestation stops applying automatically and the skill drops back to Community. That is the mechanism working — you do not need to monitor anything.
 

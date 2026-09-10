@@ -42,8 +42,18 @@ This is the tier a city IT director can act on. It is a smaller claim than two r
   reviewers: ["AI Lab for Cities at Harvard"]     # the attesting party
   reviewed: 2026-09-14
   expires: 2027-09-14
+  # languages: ["en", "es"]   # optional — BCP 47 tags the reviewer actually verified
   notes: "Read-only. No network egress. No PII handling."
 ```
+
+`languages` is optional. Omitted means "the language the skill is written in,
+and no other" — nothing more was checked. When present, it is the reviewer's
+verified list, the same BCP 47 shape as `civic.language`, and it is the only
+honest source for "verified in Spanish": that claim cannot come from the
+author, because `civic.languages-tested` is self-reported and unverified by
+anyone. See [ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md)
+ruling 2. What a reviewer does to earn a language entry is still open — see
+that ADR's "Not decided."
 
 The build joins this ledger against the current tree and derives tier:
 
