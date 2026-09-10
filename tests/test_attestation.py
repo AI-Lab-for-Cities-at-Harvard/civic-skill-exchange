@@ -227,6 +227,68 @@ def test_every_attestation_pins_a_commit_that_touched_that_skill(entry: dict):
 
 
 # --------------------------------------------------------------------------- #
+# The optional `languages:` field (#146).
+#
+# "Verified in Spanish" can only honestly come from the reviewer, so it lives
+# here, never in frontmatter (ADR 0004 ruling 2). Same shape as civic.language:
+# a list of BCP 47 tags. Omitted means "the language it is written in, and no
+# other" — build_index derives that, this file only guards the shape of what a
+# reviewer actually typed.
+
+
+BASE_ENTRY = {
+    "skill": "ns/example",
+    "sha": "a" * 40,
+    "reviewers": ["AI Lab for Cities at Harvard"],
+    "reviewed": "2026-01-01",
+    "expires": "2027-01-01",
+    "notes": "Read-only.",
+}
+
+
+def _write_ledger(tmp_path: Path, monkeypatch, entry: dict) -> None:
+    registry = tmp_path / "registry"
+    registry.mkdir()
+    (registry / "reviewed.yml").write_text(
+        yaml.safe_dump({"attestations": [entry]}), encoding="utf-8")
+    monkeypatch.setattr(build_index, "ROOT", tmp_path)
+
+
+def test_languages_is_optional_on_an_attestation(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY))
+    loaded = build_index.load_attestations()
+    assert "languages" not in loaded["ns/example"]
+
+
+def test_languages_accepts_a_list_of_bcp47_tags(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages=["en", "es"]))
+    loaded = build_index.load_attestations()
+    assert loaded["ns/example"]["languages"] == ["en", "es"]
+
+
+def test_languages_rejects_a_bare_string(tmp_path, monkeypatch):
+    """`languages: es` parses as a string, not a one-item list — the same
+    mistake `civic.languages-tested` accepts on purpose and this must not."""
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages="es"))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()
+
+
+def test_languages_rejects_a_non_tag_entry(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages=["spanish"]))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()
+
+
+def test_languages_rejects_an_empty_list(tmp_path, monkeypatch):
+    """An empty list is a reviewer saying "some languages" without naming one —
+    reject it rather than publish a verification that verifies nothing."""
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages=[]))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()
+
+
+# --------------------------------------------------------------------------- #
 # --questionnaire (#119).
 #
 # The first real review put all nine checklist answers into `notes`, because

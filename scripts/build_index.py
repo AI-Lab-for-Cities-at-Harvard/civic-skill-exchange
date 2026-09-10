@@ -118,6 +118,40 @@ def head_sha(path: Path) -> str | None:
     return out.stdout.strip() or None
 
 
+#: The same conservative BCP 47 shape as civic.language (validator/src/rules.ts
+#: LANGUAGE_PATTERN), reimplemented rather than shared: this is Python, that is
+#: TypeScript, and the tag itself — not a runtime dependency — is the contract
+#: between them.
+LANGUAGE_TAG_RE = re.compile(
+    r"^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?$")
+
+
+def _validate_languages(entry: dict, path: Path) -> None:
+    """The optional `languages:` field on an attestation — the reviewer's
+    verified list, same shape as civic.language (ADR 0004 ruling 2).
+
+    Validated at load, alongside the rest of the ledger's shape, so a malformed
+    entry fails the build loudly rather than silently publishing a
+    verification nobody performed. Omitted entirely is fine — it means the
+    reviewer verified nothing beyond content. A string, a non-tag entry, and an
+    empty list are the three ways to say "some language" without naming one,
+    so all three are rejected.
+    """
+    if "languages" not in entry:
+        return
+    languages = entry["languages"]
+    skill = entry.get("skill", "?")
+    if not isinstance(languages, list) or not languages:
+        raise ValueError(
+            f"{path.relative_to(ROOT)}: {skill}'s `languages` must be a "
+            f"non-empty list of BCP 47 tags, not {languages!r}.")
+    for tag in languages:
+        if not isinstance(tag, str) or not LANGUAGE_TAG_RE.match(tag):
+            raise ValueError(
+                f"{path.relative_to(ROOT)}: {skill}'s `languages` contains "
+                f"{tag!r}, which is not a BCP 47 tag.")
+
+
 def load_attestations() -> dict[str, dict]:
     """The review ledger, keyed by skill id.
 
@@ -143,6 +177,8 @@ def load_attestations() -> dict[str, dict]:
         raise ValueError(
             f"{path.relative_to(ROOT)}: `attestations` must be a list, not "
             f"{type(entries).__name__}.")
+    for entry in entries:
+        _validate_languages(entry, path)
     return {a["skill"]: a for a in entries}
 
 
@@ -238,15 +274,24 @@ def normalize_tools(value) -> list[str]:
 
 
 def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> dict:
-    """Derive tier, and say plainly why — the reason is published in the index."""
+    """Derive tier, and say plainly why — the reason is published in the index.
+
+    `verified_languages` rides along on exactly the same condition as
+    `tier: reviewed` — a stale, expired, or unresolvable attestation yields
+    null, never the languages it once verified. Fabricating a verification
+    that no longer holds would be worse than publishing nothing (#146,
+    ADR 0004 ruling 2).
+    """
     if not attestation:
-        return {"tier": "community", "reason": "no review attestation"}
+        return {"tier": "community", "reason": "no review attestation",
+                 "verified_languages": None}
 
     expires = attestation.get("expires")
     if isinstance(expires, str):
         expires = date.fromisoformat(expires)
     if expires and expires < date.today():
-        return {"tier": "community", "reason": f"attestation expired {expires.isoformat()}"}
+        return {"tier": "community", "reason": f"attestation expired {expires.isoformat()}",
+                 "verified_languages": None}
 
     # Fail closed. If we cannot resolve the skill's current commit we cannot confirm
     # the attestation still applies, and an unverifiable Reviewed badge is worse
@@ -256,6 +301,7 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
             "tier": "community",
             "reason": "cannot resolve the skill's current commit, so the attestation "
                       "cannot be verified",
+            "verified_languages": None,
         }
 
     if attestation.get("sha") != sha:
@@ -264,11 +310,13 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
             "reason": "content changed since review — attestation covers "
                       f"{str(attestation.get('sha'))[:12]}, current is {sha[:12]}",
             "drift": True,
+            "verified_languages": None,
         }
 
     return {
         "tier": "reviewed",
         "reason": "attestation matches current content",
+        "verified_languages": attestation.get("languages"),
         "reviewed": {
             "date": str(attestation.get("reviewed")),
             "expires": str(attestation.get("expires")),
