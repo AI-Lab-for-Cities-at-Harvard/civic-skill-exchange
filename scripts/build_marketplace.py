@@ -182,6 +182,50 @@ def build_codex(root: Path = ROOT) -> dict:
     return {"name": MARKETPLACE_NAME, "plugins": plugins}
 
 
+# --------------------------------------------------------------------------- #
+# Claude (#183).
+#
+# A plugin with a SKILL.md at its root, no `skills/` subdirectory and no
+# `skills` manifest field is loaded by Claude Code as a single-skill plugin —
+# documented, and the CLI installs this registry that way with no manifest at
+# all. The desktop app's plugin browser shows nothing from this marketplace and
+# reports no error, and the hypothesis under test here is that it wants
+# `.claude-plugin/plugin.json` in every plugin.
+#
+# Metadata only, and deliberately: `hooks`, `mcpServers`, `commands`, `agents`
+# and the rest are honoured by code rather than by a model, which is why L0
+# refuses an author's plugin-level files at all (#151). This file is allowed
+# inside a skill directory only because the generator produces it and
+# `build_marketplace.py --check` blocks a pull request whose copy differs, so
+# nothing an author writes here survives.
+#
+# No `skills` field. `"skills": "./"` is what the Codex manifest needs, and
+# setting it here would take away the very root-SKILL.md path that loads the
+# skill.
+
+
+def claude_plugin(skill_dir: Path) -> dict:
+    """The `.claude-plugin/plugin.json` for one skill."""
+    front = read_frontmatter(skill_dir / "SKILL.md") or {}
+    meta = front.get("metadata") or {}
+    namespace, name = skill_dir.parent.name, skill_dir.name
+
+    manifest = {
+        # The marketplace entry's plugin name, so the plugin a client installs
+        # and the plugin it loads are the same one.
+        "name": plugin_name(namespace, name),
+        "description": (front.get("description") or "").strip(),
+        # Same reasoning as the Codex manifest: no version is invented, and a
+        # declared one is published. `claude plugin validate --strict` warns
+        # without it, which is a warning the registry accepts rather than
+        # answering with a made-up number.
+        **({"version": str(meta["version"])} if meta.get("version") else {}),
+        # `--strict` treats a missing author as an error.
+        "author": {"name": str(meta.get("civic.maintainer") or namespace)},
+    }
+    return {k: v for k, v in manifest.items() if v not in ("", None)}
+
+
 def build(root: Path = ROOT) -> dict:
     plugins = []
     entries = []
@@ -238,6 +282,8 @@ def generated(root: Path) -> dict[Path, str]:
             continue
         out[skill_dir / ".codex-plugin" / "plugin.json"] = render(
             codex_plugin(skill_dir, labels))
+        out[skill_dir / ".claude-plugin" / "plugin.json"] = render(
+            claude_plugin(skill_dir))
     return out
 
 
