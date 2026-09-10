@@ -184,6 +184,12 @@ export const en = {
       submit: "Submit",
       github: "GitHub",
     },
+    /** The language switcher. Only its accessible name is prose: each locale
+     *  is offered under its own name, which is the same in every language and
+     *  lives in `strings.ts` rather than here. */
+    language: {
+      label: "Language",
+    },
     theme: {
       toLight: "Light",
       toDark: "Dark",
