@@ -37,6 +37,13 @@ Rules the automation enforces:
   directly, and these are refused outright rather than merely reviewed.
   `.mcp.json` is the one exception: it stays, and is treated as executed code
   like anything under `scripts/`. See [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
+- Two files inside your directory are **not yours to write**:
+  `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json`. The registry
+  generates both from your frontmatter, and `scripts/build_marketplace.py
+  --check` fails the pull request if the committed copy differs from what the
+  generator produces — so do not hand-edit them, and do run
+  `python scripts/build_marketplace.py` and commit the result when you add or
+  change a skill.
 - **All four size limits**, so you can check before you hit them:
 
   | Limit | Value |

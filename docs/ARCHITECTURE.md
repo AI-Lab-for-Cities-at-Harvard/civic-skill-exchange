@@ -309,7 +309,7 @@ a marketplace that surfaced nothing.
 | | Claude Code | Codex |
 |---|---|---|
 | Marketplace | `.claude-plugin/marketplace.json` | `.agents/plugins/marketplace.json` |
-| Per-plugin manifest | none needed | `.codex-plugin/plugin.json`, inside each skill |
+| Per-plugin manifest | `.claude-plugin/plugin.json`, inside each skill | `.codex-plugin/plugin.json`, inside each skill |
 | Add | `/plugin marketplace add {owner}/{repo}` | `codex plugin marketplace add {owner}/{repo}` |
 
 **One plugin per skill in both**, with the same name, so the install command
@@ -331,6 +331,26 @@ Nothing moved to make this work. Every skill is already a directory with
 plugin, and each entry in the manifest names its own `source` — so the
 `{namespace}/` directory between `skills/` and the skill is invisible to the
 client while staying where the ownership check needs it.
+
+**Claude's per-plugin manifest is metadata and nothing else.** Claude Code
+loads a root `SKILL.md` as a plugin's single skill exactly when the plugin has
+no `skills/` directory and no `skills` manifest field, so
+`.claude-plugin/plugin.json` carries the plugin name, the listing's
+description, the maintainer as `author`, and a `version` only where the skill
+declares one — no `skills` field, which would take that loader path away, and
+no `hooks`, `mcpServers`, or any other component field. The manifest is
+optional to the documented loader and the CLI installs the registry without
+it; it exists because the desktop app's plugin browser surfaced nothing from
+this marketplace and reported no error
+([#183](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/183)),
+and a manifest in every plugin is the hypothesis being tested.
+
+That file sits inside an author's skill directory, which is why L0 refuses the
+rest of `.claude-plugin/` and allows exactly this path: the generator produces
+it from the author's own frontmatter, and `build_marketplace.py --check` fails
+a pull request whose copy differs from what the generator produces. Nothing an
+author writes there survives, so inline hooks or MCP servers cannot be
+smuggled through it. See [SECURITY.md](SECURITY.md#which-files-a-skill-may-contain).
 
 **It is the one generated file that is committed**, and the exception is
 forced: `/plugin marketplace add` reads the repository, not the published site.
@@ -378,9 +398,9 @@ the day a stranger arrives.
 
 ### Generated files inside skill directories
 
-`.codex-plugin/plugin.json` lives inside every listed skill, and that has
-consequences the rest of the repository has to know about. Three rules, each
-learned by breaking something:
+`.codex-plugin/plugin.json` and `.claude-plugin/plugin.json` both live inside
+every listed skill, and that has consequences the rest of the repository has to
+know about. Three rules, each learned by breaking something:
 
 **A generated file is registry-owned, not author-owned.** Regenerating the
 manifests touches every namespace at once, so `discoverChanged` in the validator
