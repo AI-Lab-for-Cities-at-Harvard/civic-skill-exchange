@@ -1,3 +1,4 @@
+import { DocLink } from "./DocLink";
 import { rich } from "../i18n/rich";
 import { useStrings, type Strings } from "../i18n/strings";
 import { aboutHref, skillHref } from "../lib/route";
@@ -151,9 +152,9 @@ export function About(
           </p>
         )}
         <p>
-          <a className="arrow-link" href={`${REPO}/blob/main/docs/LOCALIZATION.md`}>
-            {a.localization.more} <span aria-hidden="true">→</span>
-          </a>
+          <DocLink href={`${REPO}/blob/main/docs/LOCALIZATION.md`}>
+            {a.localization.more}
+          </DocLink>
         </p>
       </section>
 
@@ -250,10 +251,10 @@ export function About(
           <a className="btn btn--strong" href="#/submit" data-testid="about-submit-cta">
             {a.submitting.cta}
           </a>
-          <a className="btn" href={`${REPO}/blob/main/CONTRIBUTING.md`}
-            data-testid="about-contributing">
+          <DocLink className="btn" arrow={false} testId="about-contributing"
+            href={`${REPO}/blob/main/CONTRIBUTING.md`}>
             {a.submitting.guide}
-          </a>
+          </DocLink>
         </p>
       </section>
 
@@ -269,10 +270,9 @@ export function About(
           <li>{a.checks.removal}</li>
         </ul>
         <p>
-          <a className="arrow-link" href={`${REPO}/blob/main/docs/SECURITY.md`}>
-            {a.checks.security}{" "}
-            <span aria-hidden="true">→</span>
-          </a>
+          <DocLink href={`${REPO}/blob/main/docs/SECURITY.md`}>
+            {a.checks.security}
+          </DocLink>
         </p>
       </section>
 
@@ -286,11 +286,10 @@ export function About(
         </ol>
         <p className="tier-card__warn">{rich(a.review.warn)}</p>
         <p>
-          <a className="arrow-link" href={`${REPO}/blob/main/docs/REVIEW.md`}
-            data-testid="about-review-checklist">
-            {a.review.checklist}{" "}
-            <span aria-hidden="true">→</span>
-          </a>
+          <DocLink href={`${REPO}/blob/main/docs/REVIEW.md`}
+            testId="about-review-checklist">
+            {a.review.checklist}
+          </DocLink>
         </p>
       </section>
 

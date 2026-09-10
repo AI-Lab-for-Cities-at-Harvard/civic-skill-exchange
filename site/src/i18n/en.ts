@@ -184,6 +184,16 @@ export const en = {
       submit: "Submit",
       github: "GitHub",
     },
+    /** Beside a link into `docs/`, which stays in English in every locale
+     *  (ADR 0004 decision 4).
+     *
+     *  Empty here, and that is the answer rather than a missing one: an English
+     *  reader does not need to be told that an English document is in English.
+     *  A locale that is not English fills it in, `DocLink` renders it only when
+     *  it is non-empty, and the decision stays in the table where the next
+     *  locale can see it. */
+    docsInEnglish: "",
+
     /** The language switcher. Only its accessible name is prose: each locale
      *  is offered under its own name, which is the same in every language and
      *  lives in `strings.ts` rather than here. */

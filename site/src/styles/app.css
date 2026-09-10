@@ -437,6 +437,12 @@ a:hover { color: var(--c-spot); }
 }
 .arrow-link:hover { color: var(--c-spot); }
 
+/* "(in English)" beside a link into docs/, which is not translated. Lighter and
+   smaller than the link it qualifies: it is a caveat about the destination, not
+   part of the link's name. Inherits weight from the link deliberately — a
+   different weight mid-link reads as two links. */
+.doc-link__note { color: var(--c-text-lighter); font-size: 0.9em; }
+
 .terms { max-width: var(--w-center); margin: 0 auto; }
 .terms p { font-size: var(--t-sm); }
 .terms__affil { color: var(--c-text-lighter); font-size: var(--t-xs) !important; }
