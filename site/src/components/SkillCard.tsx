@@ -36,7 +36,10 @@ export function SkillCard({ skill }: { skill: Skill }) {
         <a href={href}>{skill.name}</a>
       </h2>
       <p className="card__ns">{skill.namespace}</p>
-      <p className="card__desc">{skill.description}</p>
+      {/* The description is submitter-authored prose in the listing's own
+          language. Without lang, a Spanish description on this English page is
+          read aloud in an English voice (#145). */}
+      <p className="card__desc" lang={skill.language ?? undefined}>{skill.description}</p>
 
       <p className="card__meta" data-testid="card-meta">
         <span>{categoriesOf(skill).map((c) => label(CATEGORY_LABELS, c)).join(" · ")}</span>

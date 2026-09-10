@@ -21,6 +21,7 @@ const front = {
     "civic.maintainer": "Test",
     "civic.affiliation": "individual",
     "civic.deployment": "none",
+    "civic.language": "en",
   },
 };
 

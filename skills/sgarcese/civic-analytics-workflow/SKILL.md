@@ -7,6 +7,7 @@ metadata:
   civic.category-secondary: data-analysis
   civic.scope: municipal
   civic.scope-secondary: regional
+  civic.language: en
   civic.localization: generalized
   civic.data-sensitivity: none
   civic.human-review: none

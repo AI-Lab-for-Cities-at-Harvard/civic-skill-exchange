@@ -5,7 +5,7 @@ import { categoriesOf, scopesOf } from "../lib/filter";
 import { TierBadge, LabBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
 import {
   label, CATEGORY_LABELS, SCOPE_LABELS, SENSITIVITY_LABELS,
-  DEPLOYMENT_LABELS, LOCALIZATION_LABELS,
+  DEPLOYMENT_LABELS, LOCALIZATION_LABELS, LANGUAGE_LABELS,
 } from "../lib/labels";
 import { addFieldsHref } from "../lib/route";
 import { bytes } from "../lib/format";
@@ -75,7 +75,12 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           <DeploymentBadge provenance={detail.provenance} detail />
         </div>
         <h1 className="detail__title">{detail.name}</h1>
-        <p className="detail__desc">{detail.description}</p>
+        {/* Submitter-authored prose, in the listing's own language. Marked so
+            a screen reader on this English page reads a Spanish description in
+            a Spanish voice (#145). */}
+        <p className="detail__desc" lang={detail.language ?? undefined}>
+          {detail.description}
+        </p>
         <p className="detail__maintainer">
           Maintained by {detail.maintainer ?? "—"}
         </p>
@@ -103,7 +108,10 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                 Written by whoever submitted the skill, about their own work.
                 Nobody has checked it against what the skill actually does.
               </p>
-              <dl className="fit">
+              {/* The author's own prose, in the listing's language — the same
+                  reason the description is marked. On the list, so both items
+                  inherit it. */}
+              <dl className="fit" lang={detail.language ?? undefined}>
                 {detail.use_when && (
                   <div className="fit__item">
                     <dt>Use it when</dt>
@@ -186,6 +194,27 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
               )}
               {detail.localization && (
                 <div><dt>Portability</dt><dd>{label(LOCALIZATION_LABELS, detail.localization)}</dd></div>
+              )}
+              {/* The declared language, and separately the author's claim about
+                  what they tried it in. Never merged: the reviewer's verified
+                  list lives on the attestation in registry/reviewed.yml, and a
+                  reader who cannot tell the two apart will over-trust the
+                  claim. ADR 0004. */}
+              <div>
+                <dt>Written in</dt>
+                <dd>{label(LANGUAGE_LABELS, detail.language)}</dd>
+              </div>
+              {detail.languages_tested && detail.languages_tested.length > 0 && (
+                <div data-testid="languages-tested">
+                  <dt>Author reports testing in</dt>
+                  <dd>
+                    {detail.languages_tested.join(", ")}
+                    <span className="facts__note">
+                      {" "}Self-reported. Nobody has run it in these languages
+                      on our behalf.
+                    </span>
+                  </dd>
+                </div>
               )}
               <div><dt>Data</dt><dd>{label(SENSITIVITY_LABELS, detail.data_sensitivity)}</dd></div>
               <div>

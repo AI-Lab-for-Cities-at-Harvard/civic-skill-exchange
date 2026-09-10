@@ -15,9 +15,10 @@ import {
   AFFILIATIONS, DEPLOYED_IN_PATTERN, DEPLOYED_SINCE_PATTERN, DEPLOYMENT_DETAILS,
   DEPLOYMENTS, HUMAN_REVIEW, ORGANIZATIONAL_DETAILS, PLACE_PATTERN,
   SCOPES, SCOPE_FIELD, SCOPE_SECONDARY,
-  FIT_MAX_LENGTH, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS,
-  SECONDARY_CATEGORY, SENSITIVITIES, VERSION_FIELD, VERSION_PATTERN,
-  SPEC_FIELDS,
+  FIT_MAX_LENGTH, LANGUAGE_FIELD, LANGUAGE_PATTERN, LANGUAGES_TESTED_FIELD,
+  LANGUAGES_TESTED_PATTERN, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS,
+  REQUIRED_METADATA, SECONDARY_CATEGORY, SENSITIVITIES,
+  VERSION_FIELD, VERSION_PATTERN, SPEC_FIELDS,
 } from "./rules";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -65,12 +66,11 @@ describe("the published schema agrees with rules.ts", () => {
   });
 
   it("requires the same civic.* metadata", () => {
-    const required = [
-      "civic.category", SCOPE_FIELD, "civic.data-sensitivity",
-      "civic.human-review", "civic.maintainer",
-      "civic.affiliation", "civic.deployment",
-    ];
-    expect(schema.properties.metadata.required.slice().sort()).toEqual(required.sort());
+    // Read from rules.ts rather than retyped. A second copy of the list is how
+    // a field gets added to the code and not to the document a contributor
+    // reads, with every check still passing.
+    expect(schema.properties.metadata.required.slice().sort())
+      .toEqual([...REQUIRED_METADATA].sort());
   });
 
   it("declares only the six Agent Skills spec fields", () => {
@@ -231,5 +231,38 @@ describe("the version field", () => {
   it("is not namespaced civic.*, which would claim a field that is not ours", () => {
     expect(VERSION_FIELD).toBe("version");
     expect(metaProps["civic.version"]).toBeUndefined();
+  });
+});
+
+/** The language a listing declares (#145). */
+describe("the language fields", () => {
+  it("requires civic.language, because an omitted tag is not an answer", () => {
+    expect(schema.properties.metadata.required).toContain(LANGUAGE_FIELD);
+  });
+
+  it("carries the tag pattern rules.ts enforces rather than describing it", () => {
+    expect(metaProps[LANGUAGE_FIELD]?.pattern).toBe(LANGUAGE_PATTERN);
+  });
+
+  it("leaves civic.languages-tested optional and pattern-checked", () => {
+    expect(metaProps[LANGUAGES_TESTED_FIELD]).toBeDefined();
+    expect(schema.properties.metadata.required).not.toContain(LANGUAGES_TESTED_FIELD);
+    expect(metaProps[LANGUAGES_TESTED_FIELD]?.pattern).toBe(LANGUAGES_TESTED_PATTERN);
+  });
+
+  it("accepts the tags a listing may declare and refuses a language name", () => {
+    const re = new RegExp(metaProps[LANGUAGE_FIELD]!.pattern!);
+    for (const tag of ["en", "es", "pt-BR", "es-419", "zh-Hant-TW"]) {
+      expect(re.test(tag)).toBe(true);
+    }
+    for (const bad of ["english", "EN_us", "en-"]) expect(re.test(bad)).toBe(false);
+  });
+
+  it("accepts a delimited list and refuses a ragged one", () => {
+    const re = new RegExp(metaProps[LANGUAGES_TESTED_FIELD]!.pattern!);
+    expect(re.test("en")).toBe(true);
+    expect(re.test("en, es")).toBe(true);
+    expect(re.test("en,, es")).toBe(false);
+    expect(re.test("en, es,")).toBe(false);
   });
 });

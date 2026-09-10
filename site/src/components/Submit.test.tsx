@@ -841,3 +841,53 @@ describe("Submit — one directory is one skill", () => {
     expect(screen.queryByTestId("blocked")).not.toBeInTheDocument();
   });
 });
+
+/** #145: a listing declares the language it is written in, so the wizard has
+ *  to ask. A select for the two languages the exchange ships in, and a tag box
+ *  for anything else — a Portuguese author has to be able to submit. */
+describe("Submit — the language it asks for", () => {
+  it("asks what language the skill is written in", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByLabelText(/What language is it written in/i)).toBeInTheDocument();
+  });
+
+  it("emits nothing until the question is answered", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("yaml").textContent).not.toContain("civic.language");
+  });
+
+  it("reports the missing language against its own field", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    const field = screen.getByLabelText(/What language is it written in/i)
+      .closest(".field");
+    expect(field?.textContent).toMatch(/language/i);
+    expect(field?.className).toContain("field--flagged");
+  });
+
+  it("writes the chosen language into the frontmatter", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.selectOptions(
+      screen.getByLabelText(/What language is it written in/i), "es");
+    expect(screen.getByTestId("yaml").textContent).toContain('civic.language: "es"');
+  });
+
+  it("takes a tag for a language the select does not list", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.selectOptions(
+      screen.getByLabelText(/What language is it written in/i), "other");
+    await user.type(screen.getByLabelText(/language tag/i), "pt-BR");
+    expect(screen.getByTestId("yaml").textContent).toContain('civic.language: "pt-BR"');
+  });
+
+  it("asks, optionally, what languages the author has tried it in", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.selectOptions(
+      screen.getByLabelText(/What language is it written in/i), "en");
+    await user.type(screen.getByLabelText(/tried it in/i), "en, es");
+    expect(screen.getByTestId("yaml").textContent)
+      .toContain('civic.languages-tested: "en, es"');
+  });
+});

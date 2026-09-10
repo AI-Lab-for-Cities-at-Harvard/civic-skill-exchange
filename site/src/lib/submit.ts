@@ -25,6 +25,11 @@ export interface Draft {
   scopeSecondary: string;
   jurisdiction: string;
   localization: string;
+  /** One BCP 47 tag. Required metadata, so an empty value is a finding rather
+   *  than an omission the file gets away with. */
+  language: string;
+  /** Optional, comma-separated tags. The author's claim, verified by nothing. */
+  languagesTested: string;
   dataSensitivity: string;
   humanReview: string;
   useWhen: string;
@@ -44,6 +49,7 @@ export const EMPTY_DRAFT: Draft = {
   author: "", name: "", description: "", license: "MIT", compatibility: "",
   tools: "", category: "", categorySecondary: "", version: "",
   scope: "", scopeSecondary: "", jurisdiction: "", localization: "",
+  language: "", languagesTested: "",
   dataSensitivity: "none", humanReview: "none", useWhen: "", avoidWhen: "",
   maintainer: "", affiliation: "", deployment: "none",
   deployedAt: "", deployedIn: "", deployedSince: "",
@@ -77,6 +83,8 @@ export function toFields(draft: Draft): Record<string, string> {
     "civic.scope-secondary": trim(draft.scopeSecondary),
     "civic.jurisdiction": trim(draft.jurisdiction),
     "civic.localization": trim(draft.localization),
+    "civic.language": trim(draft.language),
+    "civic.languages-tested": trim(draft.languagesTested),
     "civic.data-sensitivity": trim(draft.dataSensitivity),
     "civic.human-review": trim(draft.humanReview),
     "civic.use-when": trim(draft.useWhen),

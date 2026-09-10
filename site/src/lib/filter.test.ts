@@ -11,6 +11,7 @@ function skill(over: Partial<Skill> = {}): Skill {
     history: { first_seen: null, last_changed: null, commits: null, pull_request: null },
     scope: "any", scope_secondary: null,
     jurisdiction: null, localization: null,
+    language: "en", languages_tested: null,
     data_sensitivity: "none", human_review: "none",
     use_when: null, avoid_when: null, maintainer: "Test", source: null,
     provenance: {
@@ -151,5 +152,37 @@ describe("the second category is browsable, not decorative", () => {
     // published artifact and this must not double-count if one slips through.
     const odd = [skill({ id: "d/4", category: "finance", category_secondary: "finance" })];
     expect(categoryCounts(odd)).toEqual({ finance: 1 });
+  });
+});
+
+/** The language a listing is written in is a facet (#145). Single-valued —
+ *  a listing is written in one language — so it needs none of the pair
+ *  machinery category and scope have. */
+describe("the language facet", () => {
+  const listings = [
+    skill({ id: "a/1", language: "en" }),
+    skill({ id: "b/2", language: "es" }),
+    skill({ id: "c/3", language: "es" }),
+  ];
+
+  it("narrows the catalogue to one language", () => {
+    const found = applyFilters(listings, { ...EMPTY_FILTERS, language: "es" });
+    expect(found.map((s) => s.id)).toEqual(["b/2", "c/3"]);
+  });
+
+  it("returns everything when no language is chosen", () => {
+    expect(applyFilters(listings, EMPTY_FILTERS)).toHaveLength(3);
+  });
+
+  it("counts listings per language", () => {
+    expect(facetCounts(listings, "language")).toEqual({ en: 1, es: 2 });
+  });
+
+  it("does not confuse the written language with the tested ones", () => {
+    // languages_tested is the author's claim and never a facet: a skill
+    // written in English that its author tried in Spanish is an English
+    // listing, and browsing must not say otherwise.
+    const tested = [skill({ id: "a/1", language: "en", languages_tested: ["en", "es"] })];
+    expect(applyFilters(tested, { ...EMPTY_FILTERS, language: "es" })).toEqual([]);
   });
 });

@@ -92,6 +92,8 @@ metadata:
   civic.category: permitting-licensing
   civic.scope: municipal
   civic.jurisdiction: "US-MA / Boston"
+  civic.language: en                     # required, one BCP 47 tag
+  civic.languages-tested: "en, es"       # optional, comma-separated, a claim
   civic.data-sensitivity: none
   civic.human-review: advisory-only
   civic.use-when: >                      # optional, ≤500, plain text
@@ -116,6 +118,37 @@ adopter fills in (`generalized`). Skills with no jurisdiction-specific content o
 it. The validator rejects the one contradiction an adopter cannot resolve —
 `generalized` alongside a named jurisdiction like `us-state`. See
 [LOCALIZATION.md](LOCALIZATION.md).
+
+### Language
+
+`civic.language` is required and holds one BCP 47 tag — `en`, `es`, `pt-BR`,
+`es-419` — naming the language the `SKILL.md` is written in. Required rather
+than defaulted to English for the same reason `civic.scope: any` is explicit:
+an omitted value cannot be told apart from an unanswered one. The check is a
+conservative shape check, not a registry lookup: a two- or three-letter primary
+subtag, an optional titlecase script, an optional region of two uppercase
+letters or three digits. Extensions and private-use subtags are outside it, and
+no language-tag library is pulled in — the pattern runs in the browser too.
+
+It says nothing about who can use the skill. A model reads an English
+`SKILL.md` and follows it in Spanish when the person writes in Spanish; the
+field exists so a reader knows what they are about to open, and so the
+catalogue can be browsed by it.
+
+`civic.languages-tested` is optional and holds comma-separated tags of the same
+shape — the languages the author says they have exercised the skill in. It must
+include `civic.language`, since a skill written in a language has been tried in
+it; a ragged list (`en,, es`, a trailing comma) is rejected rather than quietly
+losing an entry. **Nothing verifies the claim.** The reviewer's verified list is
+`languages:` on the attestation in `registry/reviewed.yml` — the same split the
+registry already draws between `civic.deployment` and the ledger. The detail
+page renders the two on different footings and labels the frontmatter one as
+the author's report. See [ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md).
+
+A delimited string rather than the two-explicit-fields trick
+`civic.category-secondary` uses: `metadata` values are strings per the Agent
+Skills spec either way, but a cap of two would be an arbitrary ceiling on a
+claim that has no natural one.
 
 ### Fit
 
@@ -399,6 +432,8 @@ An index entry, with every field the build actually emits:
   "scope_secondary": null,
   "jurisdiction": "US-MA / Boston",
   "localization": "localized",
+  "language": "en",
+  "languages_tested": ["en", "es"],
   "data_sensitivity": "none",
   "human_review": "advisory-only",
   "use_when": "A resident asks why their permit is stuck and the status codes...",

@@ -29,6 +29,15 @@ export interface Skill {
    *  so it is shown and never faceted. */
   jurisdiction: string | null;
   localization: Localization;
+  /** The language the SKILL.md is written in, as one BCP 47 tag. Declared,
+   *  required, and what the language facet reads. Null only for a listing that
+   *  predates the field. */
+  language: string | null;
+  /** The author's claim about which languages they exercised the skill in.
+   *  Nothing verifies it — the reviewer's verified list lives on the
+   *  attestation — so the page renders it as a claim and says so. Null when the
+   *  author claimed nothing, which is not the same as an empty list. */
+  languages_tested: string[] | null;
   data_sensitivity: string | null;
   human_review: string | null;
   /** When the skill fits, and when it does not. Plain text — rendered as text,
@@ -94,6 +103,7 @@ export interface Filters {
   category: string | null;
   scope: string | null;
   localization: string | null;
+  language: string | null;
   dataSensitivity: string | null;
   tier: string | null;
 }
@@ -103,6 +113,7 @@ export const EMPTY_FILTERS: Filters = {
   category: null,
   scope: null,
   localization: null,
+  language: null,
   dataSensitivity: null,
   tier: null,
 };

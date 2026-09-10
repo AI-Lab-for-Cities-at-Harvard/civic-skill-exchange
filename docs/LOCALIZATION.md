@@ -27,6 +27,12 @@ policy skill        ─────►    policy skill      ─────►  
                         └──► vermont.context ──────┘  boston.context
 ```
 
+Neither state has anything to do with language. This axis is about whose forms,
+deadlines and statutes a skill carries; the language it is written in is
+`civic.language`, documented in
+[ARCHITECTURE.md](ARCHITECTURE.md#language). A generalized skill written in
+English is still written in English.
+
 Neither state is better. A localized skill that solves a real problem in one city
 is worth more than a generalized skill nobody has run. Generalizing is what you do
 when you want the second city to be able to use it.

@@ -48,6 +48,8 @@ const FIELD_LABELS: Record<string, string> = {
   "civic.scope-secondary": "the second level",
   "civic.jurisdiction": "the place it is written for",
   "civic.localization": "how portable it is",
+  "civic.language": "the language it is written in",
+  "civic.languages-tested": "the languages you have tried it in",
   "civic.data-sensitivity": "the data it touches",
   "civic.human-review": "its effect on people",
   "civic.use-when": "when it is useful",
@@ -76,6 +78,20 @@ const SCOPE_CHOICES: [string, string][] = [
   ["national", "A national government"],
   ["supranational", "A body above national government"],
 ];
+
+/** The language the SKILL.md is written in (#145).
+ *
+ *  A select over the two languages the exchange itself ships in, plus a tag box
+ *  for everything else — the field is required, and a form that could only
+ *  answer it in English or Spanish would stop a Portuguese author submitting at
+ *  all. The tag is shape-checked by rules.ts like every other value here. */
+const LANGUAGE_CHOICES: [string, string][] = [
+  ["en", "English"],
+  ["es", "Spanish"],
+  ["other", "Another language \u2014 I will give the tag"],
+];
+
+const OFFERED_LANGUAGES = new Set(LANGUAGE_CHOICES.map(([v]) => v));
 
 /** The two judgment questions live in labels.ts so their wording has one home
  *  rather than being written inline here. */
@@ -161,12 +177,26 @@ export function Submit(
   // — the owner is not the namespace for a reserved one, and the name is
   // whatever the submitter typed into GitHub's fork dialog.
   const [forkInput, setForkInput] = useState("");
+  // Whether the language question is being answered with a typed tag. Kept as
+  // state rather than derived, because "other" chosen with nothing typed yet
+  // looks exactly like "nothing chosen" in the draft.
+  const [otherLanguage, setOtherLanguage] = useState(false);
+
+  // A pasted or imported SKILL.md may already carry a tag the select does not
+  // offer, so the box reveals itself rather than the value disappearing.
+  const languageIsOther = otherLanguage ||
+    (draft.language !== "" && !OFFERED_LANGUAGES.has(draft.language));
 
   const set = (key: keyof Draft) => (value: string) =>
     setDraft((d) => ({ ...d, [key]: value }));
   const onInput = (key: keyof Draft) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       set(key)(e.target.value);
+
+  const onLanguage = (value: string) => {
+    setOtherLanguage(value === "other");
+    setDraft((d) => ({ ...d, language: value === "other" ? "" : value }));
+  };
 
   // A reserved namespace is not a person, and checkFrontmatter skips the
   // ownership check for it — CODEOWNERS gates the folder to the maintainers
@@ -646,6 +676,30 @@ export function Submit(
             </>}
           />
 
+          <Choice
+            id="civic.language"
+            label="What language is it written in?"
+            value={languageIsOther ? "other" : draft.language}
+            findings={findings} placeholder="Choose\u2026" onChange={onLanguage}
+            options={LANGUAGE_CHOICES}
+            hint={<>The language of the <code>SKILL.md</code> itself. It is not a
+              limit on who can use the skill \u2014 a model reads a skill in one
+              language and follows it in another. It is so a reader knows what
+              they are about to open.</>}
+          />
+
+          {languageIsOther && (
+            <Field id="civic.language-other" label="Its language tag"
+              findings={[]}
+              hint={<>A BCP 47 tag, not the language&rsquo;s name:{" "}
+                <code>pt-BR</code>, <code>fr</code>, <code>de</code>,{" "}
+                <code>es-419</code>.</>}>
+              <input id="civic.language-other" className="input"
+                value={draft.language} onChange={onInput("language")}
+                placeholder="pt-BR" />
+            </Field>
+          )}
+
           <Choice id="civic.data-sensitivity" label={DATA.question}
             value={draft.dataSensitivity} findings={findings}
             onChange={set("dataSensitivity")} options={DATA.options} />
@@ -687,6 +741,17 @@ export function Submit(
               hint="The one only you can answer. A skill honest about its limits gets adopted faster.">
               <textarea id="civic.avoid-when" className="textarea" rows={2}
                 value={draft.avoidWhen} onChange={onInput("avoidWhen")} />
+            </Field>
+
+            <Field id="civic.languages-tested"
+              label="What languages have you tried it in?" findings={findings}
+              hint={<>Comma-separated tags, including the one above \u2014{" "}
+                <code>en, es</code>. Your own claim: nothing here checks it, and
+                the page shows it as something you said rather than something
+                anybody verified.</>}>
+              <input id="civic.languages-tested" className="input"
+                value={draft.languagesTested}
+                onChange={onInput("languagesTested")} placeholder="en, es" />
             </Field>
 
             <Field id="allowed-tools" label="Tools it needs" findings={findings}

@@ -14,6 +14,7 @@ metadata:
   civic.category: communications
   civic.category-secondary: constituent-services
   civic.scope: any
+  civic.language: en
   civic.data-sensitivity: none
   civic.human-review: advisory-only
   civic.use-when: >

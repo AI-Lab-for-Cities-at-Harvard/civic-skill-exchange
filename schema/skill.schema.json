@@ -62,7 +62,8 @@
         "civic.human-review",
         "civic.maintainer",
         "civic.affiliation",
-        "civic.deployment"
+        "civic.deployment",
+        "civic.language"
       ],
       "allOf": [
         {
@@ -295,6 +296,20 @@
             "localized"
           ],
           "description": "Where the skill sits on the jurisdiction axis. 'localized' carries one jurisdiction's specifics; 'generalized' has had them lifted out into a context an adopter fills in. Optional — omit it when the skill has no jurisdiction-specific content either way. See docs/LOCALIZATION.md."
+        },
+        "civic.language": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?$",
+          "maxLength": 35,
+          "$comment": "A conservative BCP 47 shape check, not a registry lookup: a 2-3 letter primary subtag, an optional titlecase four-letter script, an optional region of two uppercase letters or three digits. Extensions and private-use subtags are outside it deliberately. Enforced by validator/src/rules.ts, which carries the same pattern.",
+          "description": "The language the SKILL.md is written in, as one BCP 47 tag: 'en', 'es', 'pt-BR', 'es-419'. Required rather than defaulted to English, because an omitted value cannot be told apart from an unanswered one \u2014 the same reasoning that made civic.scope: any explicit. It says nothing about whether the skill works in that language; a model reads an English skill and follows it in Spanish. See docs/ARCHITECTURE.md."
+        },
+        "civic.languages-tested": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?(?:\\s*,\\s*[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?)*$",
+          "maxLength": 200,
+          "$comment": "A delimited string rather than two explicit fields, which is how civic.category-secondary handles the spec's string-only metadata values: a cap of two would be an arbitrary ceiling on a claim that has none. Must include civic.language; enforced by validator/src/rules.ts, which JSON Schema cannot express against another property's value.",
+          "description": "Optional. The languages the author says they have exercised the skill in, as comma-separated BCP 47 tags: 'en, es'. Self-reported and verified by nothing \u2014 the reviewer's verified list is 'languages:' on the attestation in registry/reviewed.yml, and the site renders the two separately. Must include civic.language, since a skill written in a language has been tried in it."
         },
         "civic.source-repo": {
           "type": "string",

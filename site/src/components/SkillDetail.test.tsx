@@ -54,3 +54,57 @@ describe("the structure section says what runs", () => {
     expect(row("references/notes.md")?.textContent).not.toContain("executed");
   });
 });
+
+/** The declared language, and the author's claim about what they tried it in
+ *  (#145). Two different things, and the page never merges them: verification
+ *  lives on the attestation, not in frontmatter. */
+describe("the detail page says what language the listing is in", () => {
+  it("marks the description with the listing's language", async () => {
+    served(detail({ language: "es", description: "Una habilidad de ejemplo para las pruebas." }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const desc = await screen.findByText("Una habilidad de ejemplo para las pruebas.");
+    expect(desc).toHaveAttribute("lang", "es");
+  });
+
+  it("names the language in the facts list", async () => {
+    served(detail({ language: "es" }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const facts = await screen.findByRole("region", { name: /at a glance/i });
+    expect(facts).toHaveTextContent("Written in");
+    expect(facts).toHaveTextContent("Spanish");
+  });
+
+  it("shows an unmapped tag as the tag itself rather than nothing", async () => {
+    served(detail({ language: "pt-BR" }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    expect(await screen.findByRole("region", { name: /at a glance/i }))
+      .toHaveTextContent("pt-BR");
+  });
+
+  it("words the tested languages as the author's claim, not as verification", async () => {
+    served(detail({ language: "en", languages_tested: ["en", "es"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const claim = await screen.findByTestId("languages-tested");
+    expect(claim).toHaveTextContent("Author reports testing in");
+    expect(claim).toHaveTextContent("en, es");
+    expect(claim.textContent).not.toMatch(/verified|confirmed|checked by/i);
+  });
+
+  it("marks the fit fields too, since they are the author's prose as well", async () => {
+    served(detail({
+      language: "es",
+      use_when: "Cuando un residente pregunta por su permiso.",
+      avoid_when: "No para apelaciones.",
+    }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const fit = await screen.findByRole("region", { name: /when to use this/i });
+    expect(fit.querySelector(".fit")).toHaveAttribute("lang", "es");
+  });
+
+  it("says nothing about tested languages when the author claimed none", async () => {
+    served(detail({ language: "en", languages_tested: null }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    await screen.findByRole("region", { name: /at a glance/i });
+    expect(screen.queryByTestId("languages-tested")).not.toBeInTheDocument();
+  });
+});

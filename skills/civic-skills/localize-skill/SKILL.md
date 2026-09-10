@@ -16,6 +16,7 @@ allowed-tools: Read, Write, Grep, Glob, WebFetch
 metadata:
   civic.category: ai-tools
   civic.scope: any
+  civic.language: en
   civic.localization: generalized
   civic.data-sensitivity: none
   civic.human-review: none

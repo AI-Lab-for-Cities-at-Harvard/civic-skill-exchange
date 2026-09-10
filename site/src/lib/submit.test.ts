@@ -9,6 +9,7 @@
  */
 
 import { describe, it, expect } from "vitest";
+import { checkFrontmatter } from "@civic-skill-exchange/validator/rules";
 import {
   toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, repoSlug, slugify,
   URL_BUDGET,
@@ -356,5 +357,46 @@ describe("the namespace is lowercase however the login was typed", () => {
     // The filename travels URL-encoded in the query string.
     expect(newFileUrl(REPO, { ...D, author: "CityOfX" }, "")).toContain("skills%2Fcityofx%2F");
     expect(newFileUrl(REPO, { ...D, author: "CityOfX" }, "")).not.toContain("CityOfX");
+  });
+});
+
+/** The language the listing is written in (#145). Required metadata, so the
+ *  wizard cannot produce frontmatter without it — the finding reports rather
+ *  than blocks, as every finding on this page does, but the field is there and
+ *  the emitted file carries it. */
+describe("the declared language", () => {
+  it("is absent from an empty draft, so the validator asks for it", () => {
+    expect(toFrontmatter(EMPTY_DRAFT).metadata?.["civic.language"]).toBeUndefined();
+    const findings = checkFrontmatter(toFrontmatter(EMPTY_DRAFT), { categories: [] });
+    expect(findings.some((f) => f.where === "civic.language")).toBe(true);
+  });
+
+  it("is emitted into the metadata block once answered", () => {
+    const f = toFrontmatter(draft({ language: "es" }));
+    expect(f.metadata?.["civic.language"]).toBe("es");
+    expect(toYaml(f)).toContain('civic.language: "es"');
+  });
+
+  it("carries a tag the select does not offer", () => {
+    expect(toFrontmatter(draft({ language: "pt-BR" })).metadata?.["civic.language"])
+      .toBe("pt-BR");
+  });
+
+  it("emits the tested languages when the author claims some", () => {
+    const f = toFrontmatter(draft({ language: "en", languagesTested: "en, es" }));
+    expect(f.metadata?.["civic.languages-tested"]).toBe("en, es");
+  });
+
+  it("omits the tested languages rather than emitting an empty claim", () => {
+    const f = toFrontmatter(draft({ language: "en", languagesTested: "" }));
+    expect(f.metadata?.["civic.languages-tested"]).toBeUndefined();
+  });
+
+  it("clears the wizard's answers past the validator once a language is given", () => {
+    const findings = checkFrontmatter(
+      toFrontmatter(draft({ language: "en", scope: "any", categorySecondary: "" })),
+      { categories: ["constituent-services"] },
+    );
+    expect(findings.filter((f) => f.where.startsWith("civic.language"))).toEqual([]);
   });
 });
