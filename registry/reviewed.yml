@@ -29,10 +29,10 @@
 
 attestations:
  - skill: "civic-skills/plain-language-notice-rewriter"
-   sha: "4afc76bf891a75271ec5d673e970ec693f75cfe6"
+   sha: "4bb255c3a2650ca32eea7b4aecac2a8b4875c55e"
    reviewers: ["AI Lab for Cities at Harvard"]
-   reviewed: 2026-09-02
-   expires: 2027-09-02
+   reviewed: 2026-09-09
+   expires: 2027-09-09
    notes: >
     Lab-authored, in the reserved civic-skills namespace  item 7 was judged
     on the Lab's own work, which is where that costs most.
@@ -50,6 +50,10 @@ attestations:
     civic.jurisdiction: generic, since a language bias is not a
     jurisdiction, but a non-English deployment is untested.
 
-    The pinned commit is a marketplace-manifest regeneration (#99), so the
-    reviewed content is older than the SHA. Nothing in the skill itself has
-    changed since c43c4c1.
+    Re-attested 2026-09-09 at the commit that added civic.language: en to the
+    frontmatter (#145). That line is the only change to the directory since
+    the previous pin, 4afc76b, which was itself a manifest regeneration over
+    content unchanged since c43c4c1. The checklist was not re-run; the
+    content it was run against is byte-identical apart from that line. The
+    language question (#143, question 5) is still open, so this records no
+    verified languages.
