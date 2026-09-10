@@ -90,6 +90,49 @@ def test_expiry_accepts_a_parsed_date_object():
 
 
 # --------------------------------------------------------------------------- #
+# The languages a reviewer verified (#146).
+#
+# "Verified in Spanish" can only honestly come from the reviewer (ADR 0004
+# ruling 2), so this is derived under exactly the condition that yields
+# tier: reviewed — a stale, expired, or unresolvable attestation gets null,
+# never the languages it once verified.
+
+
+def test_a_current_attestation_carries_the_languages_it_verified():
+    result = build_index.resolve_tier("ns/example", SHA, attestation(languages=["en", "es"]))
+    assert result["tier"] == "reviewed"
+    assert result["verified_languages"] == ["en", "es"]
+
+
+def test_a_stale_sha_yields_no_verified_languages():
+    result = build_index.resolve_tier(
+        "ns/example", OTHER_SHA, attestation(sha=SHA, languages=["en", "es"]))
+    assert result["tier"] == "community"
+    assert result["verified_languages"] is None
+
+
+def test_an_expired_attestation_yields_no_verified_languages():
+    result = build_index.resolve_tier(
+        "ns/example", SHA, attestation(expires=PAST, languages=["en", "es"]))
+    assert result["tier"] == "community"
+    assert result["verified_languages"] is None
+
+
+def test_no_languages_field_on_a_current_attestation_is_null_not_invented():
+    """No `languages:` on the attestation means null, never the language the
+    skill happens to be written in — that would be fabricating a verification
+    nobody performed."""
+    result = build_index.resolve_tier("ns/example", SHA, attestation())
+    assert result["tier"] == "reviewed"
+    assert result["verified_languages"] is None
+
+
+def test_no_attestation_at_all_yields_no_verified_languages():
+    result = build_index.resolve_tier("ns/example", SHA, None)
+    assert result["verified_languages"] is None
+
+
+# --------------------------------------------------------------------------- #
 # Index entries
 
 
@@ -755,3 +798,43 @@ def test_the_declared_language_cannot_reach_the_tier(make_skill):
     entry = build_index.build_entry(skill, {}, {})
     assert entry["tier"] == "community"
     assert entry["reason"] == "no review attestation"
+
+
+# --------------------------------------------------------------------------- #
+# The languages a reviewer verified, reaching the entry and the detail payload
+# (#146). resolve_tier's own derivation is covered above; this is the join
+# through build_entry, where the ledger is keyed by skill id.
+
+
+def test_verified_languages_key_is_present_even_when_absent(make_skill):
+    """Published API: the key is always there, just like languages_tested."""
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["verified_languages"] is None
+
+
+def test_entry_carries_the_languages_a_reviewer_verified(make_skill, monkeypatch):
+    skill = make_skill(namespace="cityofx", name="permit-status-explainer",
+                        front=dict(VALID_FRONTMATTER, name="permit-status-explainer"))
+    monkeypatch.setattr(build_index, "head_sha", lambda _: SHA)
+    entry = build_index.build_entry(
+        skill,
+        {"cityofx/permit-status-explainer": attestation(
+            skill="cityofx/permit-status-explainer", languages=["en", "es"])},
+        {},
+    )
+    assert entry["tier"] == "reviewed"
+    assert entry["verified_languages"] == ["en", "es"]
+
+
+def test_the_detail_payload_carries_verified_languages(make_skill, monkeypatch):
+    skill = make_skill(namespace="cityofx", name="permit-status-explainer",
+                        front=dict(VALID_FRONTMATTER, name="permit-status-explainer"))
+    monkeypatch.setattr(build_index, "head_sha", lambda _: SHA)
+    entry = build_index.build_entry(
+        skill,
+        {"cityofx/permit-status-explainer": attestation(
+            skill="cityofx/permit-status-explainer", languages=["en", "es"])},
+        {},
+    )
+    detail = build_index.build_detail(skill, entry)
+    assert detail["verified_languages"] == ["en", "es"]

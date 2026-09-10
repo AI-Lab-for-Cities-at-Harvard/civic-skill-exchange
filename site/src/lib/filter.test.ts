@@ -11,7 +11,7 @@ function skill(over: Partial<Skill> = {}): Skill {
     history: { first_seen: null, last_changed: null, commits: null, pull_request: null },
     scope: "any", scope_secondary: null,
     jurisdiction: null, localization: null,
-    language: "en", languages_tested: null,
+    language: "en", languages_tested: null, verified_languages: null,
     data_sensitivity: "none", human_review: "none",
     use_when: null, avoid_when: null, maintainer: "Test", source: null,
     provenance: {

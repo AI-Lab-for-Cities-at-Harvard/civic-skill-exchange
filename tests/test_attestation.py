@@ -74,6 +74,18 @@ def test_the_block_it_prints_is_the_shape_reviewed_yml_documents():
     assert entry["notes"].strip() == "Read-only."
 
 
+def test_the_block_documents_the_optional_languages_field():
+    """`languages:` is optional, so the printed block shows it commented out
+    rather than filled in with a guess — the reviewer types it in only when
+    they actually verified something beyond content (#146)."""
+    block = attestation.render(SKILL_ID, "a" * 40, notes="Read-only.")
+    assert "languages" in block
+    # Still exactly one entry: a commented-out line must not parse as YAML.
+    parsed = yaml.safe_load(block)
+    assert isinstance(parsed, list) and len(parsed) == 1
+    assert "languages" not in parsed[0]
+
+
 def test_the_attestation_expires_a_year_after_the_review():
     entry = yaml.safe_load(attestation.render(SKILL_ID, "a" * 40, notes="x"))[0]
     reviewed = entry["reviewed"]
@@ -224,6 +236,68 @@ def test_every_attestation_pins_a_commit_that_touched_that_skill(entry: dict):
     assert sha in touched, (
         f"{sha[:12]} is not a commit that ever touched skills/{entry['skill']}. "
         f"The one to attest to is {touched[0][:12]}.")
+
+
+# --------------------------------------------------------------------------- #
+# The optional `languages:` field (#146).
+#
+# "Verified in Spanish" can only honestly come from the reviewer, so it lives
+# here, never in frontmatter (ADR 0004 ruling 2). Same shape as civic.language:
+# a list of BCP 47 tags. Omitted means "the language it is written in, and no
+# other" — build_index derives that, this file only guards the shape of what a
+# reviewer actually typed.
+
+
+BASE_ENTRY = {
+    "skill": "ns/example",
+    "sha": "a" * 40,
+    "reviewers": ["AI Lab for Cities at Harvard"],
+    "reviewed": "2026-01-01",
+    "expires": "2027-01-01",
+    "notes": "Read-only.",
+}
+
+
+def _write_ledger(tmp_path: Path, monkeypatch, entry: dict) -> None:
+    registry = tmp_path / "registry"
+    registry.mkdir()
+    (registry / "reviewed.yml").write_text(
+        yaml.safe_dump({"attestations": [entry]}), encoding="utf-8")
+    monkeypatch.setattr(build_index, "ROOT", tmp_path)
+
+
+def test_languages_is_optional_on_an_attestation(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY))
+    loaded = build_index.load_attestations()
+    assert "languages" not in loaded["ns/example"]
+
+
+def test_languages_accepts_a_list_of_bcp47_tags(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages=["en", "es"]))
+    loaded = build_index.load_attestations()
+    assert loaded["ns/example"]["languages"] == ["en", "es"]
+
+
+def test_languages_rejects_a_bare_string(tmp_path, monkeypatch):
+    """`languages: es` parses as a string, not a one-item list — the same
+    mistake `civic.languages-tested` accepts on purpose and this must not."""
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages="es"))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()
+
+
+def test_languages_rejects_a_non_tag_entry(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages=["spanish"]))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()
+
+
+def test_languages_rejects_an_empty_list(tmp_path, monkeypatch):
+    """An empty list is a reviewer saying "some languages" without naming one —
+    reject it rather than publish a verification that verifies nothing."""
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, languages=[]))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()
 
 
 # --------------------------------------------------------------------------- #
