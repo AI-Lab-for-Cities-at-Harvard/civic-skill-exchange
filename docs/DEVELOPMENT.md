@@ -373,8 +373,13 @@ show its load error.
 
 `src/i18n/en.ts` holds every string the site shows a person, grouped by surface.
 Components read it through `useStrings()`; the pure modules that compose text a
-visitor reads — `notice.ts`, `format.ts`, `import.ts`, `zip.ts`, `parse.ts`,
-`patch.ts`, and `submit.ts`'s mail body — read it through `strings()`.
+visitor reads — `notice.ts`, `format.ts`, `import.ts`, `zip.ts`, `parse.ts` and
+`patch.ts` — read it through `strings()`.
+
+`submit.ts`'s mail body is the exception, and reads `en` directly. It is the one
+thing the site composes that its author does not read: a maintainer receives it
+and opens the pull request from it, so it stays English whatever the submitter
+chose.
 
 **No prose in a component.** `src/i18n/no-literals.test.ts` parses every
 prose-bearing component and fails on JSX text with letters in it, or on a string
@@ -405,10 +410,61 @@ English visitor nothing. `strings.ts` imports `en.ts` statically and reaches
 every other locale through `LOCALES`, whose entries are `import()` thunks Vite
 gives their own chunk. `scripts/size.mjs` holds the English entry chunk to
 `size-baseline.json` within 3%, runs at the end of `npm run build` — so the CI
-Site job enforces it — and is driven by `src/i18n/bundle-size.test.ts` over a
-build written to a temporary directory. To re-record a deliberate growth:
-`npm run build` then `node scripts/size.mjs --record`, with the reason in the
-commit message. Never to make a red gate green.
+Site job enforces it — and is driven by `src/i18n/bundle-size.test.ts`, which
+builds once into a temporary directory and then reads the output: the Spanish
+sentences have to be in the `es-*.js` chunk and nowhere near the entry chunk.
+To re-record a deliberate growth: `npm run build` then
+`node scripts/size.mjs --record`, with the reason in the commit message. Never
+to make a red gate green, and never to absorb a locale — that is the failure
+the gate exists to report.
+
+### Adding a locale
+
+Four steps, and the tests say when each is done.
+
+1. **One file.** Copy `en.ts` to `<tag>.ts`, rename the export to `strings`,
+   type it `Strings`, and prefix every value with the marker `[<tag>] ` — it is
+   there to be greppable and to look wrong on the page. Drop en.ts's per-entry
+   comments: the rationale for a key has one home, beside the English, and a
+   second copy is one stale comment.
+2. **One line.** `es: () => import("./es")` in `LOCALES`, plus the language's
+   own name in `LOCALE_NAMES` — a name that is the same in every locale, which
+   is why it is not in the tables. Nothing else names a locale: the header's
+   switcher offers whatever `locales()` reports and remembers the choice in
+   `localStorage` (falling back to `navigator.language`, then English), and the
+   axe, keyboard and About tests are parametrised over `locales()`, so a new
+   locale is tested by adding it.
+3. **The vocabulary.** `registry/categories.yml` gains `label_<tag>` and
+   `description_<tag>` beside the English ones, and `labels.test.ts` holds the
+   table's category map to them. The vocabulary is one list in one file however
+   many languages the site speaks.
+4. **Fill the table.** `src/i18n/no-untranslated.test.ts` lists every value
+   still carrying the marker and fails while any remains, so the branch is
+   finished exactly when it is green. **It is red by design until then**, which
+   is why a locale lands as a draft pull request. Do not exempt entries to make
+   it green: a half-translated locale is worse than English, because a reader
+   who sees their own language trusts the page to be in it.
+
+Two things are deliberately not translated, and both say so where they are
+written: the `email` group, whose reader is a maintainer, and the `Intl` calls
+in `footer.date` and `history.when`, which take their language from the locale
+tag. A `[value, label]` choice translates the label only — the value is an enum
+the schema defines, and `es.test.ts` fails on a translated one.
+
+`src/i18n/es.test.ts` compares the shape of the two tables as one list: key set,
+source order, function arity, list length. `Strings` already makes a missing key
+a compile error; what a type cannot see is a moved group or a list that lost a
+bullet.
+
+Dates and numbers follow the locale through `i18n/locale.ts`, which holds the
+tag below the tables — `en.ts` formats two dates and a table importing
+`strings.ts` would be a cycle. `<html lang>` follows the chosen locale; a
+listing's own description keeps the `lang` it got from `civic.language`, so an
+English skill on the Spanish site is still read as English (#145).
+
+**`docs/` stays English** (ADR 0004 decision 4). A link into it goes through
+`components/DocLink.tsx`, which appends `chrome.docsInEnglish` — a string each
+locale words for itself, and empty in English, where there is nothing to say.
 
 ### Design tokens
 
