@@ -22,14 +22,18 @@
 
 import { useSyncExternalStore } from "react";
 import { en } from "./en";
+import { DEFAULT_LOCALE, locale, setLocaleTag } from "./locale";
+
+/** Re-exported so the rest of the site has one import for the locale seam.
+ *  The tag itself lives in `locale.ts`, below the tables, because the tables
+ *  format dates with it. */
+export { DEFAULT_LOCALE, locale };
 
 export type Strings = typeof en;
 
 /** A locale module exports `strings`. Declared as the loader's return type so
  *  the module cannot satisfy `LOCALES` while getting the shape wrong. */
 type Locale = { strings: Strings };
-
-export const DEFAULT_LOCALE = "en";
 
 /** The seam. English resolves without a fetch because it is already here; every
  *  other locale is one line, and the `import()` is what gives it its own chunk.
@@ -60,7 +64,6 @@ export function locales(): string[] {
 }
 
 let current: Strings = en;
-let tag: string = DEFAULT_LOCALE;
 
 const listeners = new Set<() => void>();
 
@@ -70,20 +73,16 @@ export function strings(): Strings {
   return current;
 }
 
-export function locale(): string {
-  return tag;
-}
-
 /** Loads a locale and swaps it in, or does nothing if the site does not have
  *  one for that tag. Awaited rather than fire-and-forget so a caller can leave
  *  the old strings up until the new ones are actually in hand — a half-applied
  *  switch is a page in two languages. */
 export async function setLocale(next: string): Promise<boolean> {
-  if (next === tag) return true;
+  if (next === locale()) return true;
   const load = LOCALES[next];
   if (!load) return false;
   current = (await load()).strings;
-  tag = next;
+  setLocaleTag(next);
   for (const notify of [...listeners]) notify();
   return true;
 }
