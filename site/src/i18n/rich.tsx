@@ -37,10 +37,9 @@ const MARKER =
  *  places where the thing in the middle of a sentence is not a link at all: the
  *  empty-results notice offers a button, because clearing the filters is not
  *  navigation. */
-export type Link =
-  | string
-  | AnchorHTMLAttributes<HTMLAnchorElement>
-  | ((label: ReactNode) => ReactNode);
+export type Anchor =
+  AnchorHTMLAttributes<HTMLAnchorElement> & { [key: `data-${string}`]: string };
+export type Link = string | Anchor | ((label: ReactNode) => ReactNode);
 export type Links = Record<string, Link>;
 
 /** Thrown rather than swallowed while developing, so a marker whose link the

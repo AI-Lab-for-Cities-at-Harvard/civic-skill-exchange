@@ -390,6 +390,366 @@ export const en = {
     },
   },
 
+  /** The About page.
+   *
+   *  ADR 0004 decision 4 translates this page too, against the spike's own
+   *  recommendation, and the record says why: it is the page a Spanish-speaking
+   *  visitor actually reads. It is also the page that will drift, because it is
+   *  prose and it changes with the project. Every change here is two changes.
+   *
+   *  Ordered as the page is, so a translator can work down the screen. */
+  about: {
+    toc: {
+      label: "On this page",
+      title: "On this page",
+      /** The two groups the eight sections sit in (#136): the substance, and
+       *  the caveats a reader wants findable rather than first. */
+      groups: {
+        whatThisIs: "What this is",
+        whatToExpect: "What to expect",
+      },
+      /** Keyed by section id, which is a route slug and not prose. */
+      sections: {
+        "what-this-is": "The registry",
+        tiers: "Two tiers",
+        localization: "Generalized and localized",
+        metadata: "The civic metadata",
+        submitting: "How to submit",
+        checks: "What we check",
+        review: "What a review checks for",
+        beta: "What Beta means",
+      },
+    },
+
+    whatThisIs: {
+      heading: "What this is",
+      lede:
+        "An open catalog of agent skills for civic use — government, " +
+        "public-sector and nonprofit work.",
+      skill:
+        "A **skill** is a small, portable bundle of instructions — and " +
+        "sometimes scripts — that teaches an AI coding agent how to do one job " +
+        "well: explain a permit status in plain language, check a benefits " +
+        "application against eligibility rules, turn a budget spreadsheet into " +
+        "a published open-data file.",
+      standard:
+        "Skills follow the [Agent Skills open standard](spec), so they work " +
+        "across tools rather than locking you into one vendor.",
+    },
+
+    tiers: {
+      heading: "Two tiers, and what they mean",
+      communityTerm: "Community",
+      community:
+        "The skill is well-formed and nothing mechanical is wrong with it. " +
+        "Merged once it passes structural, ownership and signature checks.",
+      communityWarn:
+        "**This is not an endorsement.** Automated checks can only ever say " +
+        "*no* — a pass is the absence of known-bad signals, not the presence " +
+        "of safety. Read anything from this tier before you run it.",
+      reviewedTerm: "Reviewed",
+      reviewed:
+        "The AI Lab for Cities at Harvard read every line of one specific " +
+        "commit against a published checklist and put its name on it.",
+      reviewedWarn:
+        "**One reader, and it is us.** Nobody outside the Lab has read it, and " +
+        "where the Lab wrote the skill as well, the listing says so. It is a " +
+        "smaller claim than two readers from separate organizations would be, " +
+        "and it is one we can actually make.",
+      pinned:
+        "The attestation is pinned to **one commit** — the last one that " +
+        "touched the skill. If anything commits to it after that, the listing " +
+        "drops back to Community automatically, so a compromised account " +
+        "cannot quietly alter something already carrying our review.",
+      reviewLink: "What a review checks for",
+    },
+
+    localization: {
+      heading: "Generalized and localized",
+      bound:
+        "Most civic skills start out bound to one place. A policy skill " +
+        "written for the State of Vermont knows Vermont's statute citations, " +
+        "appeal windows and form numbers — which is what makes it useful " +
+        "there, and useless anywhere else.",
+      /** The three steps of the diagram. Placeholder jurisdictions, and they
+       *  stay as they are: the point is one place to another, and Vermont to
+       *  Boston is the example the LOCALIZATION doc uses. */
+      flow: {
+        from: "Vermont policy skill",
+        via: "generalized",
+        to: "Boston policy skill",
+      },
+      both:
+        "A **localized** skill carries one jurisdiction's specifics. A " +
+        "**generalized** one has had them lifted out into a context an adopter " +
+        "fills in. Neither is better — but generalizing is what lets a " +
+        "solution make the trip to the second city.",
+      /** Named only when actually listed: a hardcoded link to a skill that has
+       *  not been merged yet is a 404 on the page explaining the idea. At least
+       *  one of the two is always true where this is rendered. */
+      pair: (generalize: boolean, localize: boolean) =>
+        "The trip is not manual. Two skills in this registry do it: " +
+        (generalize && localize
+          ? "[generalize](generalize), which lifts a jurisdiction's specifics " +
+            "out into a context file, and [localize](localize), which applies " +
+            "a new place's context to a generalized skill."
+          : generalize
+            ? "[generalize](generalize)."
+            : "[localize](localize), which applies a new place's context to a " +
+              "generalized skill, listed here."),
+      more: "Read more on generalizing skills",
+    },
+
+    metadata: {
+      heading: "The civic metadata",
+      ordinary:
+        "A skill here is an ordinary [Agent Skill](spec) — the same `SKILL.md` " +
+        "that works in Claude Code, ChatGPT, Codex and the rest. What this " +
+        "registry adds is a `civic.*` block under `metadata`, which the " +
+        "specification reserves for exactly this.",
+      selfReported:
+        "Every field below is **self-reported** by the author. The registry " +
+        "derives only two things itself: the tier, from the attestation " +
+        "ledger, and authorship, from the namespace. Nothing an author writes " +
+        "can move either.",
+
+      purposeHeading: "What it is for",
+      category:
+        "One of a closed list, so the catalogue can be filtered rather than " +
+        "searched. Closed on purpose: a free-text field becomes twelve " +
+        "spellings of \u201cpermits\u201d.",
+      scope:
+        "What kind of government body it is written for — a city, a state, a " +
+        "national agency. Country-neutral, because the place is a separate " +
+        "field. A skill may serve two levels; one is required, because leaving " +
+        "it out could not be told apart from meaning *any*.",
+      jurisdiction:
+        "The specific place, when there is one: `US-VT`, `US-MA / Boston`. " +
+        "Left out by a skill that is not tied to a place, which is most of " +
+        "them — and a `generalized` skill never has one, since its specifics " +
+        "were lifted out.",
+      localization:
+        "Whether the local specifics are still in it. This one changes how the " +
+        "checks read the skill: an external URL in a `localized` skill is the " +
+        "skill working, and in a `generalized` one it is a leftover.",
+      language:
+        "The language the `SKILL.md` is written in, as one BCP 47 tag — `en`, " +
+        "`es`, `pt-BR`. Not a limit on who can use the skill: a model reads an " +
+        "English skill and follows it in Spanish. It is so you know what you " +
+        "are about to open, and so the catalogue can be browsed by it. " +
+        "Required, because an omitted tag could not be told apart from an " +
+        "unanswered one.",
+      languagesTested:
+        "Optional, and the author\u2019s own claim about which languages they " +
+        "have exercised the skill in. **Nothing checks it.** The verified list " +
+        "is a different field in a different file — `languages:` on the review " +
+        "attestation in `registry/reviewed.yml` — and the skill\u2019s page " +
+        "keeps the two apart rather than merging them into one badge.",
+
+      effectHeading: "What it might do to somebody",
+      effectLede:
+        "The two fields nobody can answer by reading the code, and the reason " +
+        "this registry exists rather than a folder of gists.",
+      dataSensitivity: "What the skill touches when it runs on real work.",
+      humanReview:
+        "Whether its output reaches a decision about a person\u2019s rights or " +
+        "benefits. A skill that drafts a letter and a skill that feeds an " +
+        "eligibility determination are different propositions.",
+
+      fitHeading: "When it fits, and when it does not",
+      useWhen:
+        "The situation this is the right tool for. Plain text, never rendered " +
+        "as markdown.",
+      avoidWhen:
+        "The higher-value half. Nobody but the author can supply it, and a " +
+        "skill honest about its limits gets adopted faster than one claiming " +
+        "none.",
+
+      standingHeading: "Who stands behind it",
+      maintainer:
+        "A person or team, and what kind of organization they are. There is no " +
+        "separate contact field: the namespace is a GitHub account, so an " +
+        "issue or a mention reaches whoever owns it, and that cannot go stale " +
+        "independently of the account.",
+      deployment:
+        "Whether anyone has actually used it, and where. Self-reported, and " +
+        "shown as such.",
+      source:
+        "Where an imported copy came from, stamped automatically when a skill " +
+        "is read out of a repository. The registry holds the content; these " +
+        "record its provenance.",
+
+      schema: "The schema, which is the contract",
+    },
+
+    submitting: {
+      heading: "How to submit a skill",
+      lede:
+        "The [submission page](submit) does most of this for you: drop in a " +
+        "folder or point it at a repository, and it reads what is already " +
+        "there and asks only for what it could not find. You will need a " +
+        "**GitHub account** \u2014 it is free, and it is what records the " +
+        "skill as yours.",
+      byHand: "What it produces, and what you would build by hand:",
+      steps: {
+        namespaceTitle: "Put it in your own namespace",
+        namespace:
+          "`skills/{your-github-username}/{skill-name}/` with a `SKILL.md`, " +
+          "plus optional `scripts/` and `references/` directories.",
+        frontmatterTitle: "Fill in the frontmatter",
+        frontmatter:
+          "The six fields of the Agent Skills spec, plus `civic.*` metadata: " +
+          "category, level of government, what data it touches, and whether " +
+          "its output affects anyone's rights or benefits. Those last two are " +
+          "the questions nobody can answer from reading your code.",
+        pullRequestTitle: "Open a pull request",
+        pullRequest:
+          "Automated checks run and report back in a comment. They can only " +
+          "reject \u2014 a pass is not a statement that a skill is safe.",
+      },
+      cta: "Share a skill",
+      guide: "The contributor guide",
+    },
+
+    checks: {
+      heading: "What we check, and what we don\u2019t",
+      what:
+        "Every submission goes through automated checks. They confirm the " +
+        "skill is well formed, that it was submitted into its author\u2019s " +
+        "own folder, and they scan for a set of known problems: commands that " +
+        "run before the model has read the file, unrestricted tool access, and " +
+        "code that reaches for credentials.",
+      limits:
+        "**These checks find known problems. They cannot tell you a skill is " +
+        "safe.** Scanners of this kind are well documented as possible to " +
+        "evade, so a clean result means only that nothing on the list matched.",
+      reviewIsDifferent:
+        "A review is a different thing. Someone reads the whole skill and " +
+        "checks that what it does matches what it says it does. That is the " +
+        "question no scanner can answer, and it is why the Reviewed tier " +
+        "exists.",
+      threeThings: "Three things to know before you run any skill, from anywhere:",
+      scripts: "Skills can include scripts your agent *runs*, not only text it reads.",
+      tools:
+        "The `allowed-tools` field gives a skill access to tools without " +
+        "asking you first.",
+      removal:
+        "Removing a skill from this catalog does not remove it from anyone who " +
+        "already downloaded it.",
+      security: "Security model and how to report a problem",
+    },
+
+    review: {
+      heading: "What a review checks for",
+      lede:
+        "A review is one person reading the whole skill against a fixed list " +
+        "of nine questions, in this order. Four of them are outright " +
+        "rejections rather than judgment calls, and they are marked.",
+      /** The nine, in order. Each opens with the question in bold, and the four
+       *  that are refusals rather than judgment calls close with the marker.
+       *  REVIEW.md is the authority; this is the reader's version of it. */
+      questions: [
+        "**Does the description match what the skill does?** A description " +
+        "broader than the behaviour is a security finding, not a style " +
+        "problem — it is how a skill gets invoked for work it was not written " +
+        "for. *Rejection.*",
+
+        "**Would we run these scripts?** Every line of every file under " +
+        "`scripts/` gets read, and of `.mcp.json` where a skill declares MCP " +
+        "servers. If we would not run it on our own machine, it does not " +
+        "pass. *Rejection.*",
+
+        "**Does it ask for more tools than it needs?** `allowed-tools` grants " +
+        "access without prompting you and is not gated by trusting the " +
+        "workspace, so every entry has to be necessary. An unrestricted shell " +
+        "grant is refused outright. *Rejection.*",
+
+        "**Where does it send anything?** Every network destination has to be " +
+        "named, expected, and written down. Traffic to somewhere the " +
+        "skill\u2019s stated purpose does not require is not a question to " +
+        "ask the author. *Rejection.*",
+
+        "**Does it reach outside the folder it was given?** Credentials, " +
+        "environment variables, files elsewhere on the machine.",
+
+        "**Does it tell the agent to hide anything?** Instructions to " +
+        "disregard what came before, to conceal a step, or to leave something " +
+        "out of what it reports back to you.",
+
+        "**Does what it produces affect anyone\u2019s rights or benefits?** " +
+        "If it does, the skill has to say so in its own output, where the " +
+        "person affected will see it — not only in its metadata, where only " +
+        "we will.",
+
+        "**Is the license there, and does it actually apply?** A license " +
+        "naming terms the author had no standing to grant is worse than none.",
+
+        "**Would it work outside the place it came from?** A skill welded to " +
+        "one jurisdiction\u2019s forms and deadlines is still useful; it just " +
+        "needs to say so, so nobody adopts it expecting otherwise.",
+      ],
+      warn:
+        "**This is a record of what was checked, not a guarantee.** One " +
+        "reader, about fifteen minutes, one version of the skill. It is not an " +
+        "independent audit, we do not test that the skill works, and passing " +
+        "these nine questions is not a statement that a skill is safe or fit " +
+        "for your purpose. What it does mean is that somebody looked, and you " +
+        "can see exactly what they looked for.",
+      checklist: "The full checklist, with what each question rejects",
+    },
+
+    beta: {
+      heading: "What Beta means",
+      scope:
+        "This is about the exchange, not about the skills. What a listing " +
+        "means is covered above and has not changed: automated checks can only " +
+        "reject, and a review is a record of what was checked rather than a " +
+        "guarantee. Beta says something narrower — that the registry around " +
+        "those listings is still being built, and you may hit an " +
+        "inconsistency that is ours rather than a skill\u2019s.",
+      movingLede: "What is moving right now:",
+      moving: [
+        "**The categories.** Just recut from twelve to fifteen, onto two axes. " +
+        "A listing\u2019s category may be relabelled again.",
+
+        "**The metadata fields.** Some are being dropped, others added — what " +
+        "level of government a skill is written for, and how a version is " +
+        "declared.",
+
+        "**Submitting.** The browser route works; the two paths around it are " +
+        "still settling, and error messages are still being written for " +
+        "people rather than for reviewers.",
+
+        "**Review and removal.** Both processes exist and each has run once. " +
+        "Expect the guides to change as they are used.",
+      ],
+      migration:
+        "A field that changes does not invalidate a listing: the validator " +
+        "says what a submission needs at the moment you submit it, and the " +
+        "maintainers migrate what is already listed rather than asking authors " +
+        "to. If something contradicts itself, that is a bug and worth an issue.",
+    },
+
+    terms: {
+      heading: "Terms",
+      inclusion:
+        "Inclusion in this registry does not constitute endorsement, " +
+        "verification, or any guarantee regarding a skill's quality, " +
+        "functionality, security, or fitness for any purpose. Skills in the " +
+        "Reviewed tier have been read by the AI Lab for Cities at Harvard " +
+        "against a published checklist; that is a statement about a specific " +
+        "commit, not a warranty, and not an independent assessment. **You are " +
+        "responsible for what you run.**",
+      licensing:
+        "Registry infrastructure is MIT licensed. Each skill carries its own " +
+        "license in its frontmatter and remains the property of its authors — " +
+        "check that field before you use one.",
+      affiliation:
+        "A project affiliated with the AI Lab for Cities at Harvard. Not an " +
+        "official publication, and not endorsed by any institution.",
+    },
+  },
+
   /** One skill's own page. */
   detail: {
     breadcrumb: "Breadcrumb",
