@@ -11,6 +11,7 @@ import {
   MAX_SKILL_BYTES,
   ALLOWED_SUFFIXES,
   isRepositoryFurniture,
+  rejectedPluginPath,
 } from "./structure-core";
 
 const bytes = (s: string) => new TextEncoder().encode(s);
@@ -279,7 +280,9 @@ describe("plugin-level files a skill may not ship", () => {
     "settings.json",
     "settings.local.json",
     ".lsp.json",
-    ".claude-plugin/plugin.json",
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/hooks/hooks.json",
+    ".claude-plugin/plugin.jsonc",
   ])("%s is rejected, and the finding names the path", (path) => {
     const findings = checkStructureCore(withRoot(path));
     expect(findings).toHaveLength(1);
@@ -320,6 +323,39 @@ describe("plugin-level files a skill may not ship", () => {
     // build_marketplace.py writes one into every listing, so rejecting it
     // would fail every skill in the registry.
     expect(checkStructureCore(withRoot(".codex-plugin/plugin.json"))).toEqual([]);
+  });
+
+  /* #183 narrowed the `.claude-plugin/` refusal to everything except the one
+     file the generator writes there. #151 refused the directory outright
+     because an author's copy would shadow the generated manifest — and that
+     reasoning holds for every path under it but the generated one, which
+     `build_marketplace.py --check` compares byte for byte against what the
+     generator produces before validate.yml will let the pull request pass. */
+  it("leaves the generated .claude-plugin manifest alone", () => {
+    expect(checkStructureCore(withRoot(".claude-plugin/plugin.json"))).toEqual([]);
+  });
+
+  it("does not report the .claude-plugin directory entry itself", () => {
+    expect(checkStructureCore([
+      file("SKILL.md", "x"),
+      { path: ".claude-plugin", kind: "dir" },
+      file(".claude-plugin/plugin.json", "{}\n"),
+    ])).toEqual([]);
+  });
+
+  it("still refuses another file beside the generated one", () => {
+    const findings = checkStructureCore([
+      file("SKILL.md", "x"),
+      { path: ".claude-plugin", kind: "dir" },
+      file(".claude-plugin/plugin.json", "{}\n"),
+      file(".claude-plugin/settings.json", "{}\n"),
+    ]);
+    expect(findings.map((f) => f.where)).toEqual([".claude-plugin/settings.json"]);
+  });
+
+  it("says a differing copy is caught, so nothing can be smuggled in", () => {
+    expect(rejectedPluginPath(".claude-plugin/other.json"))
+      .toMatch(/build_marketplace\.py --check/);
   });
 
   it.each([
