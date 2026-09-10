@@ -104,6 +104,34 @@ body:
         - "generalized — those have been lifted out into a context to fill in"
 
   - type: dropdown
+    id: language
+    attributes:
+      label: What language is the skill written in?
+      description: >
+        The language of the SKILL.md itself, which becomes a BCP 47 tag in
+        `civic.language`. Not a limit on who can use it — a model reads a skill
+        in one language and follows it in another. Pick "another language" and
+        say which in the notes below if neither fits.
+      options:
+        - "en — English"
+        - "es — Spanish"
+        - "another language — I will give the tag below"
+    validations:
+      required: true
+
+  - type: input
+    id: languages-tested
+    attributes:
+      label: Which languages have you tried it in?
+      description: >
+        Optional, and your own claim — nothing here checks it. Comma-separated
+        tags including the one above, which becomes `civic.languages-tested`.
+        The skill's page shows it as something you said rather than something
+        anybody verified. A reviewer's verified list is a separate thing and
+        lives on the attestation.
+      placeholder: en, es
+
+  - type: dropdown
     id: sensitivity
     attributes:
       label: What data does this skill touch?
