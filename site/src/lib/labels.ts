@@ -1,118 +1,34 @@
-/** Display strings. Kept in one place so the vocabulary stays consistent
- *  between facets, cards, and detail views. */
-
-export const CATEGORY_LABELS: Record<string, string> = {
-  policy: "Policy",
-  "data-analysis": "Data Analysis",
-  communications: "Communications",
-  finance: "Finance",
-  hr: "HR",
-  technology: "Technology",
-  "constituent-services": "Constituent Services",
-  "benefits-eligibility": "Benefits & Eligibility",
-  "permitting-licensing": "Permitting & Licensing",
-  legal: "Legal",
-  "public-records": "Public Records & Transparency",
-  operations: "Operations & Service Delivery",
-  "emergency-public-safety": "Emergency Management & Public Safety",
-  "planning-land-use": "Planning & Land Use",
-  "ai-tools": "AI Tools",
-};
-
-/** What kind of government body a skill is written for (#67). Country-neutral,
- *  because the place is a separate field that carries the country — "regional"
- *  is a state, province, prefecture, canton or region, and "municipal" is a
- *  city, county or town. */
-export const SCOPE_LABELS: Record<string, string> = {
-  any: "Any level of government",
-  municipal: "City, county or town",
-  regional: "State, province or region",
-  national: "National",
-  supranational: "Supranational",
-};
-
-/** The two languages the exchange itself ships in, and nothing more.
+/** The closed vocabularies, and the two questions the form asks.
  *
- *  Deliberately not a language-name table. A full one is hundreds of entries
- *  in each locale the site speaks, it would go stale, and a tag the map does
- *  not hold renders as the tag — which is a correct, if terse, answer. `label`
- *  already falls back that way, so a Portuguese listing reads `pt-BR` rather
- *  than an empty cell. */
-export const LANGUAGE_LABELS: Record<string, string> = {
-  en: "English",
-  es: "Spanish",
-};
-
-export const SENSITIVITY_LABELS: Record<string, string> = {
-  none: "No personal data",
-  pii: "Personal data (PII)",
-  protected: "Protected — statutory regime",
-};
-
-export const LOCALIZATION_LABELS: Record<string, string> = {
-  generalized: "Generalized",
-  localized: "Localized",
-};
-
-export const DEPLOYMENT_LABELS: Record<string, string> = {
-  none: "Not used in production",
-  personal: "Used personally",
-  team: "Used by a team",
-  organization: "Used organization-wide",
-};
-
-export const HUMAN_REVIEW_LABELS: Record<string, string> = {
-  none: "No effect on rights or benefits",
-  "advisory-only": "Informs a person, decides nothing",
-  "decision-support": "Feeds a decision someone acts on",
-};
-
-export const AFFILIATION_LABELS: Record<string, string> = {
-  government: "Government",
-  nonprofit: "Nonprofit",
-  vendor: "Vendor",
-  academic: "Academic",
-  individual: "Individual",
-};
-
-export const TIER_LABELS: Record<string, string> = {
-  reviewed: "Reviewed",
-  community: "Community",
-};
-
-/** The two questions no scanner can answer, and the words both intake routes
- *  ask them in.
+ *  These moved into `i18n/en.ts` with the rest of the site's strings (#149).
+ *  What is left here is the re-export, so that the twenty-odd import sites did
+ *  not all have to change with them, and `label`, which is the one piece of
+ *  behaviour: fall back to the raw value for a key the vocabulary has no name
+ *  for, so a `pt-BR` listing reads `pt-BR` rather than an empty cell.
  *
- *  Only the author knows what data their skill touches or whether its output
- *  reaches a person's rights, so these are asked rather than derived — and
- *  asking them differently in two places is how one skill acquires two
- *  different answers, so the wording lives here rather than inline in the form.
- *  Submit.test.tsx asserts the form renders what this holds.
- *
- *  These are the plain questions, not the display strings above:
- *  SENSITIVITY_LABELS renders a listing, this asks a submitter. */
-export const JUDGMENT_QUESTIONS: Record<
-  string, { question: string; options: [string, string][] }
-> = {
-  "civic.data-sensitivity": {
-    question: "What data does it touch?",
-    options: [
-      ["none", "No personal data"],
-      ["pii", "Personal details about identifiable people"],
-      ["protected", "Health, benefits, immigration or criminal justice data"],
-    ],
-  },
-  "civic.human-review": {
-    question: "Does what it produces affect anyone's rights or benefits?",
-    options: [
-      ["none", "No — it does not affect anyone's rights or benefits"],
-      ["advisory-only", "It informs a person, but decides nothing"],
-      ["decision-support", "It feeds a decision someone acts on"],
-    ],
-  },
-};
+ *  These constants are the **English** maps. That is deliberate and it is what
+ *  callers want them for: `Object.keys(CATEGORY_LABELS)` is the canonical value
+ *  list, which does not vary by locale. Anything that renders a label to a
+ *  reader reads it off `useStrings().vocabulary` instead, so it follows the
+ *  locale the reader chose.
+ */
+
+import { en } from "../i18n/en";
+import { strings } from "../i18n/strings";
+
+export const CATEGORY_LABELS: Record<string, string> = en.vocabulary.category;
+export const SCOPE_LABELS: Record<string, string> = en.vocabulary.scope;
+export const LANGUAGE_LABELS: Record<string, string> = en.vocabulary.language;
+export const SENSITIVITY_LABELS: Record<string, string> = en.vocabulary.sensitivity;
+export const LOCALIZATION_LABELS: Record<string, string> = en.vocabulary.localization;
+export const DEPLOYMENT_LABELS: Record<string, string> = en.vocabulary.deployment;
+export const HUMAN_REVIEW_LABELS: Record<string, string> = en.vocabulary.humanReview;
+export const AFFILIATION_LABELS: Record<string, string> = en.vocabulary.affiliation;
+export const TIER_LABELS: Record<string, string> = en.vocabulary.tier;
+
+export const JUDGMENT_QUESTIONS = en.questions;
 
 export function label(map: Record<string, string>, key: string | null): string {
-  if (!key) return "—";
+  if (!key) return strings().vocabulary.missing;
   return map[key] ?? key;
 }

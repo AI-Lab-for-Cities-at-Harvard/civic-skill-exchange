@@ -1,13 +1,14 @@
-import {
-  CATEGORY_LABELS, SCOPE_LABELS, SENSITIVITY_LABELS,
-  LOCALIZATION_LABELS, HUMAN_REVIEW_LABELS, AFFILIATION_LABELS,
-  DEPLOYMENT_LABELS,
-} from "../lib/labels";
-import { BETA_SUMMARY } from "./Beta";
+import { rich } from "../i18n/rich";
+import { useStrings, type Strings } from "../i18n/strings";
 import { aboutHref, skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
 
 const REPO = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
+const SPEC = "https://agentskills.io";
+const STANDARD = "https://agentskills.io/specification";
+
+type SectionId = keyof Strings["about"]["toc"]["sections"];
+type GroupId = keyof Strings["about"]["toc"]["groups"];
 
 /** The sections, in two groups (#136).
  *
@@ -17,38 +18,34 @@ const REPO = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchan
  *  railed: the design system's nearest in-page navigation is a vertical rail,
  *  but a rail would cost this page its single column and need its own collapse
  *  on a phone — more risk than the problem warrants. Grouping fixes the
- *  hierarchy and the unpredictable wrapping, which is what was wrong. */
-const GROUPS: { label: string; sections: [string, string][] }[] = [
+ *  hierarchy and the unpredictable wrapping, which is what was wrong.
+ *
+ *  Ids only. They are route slugs and element ids, so they do not translate;
+ *  the labels come off the table keyed by them. */
+const GROUPS: { id: GroupId; sections: SectionId[] }[] = [
   {
-    label: "What this is",
-    sections: [
-      ["what-this-is", "The registry"],
-      ["tiers", "Two tiers"],
-      ["localization", "Generalized and localized"],
-      ["metadata", "The civic metadata"],
-    ],
+    id: "whatThisIs",
+    sections: ["what-this-is", "tiers", "localization", "metadata"],
   },
   {
-    label: "What to expect",
-    sections: [
-      ["submitting", "How to submit"],
-      ["checks", "What we check"],
-      ["review", "What a review checks for"],
-      ["beta", "What Beta means"],
-    ],
+    id: "whatToExpect",
+    sections: ["submitting", "checks", "review", "beta"],
   },
 ];
 
 /** Every section id, for anything that needs the flat list. */
-const SECTION_IDS = GROUPS.flatMap((g) => g.sections.map(([id]) => id));
+const SECTION_IDS: string[] = GROUPS.flatMap((g) => g.sections);
 
 /** The vocabulary tables, built from the same maps the facets and the form use.
  *  Written out by hand once and they would drift the first time a category is
- *  added. */
-function Vocabulary({ title, map }: { title: string; map: Record<string, string> }) {
+ *  added.
+ *
+ *  `field` is the frontmatter key, which is an identifier and does not
+ *  translate — the labels beside it do. */
+function Vocabulary({ field, map }: { field: string; map: Record<string, string> }) {
   return (
     <div className="vocab">
-      <h4 className="vocab__title">{title}</h4>
+      <h4 className="vocab__title">{field}</h4>
       <ul className="vocab__list">
         {Object.entries(map).map(([key, label]) => (
           <li key={key}><code>{key}</code> <span>{label}</span></li>
@@ -68,6 +65,8 @@ function skillLink(skills: Skill[], name: string) {
 export function About(
   { skills = [], section }: { skills?: Skill[]; section?: string },
 ) {
+  const s = useStrings();
+  const a = s.about;
   const generalize = skillLink(skills, "generalize-skill");
   const localize = skillLink(skills, "localize-skill");
   // parseRoute lets any slug through — it reaches getElementById and misses —
@@ -76,19 +75,19 @@ export function About(
 
   return (
     <article className="prose">
-      <nav className="toc" aria-label="On this page" data-testid="about-toc">
-        <p className="toc__title">On this page</p>
+      <nav className="toc" aria-label={a.toc.label} data-testid="about-toc">
+        <p className="toc__title">{a.toc.title}</p>
         <div className="toc__groups">
           {GROUPS.map((group) => (
-            <div className="toc__group" key={group.label}>
-              <p className="toc__group-label">{group.label}</p>
+            <div className="toc__group" key={group.id}>
+              <p className="toc__group-label">{a.toc.groups[group.id]}</p>
               <ul className="toc__list">
-                {group.sections.map(([id, label]) => (
+                {group.sections.map((id) => (
                   <li key={id}>
                     <a href={aboutHref(id)}
                       className={id === current ? "toc__link toc__link--current" : "toc__link"}
                       aria-current={id === current ? "true" : undefined}>
-                      {label}
+                      {a.toc.sections[id]}
                     </a>
                   </li>
                 ))}
@@ -99,65 +98,29 @@ export function About(
       </nav>
 
       <section className="prose__block" id="what-this-is">
-        <h2 className="h2">What this is</h2>
-        <p className="lede">
-          An open catalog of agent skills for civic use — government,
-          public-sector and nonprofit work.
-        </p>
-        <p>
-          A <strong>skill</strong> is a small, portable bundle of instructions —
-          and sometimes scripts — that teaches an AI coding agent how to do one
-          job well: explain a permit status in plain language, check a benefits
-          application against eligibility rules, turn a budget spreadsheet into a
-          published open-data file.
-        </p>
-        <p>
-          Skills follow the{" "}
-          <a href="https://agentskills.io/specification">Agent Skills open standard</a>,
-          so they work across tools rather than locking you into one vendor.
-        </p>
+        <h2 className="h2">{a.whatThisIs.heading}</h2>
+        <p className="lede">{a.whatThisIs.lede}</p>
+        <p>{rich(a.whatThisIs.skill)}</p>
+        <p>{rich(a.whatThisIs.standard, { spec: STANDARD })}</p>
       </section>
 
       <section className="prose__block" id="tiers">
-        <h2 className="h2">Two tiers, and what they mean</h2>
+        <h2 className="h2">{a.tiers.heading}</h2>
         <div className="tiers">
           <div className="tier-card">
-            <h3 className="h3">Community</h3>
-            <p>
-              The skill is well-formed and nothing mechanical is wrong with it.
-              Merged once it passes structural, ownership and signature checks.
-            </p>
-            <p className="tier-card__warn">
-              <strong>This is not an endorsement.</strong> Automated checks can
-              only ever say <em>no</em> — a pass is the absence of known-bad
-              signals, not the presence of safety. Read anything from this tier
-              before you run it.
-            </p>
+            <h3 className="h3">{a.tiers.communityTerm}</h3>
+            <p>{a.tiers.community}</p>
+            <p className="tier-card__warn">{rich(a.tiers.communityWarn)}</p>
           </div>
           <div className="tier-card tier-card--reviewed">
-            <h3 className="h3">Reviewed</h3>
-            <p>
-              The AI Lab for Cities at Harvard read every line of one specific
-              commit against a published checklist and put its name on it.
-            </p>
-            <p className="tier-card__warn">
-              <strong>One reader, and it is us.</strong> Nobody outside the Lab
-              has read it, and where the Lab wrote the skill as well, the
-              listing says so. It is a smaller claim than two readers from
-              separate organizations would be, and it is one we can actually
-              make.
-            </p>
-            <p>
-              The attestation is pinned to{" "}
-              <strong>one commit</strong> — the last one that touched the
-              skill. If anything commits to it after that, the listing drops
-              back to Community automatically, so a compromised account cannot
-              quietly alter something already carrying our review.
-            </p>
+            <h3 className="h3">{a.tiers.reviewedTerm}</h3>
+            <p>{a.tiers.reviewed}</p>
+            <p className="tier-card__warn">{rich(a.tiers.reviewedWarn)}</p>
+            <p>{rich(a.tiers.pinned)}</p>
             <p>
               <a className="arrow-link" href={aboutHref("review")}
                 data-testid="tier-card-review-link">
-                What a review checks for <span aria-hidden="true">→</span>
+                {a.tiers.reviewLink} <span aria-hidden="true">→</span>
               </a>
             </p>
           </div>
@@ -165,416 +128,189 @@ export function About(
       </section>
 
       <section className="prose__block" id="localization">
-        <h2 className="h2">Generalized and localized</h2>
-        <p>
-          Most civic skills start out bound to one place. A policy skill written
-          for the State of Vermont knows Vermont's statute citations, appeal
-          windows and form numbers — which is what makes it useful there, and
-          useless anywhere else.
-        </p>
+        <h2 className="h2">{a.localization.heading}</h2>
+        <p>{a.localization.bound}</p>
         <p className="flow">
-          <span className="flow__step">Vermont policy skill</span>
+          <span className="flow__step">{a.localization.flow.from}</span>
           <span className="flow__arrow" aria-hidden="true">→</span>
-          <span className="flow__step flow__step--mid">generalized</span>
+          <span className="flow__step flow__step--mid">{a.localization.flow.via}</span>
           <span className="flow__arrow" aria-hidden="true">→</span>
-          <span className="flow__step">Boston policy skill</span>
+          <span className="flow__step">{a.localization.flow.to}</span>
         </p>
-        <p>
-          A <strong>localized</strong> skill carries one jurisdiction's
-          specifics. A <strong>generalized</strong> one has had them lifted out
-          into a context an adopter fills in. Neither is better — but
-          generalizing is what lets a solution make the trip to the second city.
-        </p>
+        <p>{rich(a.localization.both)}</p>
         {(generalize || localize) && (
           <p>
-            The trip is not manual. Two skills in this registry do it:{" "}
-            {generalize && (
-              <a href={generalize} data-testid="link-generalize">generalize</a>
-            )}
-            {generalize && localize && ", which lifts a jurisdiction's specifics out into a context file, and "}
-            {localize && (
-              <a href={localize} data-testid="link-localize">localize</a>
-            )}
-            {localize && ", which applies a new place's context to a generalized skill"}
-            {!generalize && ", listed here"}.
+            {rich(a.localization.pair(generalize !== null, localize !== null), {
+              ...(generalize
+                ? { generalize: { href: generalize, "data-testid": "link-generalize" } }
+                : {}),
+              ...(localize
+                ? { localize: { href: localize, "data-testid": "link-localize" } }
+                : {}),
+            })}
           </p>
         )}
         <p>
           <a className="arrow-link" href={`${REPO}/blob/main/docs/LOCALIZATION.md`}>
-            Read more on generalizing skills <span aria-hidden="true">→</span>
+            {a.localization.more} <span aria-hidden="true">→</span>
           </a>
         </p>
       </section>
 
       <section className="prose__block" id="metadata">
-        <h2 className="h2">The civic metadata</h2>
-        <p>
-          A skill here is an ordinary{" "}
-          <a href="https://agentskills.io">Agent Skill</a> — the same{" "}
-          <code>SKILL.md</code> that works in Claude Code, ChatGPT, Codex and
-          the rest. What this registry adds is a <code>civic.*</code> block
-          under <code>metadata</code>, which the specification reserves for
-          exactly this.
-        </p>
-        <p>
-          Every field below is <strong>self-reported</strong> by the author. The
-          registry derives only two things itself: the tier, from the attestation
-          ledger, and authorship, from the namespace. Nothing an author writes
-          can move either.
-        </p>
+        <h2 className="h2">{a.metadata.heading}</h2>
+        <p>{rich(a.metadata.ordinary, { spec: SPEC })}</p>
+        <p>{rich(a.metadata.selfReported)}</p>
 
-        <h3 className="h3">What it is for</h3>
+        <h3 className="h3">{a.metadata.purposeHeading}</h3>
         <dl className="fields">
           <dt><code>civic.category</code></dt>
-          <dd>
-            One of a closed list, so the catalogue can be filtered rather than
-            searched. Closed on purpose: a free-text field becomes twelve
-            spellings of &ldquo;permits&rdquo;.
-          </dd>
+          <dd>{rich(a.metadata.category)}</dd>
           <dt><code>civic.scope</code>, <code>civic.scope-secondary</code></dt>
-          <dd>
-            What kind of government body it is written for — a city, a state, a
-            national agency. Country-neutral, because the place is a separate
-            field. A skill may serve two levels; one is required, because
-            leaving it out could not be told apart from meaning{" "}
-            <em>any</em>.
-          </dd>
+          <dd>{rich(a.metadata.scope)}</dd>
           <dt><code>civic.jurisdiction</code></dt>
-          <dd>
-            The specific place, when there is one:{" "}
-            <code>US-VT</code>, <code>US-MA / Boston</code>. Left out by a skill
-            that is not tied to a place, which is most of them — and a{" "}
-            <code>generalized</code> skill never has one, since its specifics
-            were lifted out.
-          </dd>
+          <dd>{rich(a.metadata.jurisdiction)}</dd>
           <dt><code>civic.localization</code></dt>
-          <dd>
-            Whether the local specifics are still in it. This one changes how
-            the checks read the skill: an external URL in a{" "}
-            <code>localized</code> skill is the skill working, and in a{" "}
-            <code>generalized</code> one it is a leftover.
-          </dd>
+          <dd>{rich(a.metadata.localization)}</dd>
           <dt><code>civic.language</code></dt>
-          <dd>
-            The language the <code>SKILL.md</code> is written in, as one BCP 47
-            tag — <code>en</code>, <code>es</code>, <code>pt-BR</code>. Not a
-            limit on who can use the skill: a model reads an English skill and
-            follows it in Spanish. It is so you know what you are about to open,
-            and so the catalogue can be browsed by it. Required, because an
-            omitted tag could not be told apart from an unanswered one.
-          </dd>
+          <dd>{rich(a.metadata.language)}</dd>
           <dt><code>civic.languages-tested</code></dt>
-          <dd>
-            Optional, and the author&rsquo;s own claim about which languages they
-            have exercised the skill in. <strong>Nothing checks it.</strong> The
-            verified list is a different field in a different file —{" "}
-            <code>languages:</code> on the review attestation in{" "}
-            <code>registry/reviewed.yml</code> — and the skill&rsquo;s page keeps
-            the two apart rather than merging them into one badge.
-          </dd>
+          <dd>{rich(a.metadata.languagesTested)}</dd>
         </dl>
         <div className="vocab-grid">
-          <Vocabulary title="civic.category" map={CATEGORY_LABELS} />
-          <Vocabulary title="civic.scope" map={SCOPE_LABELS} />
-          <Vocabulary title="civic.localization" map={LOCALIZATION_LABELS} />
+          <Vocabulary field="civic.category" map={s.vocabulary.category} />
+          <Vocabulary field="civic.scope" map={s.vocabulary.scope} />
+          <Vocabulary field="civic.localization" map={s.vocabulary.localization} />
         </div>
 
-        <h3 className="h3">What it might do to somebody</h3>
-        <p>
-          The two fields nobody can answer by reading the code, and the reason
-          this registry exists rather than a folder of gists.
-        </p>
+        <h3 className="h3">{a.metadata.effectHeading}</h3>
+        <p>{a.metadata.effectLede}</p>
         <dl className="fields">
           <dt><code>civic.data-sensitivity</code></dt>
-          <dd>What the skill touches when it runs on real work.</dd>
+          <dd>{a.metadata.dataSensitivity}</dd>
           <dt><code>civic.human-review</code></dt>
-          <dd>
-            Whether its output reaches a decision about a person&rsquo;s rights or
-            benefits. A skill that drafts a letter and a skill that feeds an
-            eligibility determination are different propositions.
-          </dd>
+          <dd>{rich(a.metadata.humanReview)}</dd>
         </dl>
         <div className="vocab-grid">
-          <Vocabulary title="civic.data-sensitivity" map={SENSITIVITY_LABELS} />
-          <Vocabulary title="civic.human-review" map={HUMAN_REVIEW_LABELS} />
+          <Vocabulary field="civic.data-sensitivity" map={s.vocabulary.sensitivity} />
+          <Vocabulary field="civic.human-review" map={s.vocabulary.humanReview} />
         </div>
 
-        <h3 className="h3">When it fits, and when it does not</h3>
+        <h3 className="h3">{a.metadata.fitHeading}</h3>
         <dl className="fields">
           <dt><code>civic.use-when</code></dt>
-          <dd>The situation this is the right tool for. Plain text, never rendered as markdown.</dd>
+          <dd>{a.metadata.useWhen}</dd>
           <dt><code>civic.avoid-when</code></dt>
-          <dd>
-            The higher-value half. Nobody but the author can supply it, and a
-            skill honest about its limits gets adopted faster than one claiming
-            none.
-          </dd>
+          <dd>{a.metadata.avoidWhen}</dd>
         </dl>
 
-        <h3 className="h3">Who stands behind it</h3>
+        <h3 className="h3">{a.metadata.standingHeading}</h3>
         <dl className="fields">
           <dt><code>civic.maintainer</code>, <code>civic.affiliation</code></dt>
-          <dd>
-            A person or team, and what kind of organization they are. There is
-            no separate contact field: the namespace is a GitHub account, so an
-            issue or a mention reaches whoever owns it, and that cannot go stale
-            independently of the account.
-          </dd>
+          <dd>{a.metadata.maintainer}</dd>
           <dt>
             <code>civic.deployment</code>, <code>civic.deployed-at</code>,{" "}
             <code>civic.deployed-in</code>, <code>civic.deployed-since</code>
           </dt>
-          <dd>Whether anyone has actually used it, and where. Self-reported, and shown as such.</dd>
+          <dd>{a.metadata.deployment}</dd>
           <dt><code>civic.source-repo</code>, <code>civic.source-commit</code></dt>
-          <dd>
-            Where an imported copy came from, stamped automatically when a skill
-            is read out of a repository. The registry holds the content; these
-            record its provenance.
-          </dd>
+          <dd>{a.metadata.source}</dd>
         </dl>
         <div className="vocab-grid">
-          <Vocabulary title="civic.affiliation" map={AFFILIATION_LABELS} />
-          <Vocabulary title="civic.deployment" map={DEPLOYMENT_LABELS} />
+          <Vocabulary field="civic.affiliation" map={s.vocabulary.affiliation} />
+          <Vocabulary field="civic.deployment" map={s.vocabulary.deployment} />
         </div>
 
         <p>
           <a className="arrow-link" href={`${REPO}/blob/main/schema/skill.schema.json`}>
-            The schema, which is the contract <span aria-hidden="true">&rarr;</span>
+            {a.metadata.schema} <span aria-hidden="true">&rarr;</span>
           </a>
         </p>
       </section>
 
       <section className="prose__block" id="submitting">
-        <h2 className="h2">How to submit a skill</h2>
-        <p>
-          The <a href="#/submit">submission page</a> does most of this for you:
-          drop in a folder or point it at a repository, and it reads what is
-          already there and asks only for what it could not find. You will need
-          a <strong>GitHub account</strong> &mdash; it is free, and it is what
-          records the skill as yours.
-        </p>
-        <p>What it produces, and what you would build by hand:</p>
+        <h2 className="h2">{a.submitting.heading}</h2>
+        <p>{rich(a.submitting.lede, { submit: "#/submit" })}</p>
+        <p>{a.submitting.byHand}</p>
         <ol className="steps">
           <li>
-            <h3 className="h3">Put it in your own namespace</h3>
-            <p>
-              <code>skills/&#123;your-github-username&#125;/&#123;skill-name&#125;/</code>{" "}
-              with a <code>SKILL.md</code>, plus optional <code>scripts/</code>{" "}
-              and <code>references/</code> directories.
-            </p>
+            <h3 className="h3">{a.submitting.steps.namespaceTitle}</h3>
+            <p>{rich(a.submitting.steps.namespace)}</p>
           </li>
           <li>
-            <h3 className="h3">Fill in the frontmatter</h3>
-            <p>
-              The six fields of the Agent Skills spec, plus{" "}
-              <code>civic.*</code> metadata: category, level of government, what data it
-              touches, and whether its output affects anyone's rights or
-              benefits. Those last two are the questions nobody can answer from
-              reading your code.
-            </p>
+            <h3 className="h3">{a.submitting.steps.frontmatterTitle}</h3>
+            <p>{rich(a.submitting.steps.frontmatter)}</p>
           </li>
           <li>
-            <h3 className="h3">Open a pull request</h3>
-            <p>
-              Automated checks run and report back in a comment. They can only
-              reject &mdash; a pass is not a statement that a skill is safe.
-            </p>
+            <h3 className="h3">{a.submitting.steps.pullRequestTitle}</h3>
+            <p>{a.submitting.steps.pullRequest}</p>
           </li>
         </ol>
         <p className="cta-row">
           <a className="btn btn--strong" href="#/submit" data-testid="about-submit-cta">
-            Share a skill
+            {a.submitting.cta}
           </a>
           <a className="btn" href={`${REPO}/blob/main/CONTRIBUTING.md`}
             data-testid="about-contributing">
-            The contributor guide
+            {a.submitting.guide}
           </a>
         </p>
       </section>
 
       <section className="prose__block" id="checks">
-        <h2 className="h2">What we check, and what we don&rsquo;t</h2>
-        <p>
-          Every submission goes through automated checks. They confirm the skill
-          is well formed, that it was submitted into its author&rsquo;s own
-          folder, and they scan for a set of known problems: commands that run
-          before the model has read the file, unrestricted tool access, and code
-          that reaches for credentials.
-        </p>
-        <p>
-          <strong>These checks find known problems. They cannot tell you a skill
-          is safe.</strong> Scanners of this kind are well documented as
-          possible to evade, so a clean result means only that nothing on the
-          list matched.
-        </p>
-        <p>
-          A review is a different thing. Someone reads the whole skill and
-          checks that what it does matches what it says it does. That is the
-          question no scanner can answer, and it is why the Reviewed tier
-          exists.
-        </p>
-        <p>Three things to know before you run any skill, from anywhere:</p>
+        <h2 className="h2">{a.checks.heading}</h2>
+        <p>{a.checks.what}</p>
+        <p>{rich(a.checks.limits)}</p>
+        <p>{a.checks.reviewIsDifferent}</p>
+        <p>{a.checks.threeThings}</p>
         <ul className="plain-list">
-          <li>
-            Skills can include scripts your agent <em>runs</em>, not only text
-            it reads.
-          </li>
-          <li>
-            The <code>allowed-tools</code> field gives a skill access to tools
-            without asking you first.
-          </li>
-          <li>
-            Removing a skill from this catalog does not remove it from anyone
-            who already downloaded it.
-          </li>
+          <li>{rich(a.checks.scripts)}</li>
+          <li>{rich(a.checks.tools)}</li>
+          <li>{a.checks.removal}</li>
         </ul>
         <p>
           <a className="arrow-link" href={`${REPO}/blob/main/docs/SECURITY.md`}>
-            Security model and how to report a problem{" "}
+            {a.checks.security}{" "}
             <span aria-hidden="true">→</span>
           </a>
         </p>
       </section>
 
       <section className="prose__block" id="review">
-        <h2 className="h2">What a review checks for</h2>
-        <p>
-          A review is one person reading the whole skill against a fixed list of
-          nine questions, in this order. Four of them are outright rejections
-          rather than judgment calls, and they are marked.
-        </p>
+        <h2 className="h2">{a.review.heading}</h2>
+        <p>{a.review.lede}</p>
         <ol className="numbered-list">
-          <li>
-            <strong>Does the description match what the skill does?</strong> A
-            description broader than the behaviour is a security finding, not a
-            style problem — it is how a skill gets invoked for work it was not
-            written for. <em>Rejection.</em>
-          </li>
-          <li>
-            <strong>Would we run these scripts?</strong> Every line of every
-            file under <code>scripts/</code> gets read, and of{" "}
-            <code>.mcp.json</code> where a skill declares MCP servers. If we
-            would not run it on our own machine, it does not pass.{" "}
-            <em>Rejection.</em>
-          </li>
-          <li>
-            <strong>Does it ask for more tools than it needs?</strong>{" "}
-            <code>allowed-tools</code> grants access without prompting you and
-            is not gated by trusting the workspace, so every entry has to be
-            necessary. An unrestricted shell grant is refused outright.{" "}
-            <em>Rejection.</em>
-          </li>
-          <li>
-            <strong>Where does it send anything?</strong> Every network
-            destination has to be named, expected, and written down. Traffic to
-            somewhere the skill&rsquo;s stated purpose does not require is not a
-            question to ask the author. <em>Rejection.</em>
-          </li>
-          <li>
-            <strong>Does it reach outside the folder it was given?</strong>{" "}
-            Credentials, environment variables, files elsewhere on the machine.
-          </li>
-          <li>
-            <strong>Does it tell the agent to hide anything?</strong>{" "}
-            Instructions to disregard what came before, to conceal a step, or to
-            leave something out of what it reports back to you.
-          </li>
-          <li>
-            <strong>Does what it produces affect anyone&rsquo;s rights or
-            benefits?</strong> If it does, the skill has to say so in its own
-            output, where the person affected will see it — not only in its
-            metadata, where only we will.
-          </li>
-          <li>
-            <strong>Is the license there, and does it actually apply?</strong>{" "}
-            A license naming terms the author had no standing to grant is worse
-            than none.
-          </li>
-          <li>
-            <strong>Would it work outside the place it came from?</strong> A
-            skill welded to one jurisdiction&rsquo;s forms and deadlines is
-            still useful; it just needs to say so, so nobody adopts it
-            expecting otherwise.
-          </li>
+          {a.review.questions.map((question) => (
+            <li key={question}>{rich(question)}</li>
+          ))}
         </ol>
-        <p className="tier-card__warn">
-          <strong>This is a record of what was checked, not a guarantee.</strong>{" "}
-          One reader, about fifteen minutes, one version of the skill. It is not
-          an independent audit, we do not test that the skill works, and passing
-          these nine questions is not a statement that a skill is safe or fit
-          for your purpose. What it does mean is that somebody looked, and you
-          can see exactly what they looked for.
-        </p>
+        <p className="tier-card__warn">{rich(a.review.warn)}</p>
         <p>
           <a className="arrow-link" href={`${REPO}/blob/main/docs/REVIEW.md`}
             data-testid="about-review-checklist">
-            The full checklist, with what each question rejects{" "}
+            {a.review.checklist}{" "}
             <span aria-hidden="true">→</span>
           </a>
         </p>
       </section>
 
       <section className="prose__block" id="beta">
-        <h2 className="h2">What Beta means</h2>
-        <p>{BETA_SUMMARY}</p>
-        <p>
-          This is about the exchange, not about the skills. What a listing means
-          is covered above and has not changed: automated checks can only
-          reject, and a review is a record of what was checked rather than a
-          guarantee. Beta says something narrower — that the registry around
-          those listings is still being built, and you may hit an inconsistency
-          that is ours rather than a skill&rsquo;s.
-        </p>
-        <p>What is moving right now:</p>
+        <h2 className="h2">{a.beta.heading}</h2>
+        <p>{s.badges.beta.summary}</p>
+        <p>{a.beta.scope}</p>
+        <p>{a.beta.movingLede}</p>
         <ul className="plain-list">
-          <li>
-            <strong>The categories.</strong> Just recut from twelve to fifteen,
-            onto two axes. A listing&rsquo;s category may be relabelled again.
-          </li>
-          <li>
-            <strong>The metadata fields.</strong> Some are being dropped, others
-            added — what level of government a skill is written for, and how a
-            version is declared.
-          </li>
-          <li>
-            <strong>Submitting.</strong> The browser route works; the two paths
-            around it are still settling, and error messages are still being
-            written for people rather than for reviewers.
-          </li>
-          <li>
-            <strong>Review and removal.</strong> Both processes exist and each
-            has run once. Expect the guides to change as they are used.
-          </li>
+          {a.beta.moving.map((item) => <li key={item}>{rich(item)}</li>)}
         </ul>
-        <p>
-          A field that changes does not invalidate a listing: the validator says
-          what a submission needs at the moment you submit it, and the
-          maintainers migrate what is already listed rather than asking authors
-          to. If something contradicts itself, that is a bug and worth an issue.
-        </p>
+        <p>{a.beta.migration}</p>
       </section>
 
       <section className="prose__block" data-theme="plain-dark">
         <div className="terms">
-          <h2 className="h2">Terms</h2>
-          <p>
-            Inclusion in this registry does not constitute endorsement,
-            verification, or any guarantee regarding a skill's quality,
-            functionality, security, or fitness for any purpose. Skills in the
-            Reviewed tier have been read by the AI Lab for Cities at Harvard
-            against a published checklist; that is a statement about a specific
-            commit, not a warranty, and not an independent assessment.{" "}
-            <strong>You are responsible for what you run.</strong>
-          </p>
-          <p>
-            Registry infrastructure is MIT licensed. Each skill carries its own
-            license in its frontmatter and remains the property of its authors —
-            check that field before you use one.
-          </p>
-          <p className="terms__affil">
-            A project affiliated with the AI Lab for Cities at Harvard. Not an
-            official publication, and not endorsed by any institution.
-          </p>
+          <h2 className="h2">{a.terms.heading}</h2>
+          <p>{rich(a.terms.inclusion)}</p>
+          <p>{a.terms.licensing}</p>
+          <p className="terms__affil">{a.terms.affiliation}</p>
         </div>
       </section>
     </article>

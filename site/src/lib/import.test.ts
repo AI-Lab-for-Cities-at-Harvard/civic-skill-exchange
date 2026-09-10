@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { parseRepoRef, importFromRepo, FAILURE_MESSAGES } from "./import";
+import { parseRepoRef, importFromRepo, failureMessages } from "./import";
 
 afterEach(() => { vi.unstubAllGlobals(); });
 
@@ -125,13 +125,13 @@ describe("importFromRepo — every failure says what to do next", () => {
   it("treats private and missing alike, because GitHub does", async () => {
     vi.stubGlobal("fetch", github({ status: { repo: 404 } }));
     expect(await importFromRepo("a/b")).toEqual({ kind: "not-found" });
-    expect(FAILURE_MESSAGES["not-found"]).toMatch(/private/i);
+    expect(failureMessages()["not-found"]).toMatch(/private/i);
   });
 
   it("says a rate limit is a rate limit, not a bad repository", async () => {
     vi.stubGlobal("fetch", github({ status: { repo: 403 } }));
     expect(await importFromRepo("a/b")).toEqual({ kind: "rate-limited" });
-    expect(FAILURE_MESSAGES["rate-limited"]).not.toMatch(/wrong|invalid|bad/i);
+    expect(failureMessages()["rate-limited"]).not.toMatch(/wrong|invalid|bad/i);
   });
 
   it("refuses a truncated tree rather than checking a partial file list", async () => {
@@ -176,7 +176,7 @@ describe("importFromRepo — every failure says what to do next", () => {
   });
 
   it("offers a way forward in every message", () => {
-    for (const message of Object.values(FAILURE_MESSAGES)) {
+    for (const message of Object.values(failureMessages())) {
       expect(message.length).toBeGreaterThan(20);
     }
   });

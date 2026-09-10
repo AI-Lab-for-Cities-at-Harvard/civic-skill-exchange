@@ -7,7 +7,13 @@
  *
  * The consequence sentence never varies. It is the part that matters and it is
  * true regardless of the mix.
+ *
+ * The wording moved to `i18n/en.ts` (#149) — including the plural rules, which
+ * are the language's business rather than this module's. What is left is the
+ * decision about whether there is anything to say at all.
  */
+
+import { strings } from "../i18n/strings";
 
 export interface Counts {
   total: number;
@@ -22,20 +28,10 @@ export interface Notice {
   body: string;
 }
 
-const CONSEQUENCE =
-  "That means automated checks passed — not that anybody read the code. " +
-  "Automated checks can only ever reject. Read a skill and its scripts " +
-  "before you run it.";
-
 export function communityNotice(counts: Counts): Notice | null {
   const { total, community } = counts;
   if (total <= 0 || community <= 0) return null;
 
-  const lead =
-    community === total
-      ? `Every skill here is a Community listing.`
-      : `${community} of the ${total} skills here ${community === 1 ? "is a" : "are"} ` +
-        `Community listing${community === 1 ? "" : "s"}.`;
-
-  return { lead, body: CONSEQUENCE };
+  const notice = strings().notices.community;
+  return { lead: notice.lead(community, total), body: notice.body };
 }

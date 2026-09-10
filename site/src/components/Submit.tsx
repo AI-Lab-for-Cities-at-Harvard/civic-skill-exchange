@@ -13,10 +13,10 @@ import { buildSkillZip } from "../lib/folder";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
 import { checkGitHubUser, type UserCheck } from "../lib/github";
-import {
-  importFromRepo, FAILURE_MESSAGES, type ImportResult,
-} from "../lib/import";
-import { CATEGORY_LABELS, JUDGMENT_QUESTIONS } from "../lib/labels";
+import { importFromRepo, failureMessages, type ImportResult } from "../lib/import";
+import { rich } from "../i18n/rich";
+import { useStrings, type Strings } from "../i18n/strings";
+import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
 
@@ -29,86 +29,22 @@ import type { Skill } from "../lib/types";
  */
 export const SUBMISSIONS_EMAIL = "";
 
-const CATEGORIES = Object.keys(CATEGORY_LABELS);
+/** The canonical value list, which does not vary by locale — so it is read off
+ *  the English table rather than the current one. */
+const CATEGORIES = Object.keys(en.vocabulary.category);
 
-/** Plain questions, not field names. The schema keys stay as element ids
- *  because that is how a finding is matched to its input, but no submitter
- *  should have to learn what `civic.human-review` means to answer it. */
-const FIELD_LABELS: Record<string, string> = {
-  namespace: "your GitHub username",
-  name: "the skill name",
-  description: "the description",
-  license: "the license",
-  "allowed-tools": "the tools it needs",
-  metadata: "the details below",
-  "civic.category": "the category",
-  version: "the version",
-  "civic.category-secondary": "the second category",
-  "civic.scope": "the level of government",
-  "civic.scope-secondary": "the second level",
-  "civic.jurisdiction": "the place it is written for",
-  "civic.localization": "how portable it is",
-  "civic.language": "the language it is written in",
-  "civic.languages-tested": "the languages you have tried it in",
-  "civic.data-sensitivity": "the data it touches",
-  "civic.human-review": "its effect on people",
-  "civic.use-when": "when it is useful",
-  "civic.avoid-when": "when it is not useful",
-  "civic.maintainer": "who maintains it",
-  "civic.affiliation": "the kind of organization",
-  "civic.deployment": "how much you have used it",
-  "civic.deployed-at": "the organization",
-  "civic.deployed-in": "where it operates",
-  "civic.deployed-since": "since when",
-};
+const OFFERED_LANGUAGES = new Set(
+  en.submit.form.languageChoices.map(([value]) => value),
+);
+
+type FieldNames = Strings["submit"]["form"]["fieldNames"];
 
 /** Findings are written for a reviewer reading a diff, and name the raw key.
  *  Swapped for the question the submitter actually answered. */
-function readable(f: Finding): string {
-  const label = FIELD_LABELS[f.where];
-  return label ? f.message.replaceAll(f.where, label) : f.message;
+function readable(finding: Finding, names: FieldNames): string {
+  const name = names[finding.where as keyof FieldNames];
+  return name ? finding.message.replaceAll(finding.where, name) : finding.message;
 }
-
-/** What kind of government body, in the words a submitter would use.
- *  Country-neutral, because the specific place is asked separately (#67). */
-const SCOPE_CHOICES: [string, string][] = [
-  ["any", "Any level of government — it makes no assumptions"],
-  ["municipal", "A city, county or town"],
-  ["regional", "A state, province or region"],
-  ["national", "A national government"],
-  ["supranational", "A body above national government"],
-];
-
-/** The language the SKILL.md is written in (#145).
- *
- *  A select over the two languages the exchange itself ships in, plus a tag box
- *  for everything else — the field is required, and a form that could only
- *  answer it in English or Spanish would stop a Portuguese author submitting at
- *  all. The tag is shape-checked by rules.ts like every other value here. */
-const LANGUAGE_CHOICES: [string, string][] = [
-  ["en", "English"],
-  ["es", "Spanish"],
-  ["other", "Another language \u2014 I will give the tag"],
-];
-
-const OFFERED_LANGUAGES = new Set(LANGUAGE_CHOICES.map(([v]) => v));
-
-/** The two judgment questions live in labels.ts so their wording has one home
- *  rather than being written inline here. */
-const DATA = JUDGMENT_QUESTIONS["civic.data-sensitivity"]!;
-const EFFECT = JUDGMENT_QUESTIONS["civic.human-review"]!;
-
-const USE_LABELS: [string, string][] = [
-  ["none", "Not yet — I have not used it in real work"],
-  ["personal", "I use it myself"],
-  ["team", "My team uses it"],
-  ["organization", "My whole organization uses it"],
-];
-
-const ORG_LABELS: [string, string][] = [
-  ["government", "Government"], ["nonprofit", "Nonprofit"], ["vendor", "Vendor"],
-  ["academic", "Academic"], ["individual", "Just me"],
-];
 
 function Field(
   { label, hint, id, findings, children }: {
@@ -116,6 +52,7 @@ function Field(
     children: React.ReactNode;
   },
 ) {
+  const names = useStrings().submit.form.fieldNames;
   const mine = findings.filter((f) => f.where === id);
   return (
     <div className={`field${mine.length ? " field--flagged" : ""}`}>
@@ -123,7 +60,7 @@ function Field(
       {hint && <p className="field__hint">{hint}</p>}
       {children}
       {mine.map((f) => (
-        <p className="field__finding" key={f.message}>{readable(f)}</p>
+        <p className="field__finding" key={f.message}>{readable(f, names)}</p>
       ))}
     </div>
   );
@@ -152,6 +89,9 @@ export function Submit(
     repo: string; skills: Skill[]; mode: SubmitMode; add?: string;
   },
 ) {
+  const s = useStrings();
+  const t = s.submit;
+  const f = t.form;
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   // What was typed, kept beside the slug it becomes. Rewriting the box under
   // the cursor would eat a hyphen the moment it is typed, so the conversion is
@@ -304,7 +244,7 @@ export function Submit(
     setImporting(false);
     if ("kind" in out) {
       setArchive(null);
-      setNotes([FAILURE_MESSAGES[out.kind]]);
+      setNotes([failureMessages()[out.kind]]);
       return;
     }
     setImported(out);
@@ -355,7 +295,7 @@ export function Submit(
       setArchive({
         name: file.name, files: 0,
         left: [],
-        structural: [{ where: file.name, message: "This file could not be read as a zip archive." }],
+        structural: [{ where: file.name, message: t.problems.notAZip }],
       });
     }
   };
@@ -383,8 +323,8 @@ export function Submit(
     }
   };
 
-  const listed = skills.find((s) => `${s.namespace}/${s.name}` === add);
-  const missingFit = skills.filter((s) => !s.use_when && !s.avoid_when);
+  const listed = skills.find((sk) => `${sk.namespace}/${sk.name}` === add);
+  const missingFit = skills.filter((sk) => !sk.use_when && !sk.avoid_when);
 
   // Offered only when it will survive the trip. A mail client that truncates a
   // long body does it silently, and the submitter would never know what was
@@ -398,53 +338,46 @@ export function Submit(
   return (
     <article className="prose submit">
       <section className="prose__block">
-        <h2 className="h2">Share a skill</h2>
-        <p className="lede">
-          Fill this in and we will put it in the right shape for you. It takes a
-          few minutes.
-        </p>
+        <h2 className="h2">{t.heading}</h2>
+        <p className="lede">{t.lede}</p>
 
         {/* Before the form, not after it. Every path this page offers ends on
             GitHub, and somebody could otherwise fill in twenty fields before
             finding that out. */}
         <p className="submit__prereq" data-testid="account-needed">
-          You will need a <strong>GitHub account</strong> to finish &mdash; it is
-          free, and it is what records the skill as yours.{" "}
-          <a
-            href="https://github.com/signup" data-testid="account-signup"
-            target="_blank" rel="noreferrer"
-          >
-            Create one
-          </a>{" "}
-          if you do not have one; it takes a couple of minutes and you can come
-          back to this page afterwards.
+          {rich(t.prereq, {
+            signup: {
+              href: "https://github.com/signup",
+              "data-testid": "account-signup",
+              target: "_blank",
+              rel: "noreferrer",
+            },
+          })}
         </p>
 
         {/* Links rather than scripted tabs. Each mode is a real URL, so it can
             be sent to someone, bookmarked, and reached with the back button —
             and a skill page linking straight to the update mode needs no extra
             machinery. */}
-        <nav className="modes" aria-label="What do you want to do?">
+        <nav className="modes" aria-label={t.modes.label}>
           <a
             className="modes__item" href={submitHref("new")}
             aria-current={mode === "new" ? "page" : undefined}
             data-testid="mode-new"
           >
-            Add a new skill
+            {t.modes.new}
           </a>
           <a
             className="modes__item" href={submitHref("update")}
             aria-current={mode === "update" ? "page" : undefined}
             data-testid="mode-update"
           >
-            Update one you already listed
+            {t.modes.update}
           </a>
         </nav>
 
         {mode === "new" && (
-          <p className="submit__warn">
-            The skill will be listed as a community skill until it is reviewed.
-          </p>
+          <p className="submit__warn">{t.communityWarn}</p>
         )}
       </section>
 
@@ -453,21 +386,17 @@ export function Submit(
         {/* Upload and paste first, because most people arrive with a skill
             already written and should not retype it. */}
         <section className="prose__block">
-          <h2 className="h2">Submit a new skill</h2>
-          <p>
-            Already have one? Drop it here and the rest of this page fills
-            itself in. If your skill lives in its own repository, GitHub&rsquo;s{" "}
-            <strong>Code &rarr; Download ZIP</strong> gives you the file to drop.
-          </p>
+          <h2 className="h2">{t.intake.heading}</h2>
+          <p>{rich(t.intake.lede)}</p>
 
           <Field
-            id="repo" label="Your skill's GitHub repository" findings={[]}
-            hint="Public repositories only. We read the file list and SKILL.md, and hand the folder back for you to upload — the listing records where the copy came from."
+            id="repo" label={t.intake.repoLabel} findings={[]}
+            hint={t.intake.repoHint}
           >
             <span className="submit__row">
               <input
                 id="repo" className="input" value={repoUrl}
-                placeholder="github.com/you/your-skill"
+                placeholder={t.intake.repoPlaceholder}
                 onChange={(e) => setRepoUrl(e.target.value)}
               />
               <button
@@ -475,29 +404,29 @@ export function Submit(
                 disabled={importing || repoUrl.trim() === ""}
                 data-testid="import"
               >
-                {importing ? "Reading…" : "Read it"}
+                {importing ? t.intake.reading : t.intake.read}
               </button>
             </span>
           </Field>
 
           {imported && (
             <p className="submit__ok" data-testid="imported">
-              Read {imported.entries.length} file
-              {imported.entries.length === 1 ? "" : "s"} from{" "}
-              <code>{imported.ref.owner}/{imported.ref.repo}</code> at{" "}
-              <code>{imported.commit.slice(0, 7)}</code>.
+              {rich(t.intake.imported(
+                imported.entries.length,
+                `${imported.ref.owner}/${imported.ref.repo}`,
+                imported.commit.slice(0, 7),
+              ))}
             </p>
           )}
 
-          <Field id="archive" label="Or upload the skill folder as a .zip" findings={[]}
-            hint="Unpacked in your browser. It is not sent anywhere.">
+          <Field id="archive" label={t.intake.archiveLabel} findings={[]} hint={t.intake.archiveHint}>
             <input
               id="archive" type="file" accept=".zip,application/zip" className="input"
               onChange={(e) => onFile(e.target.files?.[0])}
             />
           </Field>
 
-          <Field id="paste" label="Or paste your SKILL.md" findings={[]}>
+          <Field id="paste" label={t.intake.pasteLabel} findings={[]}>
             <textarea
               id="paste" className="textarea" rows={5} value={pasted}
               placeholder={"---\nname: my-skill\n..."}
@@ -513,10 +442,7 @@ export function Submit(
 
           {archive && (
             <div className="submit__archive" data-testid="archive-result">
-              <p>
-                <strong>{archive.name}</strong> — {archive.files} file
-                {archive.files === 1 ? "" : "s"}.
-              </p>
+              <p>{rich(t.intake.archiveResult(archive.name, archive.files))}</p>
               {archive.left.length > 0 && (
                 /* Left out is not the same as wrong. Named so nothing vanishes
                    quietly, but these do not stop the hand-off. */
@@ -525,11 +451,13 @@ export function Submit(
                 </ul>
               )}
               {archive.structural.length === 0 ? (
-                <p className="submit__ok">Nothing else to fix.</p>
+                <p className="submit__ok">{t.intake.nothingElse}</p>
               ) : (
                 <ul className="submit__findings">
-                  {archive.structural.map((f) => (
-                    <li key={`${f.where}${f.message}`}><code>{f.where}</code> {f.message}</li>
+                  {archive.structural.map((finding) => (
+                    <li key={`${finding.where}${finding.message}`}>
+                      <code>{finding.where}</code> {finding.message}
+                    </li>
                   ))}
                 </ul>
               )}
@@ -537,64 +465,52 @@ export function Submit(
           )}
 
           {blocked && (
-            <p className="submit__blocked" data-testid="blocked">
-              Fix these before continuing. They cannot be corrected below.
-            </p>
+            <p className="submit__blocked" data-testid="blocked">{t.intake.blocked}</p>
           )}
         </section>
 
         <section className="prose__block">
-          <h2 className="h2">About the skill</h2>
+          <h2 className="h2">{f.heading}</h2>
 
           {patched && patched.problems.length === 0 && patched.present.length > 0 && (
             /* Answered already, by the file. Shown rather than hidden, because a
                description read out of somebody's repository is exactly the thing
                they may want to improve before it is listed. */
             <p className="submit__ok" data-testid="from-file">
-              Read from your file:{" "}
-              {patched.present
+              {f.fromFile(patched.present
                 .filter((k) => k !== "metadata")
-                .map((k) => FIELD_LABELS[k] ?? k)
-                .join(", ")}
-              . Everything below is already filled in where it could be — change
-              anything that is wrong.
+                .map((k) => f.fieldNames[k as keyof FieldNames] ?? k)
+                .join(", "))}
             </p>
           )}
 
           <Field
-            id="namespace" label="Your GitHub username" findings={findings}
-            hint="This has to match your login exactly — your skill goes in a folder of that name, and only you can write there."
+            id="namespace" label={f.namespaceLabel} findings={findings} hint={f.namespaceHint}
           >
             <input id="namespace" className="input" value={draft.author}
               onChange={onInput("author")} autoComplete="off" />
             {reserved ? (
               <p className="field__hint" data-testid="reserved-namespace">
-                <code>{draft.author.trim()}</code> is the Lab&rsquo;s own folder,
-                so this does not have to match your login. It needs approval from
-                a maintainer instead, and the listing carries the Lab&rsquo;s
-                badge.
+                {rich(f.reservedNamespace(draft.author.trim()))}
               </p>
             ) : userCheck === "missing" && draft.author.trim() !== "" && (
               <p className="field__finding" data-testid="no-such-user">
-                No GitHub user called {draft.author.trim()}. A submission whose
-                folder does not match the account that opens the pull request is
-                rejected.
+                {f.noSuchUser(draft.author.trim())}
               </p>
             )}
           </Field>
 
           <Field
-            id="name" label="Skill name" findings={findings}
+            id="name" label={f.nameLabel} findings={findings}
             hint={
               draft.name && draft.name !== typedName.trim()
-                ? <>Listed as <code>{draft.name}</code> — names are lowercase with
-                    hyphens instead of spaces.</>
-                : "Type it however you like; we will tidy the spacing and capitals."
+                ? rich(f.nameSlug(draft.name))
+                : f.nameHint
             }
           >
             <input
               id="name" className="input" value={typedName}
-              placeholder="Permit Status Explainer"
+              placeholder={f.namePlaceholder}
               onChange={(e) => {
                 setTypedName(e.target.value);
                 set("name")(slugify(e.target.value));
@@ -602,208 +518,182 @@ export function Submit(
             />
           </Field>
 
-          <Field id="description" label="Description" findings={findings}
-            hint="What the skill does, in a couple of sentences. This is what an agent reads to decide whether to use it.">
+          <Field id="description" label={f.descriptionLabel} findings={findings} hint={f.descriptionHint}>
             <textarea id="description" className="textarea" rows={3}
               value={draft.description} onChange={onInput("description")} />
           </Field>
 
-          <Choice id="civic.category" label="Category" value={draft.category}
-            findings={findings} placeholder="Choose…" onChange={set("category")}
-            options={CATEGORIES.map((c) => [c, CATEGORY_LABELS[c] ?? c])} />
+          <Choice id="civic.category" label={f.categoryLabel} value={draft.category}
+            findings={findings} placeholder={f.choose}
+            onChange={set("category")}
+            options={CATEGORIES.map((c) => [c, s.vocabulary.category[
+              c as keyof typeof s.vocabulary.category] ?? c])} />
 
-          <Choice id="civic.category-secondary" label="A second category, if it fits one"
+          <Choice id="civic.category-secondary" label={f.categorySecondaryLabel}
             value={draft.categorySecondary} findings={findings}
-            placeholder="None — it sits in one place"
+            placeholder={f.categorySecondaryNone}
             onChange={set("categorySecondary")}
             options={CATEGORIES.filter((c) => c !== draft.category)
-              .map((c) => [c, CATEGORY_LABELS[c]!] as [string, string])}
-            hint={
-              <>The list mixes what a skill is <em>for</em> with whose desk it
-              sits on, so many skills belong in two places. Leave this alone if
-              yours does not.</>
-            } />
+              .map((c) => [c, s.vocabulary.category[
+                c as keyof typeof s.vocabulary.category]!] as [string, string])}
+            hint={rich(f.categorySecondaryHint)} />
 
-          <Field id="version" label="Version, if you keep one" findings={findings}
-            hint={
-              <>Your own number for it, like <code>1.0</code> or{" "}
-              <code>2.1.3</code>. Optional, and nothing checks it — it is there
-              so an adopter can tell this is not what they took last year. The
-              registry records when a skill arrived and last changed on its
-              own.</>
-            }>
+          <Field id="version" label={f.versionLabel} findings={findings} hint={rich(f.versionHint)}>
             <input id="version" className="input" value={draft.version}
-              onChange={onInput("version")} placeholder="1.0" />
+              onChange={onInput("version")} placeholder={f.versionPlaceholder} />
           </Field>
 
-          <Choice id="civic.scope" label="What level of government is it for?"
-            value={draft.scope} findings={findings} placeholder="Choose…"
-            onChange={set("scope")} options={SCOPE_CHOICES} />
+          <Choice id="civic.scope" label={f.scopeLabel}
+            value={draft.scope} findings={findings}
+            placeholder={f.choose} onChange={set("scope")} options={f.scopeChoices} />
 
-          <Choice id="civic.scope-secondary" label="A second level, if it serves two"
+          <Choice id="civic.scope-secondary" label={f.scopeSecondaryLabel}
             value={draft.scopeSecondary} findings={findings}
-            placeholder="None — one level"
+            placeholder={f.scopeSecondaryNone}
             onChange={set("scopeSecondary")}
-            options={SCOPE_CHOICES.filter(
+            options={f.scopeChoices.filter(
               ([v]) => v !== draft.scope && v !== "any" && draft.scope !== "any")} />
 
-          <Field id="civic.jurisdiction" label="Is it written for one specific place?"
-            findings={findings}
-            hint={
-              <>Only if the skill carries that place&rsquo;s rules, forms or
-              deadlines — <code>US-VT</code>, <code>US-MA / Boston</code>,{" "}
-              <code>CA-ON / Toronto</code>. Leave it blank otherwise, which is
-              most skills. A country code, optionally a state or province, and
-              optionally a city after a slash.</>
-            }>
+          <Field id="civic.jurisdiction" label={f.jurisdictionLabel}
+            findings={findings} hint={rich(f.jurisdictionHint)}>
             <input id="civic.jurisdiction" className="input" value={draft.jurisdiction}
-              onChange={onInput("jurisdiction")} placeholder="US-MA / Boston" />
+              onChange={onInput("jurisdiction")}
+              placeholder={f.jurisdictionPlaceholder} />
           </Field>
 
           <Choice
             id="civic.localization"
-            label="Is it set up for one place, or does it work anywhere?"
-            value={draft.localization} findings={findings} onChange={set("localization")}
-            options={[
-              ["localized", "Set up for one place — it has our forms, deadlines and rules in it"],
-              ["generalized", "Works anywhere — the local specifics have been lifted out"],
-            ]}
-            placeholder="Not sure yet"
-            hint={<>
-              <a href="#/about">What this means</a> — a localized skill carries one
-              jurisdiction&rsquo;s specifics; a generalized one has had them taken out so
-              another city can fill in its own.
-            </>}
+            label={f.localizationLabel}
+            value={draft.localization} findings={findings}
+            onChange={set("localization")}
+            options={f.localizationChoices}
+            placeholder={f.localizationNone}
+            hint={rich(f.localizationHint, { about: "#/about" })}
           />
 
           <Choice
             id="civic.language"
-            label="What language is it written in?"
+            label={f.languageLabel}
             value={languageIsOther ? "other" : draft.language}
-            findings={findings} placeholder="Choose\u2026" onChange={onLanguage}
-            options={LANGUAGE_CHOICES}
-            hint={<>The language of the <code>SKILL.md</code> itself. It is not a
-              limit on who can use the skill \u2014 a model reads a skill in one
-              language and follows it in another. It is so a reader knows what
-              they are about to open.</>}
+            findings={findings} placeholder={f.choose}
+            onChange={onLanguage}
+            options={f.languageChoices}
+            hint={rich(f.languageHint)}
           />
 
           {languageIsOther && (
-            <Field id="civic.language-other" label="Its language tag"
-              findings={[]}
-              hint={<>A BCP 47 tag, not the language&rsquo;s name:{" "}
-                <code>pt-BR</code>, <code>fr</code>, <code>de</code>,{" "}
-                <code>es-419</code>.</>}>
+            <Field id="civic.language-other" label={f.languageOtherLabel}
+              findings={[]} hint={rich(f.languageOtherHint)}>
               <input id="civic.language-other" className="input"
                 value={draft.language} onChange={onInput("language")}
-                placeholder="pt-BR" />
+                placeholder={f.languageOtherPlaceholder} />
             </Field>
           )}
 
-          <Choice id="civic.data-sensitivity" label={DATA.question}
+          <Choice id="civic.data-sensitivity"
+            label={s.questions["civic.data-sensitivity"].question}
             value={draft.dataSensitivity} findings={findings}
-            onChange={set("dataSensitivity")} options={DATA.options} />
+            onChange={set("dataSensitivity")}
+            options={s.questions["civic.data-sensitivity"].options} />
 
-          <Choice id="civic.human-review" label={EFFECT.question}
+          <Choice id="civic.human-review"
+            label={s.questions["civic.human-review"].question}
             value={draft.humanReview} findings={findings}
-            onChange={set("humanReview")} options={EFFECT.options} />
+            onChange={set("humanReview")}
+            options={s.questions["civic.human-review"].options} />
 
-          <Choice id="civic.deployment" label="Have you used it?"
+          <Choice id="civic.deployment" label={f.deploymentLabel}
             value={draft.deployment} findings={findings}
-            onChange={set("deployment")} options={USE_LABELS}
+            onChange={set("deployment")} options={f.deploymentChoices}
             hint={
               draft.deployment === "team" || draft.deployment === "organization"
-                ? "Saying a team or an organization uses it is a claim about them, so the details below are needed."
-                : "Using it yourself is a complete answer — nothing else is required."
+                ? f.deploymentHintClaim
+                : f.deploymentHintPersonal
             } />
 
-          <Field id="civic.maintainer" label="Who maintains it?" findings={findings}
-            hint="A person or a team — City of X, Department of Innovation.">
+          <Field id="civic.maintainer" label={f.maintainerLabel} findings={findings} hint={f.maintainerHint}>
             <input id="civic.maintainer" className="input" value={draft.maintainer}
               onChange={onInput("maintainer")} />
           </Field>
 
-          <Choice id="civic.affiliation" label="What kind of organization?"
-            value={draft.affiliation} findings={findings} placeholder="Choose…"
-            onChange={set("affiliation")} options={ORG_LABELS} />
+          <Choice id="civic.affiliation" label={f.affiliationLabel}
+            value={draft.affiliation} findings={findings}
+            placeholder={f.choose}
+            onChange={set("affiliation")} options={f.affiliationChoices} />
         </section>
 
         <section className="prose__block">
           <details className="disclosure">
-            <summary className="h2 disclosure__summary">A few optional things</summary>
+            <summary className="h2 disclosure__summary">{t.optional.summary}</summary>
 
-            <Field id="civic.use-when" label="When is this useful?" findings={findings}>
+            <Field id="civic.use-when" label={t.optional.useWhenLabel}
+              findings={findings}>
               <textarea id="civic.use-when" className="textarea" rows={2}
                 value={draft.useWhen} onChange={onInput("useWhen")} />
             </Field>
 
-            <Field id="civic.avoid-when" label="When is it not?" findings={findings}
-              hint="The one only you can answer. A skill honest about its limits gets adopted faster.">
+            <Field id="civic.avoid-when" label={t.optional.avoidWhenLabel}
+              findings={findings} hint={t.optional.avoidWhenHint}>
               <textarea id="civic.avoid-when" className="textarea" rows={2}
                 value={draft.avoidWhen} onChange={onInput("avoidWhen")} />
             </Field>
 
             <Field id="civic.languages-tested"
-              label="What languages have you tried it in?" findings={findings}
-              hint={<>Comma-separated tags, including the one above \u2014{" "}
-                <code>en, es</code>. Your own claim: nothing here checks it, and
-                the page shows it as something you said rather than something
-                anybody verified.</>}>
+              label={t.optional.languagesTestedLabel} findings={findings} hint={rich(t.optional.languagesTestedHint)}>
               <input id="civic.languages-tested" className="input"
                 value={draft.languagesTested}
-                onChange={onInput("languagesTested")} placeholder="en, es" />
+                onChange={onInput("languagesTested")}
+                placeholder={t.optional.languagesTestedPlaceholder} />
             </Field>
 
-            <Field id="allowed-tools" label="Tools it needs" findings={findings}
-              hint="Comma separated. These are granted without asking the person who runs it, so list the least it needs.">
+            <Field id="allowed-tools" label={t.optional.toolsLabel} findings={findings} hint={t.optional.toolsHint}>
               <input id="allowed-tools" className="input" value={draft.tools}
-                onChange={onInput("tools")} placeholder="Read, Grep" />
+                onChange={onInput("tools")} placeholder={t.optional.toolsPlaceholder} />
             </Field>
 
-            <Field id="license" label="License" findings={findings}>
+            <Field id="license" label={t.optional.licenseLabel} findings={findings}>
               <input id="license" className="input" value={draft.license}
                 onChange={onInput("license")} />
             </Field>
 
             <Field
-              id="civic.deployed-at" label="Which organization uses it?"
+              id="civic.deployed-at" label={t.optional.deployedAtLabel}
               findings={findings}
               hint={draft.deployment === "personal"
-                ? "Leave this blank if it is just you — personal use names no organization."
+                ? t.optional.deployedAtHint
                 : undefined}
             >
               <input id="civic.deployed-at" className="input" value={draft.deployedAt}
                 onChange={onInput("deployedAt")} />
             </Field>
 
-            <Field id="civic.deployed-in" label="Where does that organization operate?"
-              findings={findings} hint="Like US-MA / Boston.">
+            <Field id="civic.deployed-in" label={t.optional.deployedInLabel}
+              findings={findings} hint={t.optional.deployedInHint}>
               <input id="civic.deployed-in" className="input" value={draft.deployedIn}
-                onChange={onInput("deployedIn")} placeholder="US-MA / Boston" />
+                onChange={onInput("deployedIn")}
+                placeholder={t.optional.deployedInPlaceholder} />
             </Field>
 
-            <Field id="civic.deployed-since" label="Roughly since when?" findings={findings}>
+            <Field id="civic.deployed-since" label={t.optional.deployedSinceLabel}
+              findings={findings}>
               <input id="civic.deployed-since" className="input" value={draft.deployedSince}
-                onChange={onInput("deployedSince")} placeholder="2026-03" />
+                onChange={onInput("deployedSince")}
+                placeholder={t.optional.deployedSincePlaceholder} />
             </Field>
           </details>
         </section>
 
         <section className="prose__block">
-          <h2 className="h2">Send it</h2>
+          <h2 className="h2">{t.send.heading}</h2>
           {added.length > 0 && (
             /* What the page wrote into the submitter's own file, on every path.
                #82: asserting that the download matters did not stop somebody
                uploading their original folder instead and losing all of it. */
             <details className="disclosure" data-testid="added">
               <summary className="disclosure__summary">
-                What we added to your SKILL.md &mdash; {added.length} line
-                {added.length === 1 ? "" : "s"}
+                {t.send.addedSummary(added.length)}
               </summary>
-              <p className="submit__note">
-                Written into the copy this page hands you. Your original file on
-                disk still does not have these.
-              </p>
+              <p className="submit__note">{t.send.addedNote}</p>
               <pre className="submit__yaml" data-testid="added-lines"><code>{
                 added.map((l) => `+ ${l}`).join("\n")
               }</code></pre>
@@ -812,9 +702,7 @@ export function Submit(
 
           {findings.length > 0 && (
             <p className="submit__note" data-testid="findings-note">
-              {findings.length} thing{findings.length === 1 ? "" : "s"} still to fill
-              in, marked above. You can send it anyway — the checks that count run
-              after you do, and you can fix things then.
+              {t.send.findingsNote(findings.length)}
             </p>
           )}
 
@@ -824,52 +712,39 @@ export function Submit(
                type a path. */
             <>
               <p className="submit__note" data-testid="multi-file-note">
-                Your skill is {source?.entries.length} files. GitHub takes a
-                whole folder, but only from its own upload page &mdash; so the
-                last steps happen there, with the folder this page hands back.
+                {t.send.multiFileNote(source?.entries.length ?? 0)}
               </p>
               <ol className="steps" data-testid="manual-steps">
                 <li className="steps__item">
-                  <h3 className="steps__title">Take the corrected folder</h3>
-                  <p className="steps__body">
-                    Your files, unchanged, with the answers above written into
-                    <code> SKILL.md</code>. This folder &mdash; not your original
-                    &mdash; is what you upload: the answers exist only in this
-                    copy. Unzip it first.
-                  </p>
+                  <h3 className="steps__title">{t.send.folderTitle}</h3>
+                  <p className="steps__body">{rich(t.send.folderBody)}</p>
                   <button
                     className="btn btn--strong" onClick={download}
                     disabled={!ready || blocked} data-testid="download-folder"
                   >
-                    Download {folderName}.zip
+                    {t.send.downloadFolder(folderName)}
                   </button>
                 </li>
 
                 {!reserved && (
                   <li className="steps__item">
-                    <h3 className="steps__title">Make your own copy of the registry</h3>
-                    <p className="steps__body">
-                      One button on GitHub, then come back and paste the address
-                      it gives you. We cannot guess it &mdash; you may rename the
-                      copy, or keep it under a different account.
-                    </p>
+                    <h3 className="steps__title">{t.send.forkTitle}</h3>
+                    <p className="steps__body">{t.send.forkBody}</p>
                     <p className="cta-row">
                       <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
-                        target="_blank" rel="noreferrer">Fork the registry</a>
+                        target="_blank" rel="noreferrer">{t.send.forkCta}</a>
                     </p>
                     <Field
-                      id="fork" label="The address of your copy" findings={[]}
-                      hint="Paste it from your browser's address bar, or type owner/name."
+                      id="fork" label={t.send.forkLabel} findings={[]} hint={t.send.forkHint}
                     >
                       <input
                         id="fork" className="input" value={forkInput}
-                        placeholder="github.com/you/civic-skill-exchange"
+                        placeholder={t.send.forkPlaceholder}
                         onChange={(e) => setForkInput(e.target.value)}
                       />
                       {forkInput.trim() !== "" && !forkRef && (
                         <p className="field__finding" data-testid="fork-unparsed">
-                          That does not look like a GitHub repository. It should
-                          be like <code>github.com/you/civic-skill-exchange</code>.
+                          {rich(t.send.forkUnparsed)}
                         </p>
                       )}
                     </Field>
@@ -877,47 +752,32 @@ export function Submit(
                 )}
 
                 <li className="steps__item">
-                  <h3 className="steps__title">Drag the folder in</h3>
+                  <h3 className="steps__title">{t.send.uploadTitle}</h3>
                   <p className="steps__body" data-testid="upload-step-body">
-                    Drop in the whole folder you <strong>downloaded</strong> in
-                    step 1 &mdash; unzipped, named{" "}
-                    <code>{folderName}</code>, subfolders and all. Do not open it
-                    first: GitHub keeps the folder&rsquo;s name, which is how it
-                    lands in the right place. Then{" "}
-                    <strong>Commit changes</strong>, choosing{" "}
-                    <em>create a new branch and start a pull request</em> rather
-                    than committing to <code>main</code>.
-                    {reserved
-                      ? " This opens the registry at "
-                      : " This opens your copy at "}
-                    <code>{namespacePath(draft)}</code>, so the result is{" "}
-                    <code>{skillPath(draft)}</code>.
+                    {rich(t.send.uploadBody(
+                      folderName, reserved, namespacePath(draft), skillPath(draft),
+                    ))}
                   </p>
                   {uploadHref ? (
                     <a className="btn" href={uploadHref}
                       data-testid="step-upload" target="_blank" rel="noreferrer">
-                      Upload the folder
+                      {t.send.uploadCta}
                     </a>
                   ) : (
                     <p className="submit__note" data-testid="upload-waiting">
-                      Paste the address of your copy above and this becomes a
-                      link. A guessed one would send you to the wrong place.
+                      {t.send.uploadWaiting}
                     </p>
                   )}
                 </li>
 
                 {!reserved && (
                   <li className="steps__item">
-                    <h3 className="steps__title">Open the pull request</h3>
-                    <p className="steps__body">
-                      If GitHub already offered you one at the end of step 3,
-                      that is this step done. The checks run on it, and a
-                      maintainer takes it from there.
-                    </p>
+                    <h3 className="steps__title">{t.send.pullRequestTitle}</h3>
+                    <p className="steps__body">{t.send.pullRequestBody}</p>
                     {prHref && (
                       <a className="btn" href={prHref}
                         data-testid="step-pr" target="_blank" rel="noreferrer">
-                        Open the pull request
+                        {t.send.pullRequestCta}
                       </a>
                     )}
                   </li>
@@ -933,31 +793,30 @@ export function Submit(
                   aria-disabled={!ready || blocked}
                   data-testid="handoff"
                 >
-                  Continue on GitHub
+                  {t.send.handoff}
                 </a>
               ) : (
                 <span className="submit__note" data-testid="url-too-long">
-                  This is too long to carry in a link. Copy it below and paste it
-                  into GitHub instead.
+                  {t.send.urlTooLong}
                 </span>
               )}
-              <button className="btn" onClick={copy}>{copied ? "Copied" : "Copy it"}</button>
+              <button className="btn" onClick={copy}>
+                {copied ? t.send.copied : t.send.copy}
+              </button>
             </p>
           )}
 
           {mailto ? (
             <p className="submit__note">
-              No GitHub account?{" "}
-              <a href={mailto} data-testid="email-handoff">Email it to us</a> and we
-              will add it for you. It goes in under the project&rsquo;s name rather
-              than yours, with you credited as the maintainer &mdash; attach the
-              skill file and anything it needs.
+              {rich(t.send.emailHandoff, {
+                email: { href: mailto, "data-testid": "email-handoff" },
+              })}
             </p>
           ) : SUBMISSIONS_EMAIL ? (
             <p className="submit__note" data-testid="email-too-long">
-              Too long to send by email link. Copy it above and mail it to{" "}
-              <a href={`mailto:${SUBMISSIONS_EMAIL}`}>{SUBMISSIONS_EMAIL}</a> with
-              the skill file attached.
+              {rich(t.send.emailTooLong(SUBMISSIONS_EMAIL), {
+                email: `mailto:${SUBMISSIONS_EMAIL}`,
+              })}
             </p>
           ) : (
             /* No inbox yet, so this cannot say "email it to us" — and going
@@ -965,23 +824,19 @@ export function Submit(
                with no idea whether that is a dead end. It is, for now, and
                saying so beats letting them find out. */
             <p className="submit__note" data-testid="no-account-path">
-              Every route from here goes through GitHub, so an account is
-              required &mdash; the checks that admit a skill work by confirming
-              the account that submitted it owns the folder it went into. If that
-              is a problem, open an{" "}
-              <a href={`https://github.com/${repo}/issues`}>issue</a> or ask
-              whoever pointed you at this page; a maintainer can submit on your
-              behalf, and the listing will credit you as the maintainer.
+              {rich(t.send.noAccountPath, {
+                issues: `https://github.com/${repo}/issues`,
+              })}
             </p>
           )}
 
           <details className="disclosure">
-            <summary className="disclosure__summary">See what will be added</summary>
+            <summary className="disclosure__summary">{t.send.seeYaml}</summary>
             <pre className="submit__yaml" data-testid="yaml"><code>{fileText}</code></pre>
           </details>
 
           <details className="disclosure">
-            <summary className="disclosure__summary">Or do it from the command line</summary>
+            <summary className="disclosure__summary">{t.send.commandLine}</summary>
             <pre className="submit__yaml"><code>{
   `git clone https://github.com/${repo}.git
   mkdir -p ${skillPath(draft)}
@@ -995,46 +850,38 @@ export function Submit(
 
       {mode === "update" && (
       <section className="prose__block" data-testid="flow-two">
-        <h2 className="h2">Update a skill you already listed</h2>
-        <p>
-          Choose it and we will show you what to add. You paste two lines into
-          the file on GitHub, and nothing else changes.
-        </p>
+        <h2 className="h2">{t.update.heading}</h2>
+        <p>{t.update.lede}</p>
         {skills.length === 0 && (
           <p className="submit__note" data-testid="nothing-listed">
-            Nothing is listed here yet.
+            {t.update.nothingListed}
           </p>
         )}
-        <label className="field__label" htmlFor="add">Your skill</label>
+        <label className="field__label" htmlFor="add">{t.update.pick}</label>
         <select
           id="add" className="select" value={add ?? ""}
           onChange={(e) => { window.location.hash = e.target.value
             ? `#/submit?add=${encodeURIComponent(e.target.value)}` : "#/submit"; }}
         >
-          <option value="">Choose a listing…</option>
-          {(missingFit.length ? missingFit : skills).map((s) => (
-            <option key={s.id} value={s.id}>{s.id}</option>
+          <option value="">{t.update.choose}</option>
+          {(missingFit.length ? missingFit : skills).map((sk) => (
+            <option key={sk.id} value={sk.id}>{sk.id}</option>
           ))}
         </select>
         {listed && (
           <div className="submit__handoff" data-testid="edit-handoff">
-            <p className="field__hint">
-              Paste these into the <code>metadata:</code> block, keeping the
-              indentation, and change the text.
-            </p>
+            <p className="field__hint">{rich(t.update.pasteHint)}</p>
             <pre className="submit__yaml"><code>{
 `  civic.use-when: "When this skill earns its place."
   civic.avoid-when: "When it does not."`}</code></pre>
             <a className="btn btn--strong" href={editUrl(repo, listed.path)}>
-              Edit {listed.id} on GitHub
+              {t.update.editCta(listed.id)}
             </a>
           </div>
         )}
 
         <p className="submit__note">
-          Not finding it? Only skills already in this catalog appear here. If
-          yours is not listed yet,{" "}
-          <a href={submitHref("new")}>submit it as a new skill</a> first.
+          {rich(t.update.notFinding, { new: submitHref("new") })}
         </p>
       </section>
       )}

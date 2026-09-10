@@ -360,13 +360,55 @@ npm install
 npm run dev       # localhost:5173
 npm run lint      # eslint
 npm run test      # vitest
-npm run build     # → site/dist
+npm run build     # → site/dist, then the bundle-size gate
+npm run size      # the gate on its own, over an existing dist/
 ```
 
 `build_index.py --out site/public/data` writes the catalog into Vite's `public/`,
 which Vite copies verbatim into `dist/data/`. That directory is generated, so it
 is gitignored — run the build script once before `npm run dev` or the page will
 show its load error.
+
+### Every user-facing string is in one table
+
+`src/i18n/en.ts` holds every string the site shows a person, grouped by surface.
+Components read it through `useStrings()`; the pure modules that compose text a
+visitor reads — `notice.ts`, `format.ts`, `import.ts`, `zip.ts`, `parse.ts`,
+`patch.ts`, and `submit.ts`'s mail body — read it through `strings()`.
+
+**No prose in a component.** `src/i18n/no-literals.test.ts` parses every
+prose-bearing component and fails on JSX text with letters in it, or on a string
+literal given to `aria-label`, `title`, `alt`, `placeholder`, or the prose props
+the site's own components take. Punctuation and arrows pass; so does anything
+inside `<code>`, because a code span holds an identifier and identifiers do not
+translate.
+
+Frontmatter keys, enum values, URLs and file paths stay in the component for the
+same reason. A listing's own prose — its description, its use-when — is rendered
+in the language its author wrote it in and never goes near the table (#145).
+
+A paragraph is one string. Four markers inside it are markup, rendered by
+`rich()`: `**strong**`, `*emphasis*`, `` `code` ``, and `[label](name)` for a
+link whose URL the component supplies. `en.ts` documents them at the top, for
+whoever writes the next locale.
+
+`src/i18n/rendered-text.test.tsx` snapshots what every surface says. It is the
+gate on a change to a component being a change to its markup and not to its
+words: if a snapshot moves, the page moved, and `-u` belongs in a commit whose
+subject is the wording change.
+
+`src/i18n/coverage.test.ts` fails on an entry nothing reads, so the table cannot
+accrete strings for the next locale to translate for nothing.
+
+**A locale is a separate chunk.** ADR 0004 decision 5: a locale costs the
+English visitor nothing. `strings.ts` imports `en.ts` statically and reaches
+every other locale through `LOCALES`, whose entries are `import()` thunks Vite
+gives their own chunk. `scripts/size.mjs` holds the English entry chunk to
+`size-baseline.json` within 3%, runs at the end of `npm run build` — so the CI
+Site job enforces it — and is driven by `src/i18n/bundle-size.test.ts` over a
+build written to a temporary directory. To re-record a deliberate growth:
+`npm run build` then `node scripts/size.mjs --record`, with the reason in the
+commit message. Never to make a red gate green.
 
 ### Design tokens
 

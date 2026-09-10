@@ -16,6 +16,7 @@
 import {
   MAX_FILE_BYTES, isRepositoryFurniture, type Entry,
 } from "@civic-skill-exchange/validator";
+import { strings } from "../i18n/strings";
 
 const API = "https://api.github.com";
 
@@ -53,16 +54,23 @@ export interface ImportResult {
   skipped: string[];
 }
 
-export const FAILURE_MESSAGES: Record<ImportFailure["kind"], string> = {
-  "not-a-repo": "That does not look like a GitHub repository. Paste its address, like github.com/you/your-skill.",
-  // A 404 covers private and missing alike — GitHub will not distinguish them
-  // for an unauthenticated caller, and neither should we.
-  "not-found": "No public repository there. If it is private, download it and upload the zip instead.",
-  "rate-limited": "GitHub is rate-limiting anonymous requests from here. Wait a few minutes, or upload the zip instead.",
-  "too-big": "That repository has too many files to read this way. Upload the skill folder as a zip instead.",
-  "no-skill-md": "No SKILL.md at the top of that repository. A skill is a folder with SKILL.md in it.",
-  offline: "Could not reach GitHub. Check your connection, or upload the zip instead.",
-};
+/** The wording lives in the string table with the rest of what a submitter
+ *  reads (#149). A function rather than a constant, because the answer depends
+ *  on the locale in force when the failure is shown.
+ *
+ *  A 404 covers private and missing alike — GitHub will not distinguish them
+ *  for an unauthenticated caller, and neither should we. */
+export function failureMessages(): Record<ImportFailure["kind"], string> {
+  const { problems } = strings().submit;
+  return {
+    "not-a-repo": problems.notARepo,
+    "not-found": problems.notFound,
+    "rate-limited": problems.rateLimited,
+    "too-big": problems.tooBig,
+    "no-skill-md": problems.noSkillMdInRepo,
+    offline: problems.offline,
+  };
+}
 
 async function get(url: string, signal?: AbortSignal): Promise<Response | ImportFailure> {
   try {

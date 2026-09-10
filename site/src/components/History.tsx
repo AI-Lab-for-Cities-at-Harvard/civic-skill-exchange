@@ -12,44 +12,36 @@
  *  nothing here reaches tier.
  */
 
+import { useStrings } from "../i18n/strings";
 import type { Skill } from "../lib/types";
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
-/** Month and year. A precise timestamp invites reading a week's difference as
- *  meaningful, which it is not. */
-function when(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US",
-    { month: "long", year: "numeric", timeZone: "UTC" });
-}
-
 export function History(
   { history, version }: { history: Skill["history"]; version: Skill["version"] },
 ) {
+  const s = useStrings().history;
   const known = history.first_seen || history.last_changed || history.commits;
   if (!known && !version) return null;
 
   return (
     <section className="facts" aria-labelledby="history-heading">
-      <h2 className="h3" id="history-heading">Version and history</h2>
+      <h2 className="h3" id="history-heading">{s.heading}</h2>
       <dl>
         {version && (
           <div>
-            <dt>Version</dt>
+            <dt>{s.version}</dt>
             <dd>
               <span className="mono">{version}</span>{" "}
-              <span className="facts__aside">
-                — the author&rsquo;s own number for it. Self-reported, and not
-                checked against anything.
-              </span>
+              <span className="facts__aside">{s.versionAside}</span>
             </dd>
           </div>
         )}
         {history.first_seen && (
           <div>
-            <dt>Listed since</dt>
+            <dt>{s.firstSeen}</dt>
             <dd>
-              {when(history.first_seen)}
+              {s.when(history.first_seen)}
               {history.pull_request && (
                 <>
                   {" · "}
@@ -63,28 +55,21 @@ export function History(
         )}
         {history.last_changed && (
           <div>
-            <dt>Last changed</dt>
-            <dd>{when(history.last_changed)}</dd>
+            <dt>{s.lastChanged}</dt>
+            <dd>{s.when(history.last_changed)}</dd>
           </div>
         )}
         {history.commits !== null && (
           <div>
-            <dt>Times changed</dt>
+            <dt>{s.commits}</dt>
             <dd>
               {history.commits}{" "}
-              <span className="facts__aside">
-                — a count, not a measure. It says nothing about whether the
-                skill is well maintained: one change may mean finished.
-              </span>
+              <span className="facts__aside">{s.commitsAside}</span>
             </dd>
           </div>
         )}
       </dl>
-      <p className="facts__note">
-        Dates come from this repository&rsquo;s own history, for this path. A
-        skill moved between namespaces starts again here, so an early date is
-        reliable and a recent one may just mean it was renamed.
-      </p>
+      <p className="facts__note">{s.note}</p>
     </section>
   );
 }

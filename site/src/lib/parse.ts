@@ -8,6 +8,7 @@
 import { parse } from "yaml";
 import { splitFrontmatter, checkYamlSafety } from "@civic-skill-exchange/validator";
 import { EMPTY_DRAFT, type Draft } from "./submit";
+import { strings } from "../i18n/strings";
 
 const text = (v: unknown): string => (typeof v === "string" ? v : v == null ? "" : String(v));
 
@@ -22,7 +23,7 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
   if (raw === null) {
     return {
       draft: { ...EMPTY_DRAFT, author },
-      problems: ["This does not start with a --- block, so there is nothing to read yet."],
+      problems: [strings().submit.problems.noFrontmatter],
     };
   }
 
@@ -39,7 +40,10 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
     return { draft: { ...EMPTY_DRAFT, author }, problems: [String(e)] };
   }
   if (!doc || typeof doc !== "object") {
-    return { draft: { ...EMPTY_DRAFT, author }, problems: ["The --- block is empty."] };
+    return {
+      draft: { ...EMPTY_DRAFT, author },
+      problems: [strings().submit.problems.emptyFrontmatter],
+    };
   }
 
   const front = doc as Record<string, unknown>;

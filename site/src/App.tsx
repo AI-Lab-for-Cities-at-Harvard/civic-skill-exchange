@@ -6,16 +6,16 @@ import { SkillDetail } from "./components/SkillDetail";
 import { Facet } from "./components/Facets";
 import { SkillCard } from "./components/SkillCard";
 import { TierBand, ContributeBand } from "./components/Bands";
+import { rich } from "./i18n/rich";
+import { useStrings } from "./i18n/strings";
 import { applyFilters } from "./lib/filter";
-import {
-  CATEGORY_LABELS, SCOPE_LABELS, LANGUAGE_LABELS, LOCALIZATION_LABELS,
-  SENSITIVITY_LABELS, TIER_LABELS,
-} from "./lib/labels";
 import { parseRoute, type Route } from "./lib/route";
 import { repoSlug } from "./lib/submit";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
 
 type Theme = "light" | "dark";
+
+const GITHUB = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
 function initialTheme(): Theme {
   try {
@@ -28,8 +28,9 @@ function initialTheme(): Theme {
 }
 
 export default function App() {
+  const s = useStrings();
   const [index, setIndex] = useState<Index | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
@@ -59,7 +60,10 @@ export default function App() {
         return r.json() as Promise<Index>;
       })
       .then(setIndex)
-      .catch(() => setError("The catalog could not be loaded. Try reloading the page."));
+      // The state records that it failed, not what to say about it: the
+      // wording is read at render time, so it follows the locale the reader is
+      // on rather than the one the fetch started under.
+      .catch(() => setFailed(true));
   }, []);
 
   // Memoised so the array identity is stable — a fresh [] on every render would
@@ -84,7 +88,7 @@ export default function App() {
 
   return (
     <>
-      <a className="skip-link" href="#results">Skip to content</a>
+      <a className="skip-link" href="#results">{s.chrome.skipToContent}</a>
 
       {/* A full-bleed section carrying its own theme is the system's signature
           move — the palette belongs to the block, not to the page. */}
@@ -92,47 +96,42 @@ export default function App() {
         <div className="topper__inner">
           <div className="topper__bar">
             <span className="topper__identity">
-              <a className="topper__mark" href="#/">Civic Skill&nbsp;Exchange</a>
+              <a className="topper__mark" href="#/">{s.chrome.brand}</a>
               <BetaBadge />
             </span>
-            <nav className="nav" aria-label="Main">
+            <nav className="nav" aria-label={s.chrome.nav.label}>
               <a href="#/" aria-current={route.page === "browse" ? "page" : undefined}>
-                Browse
+                {s.chrome.nav.browse}
               </a>
               <a href="#/about" aria-current={route.page === "about" ? "page" : undefined}>
-                About
+                {s.chrome.nav.about}
               </a>
               <a href="#/submit" aria-current={route.page === "submit" ? "page" : undefined}>
-                Submit
+                {s.chrome.nav.submit}
               </a>
-              <a href="https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange">
-                GitHub
-              </a>
+              <a href={GITHUB}>{s.chrome.nav.github}</a>
               <button
                 className="theme-toggle"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+                aria-label={theme === "dark"
+                  ? s.chrome.theme.switchToLight
+                  : s.chrome.theme.switchToDark}
               >
-                {theme === "dark" ? "Light" : "Dark"}
+                {theme === "dark" ? s.chrome.theme.toLight : s.chrome.theme.toDark}
               </button>
             </nav>
           </div>
 
           <div className="topper__statement">
-            <h1 className="topper__title">
-              Agent skills for government, public-sector and nonprofit work
-            </h1>
-            <p className="topper__lede">
-              A city that solves a problem once should be able to hand the
-              solution to the next hundred cities.
-            </p>
+            <h1 className="topper__title">{s.chrome.title}</h1>
+            <p className="topper__lede">{s.chrome.lede}</p>
             {index && (
               <p className="topper__stats">
-                <strong>{index.counts.total}</strong> skill{index.counts.total === 1 ? "" : "s"}
+                {rich(s.chrome.stats.skills(index.counts.total))}
                 <span className="topper__dot" aria-hidden="true">·</span>
-                <strong>{index.counts.reviewed}</strong> reviewed
+                {rich(s.chrome.stats.reviewed(index.counts.reviewed))}
                 <span className="topper__dot" aria-hidden="true">·</span>
-                <strong>{index.counts.community}</strong> community
+                {rich(s.chrome.stats.community(index.counts.community))}
               </p>
             )}
           </div>
@@ -157,65 +156,71 @@ export default function App() {
       {index && <TierBand counts={index.counts} />}
 
       <main className="layout canvas">
-        <aside className="filters" aria-label="Filter skills">
+        <aside className="filters" aria-label={s.facets.label}>
           <div className="search">
-            <label className="search__label" htmlFor="q">Search</label>
+            <label className="search__label" htmlFor="q">{s.facets.search.label}</label>
             <input
               id="q" type="search" className="search__input"
-              placeholder="permit, benefits, Boston…"
+              placeholder={s.facets.search.placeholder}
               value={filters.q}
               onChange={(e) => setFilter("q", e.target.value)}
             />
           </div>
 
-          <Facet legend="Tier" field="tier" filterKey="tier" labels={TIER_LABELS}
+          <Facet legend={s.facets.tier.legend} field="tier" filterKey="tier"
+            labels={s.vocabulary.tier}
             skills={skills} filters={filters} onChange={setFilter}
-            note="Community listings passed automated checks only." />
-          <Facet legend="Category" field="category" filterKey="category" labels={CATEGORY_LABELS}
+            note={s.facets.tier.note} />
+          <Facet legend={s.facets.category.legend} field="category" filterKey="category"
+            labels={s.vocabulary.category}
             skills={skills} filters={filters} onChange={setFilter} />
-          <Facet legend="Portability" field="localization" filterKey="localization"
-            labels={LOCALIZATION_LABELS} skills={skills} filters={filters} onChange={setFilter}
-            note="Generalized skills have jurisdiction specifics lifted out." />
-          <Facet legend="Level of government" field="scope" filterKey="scope"
-            labels={SCOPE_LABELS} skills={skills} filters={filters} onChange={setFilter}
-            note="What kind of body a skill is written for. The specific place, when it has one, is on the skill's own page." />
-          <Facet legend="Language" field="language" filterKey="language"
-            labels={LANGUAGE_LABELS} skills={skills} filters={filters} onChange={setFilter}
-            note="The language the listing is written in. A model reads a skill in one language and follows it in another, so this is not a limit on who can use it." />
-          <Facet legend="Data touched" field="data_sensitivity" filterKey="dataSensitivity"
-            labels={SENSITIVITY_LABELS} skills={skills} filters={filters} onChange={setFilter} />
+          <Facet legend={s.facets.localization.legend} field="localization"
+            filterKey="localization" labels={s.vocabulary.localization}
+            skills={skills} filters={filters} onChange={setFilter}
+            note={s.facets.localization.note} />
+          <Facet legend={s.facets.scope.legend} field="scope" filterKey="scope"
+            labels={s.vocabulary.scope} skills={skills} filters={filters}
+            onChange={setFilter} note={s.facets.scope.note} />
+          <Facet legend={s.facets.language.legend} field="language" filterKey="language"
+            labels={s.vocabulary.language} skills={skills} filters={filters}
+            onChange={setFilter} note={s.facets.language.note} />
+          <Facet legend={s.facets.sensitivity.legend} field="data_sensitivity"
+            filterKey="dataSensitivity" labels={s.vocabulary.sensitivity}
+            skills={skills} filters={filters} onChange={setFilter} />
 
           {active && (
             <button className="btn btn--subtle" onClick={() => setFilters(EMPTY_FILTERS)}>
-              Clear filters
+              {s.facets.clear}
             </button>
           )}
         </aside>
 
         <section id="results" className="results" aria-live="polite">
-          {error && <p className="notice notice--error">{error}</p>}
+          {failed && <p className="notice notice--error">{s.errors.catalogUnavailable}</p>}
 
-          {!error && !index && <p className="notice">Loading the catalog…</p>}
+          {!failed && !index && <p className="notice">{s.results.loading}</p>}
 
           {index && (
             <>
               <p className="results__count">
                 {results.length === skills.length
-                  ? `${skills.length} skill${skills.length === 1 ? "" : "s"}`
-                  : `${results.length} of ${skills.length} skills`}
+                  ? s.results.all(skills.length)
+                  : s.results.some(results.length, skills.length)}
               </p>
 
               {results.length === 0 ? (
                 <p className="notice">
-                  No skills match these filters.{" "}
-                  <button className="linkish" onClick={() => setFilters(EMPTY_FILTERS)}>
-                    Clear them
-                  </button>{" "}
-                  to see the whole catalog.
+                  {rich(s.results.empty, {
+                    clear: (kids) => (
+                      <button className="linkish" onClick={() => setFilters(EMPTY_FILTERS)}>
+                        {kids}
+                      </button>
+                    ),
+                  })}
                 </p>
               ) : (
                 <div className="grid">
-                  {results.map((s) => <SkillCard key={s.id} skill={s} />)}
+                  {results.map((sk) => <SkillCard key={sk.id} skill={sk} />)}
                 </div>
               )}
             </>
@@ -228,15 +233,13 @@ export default function App() {
       )}
 
       <footer className="footer">
-        <p>
-          Inclusion in this registry is not an endorsement. Automated checks can
-          only reject — a pass is never a statement that a skill is safe.
-        </p>
+        <p>{s.chrome.footer.disclaimer}</p>
         {index && (
           <p className="footer__meta">
-            Catalog generated {new Date(index.generated).toLocaleDateString()} ·{" "}
-            <a href={index.repo}>Source and submissions on GitHub</a> ·{" "}
-            <a href="#/about">About this project</a>
+            {rich(s.chrome.footer.meta(s.chrome.footer.date(index.generated)), {
+              repo: index.repo,
+              about: "#/about",
+            })}
           </p>
         )}
       </footer>
