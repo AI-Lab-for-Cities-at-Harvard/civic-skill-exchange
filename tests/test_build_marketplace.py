@@ -13,6 +13,7 @@ someone lists a second skill.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -435,13 +436,59 @@ def test_is_tracked_by_git_reports_a_tracked_file(tmp_path):
     assert _is_tracked_by_git(tmp_path, "example.txt")
 
 
+def _is_ignored_by_git(repo_root: Path, rel_path: str) -> bool:
+    """True if `.gitignore` (or any other exclude file) would keep `rel_path`
+    out of a commit. This is the half of the question that can be asked about a
+    path the generator has not written yet, which is the state `main` is in
+    between a skill merging and the regeneration job pushing."""
+    out = subprocess.run(
+        ["git", "check-ignore", "-q", rel_path],
+        cwd=repo_root, capture_output=True, text=True)
+    return out.returncode == 0
+
+
+def test_is_ignored_by_git_reports_an_ignored_path(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / ".gitignore").write_text(".agents/\n", encoding="utf-8")
+    assert _is_ignored_by_git(tmp_path, ".agents/plugins/marketplace.json")
+
+
+def test_is_ignored_by_git_reports_a_path_nothing_excludes(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    assert not _is_ignored_by_git(tmp_path, ".agents/plugins/marketplace.json")
+
+
 def test_every_generated_file_is_tracked_by_git():
     """The general form, against the real registry. A generated path that a
     clone would not have — gitignored, or simply never committed — fails here
-    rather than in somebody's agent."""
+    rather than in somebody's agent.
+
+    Two properties, because they hold at different times (#188). Nothing may
+    *ignore* a generated path: that is #98's bug, and it is true of a path
+    whether or not the file exists yet. A generated path that does exist must
+    be tracked: that is the local guard, which fires the moment somebody runs
+    the generator and does not commit what it wrote.
+
+    What it deliberately does not assert is that every generated file already
+    exists. Between a skill merging and `manifest.yml` pushing the
+    regeneration, `main` is a tree where one plugin.json has not been written
+    yet — and this test runs on pushes to `main`, in the job whose success the
+    regeneration waits on. Demanding existence there would fail the run that
+    gates the only job that can fix it."""
+    if os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
+        pytest.skip(
+            "a submission uploaded in a browser carries no generated file, and "
+            "the registry regenerates them after merge — see "
+            ".github/workflows/manifest.yml")
+
     root = build_marketplace.ROOT
     for path in build_marketplace.generated(root):
         rel = path.relative_to(root).as_posix()
+        assert not _is_ignored_by_git(root, rel), (
+            f"{rel} is generated but git is ignoring it — it would be built, "
+            f"pass every --check, and never enter a clone.")
+        if not path.is_file():
+            continue
         assert _is_tracked_by_git(root, rel), (
             f"{rel} is generated but not tracked by git — a clone would not "
             f"have it.")
