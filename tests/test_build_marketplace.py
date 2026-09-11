@@ -153,6 +153,62 @@ def test_main_build_fails_on_a_duplicate_plugin_name(make_skill, monkeypatch, ca
     assert "civic-skills/plain-language-notice-rewriter" in err
 
 
+# --------------------------------------------------------------------------- #
+# `--paths`: the generator answers what it owns (#188).
+#
+# The post-merge regeneration job has to stage the files it just wrote, and
+# every copy of that list has gone stale — the deleted job named
+# `.claude-plugin/marketplace.json` alone and left two manifests behind for a
+# day. So nothing restates the paths: the workflow asks the generator, and so
+# does the test that checks a clone would have them.
+
+
+def test_main_paths_prints_every_generated_path(make_skill, monkeypatch, capsys):
+    """One path per line, relative to the root and in posix form, so
+    `git add --pathspec-from-file=-` can read it unaltered."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    make_skill(name="beta", namespace="cityofy")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--paths"])
+
+    assert build_marketplace.main() == 0
+    printed = capsys.readouterr().out.split()
+
+    assert printed == [
+        p.relative_to(root).as_posix() for p in build_marketplace.generated(root)
+    ]
+    assert ".claude-plugin/marketplace.json" in printed
+    assert ".agents/plugins/marketplace.json" in printed
+    assert "skills/cityofx/alpha/.codex-plugin/plugin.json" in printed
+    assert "skills/cityofy/beta/.codex-plugin/plugin.json" in printed
+
+
+def test_main_paths_writes_nothing(make_skill, monkeypatch, capsys):
+    """Asking what the generator owns must not generate it. The workflow runs
+    the build and the listing as separate steps, and a rescan or a local check
+    may ask this question about a tree it is not allowed to modify."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--paths"])
+
+    assert build_marketplace.main() == 0
+    capsys.readouterr()
+    for path in build_marketplace.generated(root):
+        assert not path.is_file(), f"--paths wrote {path}"
+
+
+def test_main_paths_fails_on_a_duplicate_plugin_name(make_skill, monkeypatch, capsys):
+    """A listing the generator cannot render is not a path list to stage
+    against — the job must stop rather than commit a partial set."""
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--paths"])
+
+    assert build_marketplace.main() != 0
+    assert "duplicate plugin name" in capsys.readouterr().err
+
+
 def test_no_collision_when_namespace_and_name_both_differ(make_skill):
     """The ordinary case — two entirely different listings — must not trip the
     duplicate check."""
