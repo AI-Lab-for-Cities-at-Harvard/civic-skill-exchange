@@ -326,6 +326,35 @@ describe("renderRescanReport", () => {
     expect(body).toContain("`Marketplace manifests match the catalogue`");
   });
 
+  // #188: the manifests are regenerated on main after merge again, by
+  // .github/workflows/manifest.yml. So a stale manifest here is no longer
+  // somebody forgetting a step in a pull request — it is that job having
+  // failed, and the issue has to say so. Without this a maintainer reads the
+  // failure as a submission problem and goes looking on a branch.
+
+  it("says a stale manifest means the regeneration job failed, and names it", () => {
+    const body = renderRescanReport({
+      validateLog: "",
+      scanLog: "",
+      drift: [],
+      failedSteps: ["Marketplace manifests match the catalogue"],
+    });
+
+    expect(body).toContain(".github/workflows/manifest.yml");
+    expect(body).toMatch(/regenerat/i);
+  });
+
+  it("leaves the manifest note out when the manifests are not what failed", () => {
+    const body = renderRescanReport({
+      validateLog: "",
+      scanLog: "",
+      drift: [],
+      failedSteps: ["Validate"],
+    });
+
+    expect(body).not.toContain(".github/workflows/manifest.yml");
+  });
+
   it("fences a failed step's name too, on the same reasoning as everything else here", () => {
     const body = renderRescanReport({
       validateLog: "",
