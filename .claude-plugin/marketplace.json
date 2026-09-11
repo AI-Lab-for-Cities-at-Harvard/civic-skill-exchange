@@ -24,6 +24,11 @@
       "name": "sgarcese-civic-analytics-workflow",
       "source": "./skills/sgarcese/civic-analytics-workflow",
       "description": "Orchestrator for local government policy analysis and civic innovation. ALWAYS use for any request involving open government data, city, county or town services, neighborhood or ward equity, public policy, government performance, 311 and service request analysis, housing, safety or transportation — even if the user hasn't asked for a 'full analysis'. Routes between five sub-skills: problem framing (Bloomberg-inspired), policy analysis (J-PAL-inspired), communication (GovLab/InnovateUS-inspired), peer benchmarking, and performance management (Results for America / PerformanceStat). Triggers include: 'full analysis', 'policy brief', 'data-driven recommendation', 'service improvement project', 'investigate [issue]', 'compare us to peer cities', 'peer counties', 'similar towns', 'what does the data show', 'help me write a memo about', or any request combining problem definition, data analysis and communication for government or civic purposes."
+    },
+    {
+      "name": "sgarcese-jurisdiction-priority-scan",
+      "source": "./skills/sgarcese/jurisdiction-priority-scan",
+      "description": "Supports problem identification, the first phase of performance management. Runs a broad scan for potential issues a state or city agency might focus on, drawing on the jurisdiction's performance data through an OpenContext MCP connector, local media coverage, public testimony, and social media where a tool can reach it. Covers state labor and workforce, state health and human services, city 311, emergency dispatch (CAD), and city operations. Produces a ranked list of candidate problems for agency leaders and performance officers, each tagged by evidence source, shape (acute/chronic), horizon, degree of control, and dominant cost, with a verified/partial/unverified confidence flag, plus a second list of adjacent problems where the agency has leverage but no formal remit. Use when someone asks what a state or city agency should prioritize, where to target process improvement, what data or local coverage shows about emerging problems, or for a priority scan or focus areas."
     }
   ]
 }
