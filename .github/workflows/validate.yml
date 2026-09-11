@@ -142,15 +142,27 @@ jobs:
           if [ "$IS_MAINTAINER" = "true" ]; then args+=(--maintainer); fi
           npx tsx validator/src/cli.ts "${args[@]}"
 
-      # The manifest is committed rather than built, because `/plugin marketplace
-      # add` reads the repository and not the published site — so it has to be
-      # current in the pull request itself; nothing merges a repair afterwards
-      # (#170). When this fails, the fix is: run `python scripts/build_marketplace.py`
-      # and commit the result. For a submission that arrived by web upload, a
-      # maintainer will do that before merging — see docs/DEVELOPMENT.md.
+      # Reported, never required. The manifests are committed rather than built,
+      # because `/plugin marketplace add` reads the repository and not the
+      # published site — but nothing about that is a submitter's problem: a
+      # folder uploaded in a browser cannot carry a generated file, and #170
+      # made this blocking anyway, which is how the first such submission
+      # (#187) arrived unmergeable. The regeneration happens on main after the
+      # merge, in .github/workflows/manifest.yml (#188).
+      #
+      # The step stays because a maintainer reads it: stale here means this
+      # merge will trigger a regeneration, and current here means it will not.
       - name: Marketplace manifest is current
         if: steps.changes.outputs.skills == 'true'
-        run: python scripts/build_marketplace.py --check
+        continue-on-error: true   # nothing is needed from the submitter
+        run: |
+          if python scripts/build_marketplace.py --check; then
+            exit 0
+          fi
+          echo "Nothing is needed from you. The registry regenerates these"
+          echo "files on main after this pull request merges, in the workflow"
+          echo ".github/workflows/manifest.yml."
+          exit 1
 
       - name: L2 + L3 — signature scan
         if: always() && steps.changes.outputs.skills == 'true'

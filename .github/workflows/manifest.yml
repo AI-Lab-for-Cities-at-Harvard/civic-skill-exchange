@@ -1,0 +1,159 @@
+# Regenerates the marketplace manifests on main, after merge, so a submitter
+# never has to.
+#
+# The manifests are committed rather than built, because `/plugin marketplace
+# add` reads the repository and not the published site. That made adding a
+# skill also a chore of regenerating a distribution artifact. #170 moved the
+# chore into the pull request and deleted this file; the first fork-shaped
+# submission (#187) then failed the blocking check, because a contributor who
+# uploads a folder in a browser cannot run a generator — and a maintainer had
+# to check the branch out, regenerate and push. #188 puts the job back.
+#
+# WHY IT CAN PUSH AT ALL. A ruleset on main requires a pull request for every
+# change and refuses the built-in Actions app as a bypass actor, which is what
+# #170 read as "nothing can push". An organization-owned GitHub App installed
+# on this repository is a different actor: it can be allowed one, it holds
+# `contents: write` here and nowhere else, and its token is minted per run so
+# there is no long-lived credential anywhere. What it writes is the output of
+# a pure function of a skill tree that has already merged under a required
+# review — it reads no pull request and runs no contributor code.
+#
+# REPOSITORY SETTINGS THIS NEEDS, and the first things to check if it fails:
+#   - the App installed on this repository with Contents: read and write;
+#   - MANIFEST_APP_ID and MANIFEST_APP_PRIVATE_KEY as repository secrets;
+#   - the App named as a bypass actor on the ruleset that protects main.
+# Without those, this job fails on every skill merge and the manifests quietly
+# stop tracking the catalogue. The weekly re-scan is what notices.
+#
+# It runs after Checks (test.yml) completes successfully on main — build.yml's
+# guard, for build.yml's reason: a red main must never be regenerated over,
+# and a workflow_run of Checks fires for runs on every branch.
+#
+# It cannot loop. Its own push starts another Checks run on main, and this job
+# runs again over a tree the generator already agrees with, finds nothing
+# staged, and commits nothing.
+
+name: Manifest
+
+on:
+  workflow_run:
+    workflows: [Checks]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Two merges in quick succession would otherwise race to write the same files.
+# Never cancel in progress: a cancelled run leaves the manifests behind the
+# tree, which is the state nothing else repairs.
+concurrency:
+  group: marketplace-manifest
+  cancel-in-progress: false
+
+jobs:
+  regenerate:
+    name: Regenerate the marketplace manifests
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    # The App token below carries the write that matters. This stays at the one
+    # scope the job could plausibly need and nothing else, so that if the App
+    # is ever removed the run degrades to a rejected push rather than to
+    # whatever the repository's default token happens to allow.
+    permissions:
+      contents: write
+    steps:
+      # Minted for this run and expiring with it. app-id and private-key are
+      # inputs to an action, never text in a script.
+      - name: Mint a token for the registry's App
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ secrets.MANIFEST_APP_ID }}
+          private-key: ${{ secrets.MANIFEST_APP_PRIVATE_KEY }}
+
+      # main by name, not workflow_run.head_sha: this job writes to the branch,
+      # so it starts from the branch tip and rebases before pushing. build.yml
+      # takes the SHA instead because it publishes a tree rather than moving a
+      # ref.
+      - name: Check out main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+          # THE ONE DELIBERATE EXCEPTION in this repository. Every other
+          # checkout sets this false, because a persisted credential in a job
+          # that reads skill content is how a compromised skill gets a token.
+          # This job pushes, so it needs the credential to survive the
+          # checkout — and it is the App's, scoped to this repository's
+          # contents, expiring with the run. It reads no pull request and runs
+          # nothing a contributor wrote.
+          persist-credentials: true
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Regenerate
+        run: python scripts/build_marketplace.py
+
+      # Stage the set the generator reports, asked of the generator. This step
+      # named .claude-plugin/marketplace.json when the generator had learned to
+      # write two more files, so a merged skill updated the Claude marketplace
+      # and silently left the Codex side behind. `--paths` prints them, one per
+      # line, and git reads that list rather than a pathspec restated here.
+      - name: Stage exactly what the generator owns
+        id: staged
+        run: |
+          set -euo pipefail
+          python scripts/build_marketplace.py --paths > "$RUNNER_TEMP/generated.txt"
+          echo "The generator owns:"; cat "$RUNNER_TEMP/generated.txt"
+          git add --pathspec-from-file="$RUNNER_TEMP/generated.txt"
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Every manifest is already current — nothing to commit."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Staged:"; git diff --cached --name-only
+          fi
+
+      # The commit's author is the App, taken from the token action's app-slug
+      # output rather than written down here, so it names whichever App is
+      # actually installed. It reaches the shell through env.
+      #
+      # The message references no issue and closes none: this lands directly on
+      # the default branch, where GitHub parses both.
+      #
+      # main may have moved between the Checks run and now, so the push rebases
+      # first. One retry, because the loser of a race between two merges should
+      # become a second attempt rather than a stale manifest; a second failure
+      # is a red run, which is the honest outcome.
+      - name: Commit and push, as the App
+        if: steps.staged.outputs.changed == 'true'
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          git config user.name "$APP_SLUG[bot]"
+          git config user.email "$APP_SLUG[bot]@users.noreply.github.com"
+          git commit -m "Regenerate the marketplace manifests"
+
+          attempt() {
+            git pull --rebase origin main && git push origin HEAD:main
+          }
+          if ! attempt; then
+            echo "Rebase or push failed — main moved. Trying once more."
+            attempt
+          fi
+
+      # The job that repairs drift is also the job that can fail to. It once
+      # reported success while leaving half the manifests stale, so it asserts
+      # its own outcome rather than assuming it.
+      - name: Verify nothing is still stale
+        run: python scripts/build_marketplace.py --check

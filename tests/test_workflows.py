@@ -779,10 +779,14 @@ def test_the_regeneration_job_stages_what_the_generator_reports() -> None:
         "the staged set must come from the generator's list, not from a "
         "pathspec written out here"
     )
+    # The comments may recount which path the deleted job named; nothing the
+    # runner executes may name one.
+    executed = "\n".join(line for line in MANIFEST_YML.splitlines()
+                         if not line.lstrip().startswith("#"))
     for restated in (".claude-plugin/marketplace.json",
                      ".agents/plugins/marketplace.json",
                      ".codex-plugin/plugin.json"):
-        assert restated not in MANIFEST_YML, (
+        assert restated not in executed, (
             f"manifest.yml names {restated} — ask the generator instead")
 
 
