@@ -219,7 +219,7 @@ pull request, and a check that is always red is a check nobody reads.
 2. **No secrets in any job that reads skill content.** Split privileged work into a separate `workflow_run` job.
 3. **Never `${{ }}`-interpolate event text into a model prompt.** If a model ever enters this pipeline, it must read untrusted text from a file or an environment variable.
 4. **Pin actions by commit SHA,** not by tag. Tags move, and whoever controls a tag controls what runs in CI — including the job that holds `pull-requests: write` and the one that deploys the site. Every `uses:` carries a full 40-character SHA and a trailing `# vN.N.N` comment saying which release it is. `tests/test_workflows.py` fails if an unpinned ref, a bare SHA, or a "pin this later" comment appears.
-5. **`persist-credentials: false`** on checkout.
+5. **`persist-credentials: false`** on checkout. One exception, and it is asserted by a test rather than left to a reader: `.github/workflows/manifest.yml` persists the GitHub App credential it checks out with, because that job's purpose is to push. See "Repository settings" below.
 6. **CODEOWNER approval** for anything outside `skills/`, and for promotion into the Reviewed tier.
 
 ### Keeping the pins current
@@ -244,10 +244,27 @@ rather than the commit's, and the two will not match what the workflow needs.
 - Require 2FA for all organization members
 - Require signed commits from maintainers
 - Never store a publish or deploy token in a workflow that reads `skills/`
-- **No workflow pushes to `main`.** A ruleset requires a pull request for
-  every change and rejects the built-in Actions app as a bypass actor, so
-  nothing — including a regenerated marketplace manifest — reaches `main` any
-  way but a reviewed pull request.
+- **Exactly one job pushes to `main`, and it pushes after merge.**
+  `.github/workflows/manifest.yml` regenerates the marketplace manifests and
+  pushes them. Nothing else in the repository runs `git push`, and a test
+  asserts that. It authenticates as an organization-owned GitHub App, not as
+  the built-in Actions app — the ruleset on `main` requires a pull request for
+  every change and refuses the Actions app as a bypass actor, and an App is a
+  distinct actor that can be named as one. The App is installed on this
+  repository only, holds `contents: write` and nothing else, and its token is
+  minted per run and expires with it. It is also the one checkout in the
+  repository that persists its credential.
+
+  **Why that is acceptable.** The job reads content that has already merged
+  under a required review. It never checks out a pull request, and
+  `workflow_run` runs the definition from the default branch, so a fork cannot
+  edit what executes. It runs one generator — a pure function of the skill
+  tree — and commits only the paths that generator reports. It waits on a
+  green **Checks** run on `main` and re-checks the conclusion itself, so a red
+  `main` is never regenerated over. The alternative is a maintainer checking
+  out every browser submission by hand to run a generator on it, which is both
+  a person in the critical path and a human pushing to `main` for the same
+  effect with less review.
 
 ---
 
