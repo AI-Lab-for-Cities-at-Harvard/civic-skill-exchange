@@ -813,12 +813,24 @@ def test_the_regeneration_job_rebases_before_it_pushes() -> None:
 
 
 def test_the_regeneration_job_retries_the_rebase_and_push_once() -> None:
-    """Two merges in quick succession race for the same file. One retry turns
-    the loser into a second attempt rather than a stale manifest."""
+    """Two merges in quick succession race for the same files. One retry turns
+    the loser into a second attempt rather than into a stale manifest that only
+    the weekly re-scan will mention.
+
+    Written out twice, or a shell function called more than once — both are a
+    retry. A single unconditional attempt is not."""
     body = "\n".join(b for _, b in _script_bodies(MANIFEST_YML))
-    assert body.count("git pull --rebase") >= 2 or re.search(
-        r"(attempt|retry|try)", body), (
-        "manifest.yml must retry the rebase-and-push once on failure"
+    if body.count("git pull --rebase") >= 2:
+        return
+    function = re.search(r"^\s*(\w+)\s*\(\)\s*\{", body, re.M)
+    assert function, (
+        "manifest.yml attempts the rebase-and-push exactly once — a race "
+        "between two merges has to become a second attempt"
+    )
+    name = function.group(1)
+    # The definition plus two calls.
+    assert len(re.findall(rf"\b{re.escape(name)}\b", body)) >= 3, (
+        f"manifest.yml defines {name}() but calls it once — that is not a retry"
     )
 
 
