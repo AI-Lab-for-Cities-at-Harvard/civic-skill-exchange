@@ -260,7 +260,25 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
                         help="exit non-zero if the committed manifest is stale")
+    parser.add_argument("--paths", action="store_true",
+                        help="print the paths this script owns, one per line, "
+                             "relative to the repository root, and write "
+                             "nothing")
     args = parser.parse_args()
+
+    # The generator is the only authority on which files it owns. Anything that
+    # stages, checks or exempts them asks this rather than keeping a second copy
+    # of the list: the post-merge regeneration job named one manifest path and
+    # left two behind for a day (#188).
+    if args.paths:
+        try:
+            paths = list(generated(ROOT))
+        except DuplicatePluginName as exc:
+            print(f"error {exc}", file=sys.stderr)
+            return 1
+        for path in paths:
+            print(path.relative_to(ROOT).as_posix())
+        return 0
 
     if args.check:
         try:

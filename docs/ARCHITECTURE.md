@@ -336,29 +336,40 @@ client while staying where the ownership check needs it.
 forced: `/plugin marketplace add` reads the repository, not the published site.
 `index.json` can be a build output served from Pages; this cannot be.
 
-**The pull request carries it, regenerated.** `scripts/build_marketplace.py`
-generates it, and `validate.yml` fails the build if the committed copy is
-stale — no job repairs it afterwards. A post-merge workflow used to do that:
-it pushed a regenerated manifest to `main` after every skill merge. That
-workflow is deleted, because the ruleset on `main` requires a pull request
-for every change and GitHub refuses to let the built-in Actions app bypass
-that ruleset, so its push was already being rejected — it could never have
-run.
+**The pull request need not carry it.** `scripts/build_marketplace.py`
+generates the manifests, and `.github/workflows/manifest.yml` regenerates them
+on `main` after every merge and pushes the result. `validate.yml` still runs
+`--check` on a pull request, but as a warning: it tells a maintainer that this
+merge will trigger a regeneration, and asks the submitter for nothing.
 
-A manifest regenerated on a branch that is current with `main` is
-byte-identical to what `main` would produce right after the squash: the
-generator is a pure function of the skill tree, nothing from git, and the
-ruleset's strict up-to-date requirement guarantees the branch's tree is
-exactly what `main`'s will be the moment the merge lands. So carrying the
-regenerated files in the pull request, rather than building them after merge,
-changes nothing about what gets published.
+**The argument is not that the two are byte-identical.** They are — the
+generator is a pure function of the skill tree, nothing from git — and that
+was the case for regenerating inside the pull request instead
+([#170](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/170)).
+It was the wrong question. The right one is what the registry asks of somebody
+submitting a skill, and the answer has to be *nothing*: a contributor who
+uploads a folder through the submission page cannot run a generator, and the
+first fork-shaped submission
+([#187](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/187))
+arrived unmergeable until a maintainer checked the branch out, regenerated and
+pushed. That step does not exist in a browser, and a registry that needs it is
+a registry with a maintainer in every submission's critical path
+([#90](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/90)).
 
-Asking a submitter to run a generator is the friction
-([#90](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/90))
-that the deleted job existed to absorb. For a submission that arrived through
-the submission page rather than the command line, a maintainer now
-regenerates and commits it onto the contributor's branch before merging — see
-docs/DEVELOPMENT.md.
+**It pushes as a GitHub App.** #170's reasoning was that nothing could push at
+all: the ruleset on `main` requires a pull request for every change and
+refuses the built-in Actions app as a bypass actor. An organization-owned App
+installed on this repository is a different actor — it can be named as a
+bypass actor, it holds `contents: write` here and nowhere else, and its token
+is minted per run, so no long-lived credential exists. `manifest.yml` is the
+only job in the repository that pushes, and the only checkout that persists a
+credential; it reads no pull request and runs nothing a contributor wrote,
+only the generator, over a tree that has already merged under a required
+review. See "CI hardening" in docs/SECURITY.md.
+
+Nothing repairs `main` if that job fails. The weekly re-scan checks the
+manifests against the catalogue and opens an issue saying which workflow to go
+and look at.
 
 Plugin names are `{namespace}-{name}`, unconditionally. Plugin names must be
 unique across a marketplace and two submitters may publish the same skill name;
