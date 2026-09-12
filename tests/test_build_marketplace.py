@@ -13,6 +13,7 @@ someone lists a second skill.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -151,6 +152,62 @@ def test_main_build_fails_on_a_duplicate_plugin_name(make_skill, monkeypatch, ca
     err = capsys.readouterr().err
     assert "civic/skills-plain-language-notice-rewriter" in err
     assert "civic-skills/plain-language-notice-rewriter" in err
+
+
+# --------------------------------------------------------------------------- #
+# `--paths`: the generator answers what it owns (#188).
+#
+# The post-merge regeneration job has to stage the files it just wrote, and
+# every copy of that list has gone stale — the deleted job named
+# `.claude-plugin/marketplace.json` alone and left two manifests behind for a
+# day. So nothing restates the paths: the workflow asks the generator, and so
+# does the test that checks a clone would have them.
+
+
+def test_main_paths_prints_every_generated_path(make_skill, monkeypatch, capsys):
+    """One path per line, relative to the root and in posix form, so
+    `git add --pathspec-from-file=-` can read it unaltered."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    make_skill(name="beta", namespace="cityofy")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--paths"])
+
+    assert build_marketplace.main() == 0
+    printed = capsys.readouterr().out.split()
+
+    assert printed == [
+        p.relative_to(root).as_posix() for p in build_marketplace.generated(root)
+    ]
+    assert ".claude-plugin/marketplace.json" in printed
+    assert ".agents/plugins/marketplace.json" in printed
+    assert "skills/cityofx/alpha/.codex-plugin/plugin.json" in printed
+    assert "skills/cityofy/beta/.codex-plugin/plugin.json" in printed
+
+
+def test_main_paths_writes_nothing(make_skill, monkeypatch, capsys):
+    """Asking what the generator owns must not generate it. The workflow runs
+    the build and the listing as separate steps, and a rescan or a local check
+    may ask this question about a tree it is not allowed to modify."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--paths"])
+
+    assert build_marketplace.main() == 0
+    capsys.readouterr()
+    for path in build_marketplace.generated(root):
+        assert not path.is_file(), f"--paths wrote {path}"
+
+
+def test_main_paths_fails_on_a_duplicate_plugin_name(make_skill, monkeypatch, capsys):
+    """A listing the generator cannot render is not a path list to stage
+    against — the job must stop rather than commit a partial set."""
+    root = make_skill(name="skills-plain-language-notice-rewriter", namespace="civic").parents[2]
+    make_skill(name="plain-language-notice-rewriter", namespace="civic-skills")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--paths"])
+
+    assert build_marketplace.main() != 0
+    assert "duplicate plugin name" in capsys.readouterr().err
 
 
 def test_no_collision_when_namespace_and_name_both_differ(make_skill):
@@ -379,13 +436,59 @@ def test_is_tracked_by_git_reports_a_tracked_file(tmp_path):
     assert _is_tracked_by_git(tmp_path, "example.txt")
 
 
+def _is_ignored_by_git(repo_root: Path, rel_path: str) -> bool:
+    """True if `.gitignore` (or any other exclude file) would keep `rel_path`
+    out of a commit. This is the half of the question that can be asked about a
+    path the generator has not written yet, which is the state `main` is in
+    between a skill merging and the regeneration job pushing."""
+    out = subprocess.run(
+        ["git", "check-ignore", "-q", rel_path],
+        cwd=repo_root, capture_output=True, text=True)
+    return out.returncode == 0
+
+
+def test_is_ignored_by_git_reports_an_ignored_path(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    (tmp_path / ".gitignore").write_text(".agents/\n", encoding="utf-8")
+    assert _is_ignored_by_git(tmp_path, ".agents/plugins/marketplace.json")
+
+
+def test_is_ignored_by_git_reports_a_path_nothing_excludes(tmp_path):
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    assert not _is_ignored_by_git(tmp_path, ".agents/plugins/marketplace.json")
+
+
 def test_every_generated_file_is_tracked_by_git():
     """The general form, against the real registry. A generated path that a
     clone would not have — gitignored, or simply never committed — fails here
-    rather than in somebody's agent."""
+    rather than in somebody's agent.
+
+    Two properties, because they hold at different times (#188). Nothing may
+    *ignore* a generated path: that is #98's bug, and it is true of a path
+    whether or not the file exists yet. A generated path that does exist must
+    be tracked: that is the local guard, which fires the moment somebody runs
+    the generator and does not commit what it wrote.
+
+    What it deliberately does not assert is that every generated file already
+    exists. Between a skill merging and `manifest.yml` pushing the
+    regeneration, `main` is a tree where one plugin.json has not been written
+    yet — and this test runs on pushes to `main`, in the job whose success the
+    regeneration waits on. Demanding existence there would fail the run that
+    gates the only job that can fix it."""
+    if os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
+        pytest.skip(
+            "a submission uploaded in a browser carries no generated file, and "
+            "the registry regenerates them after merge — see "
+            ".github/workflows/manifest.yml")
+
     root = build_marketplace.ROOT
     for path in build_marketplace.generated(root):
         rel = path.relative_to(root).as_posix()
+        assert not _is_ignored_by_git(root, rel), (
+            f"{rel} is generated but git is ignoring it — it would be built, "
+            f"pass every --check, and never enter a clone.")
+        if not path.is_file():
+            continue
         assert _is_tracked_by_git(root, rel), (
             f"{rel} is generated but not tracked by git — a clone would not "
             f"have it.")

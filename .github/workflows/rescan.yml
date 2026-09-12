@@ -54,11 +54,11 @@ jobs:
       # Detects attestations whose sha no longer matches the skill's current tree.
       # Those skills are already demoted by the build; this is how a human hears
       # about it.
-      # The manifests are regenerated inside each skill pull request now, and
-      # nothing pushes a repair to main afterwards (#170) — so this is the only
-      # thing that still checks main itself. It never repairs anything, only
-      # reports, so a failure here means a stale manifest reached main, not
-      # that somebody forgot a step.
+      # manifest.yml regenerates the manifests on main after every merge, and
+      # this is the only thing that checks main itself. It never repairs
+      # anything, only reports — so a failure here means that job did not run
+      # or did not succeed, not that somebody forgot a step (#188). The issue
+      # body says as much; see report.ts's MANIFEST_NOTE.
       - name: Marketplace manifests match the catalogue
         id: manifest
         run: python scripts/build_marketplace.py --check
