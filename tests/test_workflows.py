@@ -1128,3 +1128,28 @@ def test_no_workflow_expression_is_substituted_into_a_rescan_script() -> None:
             "rescan.yml interpolates a workflow expression into a run/script "
             "body. Pass it through env: instead."
         )
+
+
+# --------------------------------------------------------------------------- #
+# #190: a fork pull request whose branch is named `main` produced a Checks run
+# with head_branch == 'main', and both workflow_run consumers took it for a
+# push to this repository. The deploy started in a privileged context against
+# fork code and actions/checkout refused it; the manifest job was a no-op only
+# because it checks out `main` by name. Every workflow_run guard also requires
+# the triggering event to be a push, and the head repository to be this one.
+
+
+@pytest.mark.parametrize("wf_name", ["build.yml", "manifest.yml"])
+def test_workflow_run_guards_require_a_push_to_this_repository(wf_name: str) -> None:
+    text = (ROOT / ".github" / "workflows" / wf_name).read_text(encoding="utf-8")
+    guards = re.findall(r"if:\s*>-\n((?:\s+.*\n)+?)(?=\s+\S+:)", text)
+    assert guards, f"{wf_name} has no folded `if: >-` guard"
+    for guard in guards:
+        assert "github.event.workflow_run.event == 'push'" in guard, (
+            f"{wf_name}: a workflow_run guard does not require the triggering "
+            "event to be a push — a fork pull request on a branch named main "
+            "would pass it (#190)")
+        assert ("github.event.workflow_run.head_repository.full_name == "
+                "github.repository") in guard, (
+            f"{wf_name}: a workflow_run guard does not require the head "
+            "repository to be this one (#190)")
