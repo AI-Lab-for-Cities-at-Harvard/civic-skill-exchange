@@ -1,0 +1,7 @@
+{
+  "name": "sgarcese-jurisdiction-priority-scan",
+  "description": "Supports problem identification, the first phase of performance management. Runs a broad scan for potential issues a state or city agency might focus on, drawing on the jurisdiction's performance data through an OpenContext MCP connector, local media coverage, public testimony, and social media where a tool can reach it. Covers state labor and workforce, state health and human services, city 311, emergency dispatch (CAD), and city operations. Produces a ranked list of candidate problems for agency leaders and performance officers, each tagged by evidence source, shape (acute/chronic), horizon, degree of control, and dominant cost, with a verified/partial/unverified confidence flag, plus a second list of adjacent problems where the agency has leverage but no formal remit. Use when someone asks what a state or city agency should prioritize, where to target process improvement, what data or local coverage shows about emerging problems, or for a priority scan or focus areas.",
+  "author": {
+    "name": "Santi Garces"
+  }
+}

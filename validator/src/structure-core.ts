@@ -181,7 +181,12 @@ const PLUGIN_DIRECTORIES = new Map<string, string>([
     "ship hooks."],
   [".claude-plugin", "the registry generates this directory from the listing " +
     "itself, so an author's copy would shadow it and describe the plugin as " +
-    "something other than what the catalogue shows."],
+    "something other than what the catalogue shows. Only " +
+    ".claude-plugin/plugin.json may appear here, and only because " +
+    "scripts/build_marketplace.py writes it: " +
+    "`build_marketplace.py --check` fails any pull request whose copy " +
+    "differs from what the generator produces, so inline hooks or MCP " +
+    "servers cannot be smuggled through it."],
 ]);
 
 const PLUGIN_FILES = new Map<string, string>([
@@ -196,9 +201,34 @@ const PLUGIN_FILES = new Map<string, string>([
     "reads."],
 ]);
 
+/** The one path under `.claude-plugin/` a skill directory may carry (#183).
+ *
+ *  `scripts/build_marketplace.py` writes this file into every listed skill, so
+ *  refusing it would fail the whole registry. It is safe to allow for the
+ *  reason the rest of the directory is not: the generator produces it, and
+ *  `build_marketplace.py --check` compares the committed copy against what the
+ *  generator produces. That step is blocking — validate.yml runs it on every
+ *  pull request that touches `skills/`, and nothing repairs a stale copy after
+ *  a merge (#170). So a manifest carrying inline `hooks` or `mcpServers` fails
+ *  the pull request rather than reaching a client: an author cannot smuggle
+ *  anything through a file whose exact bytes are derived from their SKILL.md.
+ *
+ *  Anything else under `.claude-plugin/` is still refused. The directory is
+ *  where a client looks for the plugin's own manifest, and #151's reason — an
+ *  author's copy shadowing the registry's — holds for every path in it but
+ *  this one. */
+const CLAUDE_PLUGIN_DIRECTORY = ".claude-plugin";
+export const GENERATED_PLUGIN_MANIFEST = `${CLAUDE_PLUGIN_DIRECTORY}/plugin.json`;
+
 /** Why this path is refused, or null. `where` carries the path itself. */
 export function rejectedPluginPath(rel: string): string | null {
   const first = rel.split("/")[0]!;
+  // The directory entry itself passes too: the walk emits it alongside the
+  // generated manifest, and reporting it would fail every listing.
+  if (first === CLAUDE_PLUGIN_DIRECTORY &&
+      (rel === CLAUDE_PLUGIN_DIRECTORY || rel === GENERATED_PLUGIN_MANIFEST)) {
+    return null;
+  }
   return PLUGIN_DIRECTORIES.get(first)
     ?? (rel === first ? PLUGIN_FILES.get(first) ?? null : null);
 }
