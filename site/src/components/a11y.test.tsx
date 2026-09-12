@@ -3,10 +3,14 @@
  *
  *  This is a registry for skills about plain language and accessibility.
  *  Failing WCAG here would be its own kind of statement.
+ *
+ *  Every surface, in every locale (#150). The strings differ, and so do the
+ *  accessible names built out of them.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
 import { render } from "@testing-library/react";
+import { DEFAULT_LOCALE, locales, setLocale } from "../i18n/strings";
 import { findViolations, describeViolations } from "../test/axe";
 import { makeSkill } from "../test/fixtures";
 import { About } from "./About";
@@ -31,7 +35,11 @@ const detail = (over: Partial<SkillDetail> = {}): SkillDetail => ({
   ...over,
 });
 
-describe("no axe violations", () => {
+afterEach(async () => { await setLocale(DEFAULT_LOCALE); });
+
+describe.each(locales())("no axe violations — %s", (tag) => {
+  beforeEach(async () => { await setLocale(tag); });
+
   it("About", async () => { await expectClean(<About skills={[]} />); });
 
   it("a skill card", async () => {

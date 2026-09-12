@@ -22,14 +22,25 @@ import { dirname, join, resolve } from "node:path";
 import { en } from "./en";
 
 const SRC = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const TABLE = join(SRC, "i18n", "en.ts");
+const TABLES = join(SRC, "i18n");
+
+/** A locale module: `en.ts`, `es.ts`, and whatever comes next.
+ *
+ *  None of them counts as a reader. `en.ts` never did — an entry that only the
+ *  table mentions is exactly what this looks for — and a second locale is the
+ *  same file again: `es.ts` names every key `en.ts` names, so counting it would
+ *  make every entry look read and the check would pass on a table of nothing
+ *  but dead strings. The rest of `i18n/` is scanned as usual, because
+ *  `strings.ts` and `rich.tsx` do render. */
+const isLocaleTable = (path: string, name: string) =>
+  dirname(path) === TABLES && /^[a-z]{2}(-[A-Za-z0-9]+)?\.ts$/.test(name);
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
     if (statSync(path).isDirectory()) return sources(path);
     if (!/\.tsx?$/.test(entry) || /\.test\.tsx?$/.test(entry)) return [];
-    return path === TABLE ? [] : [path];
+    return isLocaleTable(path, entry) ? [] : [path];
   });
 }
 
