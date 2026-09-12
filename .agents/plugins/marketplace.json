@@ -48,6 +48,18 @@
         "authentication": "ON_USE"
       },
       "category": "Policy"
+    },
+    {
+      "name": "sgarcese-jurisdiction-priority-scan",
+      "source": {
+        "source": "local",
+        "path": "./skills/sgarcese/jurisdiction-priority-scan"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Policy"
     }
   ]
 }

@@ -495,7 +495,9 @@ def test_the_resolver_matches_on_the_head_sha_and_insists_on_exactly_one() -> No
     assert "pr: null" in RESOLVER, "there is no no-pull-request outcome to return"
 
 
-@pytest.mark.parametrize("wf", ["report.yml", "validate.yml"], ids=lambda n: n)
+@pytest.mark.parametrize(
+    "wf", ["report.yml", "validate.yml", "manifest.yml"], ids=lambda n: n
+)
 def test_no_workflow_expression_is_substituted_into_a_script(wf: str) -> None:
     """Branch and repository names are contributor-controlled data. Through
     `env` they are data; through `${{ }}` they are source, in a shell or in the
@@ -638,13 +640,371 @@ def test_no_workflow_references_the_site_lockfile(wf: Path) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# #170: the manifests are regenerated inside the skill pull request rather than
-# by a post-merge push to main. `manifest.yml` — the job that made that push —
-# is deleted, since the ruleset on main requires a pull request for every
-# change and rejects the Actions app as a bypass actor. Nothing may push to
-# main; the validate step that used to warn and let the merge repair drift now
-# fails outright, and the docs that described the deleted job describe the new
-# flow instead.
+# #188: the manifests are regenerated AFTER merge again, by `manifest.yml`,
+# which pushes to main as an organization-owned GitHub App.
+#
+# #170 had deleted that job and made validate.yml's manifest check blocking, on
+# the reading that nothing could push to main at all. The first fork-shaped
+# submission (#187) then failed that check and the tracked-files test, because
+# a folder uploaded in a browser cannot carry a generated file — and a
+# maintainer had to check the branch out, regenerate and push. A contributor
+# working in a browser cannot perform that step, so the registry performs it.
+#
+# The App is what makes the push legitimate: a ruleset on main refuses the
+# built-in Actions app as a bypass actor, and an App installed on this
+# repository with contents:write is a distinct actor that can be allowed one.
+# Its token is minted per run, so there is no long-lived credential. The job
+# reads only content that has already merged under a required review, and
+# writes only what the generator writes.
+
+MANIFEST_YML_PATH = ROOT / ".github" / "workflows" / "manifest.yml"
+
+APP_TOKEN_ACTION = (
+    "actions/create-github-app-token@"
+    "bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0"
+)
+
+
+def test_manifest_yml_exists() -> None:
+    """Guards every test below: a missing file reads as a passing assertion."""
+    assert MANIFEST_YML_PATH.is_file(), (
+        "there is no .github/workflows/manifest.yml — nothing regenerates the "
+        "manifests after merge, and a browser submission cannot carry them"
+    )
+
+
+MANIFEST_YML = MANIFEST_YML_PATH.read_text(encoding="utf-8") if (
+    MANIFEST_YML_PATH.is_file()) else ""
+
+
+def test_exactly_one_workflow_pushes_and_it_is_manifest_yml() -> None:
+    """A push from CI is a real privilege. One job has it, and its name is the
+    answer to "what wrote this commit to main"."""
+    pushers = [wf.name for wf in WORKFLOWS if "git push" in wf.read_text(encoding="utf-8")]
+    assert pushers == ["manifest.yml"], (
+        f"workflows running `git push`: {pushers}. Exactly one may push, and it "
+        "is manifest.yml — the post-merge regeneration job"
+    )
+
+
+def test_manifest_yml_triggers_on_a_completed_checks_run() -> None:
+    on_block = _on_block(MANIFEST_YML)
+    assert re.search(r"workflow_run:\s*\n\s*workflows:\s*\[Checks\]", on_block), (
+        "manifest.yml must trigger on workflow_run of the Checks workflow, so "
+        "it regenerates a commit that passed rather than whatever just landed"
+    )
+    assert re.search(r"workflow_run:.*?types:\s*\[completed\]", on_block, re.S), (
+        "manifest.yml's workflow_run trigger must fire on completed"
+    )
+
+
+def test_manifest_yml_never_triggers_on_a_pull_request() -> None:
+    """This job holds a token that can write to main. It must never run in a
+    context a contributor supplies, and `pull_request_target` in particular is
+    forbidden repository-wide."""
+    on_block = _on_block(MANIFEST_YML)
+    assert "pull_request" not in on_block, (
+        "manifest.yml triggers on a pull request event — the job that pushes to "
+        "main may not run against contributor-chosen input"
+    )
+    assert "pull_request_target" not in MANIFEST_YML
+
+
+def test_the_regeneration_job_only_runs_after_a_green_checks_run_on_main() -> None:
+    """build.yml's guard, exactly: a red main must never be regenerated over,
+    and a workflow_run of Checks fires for every branch."""
+    job = _job_block(MANIFEST_YML, "regenerate")
+    assert "github.event.workflow_run.conclusion == 'success'" in job, (
+        "the regeneration job must re-check the Checks conclusion itself"
+    )
+    assert "github.event.workflow_run.head_branch == 'main'" in job, (
+        "the regeneration job must run only for a Checks run on main"
+    )
+
+
+def test_the_regeneration_job_mints_a_github_app_token() -> None:
+    """Pinned, and reading the two named secrets. The App is org-owned and
+    installed on this repository alone; the token lives for the run."""
+    assert APP_TOKEN_ACTION in MANIFEST_YML, (
+        "manifest.yml must mint its token with the pinned "
+        f"{APP_TOKEN_ACTION.split('@')[0]} action"
+    )
+    assert "app-id: ${{ secrets.MANIFEST_APP_ID }}" in MANIFEST_YML
+    assert "private-key: ${{ secrets.MANIFEST_APP_PRIVATE_KEY }}" in MANIFEST_YML
+
+
+def test_the_app_secrets_are_read_only_where_actions_take_inputs() -> None:
+    """A secret belongs in `with:` or `env:`. Substituted into a `run:` body it
+    is source, and a private key in particular must never be shell text."""
+    for key, body in _script_bodies(MANIFEST_YML):
+        assert "secrets." not in body, (
+            f"manifest.yml: a {key}: block reads a secret. Secrets go through "
+            "with: or env:, never into a script body"
+        )
+
+
+def test_the_checkout_uses_the_app_token() -> None:
+    """Without `token:`, checkout persists the run's GITHUB_TOKEN and the push
+    is refused by the ruleset — the failure #170 read as "nothing can push"."""
+    assert "token: ${{ steps.app-token.outputs.token }}" in MANIFEST_YML, (
+        "manifest.yml's checkout must use the App token, not the run's "
+        "GITHUB_TOKEN"
+    )
+
+
+def test_the_persisted_credential_is_deliberate_and_unique_to_this_job() -> None:
+    """Every other checkout in this repository sets persist-credentials: false.
+    This one is the documented exception, because the push needs the
+    credential — so the exception is asserted, not left to a reader to notice."""
+    assert re.search(r"persist-credentials:\s*true", MANIFEST_YML), (
+        "manifest.yml's checkout must persist the App credential — the push "
+        "below uses it"
+    )
+    for wf in WORKFLOWS:
+        if wf.name == "manifest.yml":
+            continue
+        assert not re.search(
+            r"persist-credentials:\s*true", wf.read_text(encoding="utf-8")), (
+            f"{wf.name} persists checkout credentials — only manifest.yml may")
+
+
+def test_the_regeneration_job_stages_what_the_generator_reports() -> None:
+    """Not a path list restated in YAML. The deleted job named
+    .claude-plugin/marketplace.json alone and left two manifests stale."""
+    assert "build_marketplace.py --paths" in MANIFEST_YML, (
+        "manifest.yml must ask the generator which paths it owns "
+        "(`build_marketplace.py --paths`) rather than naming them"
+    )
+    assert "--pathspec-from-file" in MANIFEST_YML, (
+        "the staged set must come from the generator's list, not from a "
+        "pathspec written out here"
+    )
+    # The comments may recount which path the deleted job named; nothing the
+    # runner executes may name one.
+    executed = "\n".join(line for line in MANIFEST_YML.splitlines()
+                         if not line.lstrip().startswith("#"))
+    for restated in (".claude-plugin/marketplace.json",
+                     ".agents/plugins/marketplace.json",
+                     ".codex-plugin/plugin.json"):
+        assert restated not in executed, (
+            f"manifest.yml names {restated} — ask the generator instead")
+
+
+def test_the_regeneration_job_is_a_no_op_when_nothing_changed() -> None:
+    """It runs after every green Checks run on main, which includes its own
+    push. Nothing to commit must be an ordinary, quiet outcome."""
+    assert "git diff --cached --quiet" in MANIFEST_YML, (
+        "manifest.yml must check whether the regeneration changed anything "
+        "before committing"
+    )
+
+
+def test_the_regeneration_job_rebases_before_it_pushes() -> None:
+    """main may have moved between the Checks run and this job. A push that
+    has not rebased is rejected, and rejected silently is how the manifests
+    stopped tracking the catalogue the first time."""
+    body = "\n".join(b for _, b in _script_bodies(MANIFEST_YML))
+    rebase = body.find("git pull --rebase")
+    push = body.find("git push")
+    assert rebase != -1, "manifest.yml must rebase on origin/main before pushing"
+    assert push != -1 and rebase < push, (
+        "manifest.yml pushes before it rebases"
+    )
+
+
+def test_the_regeneration_job_retries_the_rebase_and_push_once() -> None:
+    """Two merges in quick succession race for the same files. One retry turns
+    the loser into a second attempt rather than into a stale manifest that only
+    the weekly re-scan will mention.
+
+    Written out twice, or a shell function called more than once — both are a
+    retry. A single unconditional attempt is not."""
+    body = "\n".join(b for _, b in _script_bodies(MANIFEST_YML))
+    if body.count("git pull --rebase") >= 2:
+        return
+    function = re.search(r"^\s*(\w+)\s*\(\)\s*\{", body, re.M)
+    assert function, (
+        "manifest.yml attempts the rebase-and-push exactly once — a race "
+        "between two merges has to become a second attempt"
+    )
+    name = function.group(1)
+    # The definition plus two calls.
+    assert len(re.findall(rf"\b{re.escape(name)}\b", body)) >= 3, (
+        f"manifest.yml defines {name}() but calls it once — that is not a retry"
+    )
+
+
+def test_the_regeneration_job_commits_as_the_app() -> None:
+    """The commit on main says which actor wrote it. The App's slug comes from
+    the token action, so it cannot drift from whichever App is installed, and
+    it reaches the shell through env rather than `${{ }}`."""
+    assert "app-slug" in MANIFEST_YML, (
+        "manifest.yml must take the committing identity from the token "
+        "action's app-slug output"
+    )
+    assert re.search(r"APP_SLUG:\s*\$\{\{\s*steps\.app-token\.outputs\.app-slug",
+                     MANIFEST_YML), (
+        "the App slug must reach the shell through env:, not by expression "
+        "substitution into the script"
+    )
+    assert "git config user.name" in MANIFEST_YML
+    assert "git config user.email" in MANIFEST_YML
+
+
+def test_the_regeneration_commit_closes_nothing() -> None:
+    """It lands directly on the default branch, where GitHub parses closing
+    keywords and issue references."""
+    body = "\n".join(b for _, b in _script_bodies(MANIFEST_YML))
+    commit = re.search(r"git commit[^\n]*", body)
+    assert commit, "manifest.yml never commits"
+    message = commit.group(0)
+    for keyword in ("closes", "fixes", "resolves", "#"):
+        assert keyword not in message.lower(), (
+            f"the regeneration commit message contains {keyword!r} — a commit "
+            "on main must reference no issue and close none")
+
+
+def test_the_regeneration_job_holds_exactly_contents_write() -> None:
+    """The App token carries the real write. The run's own token is kept at the
+    one scope it could plausibly need and nothing else — no packages, no
+    pull requests, no id-token."""
+    job = _job_block(MANIFEST_YML, "regenerate")
+    block = re.search(r"^    permissions:\n((?:      \S.*\n|\s*#.*\n)+)", job, re.M)
+    assert block, "the regeneration job declares no permissions block"
+    granted = set(re.findall(r"^\s+([\w-]+):\s*(\w+)\s*$", block.group(1), re.M))
+    assert granted == {("contents", "write")}, (
+        f"the regeneration job's permissions are {sorted(granted)} — exactly "
+        "contents: write, and nothing else"
+    )
+
+
+def test_the_regeneration_job_asserts_its_own_outcome() -> None:
+    """The job that repairs drift is the job that can fail to. It once reported
+    success while leaving half the manifests stale."""
+    assert "build_marketplace.py --check" in MANIFEST_YML, (
+        "manifest.yml must verify nothing is still stale after it pushes"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# validate.yml's manifest step: a signal to the maintainer, not a demand on the
+# submitter.
+
+
+def test_the_validate_manifest_step_is_a_warning_again() -> None:
+    """A submission uploaded in a browser cannot carry a generated file. The
+    check still runs — it tells a maintainer this merge will trigger a
+    regeneration — but it may not block the merge."""
+    lines = VALIDATE_YML.splitlines()
+    for i, line in enumerate(lines):
+        if "build_marketplace.py --check" in line:
+            window = "\n".join(lines[max(0, i - 8):i + 3])
+            assert "continue-on-error: true" in window, (
+                "the marketplace manifest step in validate.yml must carry "
+                "continue-on-error: true — the registry regenerates these "
+                "files after merge, so a stale manifest is not the "
+                "submitter's problem"
+            )
+            return
+    pytest.fail("validate.yml no longer runs build_marketplace.py --check")
+
+
+def _steps_with_comments(text: str) -> list[str]:
+    """Every step of a one-job workflow, each with the comment lines directly
+    above it. The comment is the half a maintainer reads, so an assertion about
+    what a step says has to see it."""
+    return re.findall(
+        r"((?:^      #[^\n]*\n)*^      - name:[^\n]*\n(?:[ ]{8}[^\n]*\n|\n)*)",
+        text,
+        re.M,
+    )
+
+
+def test_the_validate_manifest_step_asks_the_submitter_for_nothing() -> None:
+    """The step's comment and log line are read by the person who submitted.
+    Neither may tell them to run a generator or commit its output."""
+    steps = [s for s in _steps_with_comments(VALIDATE_YML)
+             if "build_marketplace.py --check" in s]
+    assert len(steps) == 1, (
+        f"expected one manifest step in validate.yml, found {len(steps)}"
+    )
+    text = steps[0].lower()
+    for demand in ("and commit", "commit the result", "a maintainer will do that",
+                   "run `python scripts/build_marketplace.py`"):
+        assert demand not in text, (
+            f"validate.yml's manifest step still says {demand!r} — nothing is "
+            "needed from the submitter; the registry regenerates after merge")
+    assert "regenerat" in text, (
+        "validate.yml's manifest step must say the registry regenerates these "
+        "files after merge"
+    )
+    assert "manifest.yml" in text, (
+        "validate.yml's manifest step must name the workflow that does the "
+        "regeneration, so a maintainer can look it up"
+    )
+
+
+# --------------------------------------------------------------------------- #
+# The docs describe what is (#188). `manifest.yml` exists again, so the docs
+# that describe how manifests reach main must name it — the inverse of the
+# assertion that stood while it was deleted.
+
+MANIFEST_DOCS = [
+    ROOT / "docs" / "ARCHITECTURE.md",
+    ROOT / "docs" / "DEVELOPMENT.md",
+    ROOT / "docs" / "SECURITY.md",
+]
+
+
+@pytest.mark.parametrize("path", MANIFEST_DOCS, ids=lambda p: str(p.relative_to(ROOT)))
+def test_the_docs_name_the_regeneration_job(path: Path) -> None:
+    text = path.read_text(encoding="utf-8")
+    assert "manifest.yml" in text, (
+        f"{path.relative_to(ROOT)} describes the manifests without naming "
+        "manifest.yml, the workflow that regenerates them after merge"
+    )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [ROOT / "docs" / "DEVELOPMENT.md", ROOT / "docs" / "SUBMITTING.md"],
+    ids=lambda p: str(p.relative_to(ROOT)),
+)
+def test_no_doc_asks_a_submitter_to_carry_the_manifests(path: Path) -> None:
+    """The regeneration is the registry's job again. A doc still describing the
+    maintainer's by-hand repair, or warning a submitter that the check fails,
+    describes something that no longer happens."""
+    text = path.read_text(encoding="utf-8")
+    for gone in (
+        "Merging a submission with a stale manifest",
+        "The marketplace manifest check will fail",
+        "nothing regenerates it",
+        "Check out the contributor's branch",
+    ):
+        assert gone not in text, (
+            f"{path.relative_to(ROOT)} still says {gone!r} — the post-merge job "
+            "regenerates the manifests, so nothing is asked of a submitter or "
+            "of the maintainer merging one")
+
+
+def test_rescan_still_checks_the_manifests_on_its_own() -> None:
+    """The weekly re-scan checks main directly. It never repairs anything, so a
+    failure there means the regeneration job did not run or did not succeed."""
+    assert "build_marketplace.py --check" in RESCAN_YML, (
+        "rescan.yml must still run build_marketplace.py --check"
+    )
+
+
+def test_the_rescan_report_blames_the_regeneration_job() -> None:
+    """A stale manifest on main is no longer somebody forgetting a step. The
+    issue body has to say that and name the workflow, or a maintainer reads the
+    failure as a submission problem and goes looking on a branch."""
+    report = (ROOT / "validator" / "src" / "report.ts").read_text(encoding="utf-8")
+    assert "manifest.yml" in report, (
+        "the re-scan issue body must name the workflow whose failure a stale "
+        "manifest on main implies"
+    )
+
 
 # #156: rescan.yml's issue-opening step used to run only when the validate or
 # scan step failed. The marketplace-manifest check sits before it with no
@@ -658,61 +1018,6 @@ def test_no_workflow_references_the_site_lockfile(wf: Path) -> None:
 
 RESCAN_YML = (ROOT / ".github" / "workflows" / "rescan.yml").read_text(encoding="utf-8")
 
-
-@pytest.mark.parametrize("wf", WORKFLOWS, ids=lambda p: p.name)
-def test_no_workflow_pushes_to_a_branch(wf: Path) -> None:
-    """The Actions app cannot be a bypass actor on the ruleset that protects
-    main, so nothing in this repository may push at all — not just to main."""
-    text = wf.read_text(encoding="utf-8")
-    assert "git push" not in text, (
-        f"{wf.name} runs `git push` — no workflow may push to a branch; the "
-        "pull request itself carries any regenerated file"
-    )
-
-
-def test_the_validate_manifest_step_no_longer_tolerates_drift() -> None:
-    """Manifests are regenerated inside the skill pull request now, not
-    repaired by a post-merge job, so a stale manifest is a real failure rather
-    than a warning the merge will fix."""
-    lines = VALIDATE_YML.splitlines()
-    for i, line in enumerate(lines):
-        if "build_marketplace.py --check" in line:
-            window = "\n".join(lines[max(0, i - 6):i])
-            assert "continue-on-error" not in window, (
-                "the marketplace manifest step in validate.yml must not carry "
-                "continue-on-error — a stale manifest should fail the build"
-            )
-            return
-    pytest.fail("validate.yml no longer runs build_marketplace.py --check")
-
-
-def test_rescan_still_checks_the_manifests_on_its_own() -> None:
-    """The weekly re-scan is the only thing left that checks main directly,
-    since nothing merges a repair to it any more."""
-    assert "build_marketplace.py --check" in RESCAN_YML, (
-        "rescan.yml must still run build_marketplace.py --check"
-    )
-
-
-@pytest.mark.parametrize(
-    "path",
-    [
-        ROOT / "docs" / "ARCHITECTURE.md",
-        ROOT / "docs" / "DEVELOPMENT.md",
-        ROOT / "docs" / "SUBMITTING.md",
-        ROOT / "docs" / "SECURITY.md",
-        ROOT / "docs" / "REVIEW.md",
-        *WORKFLOWS,
-    ],
-    ids=lambda p: str(p.relative_to(ROOT)),
-)
-def test_nothing_still_names_the_deleted_manifest_job(path: Path) -> None:
-    """`manifest.yml` no longer exists. A doc or a workflow comment still
-    naming it would describe a job nobody can look up."""
-    assert "manifest.yml" not in path.read_text(encoding="utf-8"), (
-        f"{path.relative_to(ROOT)} still names manifest.yml, which is deleted "
-        "(#170)"
-    )
 
 def _rescan_step(name: str) -> str:
     """One step's YAML, from its `- name: <name>` line up to the next step at
@@ -823,3 +1128,28 @@ def test_no_workflow_expression_is_substituted_into_a_rescan_script() -> None:
             "rescan.yml interpolates a workflow expression into a run/script "
             "body. Pass it through env: instead."
         )
+
+
+# --------------------------------------------------------------------------- #
+# #190: a fork pull request whose branch is named `main` produced a Checks run
+# with head_branch == 'main', and both workflow_run consumers took it for a
+# push to this repository. The deploy started in a privileged context against
+# fork code and actions/checkout refused it; the manifest job was a no-op only
+# because it checks out `main` by name. Every workflow_run guard also requires
+# the triggering event to be a push, and the head repository to be this one.
+
+
+@pytest.mark.parametrize("wf_name", ["build.yml", "manifest.yml"])
+def test_workflow_run_guards_require_a_push_to_this_repository(wf_name: str) -> None:
+    text = (ROOT / ".github" / "workflows" / wf_name).read_text(encoding="utf-8")
+    guards = re.findall(r"if:\s*>-\n((?:\s+.*\n)+?)(?=\s+\S+:)", text)
+    assert guards, f"{wf_name} has no folded `if: >-` guard"
+    for guard in guards:
+        assert "github.event.workflow_run.event == 'push'" in guard, (
+            f"{wf_name}: a workflow_run guard does not require the triggering "
+            "event to be a push — a fork pull request on a branch named main "
+            "would pass it (#190)")
+        assert ("github.event.workflow_run.head_repository.full_name == "
+                "github.repository") in guard, (
+            f"{wf_name}: a workflow_run guard does not require the head "
+            "repository to be this one (#190)")

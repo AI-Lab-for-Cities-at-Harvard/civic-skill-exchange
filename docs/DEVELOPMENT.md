@@ -262,6 +262,16 @@ on a skills check that was never going to run.
 So a pull request touching only `site/` gets a green Skills check that says
 "touches no skills/, nothing to validate", and the site gate does the real work.
 
+**Two jobs run after the merge, not as gates.** Both wait on a green **Checks**
+run on `main` and re-check the conclusion themselves, so a red `main` triggers
+neither. `build.yml` builds the index and deploys the site.
+`.github/workflows/manifest.yml` regenerates the marketplace manifests and
+pushes the result to `main` — the one job in this repository that pushes, which
+it does as an organization-owned GitHub App whose token is minted per run. It
+exists so that a submission uploaded through the web page, which cannot carry a
+generated file, needs nothing from the person who sent it. If the manifests on
+`main` go stale, that job is what failed; the weekly re-scan is what notices.
+
 ## Security-sensitive changes
 
 Changes to `scan.py` signatures, ownership logic in `validator/`, tier derivation in
@@ -295,34 +305,18 @@ Run them visibly — no piping that hides an exit code.
 - [ ] `npm run build --workspaces --if-present` passes — the validator has no
       build script, so the bare `--workspaces` form fails on it
 - [ ] `python scripts/build_marketplace.py --check` passes, if you touched
-      `skills/` or the generator. If it fails, run
-      `python scripts/build_marketplace.py` and commit the result — the manifest
-      has to be current in the pull request itself, since nothing regenerates it
-      after merge
+      `skills/` or the generator. Run `python scripts/build_marketplace.py` and
+      commit the result if it does not. In CI this check is a **warning**, not a
+      gate: `.github/workflows/manifest.yml` regenerates the manifests on `main`
+      after the merge, because a submission uploaded through the web page cannot
+      carry a generated file. Committing them anyway keeps the diff honest and
+      saves the post-merge job a commit
 - [ ] New behaviour has a test that fails without the change
 - [ ] Docs updated if you changed the contract contributors rely on
 - [ ] Security-sensitive changes flagged in the description
 
 After merging more than one pull request that touched the same area, run the
 whole list again on `main`. Cross-pull-request seams are invisible per-pull-request.
-
-## Merging a submission with a stale manifest
-
-`validate.yml`'s manifest check fails a pull request whose committed
-`.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`, or
-`.codex-plugin/plugin.json` no longer matches the skill tree. A contributor
-working from the command line fixes this themselves. A submission that
-arrived through the web submission page did not generate these files at all,
-so a maintainer does it as part of merging:
-
-1. Check out the contributor's branch.
-2. Run `python scripts/build_marketplace.py`.
-3. Commit the result.
-4. Push to their branch.
-
-If the fork does not allow maintainer edits, push is not available: branch
-from the contributor's head commit inside this registry instead, run the same
-three steps there, and merge that branch in place of theirs.
 
 ## Accessibility
 

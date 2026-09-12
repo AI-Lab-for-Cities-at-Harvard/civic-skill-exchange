@@ -272,6 +272,29 @@ const RESCAN_INTRO =
   "catches an already-merged skill going bad. Triage against " +
   "docs/SECURITY.md, and demote or delist per docs/TIERS.md.\n\n";
 
+/** Said only when the manifest check is what failed.
+ *
+ *  The manifests are regenerated on `main` after merge, by
+ *  `.github/workflows/manifest.yml` (#188). Nothing is asked of a submitter,
+ *  and nothing else repairs `main` — this re-scan only reports. So a stale
+ *  manifest here has exactly one cause worth looking at, and saying which
+ *  stops a maintainer from going to look on a branch.
+ *
+ *  Matched on the word rather than on rescan.yml's exact step name, so
+ *  renaming the step does not silently drop the note. */
+const MANIFEST_NOTE =
+  "**A stale manifest on `main` means the post-merge regeneration failed.** " +
+  "Nothing is needed from a submitter: `.github/workflows/manifest.yml` " +
+  "regenerates these files after every merge, and this re-scan only reports. " +
+  "Check that run — its App token, the App's installation on this " +
+  "repository, and whether the ruleset on `main` still names the App as a " +
+  "bypass actor.\n\n";
+
+const mentionsManifest = (failedSteps: unknown): boolean =>
+  (Array.isArray(failedSteps) ? failedSteps : []).some(
+    (step) => typeof step === "string" && /manifest/i.test(step),
+  );
+
 const renderDrift = (drift: DriftEntry[], cap: number): string =>
   drift.length
     ? drift.map((d) => `- ${fence(d.id, cap)} — ${fence(d.reason, cap)}`).join("\n")
@@ -296,6 +319,7 @@ export function renderRescanReport(input: RescanReportInput, cap = 8000): string
   return (
     RESCAN_INTRO +
     lead +
+    (mentionsManifest(failedSteps) ? MANIFEST_NOTE : "") +
     `### Validation\n\n${fence(validateLog, cap)}\n\n` +
     `### Signatures\n\n${fence(scanLog, cap)}\n\n` +
     `### Attestation drift\n\n${renderDrift(drift, cap)}\n\n` +
