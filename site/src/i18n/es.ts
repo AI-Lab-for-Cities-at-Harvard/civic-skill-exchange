@@ -739,346 +739,364 @@ export const strings: Strings = {
 
   about: {
     toc: {
-      label: "[es] On this page",
-      title: "[es] On this page",
+      label: "En esta página",
+      title: "En esta página",
 
       groups: {
-        whatThisIs: "[es] What this is",
-        whatToExpect: "[es] What to expect",
+        whatThisIs: "Qué es esto",
+        whatToExpect: "Qué esperar",
       },
 
       sections: {
-        "what-this-is": "[es] The registry",
-        tiers: "[es] Two tiers",
-        localization: "[es] Generalized and localized",
-        metadata: "[es] The civic metadata",
-        submitting: "[es] How to submit",
-        checks: "[es] What we check",
-        review: "[es] What a review checks for",
-        beta: "[es] What Beta means",
+        "what-this-is": "El registro",
+        tiers: "Los dos niveles",
+        localization: "Generalizadas y localizadas",
+        metadata: "Los metadatos cívicos",
+        submitting: "Cómo enviar una",
+        checks: "Qué verificamos",
+        review: "Qué comprueba una revisión",
+        beta: "Qué significa Beta",
       },
     },
 
     whatThisIs: {
-      heading: "[es] What this is",
+      heading: "Qué es esto",
       lede:
-        "[es] An open catalog of agent skills for civic use — government, " +
-        "public-sector and nonprofit work.",
+        "Un catálogo abierto de habilidades de agente para uso cívico: " +
+        "gobierno, sector público y trabajo sin fines de lucro.",
       skill:
-        "[es] A **skill** is a small, portable bundle of instructions — and " +
-        "sometimes scripts — that teaches an AI coding agent how to do one job " +
-        "well: explain a permit status in plain language, check a benefits " +
-        "application against eligibility rules, turn a budget spreadsheet into " +
-        "a published open-data file.",
+        "Una **habilidad** es un paquete pequeño y portátil de instrucciones " +
+        "— y a veces de scripts — que le enseña a un agente de programación " +
+        "con IA a hacer bien una sola tarea: explicar en lenguaje claro el " +
+        "estado de un permiso, contrastar una solicitud de beneficios con las " +
+        "reglas de elegibilidad, convertir una hoja de cálculo presupuestaria " +
+        "en un archivo publicado de datos abiertos.",
       standard:
-        "[es] Skills follow the [Agent Skills open standard](spec), so they work " +
-        "across tools rather than locking you into one vendor.",
+        "Las habilidades siguen el [estándar abierto Agent Skills](spec), de " +
+        "modo que funcionan en distintas herramientas en lugar de atarlo a un " +
+        "solo proveedor.",
     },
 
     tiers: {
-      heading: "[es] Two tiers, and what they mean",
-      communityTerm: "[es] Community",
+      heading: "Los dos niveles, y qué significan",
+      communityTerm: "Comunidad",
       community:
-        "[es] The skill is well-formed and nothing mechanical is wrong with it. " +
-        "Merged once it passes structural, ownership and signature checks.",
+        "La habilidad está bien formada y no tiene ningún defecto mecánico. Se " +
+        "integra una vez que pasa las verificaciones de estructura, de " +
+        "propiedad y de firmas.",
       communityWarn:
-        "[es] **This is not an endorsement.** Automated checks can only ever say " +
-        "*no* — a pass is the absence of known-bad signals, not the presence " +
-        "of safety. Read anything from this tier before you run it.",
-      reviewedTerm: "[es] Reviewed",
+        "**Esto no es un respaldo.** Las verificaciones automatizadas solo " +
+        "pueden decir *no*: aprobarlas es la ausencia de señales conocidas de " +
+        "peligro, no la presencia de seguridad. Lea cualquier cosa de este " +
+        "nivel antes de ejecutarla.",
+      reviewedTerm: "Revisada",
       reviewed:
-        "[es] The AI Lab for Cities at Harvard read every line of one specific " +
-        "commit against a published checklist and put its name on it.",
+        "El AI Lab for Cities at Harvard leyó cada línea de un commit " +
+        "específico contra una lista de verificación publicada y puso su " +
+        "nombre en ella.",
       reviewedWarn:
-        "[es] **One reader, and it is us.** Nobody outside the Lab has read it, and " +
-        "where the Lab wrote the skill as well, the listing says so. It is a " +
-        "smaller claim than two readers from separate organizations would be, " +
-        "and it is one we can actually make.",
+        "**Un solo lector, y somos nosotros.** Nadie fuera del Laboratorio la " +
+        "ha leído, y cuando el Laboratorio además escribió la habilidad, la " +
+        "publicación lo dice. Es una afirmación más modesta que la de dos " +
+        "lectores de organizaciones distintas, y es una que sí podemos hacer.",
       pinned:
-        "[es] The attestation is pinned to **one commit** — the last one that " +
-        "touched the skill. If anything commits to it after that, the listing " +
-        "drops back to Community automatically, so a compromised account " +
-        "cannot quietly alter something already carrying our review.",
-      reviewLink: "[es] What a review checks for",
+        "La certificación queda fijada a **un solo commit**: el último que " +
+        "tocó la habilidad. Si después de eso alguien confirma algún cambio, " +
+        "la publicación vuelve automáticamente a Comunidad, de modo que una " +
+        "cuenta comprometida no pueda alterar en silencio algo que ya lleva " +
+        "nuestra revisión.",
+      reviewLink: "Qué comprueba una revisión",
     },
 
     localization: {
-      heading: "[es] Generalized and localized",
+      heading: "Generalizadas y localizadas",
       bound:
-        "[es] Most civic skills start out bound to one place. A policy skill " +
-        "written for the State of Vermont knows Vermont's statute citations, " +
-        "appeal windows and form numbers — which is what makes it useful " +
-        "there, and useless anywhere else.",
+        "La mayoría de las habilidades cívicas nacen atadas a un solo lugar. " +
+        "Una habilidad de políticas escrita para el estado de Vermont conoce " +
+        "las citas legales, los plazos de apelación y los números de " +
+        "formulario de Vermont, que es justo lo que la hace útil allí e inútil " +
+        "en cualquier otra parte.",
 
       flow: {
-        from: "[es] Vermont policy skill",
-        via: "[es] generalized",
-        to: "[es] Boston policy skill",
+        from: "Habilidad de políticas de Vermont",
+        via: "generalizada",
+        to: "Habilidad de políticas de Boston",
       },
       both:
-        "[es] A **localized** skill carries one jurisdiction's specifics. A " +
-        "**generalized** one has had them lifted out into a context an adopter " +
-        "fills in. Neither is better — but generalizing is what lets a " +
-        "solution make the trip to the second city.",
+        "Una habilidad **localizada** lleva los detalles de una jurisdicción. " +
+        "A una **generalizada** se los extrajeron a un contexto que completa " +
+        "quien la adopta. Ninguna es mejor, pero generalizar es lo que permite " +
+        "que una solución haga el viaje a la segunda ciudad.",
 
       pair: (generalize: boolean, localize: boolean) =>
-        "[es] The trip is not manual. Two skills in this registry do it: " +
+        "El viaje no es manual. Dos habilidades de este registro lo hacen: " +
         (generalize && localize
-          ? "[es] [generalize](generalize), which lifts a jurisdiction's specifics " +
-            "out into a context file, and [localize](localize), which applies " +
-            "a new place's context to a generalized skill."
+          ? "[generalize](generalize), que extrae los detalles de una " +
+            "jurisdicción a un archivo de contexto, y [localize](localize), " +
+            "que aplica el contexto de un lugar nuevo a una habilidad generalizada."
           : generalize
-            ? "[es] [generalize](generalize)."
-            : "[es] [localize](localize), which applies a new place's context to a " +
-              "generalized skill, listed here."),
-      more: "[es] Read more on generalizing skills",
+            ? "[generalize](generalize)."
+            : "[localize](localize), que aplica el contexto de un lugar nuevo a " +
+              "una habilidad generalizada, publicada aquí."),
+      more: "Lea más sobre cómo generalizar habilidades",
     },
 
     metadata: {
-      heading: "[es] The civic metadata",
+      heading: "Los metadatos cívicos",
       ordinary:
-        "[es] A skill here is an ordinary [Agent Skill](spec) — the same `SKILL.md` " +
-        "that works in Claude Code, ChatGPT, Codex and the rest. What this " +
-        "registry adds is a `civic.*` block under `metadata`, which the " +
-        "specification reserves for exactly this.",
+        "Una habilidad de aquí es una [Agent Skill](spec) común y corriente: " +
+        "el mismo `SKILL.md` que funciona en Claude Code, ChatGPT, Codex y los " +
+        "demás. Lo que agrega este registro es un bloque `civic.*` dentro de " +
+        "`metadata`, que la especificación reserva precisamente para esto.",
       selfReported:
-        "[es] Every field below is **self-reported** by the author. The registry " +
-        "derives only two things itself: the tier, from the attestation " +
-        "ledger, and authorship, from the namespace. Nothing an author writes " +
-        "can move either.",
+        "Cada campo de abajo lo **declara el propio autor**. El registro " +
+        "deriva por su cuenta solo dos cosas: el nivel, del libro de " +
+        "certificaciones, y la autoría, del espacio de nombres. Nada de lo que " +
+        "escriba un autor puede mover ninguna de las dos.",
 
-      purposeHeading: "[es] What it is for",
+      purposeHeading: "Para qué sirve",
       category:
-        "[es] One of a closed list, so the catalogue can be filtered rather than " +
-        "searched. Closed on purpose: a free-text field becomes twelve " +
-        "spellings of \u201cpermits\u201d.",
+        "Una de una lista cerrada, para que el catálogo se pueda filtrar en " +
+        "lugar de buscar. Cerrada a propósito: un campo de texto libre se " +
+        "convierte en doce maneras de escribir “permisos”.",
       scope:
-        "[es] What kind of government body it is written for — a city, a state, a " +
-        "national agency. Country-neutral, because the place is a separate " +
-        "field. A skill may serve two levels; one is required, because leaving " +
-        "it out could not be told apart from meaning *any*.",
+        "Para qué tipo de organismo de gobierno está escrita: una ciudad, un " +
+        "estado, una agencia nacional. Es neutral respecto del país, porque el " +
+        "lugar es un campo aparte. Una habilidad puede servir a dos niveles; " +
+        "uno es obligatorio, porque omitirlo no se podría distinguir de querer " +
+        "decir *cualquiera*.",
       jurisdiction:
-        "[es] The specific place, when there is one: `US-VT`, `US-MA / Boston`. " +
-        "Left out by a skill that is not tied to a place, which is most of " +
-        "them — and a `generalized` skill never has one, since its specifics " +
-        "were lifted out.",
+        "El lugar específico, cuando lo hay: `US-VT`, `US-MA / Boston`. Lo " +
+        "omite una habilidad que no está atada a un lugar, que son la mayoría; " +
+        "y una habilidad `generalized` nunca lo tiene, porque sus detalles se " +
+        "extrajeron.",
       localization:
-        "[es] Whether the local specifics are still in it. This one changes how the " +
-        "checks read the skill: an external URL in a `localized` skill is the " +
-        "skill working, and in a `generalized` one it is a leftover.",
+        "Si los detalles locales siguen dentro. Este campo cambia cómo leen la " +
+        "habilidad las verificaciones: una URL externa en una habilidad " +
+        "`localized` es la habilidad funcionando, y en una `generalized` es un " +
+        "resto que quedó.",
       language:
-        "[es] The language the `SKILL.md` is written in, as one BCP 47 tag — `en`, " +
-        "`es`, `pt-BR`. Not a limit on who can use the skill: a model reads an " +
-        "English skill and follows it in Spanish. It is so you know what you " +
-        "are about to open, and so the catalogue can be browsed by it. " +
-        "Required, because an omitted tag could not be told apart from an " +
-        "unanswered one.",
+        "El idioma en que está escrito el `SKILL.md`, como una sola etiqueta " +
+        "BCP 47: `en`, `es`, `pt-BR`. No limita quién puede usar la habilidad: " +
+        "un modelo lee una habilidad en inglés y la sigue en español. Sirve " +
+        "para que usted sepa qué va a abrir, y para que el catálogo se pueda " +
+        "explorar por idioma. Es obligatorio, porque una etiqueta omitida no " +
+        "se podría distinguir de una sin responder.",
       languagesTested:
-        "[es] Optional, and the author\u2019s own claim about which languages they " +
-        "have exercised the skill in. **Nothing checks it.** The verified list " +
-        "is a different field in a different file — `languages:` on the review " +
-        "attestation in `registry/reviewed.yml` — and the skill\u2019s page " +
-        "keeps the two apart rather than merging them into one badge.",
+        "Opcional, y es la afirmación del propio autor sobre en qué idiomas ha " +
+        "ejercitado la habilidad. **Nada lo verifica.** La lista verificada es " +
+        "otro campo en otro archivo — `languages:` en la certificación de " +
+        "revisión en `registry/reviewed.yml` — y la página de la habilidad " +
+        "mantiene las dos separadas en lugar de fundirlas en un solo distintivo.",
 
-      effectHeading: "[es] What it might do to somebody",
+      effectHeading: "Qué le puede hacer a alguien",
       effectLede:
-        "[es] The two fields nobody can answer by reading the code, and the reason " +
-        "this registry exists rather than a folder of gists.",
-      dataSensitivity: "[es] What the skill touches when it runs on real work.",
+        "Los dos campos que nadie puede responder leyendo el código, y la " +
+        "razón por la que existe este registro y no una carpeta de gists.",
+      dataSensitivity: "Con qué trabaja la habilidad cuando se ejecuta sobre trabajo real.",
       humanReview:
-        "[es] Whether its output reaches a decision about a person\u2019s rights or " +
-        "benefits. A skill that drafts a letter and a skill that feeds an " +
-        "eligibility determination are different propositions.",
+        "Si lo que produce llega a una decisión sobre los derechos o los " +
+        "beneficios de una persona. Una habilidad que redacta una carta y una " +
+        "habilidad que alimenta una determinación de elegibilidad son cosas " +
+        "muy distintas.",
 
-      fitHeading: "[es] When it fits, and when it does not",
+      fitHeading: "Cuándo encaja y cuándo no",
       useWhen:
-        "[es] The situation this is the right tool for. Plain text, never rendered " +
-        "as markdown.",
+        "La situación para la que esta es la herramienta correcta. Texto " +
+        "plano; nunca se procesa como markdown.",
       avoidWhen:
-        "[es] The higher-value half. Nobody but the author can supply it, and a " +
-        "skill honest about its limits gets adopted faster than one claiming " +
-        "none.",
+        "La mitad más valiosa. Nadie más que el autor puede aportarla, y una " +
+        "habilidad honesta sobre sus límites se adopta más rápido que una que " +
+        "dice no tener ninguno.",
 
-      standingHeading: "[es] Who stands behind it",
+      standingHeading: "Quién responde por ella",
       maintainer:
-        "[es] A person or team, and what kind of organization they are. There is no " +
-        "separate contact field: the namespace is a GitHub account, so an " +
-        "issue or a mention reaches whoever owns it, and that cannot go stale " +
-        "independently of the account.",
+        "Una persona o un equipo, y qué tipo de organización son. No hay un " +
+        "campo de contacto aparte: el espacio de nombres es una cuenta de " +
+        "GitHub, así que un issue o una mención llegan a quien sea su dueño, y " +
+        "eso no puede quedar desactualizado por separado de la cuenta.",
       deployment:
-        "[es] Whether anyone has actually used it, and where. Self-reported, and " +
-        "shown as such.",
+        "Si alguien la ha usado de verdad, y dónde. Lo declara el autor, y se " +
+        "muestra como tal.",
       source:
-        "[es] Where an imported copy came from, stamped automatically when a skill " +
-        "is read out of a repository. The registry holds the content; these " +
-        "record its provenance.",
+        "De dónde vino una copia importada, sellado automáticamente cuando una " +
+        "habilidad se lee de un repositorio. El registro guarda el contenido; " +
+        "estos campos dejan constancia de su procedencia.",
 
-      schema: "[es] The schema, which is the contract",
+      schema: "El esquema, que es el contrato",
     },
 
     submitting: {
-      heading: "[es] How to submit a skill",
+      heading: "Cómo enviar una habilidad",
       lede:
-        "[es] The [submission page](submit) does most of this for you: drop in a " +
-        "folder or point it at a repository, and it reads what is already " +
-        "there and asks only for what it could not find. You will need a " +
-        "**GitHub account** \u2014 it is free, and it is what records the " +
-        "skill as yours.",
-      byHand: "[es] What it produces, and what you would build by hand:",
+        "La [página de envío](submit) hace casi todo esto por usted: suelte " +
+        "una carpeta o indíquele un repositorio, y leerá lo que ya está ahí y " +
+        "le pedirá solo lo que no pudo encontrar. Necesitará una **cuenta de " +
+        "GitHub**: es gratuita y es lo que deja constancia de que la habilidad " +
+        "es suya.",
+      byHand: "Lo que produce, y lo que usted armaría a mano:",
       steps: {
-        namespaceTitle: "[es] Put it in your own namespace",
+        namespaceTitle: "Póngala en su propio espacio de nombres",
         namespace:
-          "[es] `skills/{your-github-username}/{skill-name}/` with a `SKILL.md`, " +
-          "plus optional `scripts/` and `references/` directories.",
-        frontmatterTitle: "[es] Fill in the frontmatter",
+          "`skills/{your-github-username}/{skill-name}/` con un `SKILL.md`, " +
+          "más los directorios opcionales `scripts/` y `references/`.",
+        frontmatterTitle: "Complete el frontmatter",
         frontmatter:
-          "[es] The six fields of the Agent Skills spec, plus `civic.*` metadata: " +
-          "category, level of government, what data it touches, and whether " +
-          "its output affects anyone's rights or benefits. Those last two are " +
-          "the questions nobody can answer from reading your code.",
-        pullRequestTitle: "[es] Open a pull request",
+          "Los seis campos de la especificación Agent Skills, más los " +
+          "metadatos `civic.*`: categoría, nivel de gobierno, qué datos maneja " +
+          "y si lo que produce afecta los derechos o los beneficios de " +
+          "alguien. Esas dos últimas son las preguntas que nadie puede " +
+          "responder leyendo su código.",
+        pullRequestTitle: "Abra un pull request",
         pullRequest:
-          "[es] Automated checks run and report back in a comment. They can only " +
-          "reject \u2014 a pass is not a statement that a skill is safe.",
+          "Las verificaciones automatizadas se ejecutan e informan en un " +
+          "comentario. Solo pueden rechazar: que una habilidad las apruebe no " +
+          "significa que sea segura.",
       },
-      cta: "[es] Share a skill",
-      guide: "[es] The contributor guide",
+      cta: "Comparta una habilidad",
+      guide: "La guía para contribuir",
     },
 
     checks: {
-      heading: "[es] What we check, and what we don\u2019t",
+      heading: "Qué verificamos y qué no",
       what:
-        "[es] Every submission goes through automated checks. They confirm the " +
-        "skill is well formed, that it was submitted into its author\u2019s " +
-        "own folder, and they scan for a set of known problems: commands that " +
-        "run before the model has read the file, unrestricted tool access, and " +
-        "code that reaches for credentials.",
+        "Cada propuesta pasa por verificaciones automatizadas. Confirman que " +
+        "la habilidad está bien formada y que se envió a la carpeta propia de " +
+        "su autor, y buscan un conjunto de problemas conocidos: comandos que " +
+        "se ejecutan antes de que el modelo haya leído el archivo, acceso " +
+        "irrestricto a herramientas y código que va en busca de credenciales.",
       limits:
-        "[es] **These checks find known problems. They cannot tell you a skill is " +
-        "safe.** Scanners of this kind are well documented as possible to " +
-        "evade, so a clean result means only that nothing on the list matched.",
+        "**Estas verificaciones encuentran problemas conocidos. No pueden " +
+        "decirle que una habilidad es segura.** Está bien documentado que los " +
+        "escáneres de este tipo se pueden evadir, así que un resultado limpio " +
+        "solo significa que nada de la lista coincidió.",
       reviewIsDifferent:
-        "[es] A review is a different thing. Someone reads the whole skill and " +
-        "checks that what it does matches what it says it does. That is the " +
-        "question no scanner can answer, and it is why the Reviewed tier " +
-        "exists.",
-      threeThings: "[es] Three things to know before you run any skill, from anywhere:",
-      scripts: "[es] Skills can include scripts your agent *runs*, not only text it reads.",
+        "Una revisión es otra cosa. Alguien lee la habilidad completa y " +
+        "comprueba que lo que hace coincide con lo que dice que hace. Esa es " +
+        "la pregunta que ningún escáner puede responder, y es la razón por la " +
+        "que existe el nivel Revisada.",
+      threeThings:
+        "Tres cosas que conviene saber antes de ejecutar cualquier habilidad, " +
+        "venga de donde venga:",
+      scripts: "Las habilidades pueden incluir scripts que su agente *ejecuta*, no solo texto que lee.",
       tools:
-        "[es] The `allowed-tools` field gives a skill access to tools without " +
-        "asking you first.",
+        "El campo `allowed-tools` le da a una habilidad acceso a herramientas " +
+        "sin preguntarle antes.",
       removal:
-        "[es] Removing a skill from this catalog does not remove it from anyone who " +
-        "already downloaded it.",
-      security: "[es] Security model and how to report a problem",
+        "Quitar una habilidad de este catálogo no se la quita a quien ya la descargó.",
+      security: "El modelo de seguridad y cómo reportar un problema",
     },
 
     review: {
-      heading: "[es] What a review checks for",
+      heading: "Qué comprueba una revisión",
       lede:
-        "[es] A review is one person reading the whole skill against a fixed list " +
-        "of nine questions, in this order. Four of them are outright " +
-        "rejections rather than judgment calls, and they are marked.",
+        "Una revisión es una persona leyendo la habilidad completa contra una " +
+        "lista fija de nueve preguntas, en este orden. Cuatro de ellas son " +
+        "rechazos directos y no juicios de valor, y están marcadas.",
 
       questions: [
-        "[es] **Does the description match what the skill does?** A description " +
-        "broader than the behaviour is a security finding, not a style " +
-        "problem — it is how a skill gets invoked for work it was not written " +
-        "for. *Rejection.*",
+        "**¿La descripción coincide con lo que hace la habilidad?** Una " +
+        "descripción más amplia que el comportamiento es un hallazgo de " +
+        "seguridad, no un problema de estilo: es así como una habilidad " +
+        "termina invocándose para trabajo para el que no fue escrita. *Rechazo.*",
 
-        "[es] **Would we run these scripts?** Every line of every file under " +
-        "`scripts/` gets read, and of `.mcp.json` where a skill declares MCP " +
-        "servers. If we would not run it on our own machine, it does not " +
-        "pass. *Rejection.*",
+        "**¿Ejecutaríamos estos scripts?** Se lee cada línea de cada archivo " +
+        "dentro de `scripts/`, y de `.mcp.json` cuando una habilidad declara " +
+        "servidores MCP. Si no lo ejecutaríamos en nuestra propia máquina, no " +
+        "pasa. *Rechazo.*",
 
-        "[es] **Does it ask for more tools than it needs?** `allowed-tools` grants " +
-        "access without prompting you and is not gated by trusting the " +
-        "workspace, so every entry has to be necessary. An unrestricted shell " +
-        "grant is refused outright. *Rejection.*",
+        "**¿Pide más herramientas de las que necesita?** `allowed-tools` " +
+        "concede acceso sin preguntarle, y no depende de que usted confíe en " +
+        "el espacio de trabajo, así que cada entrada tiene que ser necesaria. " +
+        "Un permiso irrestricto de shell se rechaza de plano. *Rechazo.*",
 
-        "[es] **Where does it send anything?** Every network destination has to be " +
-        "named, expected, and written down. Traffic to somewhere the " +
-        "skill\u2019s stated purpose does not require is not a question to " +
-        "ask the author. *Rejection.*",
+        "**¿A dónde envía lo que sea que envíe?** Todo destino de red tiene " +
+        "que estar nombrado, ser esperado y quedar por escrito. El tráfico " +
+        "hacia un lugar que el propósito declarado de la habilidad no requiere " +
+        "no es algo que haya que preguntarle al autor. *Rechazo.*",
 
-        "[es] **Does it reach outside the folder it was given?** Credentials, " +
-        "environment variables, files elsewhere on the machine.",
+        "**¿Sale de la carpeta que se le entregó?** Credenciales, variables de " +
+        "entorno, archivos en otras partes de la máquina.",
 
-        "[es] **Does it tell the agent to hide anything?** Instructions to " +
-        "disregard what came before, to conceal a step, or to leave something " +
-        "out of what it reports back to you.",
+        "**¿Le dice al agente que oculte algo?** Instrucciones para ignorar lo " +
+        "anterior, para esconder un paso o para omitir algo de lo que le " +
+        "informa a usted.",
 
-        "[es] **Does what it produces affect anyone\u2019s rights or benefits?** " +
-        "If it does, the skill has to say so in its own output, where the " +
-        "person affected will see it — not only in its metadata, where only " +
-        "we will.",
+        "**¿Lo que produce afecta los derechos o los beneficios de alguna " +
+        "persona?** Si es así, la habilidad tiene que decirlo en su propio " +
+        "resultado, donde lo verá la persona afectada, y no solo en sus " +
+        "metadatos, donde lo veremos únicamente nosotros.",
 
-        "[es] **Is the license there, and does it actually apply?** A license " +
-        "naming terms the author had no standing to grant is worse than none.",
+        "**¿Está la licencia, y realmente corresponde?** Una licencia que " +
+        "nombra condiciones que el autor no tenía facultad para conceder es " +
+        "peor que ninguna.",
 
-        "[es] **Would it work outside the place it came from?** A skill welded to " +
-        "one jurisdiction\u2019s forms and deadlines is still useful; it just " +
-        "needs to say so, so nobody adopts it expecting otherwise.",
+        "**¿Funcionaría fuera del lugar del que viene?** Una habilidad soldada " +
+        "a los formularios y los plazos de una jurisdicción sigue siendo útil; " +
+        "solo tiene que decirlo, para que nadie la adopte esperando otra cosa.",
       ],
       warn:
-        "[es] **This is a record of what was checked, not a guarantee.** One " +
-        "reader, about fifteen minutes, one version of the skill. It is not an " +
-        "independent audit, we do not test that the skill works, and passing " +
-        "these nine questions is not a statement that a skill is safe or fit " +
-        "for your purpose. What it does mean is that somebody looked, and you " +
-        "can see exactly what they looked for.",
-      checklist: "[es] The full checklist, with what each question rejects",
+        "**Esto es constancia de lo que se revisó, no una garantía.** Un " +
+        "lector, unos quince minutos, una versión de la habilidad. No es una " +
+        "auditoría independiente, no probamos que la habilidad funcione, y " +
+        "pasar estas nueve preguntas no significa que una habilidad sea segura " +
+        "ni adecuada para su propósito. Lo que sí significa es que alguien la " +
+        "miró, y que usted puede ver exactamente qué buscó.",
+      checklist: "La lista de verificación completa, con lo que rechaza cada pregunta",
     },
 
     beta: {
-      heading: "[es] What Beta means",
+      heading: "Qué significa Beta",
       scope:
-        "[es] This is about the exchange, not about the skills. What a listing " +
-        "means is covered above and has not changed: automated checks can only " +
-        "reject, and a review is a record of what was checked rather than a " +
-        "guarantee. Beta says something narrower — that the registry around " +
-        "those listings is still being built, and you may hit an " +
-        "inconsistency that is ours rather than a skill\u2019s.",
-      movingLede: "[es] What is moving right now:",
+        "Esto se refiere al intercambio, no a las habilidades. Lo que " +
+        "significa una publicación está explicado arriba y no ha cambiado: las " +
+        "verificaciones automatizadas solo pueden rechazar, y una revisión es " +
+        "constancia de lo que se revisó y no una garantía. Beta dice algo más " +
+        "acotado: que el registro que rodea a esas publicaciones todavía se " +
+        "está construyendo, y que usted puede toparse con una inconsistencia " +
+        "que es nuestra y no de una habilidad.",
+      movingLede: "Lo que está cambiando ahora mismo:",
       moving: [
-        "[es] **The categories.** Just recut from twelve to fifteen, onto two axes. " +
-        "A listing\u2019s category may be relabelled again.",
+        "**Las categorías.** Se acaban de rehacer de doce a quince, sobre dos " +
+        "ejes. La categoría de una publicación puede volver a cambiar de etiqueta.",
 
-        "[es] **The metadata fields.** Some are being dropped, others added — what " +
-        "level of government a skill is written for, and how a version is " +
-        "declared.",
+        "**Los campos de metadatos.** Algunos se están eliminando y otros se " +
+        "están agregando: para qué nivel de gobierno está escrita una " +
+        "habilidad, y cómo se declara una versión.",
 
-        "[es] **Submitting.** The browser route works; the two paths around it are " +
-        "still settling, and error messages are still being written for " +
-        "people rather than for reviewers.",
+        "**El envío.** La ruta por el navegador funciona; los dos caminos que " +
+        "la rodean todavía se están asentando, y los mensajes de error todavía " +
+        "se están escribiendo para personas y no para revisores.",
 
-        "[es] **Review and removal.** Both processes exist and each has run once. " +
-        "Expect the guides to change as they are used.",
+        "**La revisión y el retiro.** Ambos procesos existen y cada uno se ha " +
+        "ejecutado una vez. Es de esperar que las guías cambien a medida que " +
+        "se usen.",
       ],
       migration:
-        "[es] A field that changes does not invalidate a listing: the validator " +
-        "says what a submission needs at the moment you submit it, and the " +
-        "maintainers migrate what is already listed rather than asking authors " +
-        "to. If something contradicts itself, that is a bug and worth an issue.",
+        "Un campo que cambia no invalida una publicación: el validador dice lo " +
+        "que necesita una propuesta en el momento en que usted la envía, y los " +
+        "mantenedores migran lo que ya está publicado en lugar de pedírselo a " +
+        "los autores. Si algo se contradice, eso es un error y vale la pena " +
+        "abrir un issue.",
     },
 
     terms: {
-      heading: "[es] Terms",
+      heading: "Términos",
       inclusion:
-        "[es] Inclusion in this registry does not constitute endorsement, " +
-        "verification, or any guarantee regarding a skill's quality, " +
-        "functionality, security, or fitness for any purpose. Skills in the " +
-        "Reviewed tier have been read by the AI Lab for Cities at Harvard " +
-        "against a published checklist; that is a statement about a specific " +
-        "commit, not a warranty, and not an independent assessment. **You are " +
-        "responsible for what you run.**",
+        "La inclusión en este registro no constituye respaldo, verificación ni " +
+        "garantía alguna sobre la calidad, el funcionamiento, la seguridad o " +
+        "la idoneidad de una habilidad para cualquier propósito. Las " +
+        "habilidades del nivel Revisada han sido leídas por el AI Lab for " +
+        "Cities at Harvard contra una lista de verificación publicada; eso es " +
+        "una afirmación sobre un commit específico, no una garantía, y no una " +
+        "evaluación independiente. **Usted es responsable de lo que ejecuta.**",
       licensing:
-        "[es] Registry infrastructure is MIT licensed. Each skill carries its own " +
-        "license in its frontmatter and remains the property of its authors — " +
-        "check that field before you use one.",
+        "La infraestructura del registro se publica bajo licencia MIT. Cada " +
+        "habilidad lleva su propia licencia en su frontmatter y sigue siendo " +
+        "propiedad de sus autores: revise ese campo antes de usar alguna.",
       affiliation:
-        "[es] A project affiliated with the AI Lab for Cities at Harvard. Not an " +
-        "official publication, and not endorsed by any institution.",
+        "Un proyecto afiliado al AI Lab for Cities at Harvard. No es una " +
+        "publicación oficial ni cuenta con el respaldo de ninguna institución.",
     },
   },
 
