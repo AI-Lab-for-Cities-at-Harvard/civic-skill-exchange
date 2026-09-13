@@ -613,126 +613,127 @@ export const strings: Strings = {
   },
 
   errors: {
-    catalogUnavailable: "[es] The catalog could not be loaded. Try reloading the page.",
-    loading: "[es] Loading…",
+    catalogUnavailable: "No se pudo cargar el catálogo. Intente recargar la página.",
+    loading: "Cargando…",
 
-    noSuchSkill: (id: string) => `[es] No skill called ${id} is listed here.`,
-    backToCatalog: "[es] Back to the catalog",
+    noSuchSkill: (id: string) => `Aquí no hay ninguna habilidad publicada llamada ${id}.`,
+    backToCatalog: "Volver al catálogo",
   },
 
   badges: {
-    lab: "[es] Written by the AI Lab",
+    lab: "Escrita por el AI Lab",
 
     tier: {
       reviewedTitle:
-        "[es] Read against the published nine-item checklist, at this exact " +
-        "version. A record of what was checked, not a warranty.",
-      communityNote: "[es] automated checks only",
+        "Leída contra la lista de verificación pública de nueve puntos, en esta " +
+        "versión exacta. Es constancia de lo que se revisó, no una garantía.",
+      communityNote: "solo verificaciones automatizadas",
 
-      reviewedNote: "[es] read against the published checklist",
+      reviewedNote: "leída contra la lista de verificación publicada",
 
-      reviewers: (names: string[]) => names.join("[es]  and "),
+      reviewers: (names: string[]) => names.join(" y "),
     },
 
     localization: {
-      generalized: "[es] Jurisdiction specifics lifted out into a context you fill in",
-      localized: "[es] Carries one jurisdiction's citations, forms and deadlines",
+      generalized: "Los detalles de la jurisdicción se extrajeron a un contexto que usted completa",
+      localized: "Lleva las citas legales, los formularios y los plazos de una jurisdicción",
     },
 
     deployment: {
-      selfReported: "[es] Self-reported by the submitter",
-      selfReportedSince: (since: string) => `[es] ${since} — self-reported by the submitter`,
+      selfReported: "Declarado por quien la envió",
+      selfReportedSince: (since: string) => `${since} — declarado por quien la envió`,
     },
 
     sensitivity: {
       protected:
-        "[es] Health, benefits, immigration, criminal justice, or another " +
-        "statutory regime",
-      pii: "[es] Expected to handle personally identifiable information",
+        "Salud, beneficios sociales, migración, justicia penal u otro régimen " +
+        "legal especial",
+      pii: "Se espera que maneje información de identificación personal",
     },
 
     beta: {
-      label: "[es] Beta",
+      label: "Beta",
       summary:
-        "[es] The exchange itself is new: the category vocabulary, the metadata " +
-        "fields and the submission and review workflows are all still changing.",
+        "El intercambio mismo es nuevo: el vocabulario de categorías, los " +
+        "campos de metadatos y los flujos de envío y de revisión todavía están " +
+        "cambiando.",
     },
   },
 
   card: {
-    cta: "[es] View this skill",
+    cta: "Ver esta habilidad",
   },
 
   facets: {
-    label: "[es] Filter skills",
+    label: "Filtrar habilidades",
 
-    any: "[es] Any",
-    clear: "[es] Clear filters",
+    any: "Cualquiera",
+    clear: "Quitar filtros",
     search: {
-      label: "[es] Search",
-      placeholder: "[es] permit, benefits, Boston…",
+      label: "Buscar",
+      placeholder: "permiso, beneficios, Boston…",
     },
     tier: {
-      legend: "[es] Tier",
-      note: "[es] Community listings passed automated checks only.",
+      legend: "Nivel",
+      note: "Las publicaciones de Comunidad solo pasaron verificaciones automatizadas.",
     },
-    category: { legend: "[es] Category" },
+    category: { legend: "Categoría" },
     localization: {
-      legend: "[es] Portability",
-      note: "[es] Generalized skills have jurisdiction specifics lifted out.",
+      legend: "Portabilidad",
+      note: "A las habilidades generalizadas se les extrajeron los detalles de la jurisdicción.",
     },
     scope: {
-      legend: "[es] Level of government",
+      legend: "Nivel de gobierno",
       note:
-        "[es] What kind of body a skill is written for. The specific place, when " +
-        "it has one, is on the skill's own page.",
+        "Para qué tipo de organismo está escrita una habilidad. El lugar " +
+        "específico, cuando lo tiene, aparece en la página de la habilidad.",
     },
     language: {
-      legend: "[es] Language",
+      legend: "Idioma",
       note:
-        "[es] The language the listing is written in. A model reads a skill in " +
-        "one language and follows it in another, so this is not a limit on " +
-        "who can use it.",
+        "El idioma en que está escrita la publicación. Un modelo lee una " +
+        "habilidad en un idioma y la sigue en otro, así que esto no limita " +
+        "quién puede usarla.",
     },
-    sensitivity: { legend: "[es] Data touched" },
+    sensitivity: { legend: "Datos que maneja" },
   },
 
   bands: {
     tiers: {
-      heading: "[es] What a listing here does and does not mean",
-      communityTerm: "[es] Community",
+      heading: "Qué significa y qué no significa una publicación aquí",
+      communityTerm: "Comunidad",
       community:
-        "[es] Well-formed, and nothing mechanical is wrong with it. Merged once it " +
-        "passes structural, ownership and signature checks.",
-      reviewedTerm: "[es] Reviewed",
+        "Está bien formada y no tiene ningún defecto mecánico. Se integra una " +
+        "vez que pasa las verificaciones de estructura, de propiedad y de firmas.",
+      reviewedTerm: "Revisada",
       reviewed:
-        "[es] The AI Lab for Cities read every line of one specific commit against " +
-        "a published checklist and put its name on it. One reader, not an " +
-        "independent audit. Pinned to a content hash, so any change drops it " +
-        "back to Community.",
+        "El AI Lab for Cities leyó cada línea de un commit específico contra " +
+        "una lista de verificación publicada y puso su nombre en ella. Un solo " +
+        "lector, no una auditoría independiente. Queda fijada a un hash de " +
+        "contenido, así que cualquier cambio la devuelve a Comunidad.",
     },
     contribute: {
-      heading: "[es] Have one of these already?",
+      heading: "¿Ya tiene una de estas?",
       lede:
-        "[es] A city that solves a problem once should be able to hand the " +
-        "solution to the next hundred cities. Submitting is a pull request, " +
-        "or a form if you would rather not work in git.",
-      guide: "[es] Read the contributor guide",
-      security: "[es] What we check, and the security model",
+        "Una ciudad que resuelve un problema una vez debería poder entregar la " +
+        "solución a las siguientes cien ciudades. Enviar una habilidad es un " +
+        "pull request, o un formulario si prefiere no trabajar en git.",
+      guide: "Lea la guía para contribuir",
+      security: "Qué verificamos y el modelo de seguridad",
     },
   },
 
   notices: {
     community: {
       lead: (community: number, total: number) => community === total
-        ? "[es] Every skill here is a Community listing."
+        ? "Todas las habilidades de aquí son publicaciones de Comunidad."
         : community === 1
-          ? `[es] 1 of the ${total} skills here is a Community listing.`
-          : `[es] ${community} of the ${total} skills here are Community listings.`,
+          ? `1 de las ${total} habilidades de aquí es una publicación de Comunidad.`
+          : `${community} de las ${total} habilidades de aquí son publicaciones de Comunidad.`,
       body:
-        "[es] That means automated checks passed — not that anybody read the code. " +
-        "Automated checks can only ever reject. Read a skill and its scripts " +
-        "before you run it.",
+        "Eso significa que pasaron las verificaciones automatizadas, no que " +
+        "alguien haya leído el código. Las verificaciones automatizadas solo " +
+        "pueden rechazar. Lea una habilidad y sus scripts antes de ejecutarla.",
     },
   },
 
