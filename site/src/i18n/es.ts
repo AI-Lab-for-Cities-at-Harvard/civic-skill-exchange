@@ -1101,148 +1101,153 @@ export const strings: Strings = {
   },
 
   detail: {
-    breadcrumb: "[es] Breadcrumb",
-    catalog: "[es] Catalog",
-    maintainedBy: (who: string) => `[es] Maintained by ${who}`,
+    breadcrumb: "Ruta de navegación",
+    catalog: "Catálogo",
+    maintainedBy: (who: string) => `Mantenida por ${who}`,
 
-    nudge: "[es] This listing does not say when the skill fits and when it does not.",
-    nudgeCta: "[es] Maintain it? Add that",
+    nudge: "Esta publicación no dice cuándo encaja la habilidad y cuándo no.",
+    nudgeCta: "¿La mantiene usted? Agréguelo",
 
     fit: {
-      heading: "[es] When to use this",
+      heading: "Cuándo usarla",
       caveat:
-        "[es] Written by whoever submitted the skill, about their own work. Nobody " +
-        "has checked it against what the skill actually does.",
-      use: "[es] Use it when",
-      avoid: "[es] Don’t use it when",
+        "Lo escribió quien envió la habilidad, sobre su propio trabajo. Nadie " +
+        "lo ha contrastado con lo que la habilidad hace realmente.",
+      use: "Úsela cuando",
+      avoid: "No la use cuando",
     },
 
     tools: {
-      heading: "[es] What it can do",
+      heading: "Qué puede hacer",
 
       caveat:
-        "[es] These tools are granted **without prompting you** when the skill is " +
-        "invoked, and the grant is not gated by workspace trust. Check that " +
-        "each one is necessary for what the skill claims to do.",
-      none: "[es] No tools declared.",
+        "Estas herramientas se conceden **sin preguntarle** cuando se invoca " +
+        "la habilidad, y la concesión no depende de la confianza en el espacio " +
+        "de trabajo. Compruebe que cada una es necesaria para lo que la " +
+        "habilidad dice hacer.",
+      none: "No declara ninguna herramienta.",
     },
 
     structure: {
-      heading: "[es] What is in it",
+      heading: "Qué contiene",
       caveat:
-        "[es] Files under `scripts/`, and `.mcp.json` where a skill declares MCP " +
-        "servers, are **executed by the agent**, not read by the model. Read " +
-        "them before you run this skill — the descriptions above tell you " +
-        "what it claims to do, and only the code tells you what it does.",
+        "Los archivos dentro de `scripts/`, y `.mcp.json` cuando una habilidad " +
+        "declara servidores MCP, **los ejecuta el agente**; el modelo no los " +
+        "lee. Léalos antes de ejecutar esta habilidad: las descripciones de " +
+        "arriba le dicen lo que dice hacer, y solo el código le dice lo que hace.",
 
-      executed: "[es] executed",
-      source: "[es] Read the source on GitHub",
+      executed: "se ejecuta",
+      source: "Lea el código fuente en GitHub",
     },
 
     facts: {
-      heading: "[es] At a glance",
-      category: "[es] Category",
-      categories: "[es] Categories",
-      scope: "[es] Level",
-      scopes: "[es] Levels",
-      jurisdiction: "[es] Written for",
-      localization: "[es] Portability",
+      heading: "De un vistazo",
+      category: "Categoría",
+      categories: "Categorías",
+      scope: "Nivel de gobierno",
+      scopes: "Niveles de gobierno",
+      jurisdiction: "Escrita para",
+      localization: "Portabilidad",
 
-      language: "[es] Written in",
-      languagesTested: "[es] Author reports testing in",
+      language: "Escrita en",
+      languagesTested: "El autor dice haberla probado en",
       languagesTestedNote:
-        "[es] Self-reported. Nobody has run it in these languages on our behalf.",
-      verifiedLanguages: "[es] Verified in review",
+        "Lo declara el autor. Nadie la ha ejecutado en estos idiomas por nuestra cuenta.",
+      verifiedLanguages: "Verificado en la revisión",
       verifiedLanguagesNote: (reviewers: string) =>
-        `[es] Confirmed by ${reviewers} against this exact commit.`,
+        `Confirmado por ${reviewers} sobre este commit exacto.`,
 
-      someReviewer: "[es] the reviewer",
-      sensitivity: "[es] Data",
-      humanReview: "[es] Affects people",
-      license: "[es] License",
-      compatibility: "[es] Requires",
-      commit: "[es] Commit",
-      source: "[es] Copied from",
+      someReviewer: "el revisor",
+      sensitivity: "Datos",
+      humanReview: "Afecta a personas",
+      license: "Licencia",
+      compatibility: "Requiere",
+      commit: "Commit",
+      source: "Copiada de",
     },
 
     humanReview: {
-      none: "[es] Output does not affect any individual's rights, benefits or standing.",
-      "advisory-only": "[es] Informs a person. Does not determine anything on its own.",
-      "decision-support": "[es] Feeds a determination someone acts on. Review its output.",
+      none: "Lo que produce no afecta los derechos, los beneficios ni la situación de nadie.",
+      "advisory-only": "Informa a una persona. No determina nada por sí misma.",
+      "decision-support":
+        "Sirve de insumo para una determinación sobre la que alguien actúa. " +
+        "Revise lo que produce.",
     },
 
     provenance: {
-      heading: "[es] Where it has been used",
-      note: "[es] Self-reported by the submitter.",
-      deployment: "[es] Use",
-      at: "[es] At",
-      in: "[es] In",
-      since: "[es] Since",
+      heading: "Dónde se ha usado",
+      note: "Lo declara quien la envió.",
+      deployment: "Uso",
+      at: "Organización",
+      in: "Lugar",
+      since: "Desde",
     },
   },
 
   download: {
-    heading: "[es] Use this skill",
+    heading: "Use esta habilidad",
 
     community:
-      "[es] **Nobody has reviewed this skill.** It passed automated structural and " +
-      "signature checks, which can only ever reject — a pass is not a " +
-      "statement that it is safe. Read the source on GitHub before you run it, " +
-      "particularly anything under `scripts/`.",
+      "**Nadie ha revisado esta habilidad.** Pasó verificaciones " +
+      "automatizadas de estructura y de firmas, que solo pueden rechazar: que " +
+      "las apruebe no significa que sea segura. Lea el código fuente en GitHub " +
+      "antes de ejecutarla, sobre todo lo que esté dentro de `scripts/`.",
 
     reviewed: (reviewers: string, date: string, selfReviewed: boolean) =>
-      `[es] **Reviewed${selfReviewed ? " — by its own author" : ""}.** ` +
-      `${reviewers} read this exact commit against the published checklist` +
-      `${date ? ` on ${date}` : ""}. That is a statement about this content, ` +
-      "not a warranty." +
+      `**Revisada${selfReviewed ? " — por su propio autor" : ""}.** ` +
+      `Revisión a cargo de ${reviewers}, contra la lista de verificación ` +
+      `publicada y sobre este commit exacto${date ? `, el ${date}` : ""}. Eso ` +
+      "es una afirmación sobre este contenido, no una garantía." +
       (selfReviewed
-        ? "[es]  The AI Lab for Cities wrote and reviewed this skill. Nobody " +
-          "outside the Lab has read it."
+        ? " El AI Lab for Cities escribió y revisó esta habilidad. Nadie " +
+          "fuera del Laboratorio la ha leído."
         : ""),
 
-    archive: (size: string) => `[es] Download the skill (${size})`,
+    archive: (size: string) => `Descargar la habilidad (${size})`,
     archiveNote:
-      "[es] A zip of this folder. Upload it wherever your agent tool takes skills " +
-      "— no git, no command line.",
+      "Un zip de esta carpeta. Súbalo donde su herramienta de agente acepte " +
+      "habilidades: sin git y sin línea de comandos.",
 
     commands: {
-      marketplace: "[es] Add the marketplace, once",
-      install: "[es] Install it",
-      degit: "[es] Just this skill",
-      clone: "[es] The whole registry",
+      marketplace: "Agregue el marketplace, una sola vez",
+      install: "Instálela",
+      degit: "Solo esta habilidad",
+      clone: "Todo el registro",
     },
-    copy: "[es] Copy",
-    copied: "[es] Copied",
+    copy: "Copiar",
+    copied: "Copiado",
 
     formatNote:
-      "[es] In Claude Code the two `/plugin` lines are all you need. Skills here " +
-      "follow the open [Agent Skills](spec) format, so they also work in " +
-      "ChatGPT, Codex, Gemini CLI, Copilot, Cursor and others — those take a " +
-      "skill at a time, so use the download above.",
+      "En Claude Code, las dos líneas `/plugin` son todo lo que necesita. Las " +
+      "habilidades de aquí siguen el formato abierto [Agent Skills](spec), así " +
+      "que también funcionan en ChatGPT, Codex, Gemini CLI, Copilot, Cursor y " +
+      "otros; esos aceptan una habilidad a la vez, así que use la descarga de arriba.",
     pathsNote:
-      "[es] Install paths differ across agent tools — `.claude/skills/`, " +
-      "`.agents/skills/`, and others. Check your tool's docs for where it looks.",
-    github: "[es] View on GitHub",
+      "Las rutas de instalación cambian según la herramienta de agente: " +
+      "`.claude/skills/`, `.agents/skills/` y otras. Consulte la documentación " +
+      "de su herramienta para saber dónde busca.",
+    github: "Ver en GitHub",
   },
 
   history: {
-    heading: "[es] Version and history",
+    heading: "Versión e historial",
 
     when: (iso: string) => new Date(iso).toLocaleDateString(
       locale(), { month: "long", year: "numeric", timeZone: "UTC" }),
-    version: "[es] Version",
+    version: "Versión",
     versionAside:
-      "[es] — the author’s own number for it. Self-reported, and not checked " +
-      "against anything.",
-    firstSeen: "[es] Listed since",
-    lastChanged: "[es] Last changed",
-    commits: "[es] Times changed",
+      "— el número que le pone el propio autor. Lo declara él mismo, y no se " +
+      "contrasta con nada.",
+    firstSeen: "Publicada desde",
+    lastChanged: "Último cambio",
+    commits: "Veces que cambió",
     commitsAside:
-      "[es] — a count, not a measure. It says nothing about whether the skill is " +
-      "well maintained: one change may mean finished.",
+      "— es una cuenta, no una medida. No dice nada sobre si la habilidad está " +
+      "bien mantenida: un solo cambio puede significar que está terminada.",
     note:
-      "[es] Dates come from this repository’s own history, for this path. A skill " +
-      "moved between namespaces starts again here, so an early date is " +
-      "reliable and a recent one may just mean it was renamed.",
+      "Las fechas vienen del historial de este repositorio, para esta ruta. " +
+      "Una habilidad que se movió entre espacios de nombres empieza de nuevo " +
+      "aquí, así que una fecha antigua es confiable y una reciente puede " +
+      "significar solo que se le cambió el nombre.",
   },
 };
