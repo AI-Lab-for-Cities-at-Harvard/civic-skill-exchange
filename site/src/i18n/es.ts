@@ -55,152 +55,157 @@ type Choices = [value: string, label: string][];
 
 export const strings: Strings = {
   vocabulary: {
-    missing: "[es] —",
+    missing: "—",
 
     category: {
-      policy: "[es] Policy",
-      "data-analysis": "[es] Data Analysis",
-      communications: "[es] Communications",
-      finance: "[es] Finance",
-      hr: "[es] HR",
-      technology: "[es] Technology",
-      "constituent-services": "[es] Constituent Services",
-      "benefits-eligibility": "[es] Benefits & Eligibility",
-      "permitting-licensing": "[es] Permitting & Licensing",
-      legal: "[es] Legal",
-      "public-records": "[es] Public Records & Transparency",
-      operations: "[es] Operations & Service Delivery",
-      "emergency-public-safety": "[es] Emergency Management & Public Safety",
-      "planning-land-use": "[es] Planning & Land Use",
-      "ai-tools": "[es] AI Tools",
+      policy: "Políticas Públicas",
+      "data-analysis": "Análisis de Datos",
+      communications: "Comunicaciones",
+      finance: "Finanzas",
+      hr: "Recursos Humanos",
+      technology: "Tecnología",
+      "constituent-services": "Atención Ciudadana",
+      "benefits-eligibility": "Beneficios y Elegibilidad",
+      "permitting-licensing": "Permisos y Licencias",
+      legal: "Asuntos Jurídicos",
+      "public-records": "Transparencia y Acceso a la Información",
+      operations: "Operaciones y Prestación de Servicios",
+      "emergency-public-safety": "Gestión de Emergencias y Seguridad Pública",
+      "planning-land-use": "Planificación y Uso del Suelo",
+      "ai-tools": "Herramientas de IA",
     },
 
     scope: {
-      any: "[es] Any level of government",
-      municipal: "[es] City, county or town",
-      regional: "[es] State, province or region",
-      national: "[es] National",
-      supranational: "[es] Supranational",
+      any: "Cualquier nivel de gobierno",
+      municipal: "Ciudad, condado o municipio",
+      regional: "Estado, provincia o región",
+      national: "Nacional",
+      supranational: "Supranacional",
     },
 
     language: {
-      en: "[es] English",
-      es: "[es] Spanish",
+      en: "Inglés",
+      es: "Español",
     },
 
     sensitivity: {
-      none: "[es] No personal data",
-      pii: "[es] Personal data (PII)",
-      protected: "[es] Protected — statutory regime",
+      none: "Sin datos personales",
+      pii: "Datos personales (PII)",
+      protected: "Protegidos — régimen legal especial",
     },
 
     localization: {
-      generalized: "[es] Generalized",
-      localized: "[es] Localized",
+      generalized: "Generalizada",
+      localized: "Localizada",
     },
 
     deployment: {
-      none: "[es] Not used in production",
-      personal: "[es] Used personally",
-      team: "[es] Used by a team",
-      organization: "[es] Used organization-wide",
+      none: "Sin uso en producción",
+      personal: "Uso personal",
+      team: "Uso en un equipo",
+      organization: "Uso en toda la organización",
     },
 
     humanReview: {
-      none: "[es] No effect on rights or benefits",
-      "advisory-only": "[es] Informs a person, decides nothing",
-      "decision-support": "[es] Feeds a decision someone acts on",
+      none: "Sin efecto sobre derechos ni beneficios",
+      "advisory-only": "Informa a una persona; no decide nada",
+      "decision-support": "Sirve de insumo para una decisión sobre la que alguien actúa",
     },
 
     affiliation: {
-      government: "[es] Government",
-      nonprofit: "[es] Nonprofit",
-      vendor: "[es] Vendor",
-      academic: "[es] Academic",
-      individual: "[es] Individual",
+      government: "Gobierno",
+      nonprofit: "Organización sin fines de lucro",
+      vendor: "Proveedor",
+      academic: "Institución académica",
+      individual: "Persona individual",
     },
 
     tier: {
-      reviewed: "[es] Reviewed",
-      community: "[es] Community",
+      reviewed: "Revisada",
+      community: "Comunidad",
     },
   },
 
   questions: {
     "civic.data-sensitivity": {
-      question: "[es] What data does it touch?",
+      question: "¿Qué datos maneja?",
       options: [
-        ["none", "[es] No personal data"],
-        ["pii", "[es] Personal details about identifiable people"],
-        ["protected", "[es] Health, benefits, immigration or criminal justice data"],
+        ["none", "Ningún dato personal"],
+        ["pii", "Datos personales de personas identificables"],
+        ["protected", "Datos de salud, beneficios sociales, migración o justicia penal"],
       ] as Choices,
     },
     "civic.human-review": {
-      question: "[es] Does what it produces affect anyone's rights or benefits?",
+      question: "¿Lo que produce afecta los derechos o los beneficios de alguna persona?",
       options: [
-        ["none", "[es] No — it does not affect anyone's rights or benefits"],
-        ["advisory-only", "[es] It informs a person, but decides nothing"],
-        ["decision-support", "[es] It feeds a decision someone acts on"],
+        ["none", "No — no afecta los derechos ni los beneficios de ninguna persona"],
+        ["advisory-only", "Informa a una persona, pero no decide nada"],
+        ["decision-support", "Sirve de insumo para una decisión sobre la que alguien actúa"],
       ] as Choices,
     },
   },
 
   units: {
-    bytes: "[es] B",
-    kilobytes: "[es] KB",
-    megabytes: "[es] MB",
+    bytes: "B",
+    kilobytes: "KB",
+    megabytes: "MB",
   },
 
   chrome: {
-    skipToContent: "[es] Skip to content",
+    skipToContent: "Ir al contenido",
 
-    brand: "[es] Civic Skill\u00a0Exchange",
+    brand: "Civic Skill\u00a0Exchange",
     nav: {
-      label: "[es] Main",
-      browse: "[es] Browse",
-      about: "[es] About",
-      submit: "[es] Submit",
-      github: "[es] GitHub",
+      label: "Principal",
+      browse: "Explorar",
+      about: "Acerca de",
+      submit: "Enviar",
+      github: "GitHub",
     },
-    docsInEnglish: "[es] in English",
+    docsInEnglish: "en inglés",
 
     language: {
-      label: "[es] Language",
+      label: "Idioma",
     },
     theme: {
-      toLight: "[es] Light",
-      toDark: "[es] Dark",
-      switchToLight: "[es] Switch to light theme",
-      switchToDark: "[es] Switch to dark theme",
+      toLight: "Claro",
+      toDark: "Oscuro",
+      switchToLight: "Cambiar al tema claro",
+      switchToDark: "Cambiar al tema oscuro",
     },
-    title: "[es] Agent skills for government, public-sector and nonprofit work",
+    title:
+      "Habilidades de agente para el trabajo de gobierno, del sector público y " +
+      "de organizaciones sin fines de lucro",
     lede:
-      "[es] A city that solves a problem once should be able to hand the solution " +
-      "to the next hundred cities.",
+      "Una ciudad que resuelve un problema una vez debería poder entregar la " +
+      "solución a las siguientes cien ciudades.",
 
     stats: {
-      skills: (n: number) => `[es] **${n}** skill${n === 1 ? "" : "s"}`,
-      reviewed: (n: number) => `[es] **${n}** reviewed`,
-      community: (n: number) => `[es] **${n}** community`,
+      skills: (n: number) => `**${n}** habilidad${n === 1 ? "" : "es"}`,
+      reviewed: (n: number) => `**${n}** revisada${n === 1 ? "" : "s"}`,
+      community: (n: number) => `**${n}** de comunidad`,
     },
     footer: {
       disclaimer:
-        "[es] Inclusion in this registry is not an endorsement. Automated checks " +
-        "can only reject — a pass is never a statement that a skill is safe.",
+        "La inclusión en este registro no constituye un respaldo. Las " +
+        "verificaciones automatizadas solo pueden rechazar: que una habilidad " +
+        "las apruebe nunca significa que sea segura.",
 
       meta: (generated: string) =>
-        `[es] Catalog generated ${generated} · ` +
-        "[Source and submissions on GitHub](repo) · [About this project](about)",
+        `Catálogo generado el ${generated} · ` +
+        "[Código fuente y envíos en GitHub](repo) · [Acerca de este proyecto](about)",
 
       date: (iso: string) => new Date(iso).toLocaleDateString(locale()),
     },
   },
 
   results: {
-    loading: "[es] Loading the catalog…",
-    all: (n: number) => `[es] ${n} skill${n === 1 ? "" : "s"}`,
-    some: (shown: number, total: number) => `[es] ${shown} of ${total} skills`,
-    empty: "[es] No skills match these filters. [Clear them](clear) to see the whole catalog.",
+    loading: "Cargando el catálogo…",
+    all: (n: number) => `${n} habilidad${n === 1 ? "" : "es"}`,
+    some: (shown: number, total: number) => `${shown} de ${total} habilidades`,
+    empty:
+      "Ninguna habilidad coincide con estos filtros. [Quite los filtros](clear) " +
+      "para ver el catálogo completo.",
   },
 
   submit: {
