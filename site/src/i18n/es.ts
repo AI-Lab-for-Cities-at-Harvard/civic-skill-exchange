@@ -2,14 +2,16 @@
  *
  *  ==================== FOR THE TRANSLATOR ====================
  *
- *  NOT TRANSLATED YET. Every value below is the English text behind the marker
+ *  A value that is not translated yet carries the marker
  *
  *      [es]
  *
- *  which is there to be greppable and to look wrong on the page. Translate the
- *  value and delete the marker, including the space after it.
- *  `no-untranslated.test.ts` lists what is left and fails while anything is,
- *  so the file is finished exactly when that test is green.
+ *  in front of the English text, which is greppable and looks wrong on the
+ *  page. Translate the value and delete the marker, including the space after
+ *  it. `no-untranslated.test.ts` lists what is left and fails while anything
+ *  is, so the file is finished exactly when that test is green. The first pass
+ *  was drafted by a machine and edited by a native speaker; treat any
+ *  awkwardness as a bug worth an issue.
  *
  *  `en.ts` is the contract and the commentary. Every key here sits in the same
  *  group, in the same order, and `es.test.ts` fails if that stops being true —

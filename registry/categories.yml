@@ -17,7 +17,7 @@
 # held to label. Anything machine-facing reads `label`: the ids never translate,
 # and both marketplace manifests are English.
 #
-# NOT TRANSLATED YET. Every _es value is the English text behind the marker
+# An _es value that is not translated yet is the English text behind the marker
 # "[es] ". Delete the marker as each one is written. The gate is indirect and
 # real: labels.test.ts holds es.ts's category map to label_es, so a translated
 # es.ts with an untranslated label_es here fails the site suite.
