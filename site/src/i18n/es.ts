@@ -209,377 +209,387 @@ export const strings: Strings = {
   },
 
   submit: {
-    heading: "[es] Share a skill",
-    lede: "[es] Fill this in and we will put it in the right shape for you. It takes a few minutes.",
+    heading: "Comparta una habilidad",
+    lede:
+      "Complete este formulario y nosotros le daremos la forma correcta. " +
+      "Toma unos minutos.",
 
     prereq:
-      "[es] You will need a **GitHub account** to finish — it is free, and it is " +
-      "what records the skill as yours. [Create one](signup) if you do not " +
-      "have one; it takes a couple of minutes and you can come back to this " +
-      "page afterwards.",
+      "Necesitará una **cuenta de GitHub** para terminar: es gratuita y es lo " +
+      "que deja constancia de que la habilidad es suya. [Cree una](signup) si " +
+      "no la tiene; toma un par de minutos y después puede volver a esta " +
+      "página.",
 
     modes: {
-      label: "[es] What do you want to do?",
-      new: "[es] Add a new skill",
-      update: "[es] Update one you already listed",
+      label: "¿Qué desea hacer?",
+      new: "Agregar una habilidad nueva",
+      update: "Actualizar una que ya publicó",
     },
 
-    communityWarn: "[es] The skill will be listed as a community skill until it is reviewed.",
+    communityWarn:
+      "La habilidad se publicará como habilidad de Comunidad hasta que sea revisada.",
 
     intake: {
-      heading: "[es] Submit a new skill",
+      heading: "Enviar una habilidad nueva",
       lede:
-        "[es] Already have one? Drop it here and the rest of this page fills itself " +
-        "in. If your skill lives in its own repository, GitHub\u2019s **Code → " +
-        "Download ZIP** gives you the file to drop.",
+        "¿Ya tiene una? Suéltela aquí y el resto de esta página se completa " +
+        "solo. Si su habilidad vive en su propio repositorio, **Code → " +
+        "Download ZIP** en GitHub le da el archivo que debe soltar.",
 
-      repoLabel: "[es] Your skill's GitHub repository",
+      repoLabel: "El repositorio de GitHub de su habilidad",
       repoHint:
-        "[es] Public repositories only. We read the file list and SKILL.md, and " +
-        "hand the folder back for you to upload — the listing records where " +
-        "the copy came from.",
-      repoPlaceholder: "[es] github.com/you/your-skill",
-      read: "[es] Read it",
-      reading: "[es] Reading…",
+        "Solo repositorios públicos. Leemos la lista de archivos y SKILL.md, y " +
+        "le devolvemos la carpeta para que la suba: la publicación deja " +
+        "constancia de dónde vino la copia.",
+      repoPlaceholder: "github.com/usted/su-habilidad",
+      read: "Leerlo",
+      reading: "Leyendo…",
 
       imported: (files: number, repo: string, commit: string) =>
-        `[es] Read ${files} file${files === 1 ? "" : "s"} from \`${repo}\` at ` +
-        `\`${commit}\`.`,
+        `Se leyó${files === 1 ? "" : "eron"} ${files} archivo${files === 1 ? "" : "s"} ` +
+        `de \`${repo}\` en \`${commit}\`.`,
 
-      archiveLabel: "[es] Or upload the skill folder as a .zip",
-      archiveHint: "[es] Unpacked in your browser. It is not sent anywhere.",
+      archiveLabel: "O suba la carpeta de la habilidad como .zip",
+      archiveHint: "Se descomprime en su navegador. No se envía a ninguna parte.",
 
-      pasteLabel: "[es] Or paste your SKILL.md",
+      pasteLabel: "O pegue su SKILL.md",
 
       archiveResult: (name: string, files: number) =>
-        `[es] **${name}** — ${files} file${files === 1 ? "" : "s"}.`,
-      nothingElse: "[es] Nothing else to fix.",
-      blocked: "[es] Fix these before continuing. They cannot be corrected below.",
+        `**${name}** — ${files} archivo${files === 1 ? "" : "s"}.`,
+      nothingElse: "No hay nada más que corregir.",
+      blocked: "Corrija esto antes de continuar. No se puede corregir más abajo.",
     },
 
     form: {
-      heading: "[es] About the skill",
+      heading: "Sobre la habilidad",
 
       fromFile: (fields: string) =>
-        `[es] Read from your file: ${fields}. Everything below is already filled in ` +
-        "where it could be — change anything that is wrong.",
+        `Leído de su archivo: ${fields}. Todo lo de abajo ya viene completado ` +
+        "donde se pudo; cambie lo que esté mal.",
 
       fieldNames: {
-        namespace: "[es] your GitHub username",
-        name: "[es] the skill name",
-        description: "[es] the description",
-        license: "[es] the license",
-        "allowed-tools": "[es] the tools it needs",
-        metadata: "[es] the details below",
-        "civic.category": "[es] the category",
-        version: "[es] the version",
-        "civic.category-secondary": "[es] the second category",
-        "civic.scope": "[es] the level of government",
-        "civic.scope-secondary": "[es] the second level",
-        "civic.jurisdiction": "[es] the place it is written for",
-        "civic.localization": "[es] how portable it is",
-        "civic.language": "[es] the language it is written in",
-        "civic.languages-tested": "[es] the languages you have tried it in",
-        "civic.data-sensitivity": "[es] the data it touches",
-        "civic.human-review": "[es] its effect on people",
-        "civic.use-when": "[es] when it is useful",
-        "civic.avoid-when": "[es] when it is not useful",
-        "civic.maintainer": "[es] who maintains it",
-        "civic.affiliation": "[es] the kind of organization",
-        "civic.deployment": "[es] how much you have used it",
-        "civic.deployed-at": "[es] the organization",
-        "civic.deployed-in": "[es] where it operates",
-        "civic.deployed-since": "[es] since when",
+        namespace: "su nombre de usuario de GitHub",
+        name: "el nombre de la habilidad",
+        description: "la descripción",
+        license: "la licencia",
+        "allowed-tools": "las herramientas que necesita",
+        metadata: "los datos de abajo",
+        "civic.category": "la categoría",
+        version: "la versión",
+        "civic.category-secondary": "la segunda categoría",
+        "civic.scope": "el nivel de gobierno",
+        "civic.scope-secondary": "el segundo nivel",
+        "civic.jurisdiction": "el lugar para el que está escrita",
+        "civic.localization": "qué tan portátil es",
+        "civic.language": "el idioma en que está escrita",
+        "civic.languages-tested": "los idiomas en que la ha probado",
+        "civic.data-sensitivity": "los datos que maneja",
+        "civic.human-review": "su efecto sobre las personas",
+        "civic.use-when": "cuándo es útil",
+        "civic.avoid-when": "cuándo no es útil",
+        "civic.maintainer": "quién la mantiene",
+        "civic.affiliation": "el tipo de organización",
+        "civic.deployment": "cuánto la ha usado",
+        "civic.deployed-at": "la organización",
+        "civic.deployed-in": "dónde opera",
+        "civic.deployed-since": "desde cuándo",
       },
 
-      choose: "[es] Choose…",
+      choose: "Elija…",
 
-      namespaceLabel: "[es] Your GitHub username",
+      namespaceLabel: "Su nombre de usuario de GitHub",
       namespaceHint:
-        "[es] This has to match your login exactly — your skill goes in a folder of " +
-        "that name, and only you can write there.",
+        "Tiene que coincidir exactamente con su usuario: su habilidad va en una " +
+        "carpeta con ese nombre, y solo usted puede escribir ahí.",
       reservedNamespace: (namespace: string) =>
-        `[es] \`${namespace}\` is the Lab\u2019s own folder, so this does not have ` +
-        "to match your login. It needs approval from a maintainer instead, and " +
-        "the listing carries the Lab\u2019s badge.",
+        `\`${namespace}\` es la carpeta propia del Laboratorio, así que esto no ` +
+        "tiene que coincidir con su usuario. En cambio, necesita la aprobación " +
+        "de un mantenedor, y la publicación lleva el distintivo del Laboratorio.",
       noSuchUser: (login: string) =>
-        `[es] No GitHub user called ${login}. A submission whose folder does not ` +
-        "match the account that opens the pull request is rejected.",
+        `No existe un usuario de GitHub llamado ${login}. Se rechaza toda ` +
+        "propuesta cuya carpeta no coincida con la cuenta que abre el pull request.",
 
-      nameLabel: "[es] Skill name",
-      namePlaceholder: "[es] Permit Status Explainer",
-      nameHint: "[es] Type it however you like; we will tidy the spacing and capitals.",
+      nameLabel: "Nombre de la habilidad",
+      namePlaceholder: "Explicador de Estado de Permisos",
+      nameHint: "Escríbalo como quiera; nosotros ordenamos espacios y mayúsculas.",
 
       nameSlug: (slug: string) =>
-        `[es] Listed as \`${slug}\` — names are lowercase with hyphens instead of ` +
-        "spaces.",
+        `Se publica como \`${slug}\`: los nombres van en minúsculas y con ` +
+        "guiones en lugar de espacios.",
 
-      descriptionLabel: "[es] Description",
+      descriptionLabel: "Descripción",
       descriptionHint:
-        "[es] What the skill does, in a couple of sentences. This is what an agent " +
-        "reads to decide whether to use it.",
+        "Lo que hace la habilidad, en un par de oraciones. Esto es lo que lee " +
+        "un agente para decidir si la usa.",
 
-      categoryLabel: "[es] Category",
-      categorySecondaryLabel: "[es] A second category, if it fits one",
-      categorySecondaryNone: "[es] None — it sits in one place",
+      categoryLabel: "Categoría",
+      categorySecondaryLabel: "Una segunda categoría, si encaja en otra",
+      categorySecondaryNone: "Ninguna — pertenece a un solo lugar",
       categorySecondaryHint:
-        "[es] The list mixes what a skill is *for* with whose desk it sits on, so " +
-        "many skills belong in two places. Leave this alone if yours does not.",
+        "La lista mezcla *para qué* sirve una habilidad con el escritorio en el " +
+        "que se usa, así que muchas habilidades pertenecen a dos lugares. Deje " +
+        "esto en blanco si la suya no.",
 
-      versionLabel: "[es] Version, if you keep one",
-      versionPlaceholder: "[es] 1.0",
+      versionLabel: "Versión, si lleva una",
+      versionPlaceholder: "1.0",
       versionHint:
-        "[es] Your own number for it, like `1.0` or `2.1.3`. Optional, and nothing " +
-        "checks it — it is there so an adopter can tell this is not what they " +
-        "took last year. The registry records when a skill arrived and last " +
-        "changed on its own.",
+        "Su propio número para ella, como `1.0` o `2.1.3`. Es opcional y nada " +
+        "lo verifica: está para que quien la adopte note que no es lo mismo que " +
+        "se llevó el año pasado. El registro anota por su cuenta cuándo llegó " +
+        "una habilidad y cuándo cambió por última vez.",
 
-      scopeLabel: "[es] What level of government is it for?",
+      scopeLabel: "¿Para qué nivel de gobierno es?",
 
       scopeChoices: [
-        ["any", "[es] Any level of government — it makes no assumptions"],
-        ["municipal", "[es] A city, county or town"],
-        ["regional", "[es] A state, province or region"],
-        ["national", "[es] A national government"],
-        ["supranational", "[es] A body above national government"],
+        ["any", "Cualquier nivel de gobierno — no supone nada"],
+        ["municipal", "Una ciudad, un condado o un municipio"],
+        ["regional", "Un estado, una provincia o una región"],
+        ["national", "Un gobierno nacional"],
+        ["supranational", "Un organismo por encima del gobierno nacional"],
       ] as Choices,
-      scopeSecondaryLabel: "[es] A second level, if it serves two",
-      scopeSecondaryNone: "[es] None — one level",
+      scopeSecondaryLabel: "Un segundo nivel, si sirve a dos",
+      scopeSecondaryNone: "Ninguno — un solo nivel",
 
-      jurisdictionLabel: "[es] Is it written for one specific place?",
-      jurisdictionPlaceholder: "[es] US-MA / Boston",
+      jurisdictionLabel: "¿Está escrita para un lugar específico?",
+      jurisdictionPlaceholder: "US-MA / Boston",
       jurisdictionHint:
-        "[es] Only if the skill carries that place\u2019s rules, forms or deadlines " +
-        "— `US-VT`, `US-MA / Boston`, `CA-ON / Toronto`. Leave it blank " +
-        "otherwise, which is most skills. A country code, optionally a state or " +
-        "province, and optionally a city after a slash.",
+        "Solo si la habilidad lleva las reglas, los formularios o los plazos de " +
+        "ese lugar: `US-VT`, `US-MA / Boston`, `CA-ON / Toronto`. Si no, déjelo " +
+        "en blanco, que es el caso de la mayoría. Un código de país, " +
+        "opcionalmente un estado o una provincia y, opcionalmente, una ciudad " +
+        "después de una barra.",
 
-      localizationLabel: "[es] Is it set up for one place, or does it work anywhere?",
+      localizationLabel: "¿Está preparada para un solo lugar o funciona en cualquiera?",
       localizationChoices: [
-        ["localized", "[es] Set up for one place — it has our forms, deadlines and rules in it"],
-        ["generalized", "[es] Works anywhere — the local specifics have been lifted out"],
+        ["localized", "Preparada para un solo lugar — lleva dentro nuestros formularios, plazos y reglas"],
+        ["generalized", "Funciona en cualquier lugar — los detalles locales se extrajeron"],
       ] as Choices,
-      localizationNone: "[es] Not sure yet",
+      localizationNone: "Todavía no lo sé",
       localizationHint:
-        "[es] [What this means](about) — a localized skill carries one " +
-        "jurisdiction\u2019s specifics; a generalized one has had them taken " +
-        "out so another city can fill in its own.",
+        "[Qué significa esto](about): una habilidad localizada lleva los " +
+        "detalles de una jurisdicción; a una generalizada se los quitaron para " +
+        "que otra ciudad ponga los suyos.",
 
-      languageLabel: "[es] What language is it written in?",
+      languageLabel: "¿En qué idioma está escrita?",
 
       languageChoices: [
-        ["en", "[es] English"],
-        ["es", "[es] Spanish"],
-        ["other", "[es] Another language — I will give the tag"],
+        ["en", "Inglés"],
+        ["es", "Español"],
+        ["other", "Otro idioma — yo daré la etiqueta"],
       ] as Choices,
       languageHint:
-        "[es] The language of the `SKILL.md` itself. It is not a limit on who can " +
-        "use the skill — a model reads a skill in one language and follows it " +
-        "in another. It is so a reader knows what they are about to open.",
-      languageOtherLabel: "[es] Its language tag",
-      languageOtherPlaceholder: "[es] pt-BR",
+        "El idioma del propio `SKILL.md`. No limita quién puede usar la " +
+        "habilidad: un modelo lee una habilidad en un idioma y la sigue en " +
+        "otro. Sirve para que quien la abra sepa con qué se va a encontrar.",
+      languageOtherLabel: "Su etiqueta de idioma",
+      languageOtherPlaceholder: "pt-BR",
       languageOtherHint:
-        "[es] A BCP 47 tag, not the language\u2019s name: `pt-BR`, `fr`, `de`, " +
+        "Una etiqueta BCP 47, no el nombre del idioma: `pt-BR`, `fr`, `de`, " +
         "`es-419`.",
 
-      deploymentLabel: "[es] Have you used it?",
+      deploymentLabel: "¿La ha usado?",
       deploymentChoices: [
-        ["none", "[es] Not yet — I have not used it in real work"],
-        ["personal", "[es] I use it myself"],
-        ["team", "[es] My team uses it"],
-        ["organization", "[es] My whole organization uses it"],
+        ["none", "Todavía no — no la he usado en trabajo real"],
+        ["personal", "La uso yo"],
+        ["team", "La usa mi equipo"],
+        ["organization", "La usa toda mi organización"],
       ] as Choices,
       deploymentHintClaim:
-        "[es] Saying a team or an organization uses it is a claim about them, so the " +
-        "details below are needed.",
+        "Decir que la usa un equipo o una organización es una afirmación sobre " +
+        "ellos, así que hacen falta los datos de abajo.",
       deploymentHintPersonal:
-        "[es] Using it yourself is a complete answer — nothing else is required.",
+        "Usarla usted mismo es una respuesta completa: no hace falta nada más.",
 
-      maintainerLabel: "[es] Who maintains it?",
-      maintainerHint: "[es] A person or a team — City of X, Department of Innovation.",
+      maintainerLabel: "¿Quién la mantiene?",
+      maintainerHint: "Una persona o un equipo — Ciudad de X, Departamento de Innovación.",
 
-      affiliationLabel: "[es] What kind of organization?",
+      affiliationLabel: "¿Qué tipo de organización?",
       affiliationChoices: [
-        ["government", "[es] Government"], ["nonprofit", "[es] Nonprofit"], ["vendor", "[es] Vendor"],
-        ["academic", "[es] Academic"], ["individual", "[es] Just me"],
+        ["government", "Gobierno"], ["nonprofit", "Sin fines de lucro"], ["vendor", "Proveedor"],
+        ["academic", "Académica"], ["individual", "Solo yo"],
       ] as Choices,
     },
 
     optional: {
-      summary: "[es] A few optional things",
-      useWhenLabel: "[es] When is this useful?",
-      avoidWhenLabel: "[es] When is it not?",
+      summary: "Algunos datos opcionales",
+      useWhenLabel: "¿Cuándo es útil?",
+      avoidWhenLabel: "¿Cuándo no lo es?",
       avoidWhenHint:
-        "[es] The one only you can answer. A skill honest about its limits gets " +
-        "adopted faster.",
-      languagesTestedLabel: "[es] What languages have you tried it in?",
-      languagesTestedPlaceholder: "[es] en, es",
+        "La única que solo usted puede responder. Una habilidad honesta sobre " +
+        "sus límites se adopta más rápido.",
+      languagesTestedLabel: "¿En qué idiomas la ha probado?",
+      languagesTestedPlaceholder: "en, es",
       languagesTestedHint:
-        "[es] Comma-separated tags, including the one above — `en, es`. Your own " +
-        "claim: nothing here checks it, and the page shows it as something you " +
-        "said rather than something anybody verified.",
-      toolsLabel: "[es] Tools it needs",
-      toolsPlaceholder: "[es] Read, Grep",
+        "Etiquetas separadas por comas, incluida la de arriba — `en, es`. Es su " +
+        "propia afirmación: aquí nada la verifica, y la página la muestra como " +
+        "algo que usted dijo y no como algo que alguien comprobó.",
+      toolsLabel: "Herramientas que necesita",
+      toolsPlaceholder: "Read, Grep",
       toolsHint:
-        "[es] Comma separated. These are granted without asking the person who runs " +
-        "it, so list the least it needs.",
-      licenseLabel: "[es] License",
-      deployedAtLabel: "[es] Which organization uses it?",
+        "Separadas por comas. Se conceden sin preguntarle a quien la ejecuta, " +
+        "así que enumere lo mínimo que necesita.",
+      licenseLabel: "Licencia",
+      deployedAtLabel: "¿Qué organización la usa?",
       deployedAtHint:
-        "[es] Leave this blank if it is just you — personal use names no organization.",
-      deployedInLabel: "[es] Where does that organization operate?",
-      deployedInPlaceholder: "[es] US-MA / Boston",
-      deployedInHint: "[es] Like US-MA / Boston.",
-      deployedSinceLabel: "[es] Roughly since when?",
-      deployedSincePlaceholder: "[es] 2026-03",
+        "Déjelo en blanco si es solo usted: el uso personal no nombra ninguna organización.",
+      deployedInLabel: "¿Dónde opera esa organización?",
+      deployedInPlaceholder: "US-MA / Boston",
+      deployedInHint: "Como US-MA / Boston.",
+      deployedSinceLabel: "¿Aproximadamente desde cuándo?",
+      deployedSincePlaceholder: "2026-03",
     },
 
     send: {
-      heading: "[es] Send it",
+      heading: "Envíela",
 
       addedSummary: (lines: number) =>
-        `[es] What we added to your SKILL.md — ${lines} line${lines === 1 ? "" : "s"}`,
+        `Lo que agregamos a su SKILL.md — ${lines} línea${lines === 1 ? "" : "s"}`,
       addedNote:
-        "[es] Written into the copy this page hands you. Your original file on disk " +
-        "still does not have these.",
+        "Se escribió en la copia que le entrega esta página. Su archivo " +
+        "original en el disco sigue sin tenerlo.",
 
       findingsNote: (n: number) =>
-        `[es] ${n} thing${n === 1 ? "" : "s"} still to fill in, marked above. You ` +
-        "can send it anyway — the checks that count run after you do, and you " +
-        "can fix things then.",
+        `Queda${n === 1 ? "" : "n"} ${n} cosa${n === 1 ? "" : "s"} por ` +
+        `completar, marcada${n === 1 ? "" : "s"} arriba. Puede enviarla de ` +
+        "todos modos: las verificaciones que cuentan se ejecutan después, y " +
+        "entonces podrá corregir.",
 
       multiFileNote: (files: number) =>
-        `[es] Your skill is ${files} files. GitHub takes a whole folder, but only ` +
-        "from its own upload page — so the last steps happen there, with the " +
-        "folder this page hands back.",
+        `Su habilidad tiene ${files} archivos. GitHub acepta una carpeta ` +
+        "entera, pero solo desde su propia página de carga, así que los " +
+        "últimos pasos ocurren allí, con la carpeta que le devuelve esta página.",
 
-      folderTitle: "[es] Take the corrected folder",
+      folderTitle: "Lleve la carpeta corregida",
       folderBody:
-        "[es] Your files, unchanged, with the answers above written into `SKILL.md`. " +
-        "This folder — not your original — is what you upload: the answers " +
-        "exist only in this copy. Unzip it first.",
+        "Sus archivos, sin cambios, con las respuestas de arriba escritas en " +
+        "`SKILL.md`. Esta carpeta — no la original — es la que se sube: las " +
+        "respuestas existen solo en esta copia. Descomprímala primero.",
 
-      downloadFolder: (folder: string) => `[es] Download ${folder}.zip`,
+      downloadFolder: (folder: string) => `Descargar ${folder}.zip`,
 
-      forkTitle: "[es] Make your own copy of the registry",
+      forkTitle: "Haga su propia copia del registro",
       forkBody:
-        "[es] One button on GitHub, then come back and paste the address it gives " +
-        "you. We cannot guess it — you may rename the copy, or keep it under a " +
-        "different account.",
-      forkCta: "[es] Fork the registry",
-      forkLabel: "[es] The address of your copy",
-      forkPlaceholder: "[es] github.com/you/civic-skill-exchange",
-      forkHint: "[es] Paste it from your browser's address bar, or type owner/name.",
+        "Un botón en GitHub y luego vuelva y pegue la dirección que le dé. No " +
+        "podemos adivinarla: puede cambiarle el nombre a la copia o tenerla en " +
+        "otra cuenta.",
+      forkCta: "Hacer un fork del registro",
+      forkLabel: "La dirección de su copia",
+      forkPlaceholder: "github.com/usted/civic-skill-exchange",
+      forkHint:
+        "Péguela desde la barra de direcciones de su navegador, o escriba propietario/nombre.",
       forkUnparsed:
-        "[es] That does not look like a GitHub repository. It should be like " +
-        "`github.com/you/civic-skill-exchange`.",
+        "Eso no parece un repositorio de GitHub. Debería ser algo como " +
+        "`github.com/usted/civic-skill-exchange`.",
 
-      uploadTitle: "[es] Drag the folder in",
+      uploadTitle: "Arrastre la carpeta",
 
       uploadBody: (
         folder: string, reserved: boolean, namespacePath: string, skillPath: string,
       ) =>
-        `[es] Drop in the whole folder you **downloaded** in step 1 — unzipped, ` +
-        `named \`${folder}\`, subfolders and all. Do not open it first: ` +
-        "GitHub keeps the folder\u2019s name, which is how it lands in the " +
-        "right place. Then **Commit changes**, choosing *create a new branch " +
-        "and start a pull request* rather than committing to `main`." +
-        (reserved ? "[es]  This opens the registry at " : "[es]  This opens your copy at ") +
-        `\`${namespacePath}\`, so the result is \`${skillPath}\`.`,
-      uploadCta: "[es] Upload the folder",
+        `Suelte la carpeta completa que **descargó** en el paso 1: ` +
+        `descomprimida, con el nombre \`${folder}\`, con subcarpetas y todo. ` +
+        "No la abra antes: GitHub conserva el nombre de la carpeta, que es lo " +
+        "que hace que caiga en el lugar correcto. Luego use **Commit changes** " +
+        "y elija *create a new branch and start a pull request* en lugar de " +
+        "confirmar en `main`." +
+        (reserved ? " Esto abre el registro en " : " Esto abre su copia en ") +
+        `\`${namespacePath}\`, de modo que el resultado es \`${skillPath}\`.`,
+      uploadCta: "Subir la carpeta",
       uploadWaiting:
-        "[es] Paste the address of your copy above and this becomes a link. A " +
-        "guessed one would send you to the wrong place.",
+        "Pegue arriba la dirección de su copia y esto se convierte en un " +
+        "enlace. Una dirección adivinada lo llevaría al lugar equivocado.",
 
-      pullRequestTitle: "[es] Open the pull request",
+      pullRequestTitle: "Abra el pull request",
       pullRequestBody:
-        "[es] If GitHub already offered you one at the end of step 3, that is this " +
-        "step done. The checks run on it, and a maintainer takes it from there.",
-      pullRequestCta: "[es] Open the pull request",
+        "Si GitHub ya le ofreció uno al final del paso 3, este paso ya está " +
+        "hecho. Las verificaciones se ejecutan sobre él, y desde ahí sigue un " +
+        "mantenedor.",
+      pullRequestCta: "Abrir el pull request",
 
-      handoff: "[es] Continue on GitHub",
+      handoff: "Continuar en GitHub",
       urlTooLong:
-        "[es] This is too long to carry in a link. Copy it below and paste it into " +
-        "GitHub instead.",
-      copy: "[es] Copy it",
-      copied: "[es] Copied",
+        "Esto es demasiado largo para llevarlo en un enlace. Cópielo abajo y " +
+        "péguelo en GitHub.",
+      copy: "Copiar",
+      copied: "Copiado",
 
       emailHandoff:
-        "[es] No GitHub account? [Email it to us](email) and we will add it for " +
-        "you. It goes in under the project\u2019s name rather than yours, with " +
-        "you credited as the maintainer — attach the skill file and anything " +
-        "it needs.",
+        "¿No tiene cuenta de GitHub? [Envíenosla por correo](email) y la " +
+        "agregamos por usted. Queda a nombre del proyecto y no del suyo, con " +
+        "usted acreditado como mantenedor: adjunte el archivo de la habilidad " +
+        "y todo lo que necesite.",
       emailTooLong: (address: string) =>
-        "[es] Too long to send by email link. Copy it above and mail it to " +
-        `[${address}](email) with the skill file attached.`,
+        "Demasiado largo para enviarlo por un enlace de correo. Cópielo arriba " +
+        `y envíelo a [${address}](email) con el archivo de la habilidad adjunto.`,
 
       noAccountPath:
-        "[es] Every route from here goes through GitHub, so an account is required " +
-        "— the checks that admit a skill work by confirming the account that " +
-        "submitted it owns the folder it went into. If that is a problem, open " +
-        "an [issue](issues) or ask whoever pointed you at this page; a " +
-        "maintainer can submit on your behalf, and the listing will credit you " +
-        "as the maintainer.",
+        "Todos los caminos desde aquí pasan por GitHub, así que se necesita " +
+        "una cuenta: las verificaciones que admiten una habilidad funcionan " +
+        "confirmando que la cuenta que la envió es dueña de la carpeta donde " +
+        "quedó. Si eso es un problema, abra un [issue](issues) o pregúntele a " +
+        "quien le recomendó esta página; un mantenedor puede enviarla en su " +
+        "nombre, y la publicación lo acreditará a usted como mantenedor.",
 
-      seeYaml: "[es] See what will be added",
-      commandLine: "[es] Or do it from the command line",
+      seeYaml: "Vea lo que se va a agregar",
+      commandLine: "O hágalo desde la línea de comandos",
     },
 
     update: {
-      heading: "[es] Update a skill you already listed",
+      heading: "Actualice una habilidad que ya publicó",
       lede:
-        "[es] Choose it and we will show you what to add. You paste two lines into " +
-        "the file on GitHub, and nothing else changes.",
-      nothingListed: "[es] Nothing is listed here yet.",
-      pick: "[es] Your skill",
-      choose: "[es] Choose a listing…",
+        "Elíjala y le mostraremos qué agregar. Usted pega dos líneas en el " +
+        "archivo en GitHub, y no cambia nada más.",
+      nothingListed: "Todavía no hay nada publicado aquí.",
+      pick: "Su habilidad",
+      choose: "Elija una publicación…",
       pasteHint:
-        "[es] Paste these into the `metadata:` block, keeping the indentation, and " +
-        "change the text.",
+        "Pegue esto en el bloque `metadata:`, conservando la sangría, y cambie " +
+        "el texto.",
 
-      editCta: (id: string) => `[es] Edit ${id} on GitHub`,
+      editCta: (id: string) => `Editar ${id} en GitHub`,
       notFinding:
-        "[es] Not finding it? Only skills already in this catalog appear here. If " +
-        "yours is not listed yet, [submit it as a new skill](new) first.",
+        "¿No la encuentra? Aquí solo aparecen habilidades que ya están en este " +
+        "catálogo. Si la suya todavía no está publicada, [envíela primero como " +
+        "habilidad nueva](new).",
     },
 
     problems: {
       notARepo:
-        "[es] That does not look like a GitHub repository. Paste its address, like " +
-        "github.com/you/your-skill.",
+        "Eso no parece un repositorio de GitHub. Pegue su dirección, como " +
+        "github.com/usted/su-habilidad.",
       notFound:
-        "[es] No public repository there. If it is private, download it and upload " +
-        "the zip instead.",
+        "No hay ningún repositorio público ahí. Si es privado, descárguelo y " +
+        "suba el zip.",
       rateLimited:
-        "[es] GitHub is rate-limiting anonymous requests from here. Wait a few " +
-        "minutes, or upload the zip instead.",
+        "GitHub está limitando las solicitudes anónimas desde aquí. Espere " +
+        "unos minutos o suba el zip.",
       tooBig:
-        "[es] That repository has too many files to read this way. Upload the skill " +
-        "folder as a zip instead.",
+        "Ese repositorio tiene demasiados archivos para leerlo así. Suba la " +
+        "carpeta de la habilidad como zip.",
       noSkillMdInRepo:
-        "[es] No SKILL.md at the top of that repository. A skill is a folder with " +
-        "SKILL.md in it.",
-      offline: "[es] Could not reach GitHub. Check your connection, or upload the zip instead.",
+        "No hay un SKILL.md en la raíz de ese repositorio. Una habilidad es " +
+        "una carpeta con un SKILL.md dentro.",
+      offline: "No se pudo conectar con GitHub. Revise su conexión o suba el zip.",
 
       noSkillMdInZip:
-        "[es] No SKILL.md at the root of the archive. A skill is a directory with " +
-        "SKILL.md at its top level.",
-      notAZip: "[es] This file could not be read as a zip archive.",
+        "No hay un SKILL.md en la raíz del archivo comprimido. Una habilidad " +
+        "es un directorio con SKILL.md en su nivel superior.",
+      notAZip: "No se pudo leer este archivo como un archivo zip.",
 
       pathEscape: (path: string) =>
-        `[es] ${path} — path escapes the skill directory, so it was skipped.`,
+        `${path} — la ruta se sale del directorio de la habilidad, así que se omitió.`,
       fileTooBig: (path: string, kb: number, capKb: number) =>
-        `[es] ${path} — too large at ${kb} KB. The cap is ${capKb} KB per file.`,
+        `${path} — demasiado grande: ${kb} KB. El límite es de ${capKb} KB por archivo.`,
       archiveTooBig: (capMb: number) =>
-        `[es] The archive declares more than ${capMb} MB uncompressed, which is ` +
-        "over the cap for a whole skill.",
+        `El archivo comprimido declara más de ${capMb} MB sin comprimir, que ` +
+        "está por encima del límite para una habilidad completa.",
 
       noFrontmatter:
-        "[es] This does not start with a --- block, so there is nothing to read yet.",
-      emptyFrontmatter: "[es] The --- block is empty.",
+        "Esto no empieza con un bloque ---, así que todavía no hay nada que leer.",
+      emptyFrontmatter: "El bloque --- está vacío.",
       noFrontmatterToAmend:
-        "[es] This file does not start with a --- block, so there is nothing to amend.",
-      invalidYaml: (reason: string) => `[es] The --- block is not valid YAML: ${reason}`,
+        "Este archivo no empieza con un bloque ---, así que no hay nada que modificar.",
+      invalidYaml: (reason: string) => `El bloque --- no es YAML válido: ${reason}`,
     },
   },
 
