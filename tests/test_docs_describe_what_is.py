@@ -258,4 +258,5 @@ def test_contributing_does_not_ask_the_submitter_to_regenerate_manifests() -> No
     for demand in ("fails the pull request if the committed copy differs",
                    "commit the result when you add"):
         assert demand not in text, demand
-    assert "after merge" in text or "after it merges" in text
+    assert re.search(r"after (your pull request |it )?merges|after merge", text), (
+        "CONTRIBUTING.md must say the registry regenerates the manifests after merge")
