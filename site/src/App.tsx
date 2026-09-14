@@ -7,7 +7,9 @@ import { Facet } from "./components/Facets";
 import { SkillCard } from "./components/SkillCard";
 import { TierBand, ContributeBand } from "./components/Bands";
 import { rich } from "./i18n/rich";
-import { useStrings } from "./i18n/strings";
+import {
+  DEFAULT_LOCALE, LOCALE_NAMES, locales, setLocale, useStrings,
+} from "./i18n/strings";
 import { applyFilters } from "./lib/filter";
 import { parseRoute, type Route } from "./lib/route";
 import { repoSlug } from "./lib/submit";
@@ -27,12 +29,35 @@ function initialTheme(): Theme {
   return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
+/** The language to open in: what was chosen last, else what the browser asks
+ *  for, else English.
+ *
+ *  The browser's preference is honoured only as far as the language — a reader
+ *  on `es-MX` or `es-419` gets the Spanish site — and it is matched against
+ *  `locales()` rather than against a list written here, so a third language is
+ *  still one line in `strings.ts`. A tag the site has no table for falls
+ *  through to English rather than to a blank page.
+ *
+ *  The saved choice wins over the browser, because it is the one the reader
+ *  made on this site. */
+function initialLocale(): string {
+  try {
+    const saved = localStorage.getItem("locale");
+    if (saved && locales().includes(saved)) return saved;
+  } catch {
+    /* private mode, blocked storage — fall through to the browser's language */
+  }
+  const preferred = navigator.language?.toLowerCase() ?? "";
+  return locales().find((tag) => preferred.startsWith(tag)) ?? DEFAULT_LOCALE;
+}
+
 export default function App() {
   const s = useStrings();
   const [index, setIndex] = useState<Index | null>(null);
   const [failed, setFailed] = useState(false);
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const [chosenLocale, setChosenLocale] = useState<string>(initialLocale);
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
 
   useEffect(() => {
@@ -52,6 +77,24 @@ export default function App() {
       /* not worth surfacing — the page still renders correctly */
     }
   }, [theme]);
+
+  // `<html lang>` is set once the strings are actually in hand, not when the
+  // choice is made: a document that claims Spanish while the page is still
+  // English is a document lying to a screen reader for as long as the fetch
+  // takes. A listing's own description carries its own `lang` and is not
+  // touched by any of this (#145).
+  useEffect(() => {
+    let live = true;
+    void setLocale(chosenLocale).then((ok) => {
+      if (live && ok) document.documentElement.lang = chosenLocale;
+    });
+    try {
+      localStorage.setItem("locale", chosenLocale);
+    } catch {
+      /* not worth surfacing — the page still renders in the chosen language */
+    }
+    return () => { live = false; };
+  }, [chosenLocale]);
 
   useEffect(() => {
     fetch(`${import.meta.env.BASE_URL}data/index.json`)
@@ -110,6 +153,22 @@ export default function App() {
                 {s.chrome.nav.submit}
               </a>
               <a href={GITHUB}>{s.chrome.nav.github}</a>
+              {/* Beside the theme toggle: both are settings for how the page
+                  is presented rather than places to go, and a reader looking
+                  for one looks in the same corner for the other. A select
+                  rather than a pair of links — the list grows with each
+                  locale, and the chosen language is visible in it without
+                  needing a legend. */}
+              <select
+                className="lang-switch"
+                aria-label={s.chrome.language.label}
+                value={chosenLocale}
+                onChange={(e) => setChosenLocale(e.target.value)}
+              >
+                {locales().map((tag) => (
+                  <option key={tag} value={tag}>{LOCALE_NAMES[tag] ?? tag}</option>
+                ))}
+              </select>
               <button
                 className="theme-toggle"
                 onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -235,7 +294,7 @@ export default function App() {
       <footer className="footer">
         <p>{s.chrome.footer.disclaimer}</p>
         {index && (
-          <p className="footer__meta">
+          <p className="footer__meta" data-testid="footer-meta">
             {rich(s.chrome.footer.meta(s.chrome.footer.date(index.generated)), {
               repo: index.repo,
               about: "#/about",

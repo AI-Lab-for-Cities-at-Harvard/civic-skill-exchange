@@ -35,6 +35,8 @@
  *  ==========================================================
  */
 
+import { locale } from "./locale";
+
 /** A select's or a radio group's choices, as `[value, label]`. The value is an
  *  enum the schema defines and never translates; the label is prose. */
 type Choices = [value: string, label: string][];
@@ -182,6 +184,22 @@ export const en = {
       submit: "Submit",
       github: "GitHub",
     },
+    /** Beside a link into `docs/`, which stays in English in every locale
+     *  (ADR 0004 decision 4).
+     *
+     *  Empty here, and that is the answer rather than a missing one: an English
+     *  reader does not need to be told that an English document is in English.
+     *  A locale that is not English fills it in, `DocLink` renders it only when
+     *  it is non-empty, and the decision stays in the table where the next
+     *  locale can see it. */
+    docsInEnglish: "",
+
+    /** The language switcher. Only its accessible name is prose: each locale
+     *  is offered under its own name, which is the same in every language and
+     *  lives in `strings.ts` rather than here. */
+    language: {
+      label: "Language",
+    },
     theme: {
       toLight: "Light",
       toDark: "Dark",
@@ -206,8 +224,11 @@ export const en = {
       meta: (generated: string) =>
         `Catalog generated ${generated} · ` +
         "[Source and submissions on GitHub](repo) · [About this project](about)",
-      /** The date under the catalogue, formatted the reader's own way. */
-      date: (iso: string) => new Date(iso).toLocaleDateString(),
+      /** The date under the catalogue, written the reader's own way round.
+       *  `locale()` rather than the browser's default: the reader chose a
+       *  language for the sentence around this date, and a Spanish page with a
+       *  month-first date in it is a page in two languages. */
+      date: (iso: string) => new Date(iso).toLocaleDateString(locale()),
     },
   },
 
@@ -1355,10 +1376,12 @@ export const en = {
   history: {
     heading: "Version and history",
     /** Month and year. A precise timestamp invites reading a week's difference
-     *  as meaningful, which it is not. The locale tag is part of the wording,
-     *  so it lives with it. */
+     *  as meaningful, which it is not. UTC is pinned rather than taken from the
+     *  reader's zone: midnight on the 1st is the month before, anywhere west of
+     *  Greenwich, and a listing that arrived in March should not read February
+     *  in Boston. */
     when: (iso: string) => new Date(iso).toLocaleDateString(
-      "en-US", { month: "long", year: "numeric", timeZone: "UTC" }),
+      locale(), { month: "long", year: "numeric", timeZone: "UTC" }),
     version: "Version",
     versionAside:
       "— the author’s own number for it. Self-reported, and not checked " +
