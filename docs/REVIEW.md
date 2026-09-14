@@ -166,11 +166,38 @@ Comment on the review-request issue with that write-up, the SHA you reviewed and
 it is written in, and no other" — nothing more was checked. When you fill it
 in, it is a verified list a reader can act on, in a way `civic.languages-tested`
 never can be: that field is the author's own claim, checked by nobody. What
-you should actually do to earn a language entry is not decided yet — see
-[ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md).
-This checklist does not change until that question is ruled.
+earns an entry is the section below.
 
 **The SHA is the attestation.** You are signing off on one exact commit, not on a skill name and not on a person. If the content changes, your attestation stops applying automatically and the skill drops back to Community. That is the mechanism working — you do not need to monitor anything.
+
+### Verifying a language
+
+Recording a language on an attestation is a claim that you ran the skill in
+that language, not that you read it. Three checks, all in the language you
+are recording, and nothing else:
+
+1. **Run the skill on a realistic task written in that language.** A task the
+   skill's `civic.use-when` describes, phrased the way a person from that
+   language community would phrase it.
+2. **The output comes back in that language, and every promise in
+   `description` still holds.** A model follows an English skill in Spanish
+   readily; what you are checking is that the skill's own instructions and
+   examples do not pull the answer back into English or quietly drop a step.
+3. **Every executable under `scripts/` works for that language, or the skill
+   says it does not.** Code is where language bias hides: a reading-level
+   formula calibrated for English, a regex over English stop words. A script
+   that is honestly labelled English-only passes; one that returns a plausible
+   wrong answer in Spanish does not.
+
+Deliberately not part of this: whether legally required elements,
+terminology or citations survive. Those are properties of a jurisdiction, not
+of a language, and belong to the localization axis (`civic.localization`,
+[LOCALIZATION.md](LOCALIZATION.md)). A skill can be verified in Spanish and
+still be wrong for Bogotá.
+
+Write the tags you verified into `languages`, and say in `notes` what task you
+ran. The language the skill is written in is recorded the same way as any
+other: it is not verified until it has been run.
 
 ### Checking that it took
 

@@ -260,3 +260,16 @@ def test_contributing_does_not_ask_the_submitter_to_regenerate_manifests() -> No
         assert demand not in text, demand
     assert re.search(r"after (your pull request |it )?merges|after merge", text), (
         "CONTRIBUTING.md must say the registry regenerates the manifests after merge")
+
+
+def test_review_md_says_what_earns_a_language_entry() -> None:
+    """Question 5 on #143 was ruled: three checks, none about jurisdiction.
+    REVIEW.md may no longer call it undecided, and must name all three."""
+    review = _text("docs/REVIEW.md")
+    assert "not decided yet" not in review
+    section = re.sub(r"\s+", " ", review[review.index("### Verifying a language"):])
+    for check in ("realistic task", "every promise in `description`", "under `scripts/`"):
+        assert check in section, check
+    assert "jurisdiction" in section  # says what is deliberately not checked
+    # Still nine checklist items: the language check is a section, not item 10.
+    assert "### 10." not in review
