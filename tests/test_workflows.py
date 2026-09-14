@@ -897,7 +897,9 @@ def test_the_validate_manifest_step_is_a_warning_again() -> None:
     regeneration — but it may not block the merge."""
     lines = VALIDATE_YML.splitlines()
     for i, line in enumerate(lines):
-        if "build_marketplace.py --check" in line:
+        # The root check exactly; `--check-in-skills` (#193) is a different
+        # step and is meant to block.
+        if re.search(r"build_marketplace\.py --check\b(?!-)", line):
             window = "\n".join(lines[max(0, i - 8):i + 3])
             assert "continue-on-error: true" in window, (
                 "the marketplace manifest step in validate.yml must carry "
@@ -924,7 +926,7 @@ def test_the_validate_manifest_step_asks_the_submitter_for_nothing() -> None:
     """The step's comment and log line are read by the person who submitted.
     Neither may tell them to run a generator or commit its output."""
     steps = [s for s in _steps_with_comments(VALIDATE_YML)
-             if "build_marketplace.py --check" in s]
+             if re.search(r"build_marketplace\.py --check\b(?!-)", s)]
     assert len(steps) == 1, (
         f"expected one manifest step in validate.yml, found {len(steps)}"
     )
@@ -1153,3 +1155,23 @@ def test_workflow_run_guards_require_a_push_to_this_repository(wf_name: str) -> 
                 "github.repository") in guard, (
             f"{wf_name}: a workflow_run guard does not require the head "
             "repository to be this one (#190)")
+
+
+# --------------------------------------------------------------------------- #
+# #193: inside skills/ a generated file is absent or the generator's, and that
+# is blocking even though the root manifest check is a warning (#188).
+
+
+def test_the_skills_job_blocks_a_foreign_generated_file() -> None:
+    text = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+    assert "build_marketplace.py --check-in-skills" in text, (
+        "validate.yml does not run the in-skills generated-file check (#193)")
+    steps = _steps_with_comments(text)
+    blocking = [s for s in steps if "--check-in-skills" in s]
+    assert blocking and all("continue-on-error" not in s for s in blocking), (
+        "the in-skills check must block; it is what stops a hand-written "
+        "plugin manifest carrying inline hooks (#193)")
+    warning = [s for s in steps if "build_marketplace.py --check" in s
+               and "--check-in-skills" not in s]
+    assert warning and all("continue-on-error: true" in s for s in warning), (
+        "the root manifest check stays a warning (#188)")

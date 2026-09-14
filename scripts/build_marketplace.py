@@ -287,6 +287,25 @@ def generated(root: Path) -> dict[Path, str]:
     return out
 
 
+def foreign_generated_files(root: Path = ROOT) -> list[Path]:
+    """Generated files inside skills/ that exist and are not the generator's.
+
+    The root marketplaces may be stale on a pull request; that is a warning,
+    and the post-merge job repairs them (#188). A generated file inside a
+    skill directory is different: `.claude-plugin/plugin.json` can carry inline
+    `hooks` and `mcpServers`, and it is allowed in a listing only because the
+    registry writes it (#186). So inside skills/ the rule is absent, or exactly
+    what the generator writes — and it blocks (#193). Absent is fine: the
+    post-merge job will write it.
+    """
+    skills = root / "skills"
+    return sorted(
+        path for path, content in generated(root).items()
+        if skills in path.parents and path.is_file()
+        and path.read_text(encoding="utf-8") != content
+    )
+
+
 def write_all(root: Path = ROOT) -> list[Path]:
     written = []
     for path, content in generated(root).items():
@@ -306,6 +325,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
                         help="exit non-zero if the committed manifest is stale")
+    parser.add_argument("--check-in-skills", action="store_true",
+                        help="exit non-zero if a generated file inside skills/ "
+                             "exists and is not what the generator writes; "
+                             "absent files and stale root marketplaces pass")
     parser.add_argument("--paths", action="store_true",
                         help="print the paths this script owns, one per line, "
                              "relative to the repository root, and write "
@@ -325,6 +348,21 @@ def main() -> int:
         for path in paths:
             print(path.relative_to(ROOT).as_posix())
         return 0
+
+    if args.check_in_skills:
+        try:
+            foreign = foreign_generated_files(ROOT)
+        except DuplicatePluginName as exc:
+            print(f"error {exc}", file=sys.stderr)
+            return 1
+        if not foreign:
+            print("ok    every generated file inside skills/ is the generator's, or absent")
+            return 0
+        for path in foreign:
+            print(f"FAIL  {path.relative_to(ROOT)}", file=sys.stderr)
+        print("      This file is written by the registry, never by hand. Delete it;\n"
+              "      the registry regenerates it after merge.", file=sys.stderr)
+        return 1
 
     if args.check:
         try:

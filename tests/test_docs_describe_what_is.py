@@ -209,3 +209,15 @@ def test_every_language_security_md_names_has_a_signature() -> None:
             "SECURITY.md claims Spanish coverage but the signature does not "
             "match a Spanish phrase"
         )
+
+
+def test_security_md_names_the_check_that_blocks_a_foreign_plugin_manifest() -> None:
+    """The reason SECURITY.md gives for allowing `.claude-plugin/plugin.json`
+    is that a differing copy is blocked. Since #188 the root manifest check
+    only warns, so the document has to name the check that does block (#193),
+    and that check has to exist."""
+    security = _text("docs/SECURITY.md")
+    validate = _text(".github/workflows/validate.yml")
+    assert "--check-in-skills" in validate
+    assert "--check-in-skills" in security
+    assert "a blocking step in `validate.yml`, with nothing repairing" not in security
