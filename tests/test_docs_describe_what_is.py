@@ -221,3 +221,41 @@ def test_security_md_names_the_check_that_blocks_a_foreign_plugin_manifest() -> 
     assert "--check-in-skills" in validate
     assert "--check-in-skills" in security
     assert "a blocking step in `validate.yml`, with nothing repairing" not in security
+
+# --------------------------------------------------------------------------- #
+# #194: what a submitter reads about civic.deployed-in, and about manifests.
+
+
+def _organizational_details() -> list[str]:
+    """The fields the validator requires for team/organization deployments,
+    read from rules.ts so the docs are held to the code rather than to memory."""
+    rules = _text("validator/src/rules.ts")
+    m = re.search(r'ORGANIZATIONAL_DETAILS\s*=\s*\[([^\]]*)\]', rules)
+    assert m, "rules.ts no longer defines ORGANIZATIONAL_DETAILS"
+    return re.findall(r'"([^"]+)"', m.group(1))
+
+
+def test_deployed_in_is_documented_as_optional_wherever_it_is_required_by_nobody() -> None:
+    """#67 dropped the deployed-in requirement; three surfaces kept saying it
+    was required. Hold them to ORGANIZATIONAL_DETAILS."""
+    assert "civic.deployed-in" not in _organizational_details()
+    contributing = _text("CONTRIBUTING.md")
+    row = next(l for l in contributing.splitlines() if l.startswith("| `civic.deployed-in`"))
+    assert "Same rule" not in row and "Optional" in row, row
+    template = _text(".github/ISSUE_TEMPLATE/submit-skill.yml")
+    assert template.count('Required unless you answered "none".') == 0, (
+        "the issue template still says deployed-at/deployed-in are required unless none")
+    schema = json.loads(_text("schema/skill.schema.json"))
+    desc = schema["properties"]["metadata"]["properties"]["civic.deployed-in"]["description"]
+    assert "Required alongside" not in desc and "Optional" in desc, desc
+
+
+def test_contributing_does_not_ask_the_submitter_to_regenerate_manifests() -> None:
+    """Since #188 the registry regenerates after merge; the pull request check
+    is a warning. CONTRIBUTING.md may not tell a contributor to run the
+    generator and commit, or that the check fails the pull request."""
+    text = _text("CONTRIBUTING.md")
+    for demand in ("fails the pull request if the committed copy differs",
+                   "commit the result when you add"):
+        assert demand not in text, demand
+    assert "after merge" in text or "after it merges" in text
