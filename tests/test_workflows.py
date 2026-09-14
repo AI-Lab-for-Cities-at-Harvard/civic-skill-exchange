@@ -897,7 +897,9 @@ def test_the_validate_manifest_step_is_a_warning_again() -> None:
     regeneration — but it may not block the merge."""
     lines = VALIDATE_YML.splitlines()
     for i, line in enumerate(lines):
-        if "build_marketplace.py --check" in line:
+        # The root check exactly; `--check-in-skills` (#193) is a different
+        # step and is meant to block.
+        if re.search(r"build_marketplace\.py --check\b(?!-)", line):
             window = "\n".join(lines[max(0, i - 8):i + 3])
             assert "continue-on-error: true" in window, (
                 "the marketplace manifest step in validate.yml must carry "
@@ -924,7 +926,7 @@ def test_the_validate_manifest_step_asks_the_submitter_for_nothing() -> None:
     """The step's comment and log line are read by the person who submitted.
     Neither may tell them to run a generator or commit its output."""
     steps = [s for s in _steps_with_comments(VALIDATE_YML)
-             if "build_marketplace.py --check" in s]
+             if re.search(r"build_marketplace\.py --check\b(?!-)", s)]
     assert len(steps) == 1, (
         f"expected one manifest step in validate.yml, found {len(steps)}"
     )
