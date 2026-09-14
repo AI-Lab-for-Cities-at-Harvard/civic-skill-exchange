@@ -66,3 +66,14 @@ attestations:
     .claude-plugin/plugin.json (#186). That registry-written file is the only
     change to the directory since 4bb255c; the skill's own content is
     unchanged since c43c4c1.
+ - skill: "civic-skills/generalize-skill"
+   sha: "df5281504c45f435f11e3040fab7a490e41536af"
+   reviewers: ["AI Lab for Cities at Harvard"]
+   reviewed: 2026-09-12
+   expires: 2027-09-12
+   languages: ["en"]
+   notes: >
+    Lab-authored, in the reserved civic-skills namespace. 1. The description is accurate.
+    2. There are no scripts in the skill. 3. Allowed tool list necessary to read skill. 
+    4. NA, 5. NA, 6. No the skill is not deceitful, 7. The tool is appropriate. 8. License is appropriate
+    9. Yes, the tool is general
