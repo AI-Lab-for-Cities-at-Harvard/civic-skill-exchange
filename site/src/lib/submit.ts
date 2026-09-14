@@ -9,7 +9,7 @@
  */
 
 import type { Frontmatter } from "@civic-skill-exchange/validator";
-import { strings } from "../i18n/strings";
+import { en } from "../i18n/en";
 
 export interface Draft {
   /** GitHub login. The namespace, and what L1 checks the commit author against. */
@@ -239,7 +239,14 @@ export function uploadUrl(repo: string, draft: Draft): string {
 export function mailtoUrl(email: string, draft: Draft, yaml: string): string {
   // A person reads this, so the wording is in the string table (#149). The
   // frontmatter it carries is not: that is the file, and it does not translate.
-  const say = strings().email;
+  //
+  // The English table explicitly, not the reader's (#150). This mail is the one
+  // thing the site composes that its author does not read: a maintainer
+  // receives it and opens the pull request from it, and a Spanish submission
+  // arriving as Spanish prose would need translating before it could be acted
+  // on. The submitter's own words in it — their name, their skill's
+  // description — are theirs and are carried through untouched.
+  const say = en.email;
   const subject = say.subject(trim(draft.name) || say.noName);
   const body = say.body(
     trim(draft.maintainer) || say.noMaintainer,

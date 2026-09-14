@@ -29,10 +29,10 @@
 
 attestations:
  - skill: "civic-skills/plain-language-notice-rewriter"
-   sha: "4bb255c3a2650ca32eea7b4aecac2a8b4875c55e"
+   sha: "df5281504c45f435f11e3040fab7a490e41536af"
    reviewers: ["AI Lab for Cities at Harvard"]
-   reviewed: 2026-09-09
-   expires: 2027-09-09
+   reviewed: 2026-09-12
+   expires: 2027-09-12
    notes: >
     Lab-authored, in the reserved civic-skills namespace  item 7 was judged
     on the Lab's own work, which is where that costs most.
@@ -57,3 +57,8 @@ attestations:
     content it was run against is byte-identical apart from that line. The
     language question (#143, question 5) is still open, so this records no
     verified languages.
+
+    Re-attested 2026-09-12 at the commit that added the generated
+    .claude-plugin/plugin.json (#186). That registry-written file is the only
+    change to the directory since 4bb255c; the skill's own content is
+    unchanged since c43c4c1.
