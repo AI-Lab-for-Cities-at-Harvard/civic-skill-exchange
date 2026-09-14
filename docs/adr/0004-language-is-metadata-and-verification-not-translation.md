@@ -51,9 +51,15 @@ language is screened more weakly and the document says that too.
 **7. The localize contract carries an optional `language` slot**, in both
 copies. Adding an optional key is not a `contract_version` bump.
 
-**Not decided:** what a reviewer does to earn a language entry on an
-attestation, and whether `plain-language-notice-rewriter` is re-attested as
-English-only. Open on #143.
+**Not decided at acceptance, ruled 2026-09-13 on #143 (question 5):** a
+reviewer earns a language entry by three checks in that language — run the
+skill on a realistic task, confirm the output is in that language with every
+promise in `description` intact, and confirm every executable under `scripts/`
+works for it or the skill says it does not. Jurisdiction-bound properties are
+not checked; they belong to the localization axis. The rewriter records
+`languages: [en]`. Written into REVIEW.md as its own section, so the nine
+checklist items stay nine. Revisit condition (d) below is therefore met by
+amendment rather than supersession.
 
 ## Consequences
 

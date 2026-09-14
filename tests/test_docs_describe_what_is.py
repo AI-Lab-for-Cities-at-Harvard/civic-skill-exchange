@@ -267,7 +267,7 @@ def test_review_md_says_what_earns_a_language_entry() -> None:
     REVIEW.md may no longer call it undecided, and must name all three."""
     review = _text("docs/REVIEW.md")
     assert "not decided yet" not in review
-    section = review[review.index("### Verifying a language"):]
+    section = re.sub(r"\s+", " ", review[review.index("### Verifying a language"):])
     for check in ("realistic task", "every promise in `description`", "under `scripts/`"):
         assert check in section, check
     assert "jurisdiction" in section  # says what is deliberately not checked
