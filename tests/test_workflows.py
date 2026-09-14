@@ -1153,3 +1153,23 @@ def test_workflow_run_guards_require_a_push_to_this_repository(wf_name: str) -> 
                 "github.repository") in guard, (
             f"{wf_name}: a workflow_run guard does not require the head "
             "repository to be this one (#190)")
+
+
+# --------------------------------------------------------------------------- #
+# #193: inside skills/ a generated file is absent or the generator's, and that
+# is blocking even though the root manifest check is a warning (#188).
+
+
+def test_the_skills_job_blocks_a_foreign_generated_file() -> None:
+    text = (ROOT / ".github" / "workflows" / "validate.yml").read_text(encoding="utf-8")
+    assert "build_marketplace.py --check-in-skills" in text, (
+        "validate.yml does not run the in-skills generated-file check (#193)")
+    steps = _steps_with_comments(text)
+    blocking = [s for s in steps if "--check-in-skills" in s]
+    assert blocking and all("continue-on-error" not in s for s in blocking), (
+        "the in-skills check must block; it is what stops a hand-written "
+        "plugin manifest carrying inline hooks (#193)")
+    warning = [s for s in steps if "build_marketplace.py --check" in s
+               and "--check-in-skills" not in s]
+    assert warning and all("continue-on-error: true" in s for s in warning), (
+        "the root manifest check stays a warning (#188)")
