@@ -33,6 +33,7 @@ attestations:
    reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-09-12
    expires: 2027-09-12
+   languages: ["en"]
    notes: >
     Lab-authored, in the reserved civic-skills namespace  item 7 was judged
     on the Lab's own work, which is where that costs most.
@@ -55,8 +56,11 @@ attestations:
     the previous pin, 4afc76b, which was itself a manifest regeneration over
     content unchanged since c43c4c1. The checklist was not re-run; the
     content it was run against is byte-identical apart from that line. The
-    language question (#143, question 5) is still open, so this records no
-    verified languages.
+    Verified in English (#143, question 5, ruled 2026-09-13): run on a
+    realistic English notice-rewriting task; output in English with every
+    promise in the description intact; scripts/reading_level.py works for
+    English. It has not been run in any other language, and the script is
+    English Flesch-Kincaid, so no other language is recorded.
 
     Re-attested 2026-09-12 at the commit that added the generated
     .claude-plugin/plugin.json (#186). That registry-written file is the only
