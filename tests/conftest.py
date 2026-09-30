@@ -105,3 +105,70 @@ def make_skill(tmp_path):
 
     return _make
 
+
+
+PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+MCP_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
+
+
+@pytest.fixture
+def make_plugin(tmp_path):
+    """Build a plugin directory in the Agent Plugins layout (ADR 0005).
+    Returns its path.
+
+    make_plugin()                                 two skills, one remote server
+    make_plugin(skills=["a"])                     choose the skills
+    make_plugin(manifest={...})                   merged over the default manifest
+    make_plugin(mcp=None)                         no mcp.json at all
+    make_plugin(mcp={"s": {...}})                 replace the servers
+    make_plugin(files={"skills/a/scripts/x.py": "..."})
+    """
+    import json
+
+    def _make(
+        name: str = "housing-dashboards",
+        namespace: str = "testuser",
+        skills: list[str] | None = None,
+        manifest: dict | None = None,
+        mcp: dict | None | str = "default",
+        files: dict[str, str] | None = None,
+        category: str = "finance",
+    ) -> Path:
+        plugin_dir = tmp_path / "plugins" / namespace / name
+        plugin_dir.mkdir(parents=True, exist_ok=True)
+
+        data = {
+            "$schema": PLUGIN_SCHEMA,
+            "name": f"{namespace}-{name}",
+            "description": "Housing dashboards and briefs for any U.S. city or county.",
+            "author": {"name": "Test Suite"},
+            "license": "MIT",
+            **(manifest or {}),
+        }
+        (plugin_dir / "plugin.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+        if mcp == "default":
+            mcp = {"census": {"type": "streamable-http",
+                              "url": "https://census.example.org/mcp"}}
+        if mcp is not None:
+            (plugin_dir / "mcp.json").write_text(
+                json.dumps({"$schema": MCP_SCHEMA, "mcpServers": mcp}, indent=2),
+                encoding="utf-8")
+
+        for skill in skills if skills is not None else ["build-dashboard", "write-brief"]:
+            front = {**VALID_FRONTMATTER, "name": skill,
+                     "metadata": {**VALID_FRONTMATTER["metadata"],
+                                  "civic.category": category}}
+            path = plugin_dir / "skills" / skill / "SKILL.md"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(render_frontmatter(front) + "\n\n# Skill\n\nBody.\n",
+                            encoding="utf-8")
+
+        for rel, content in (files or {}).items():
+            path = plugin_dir / rel
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content, encoding="utf-8")
+
+        return plugin_dir
+
+    return _make
