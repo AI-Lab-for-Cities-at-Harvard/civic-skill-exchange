@@ -17,8 +17,11 @@ import type { Finding } from "./types";
 const finding = (where: string, message: string): Finding => ({ where, message });
 
 /** `skills/{namespace}/{name}/SKILL.md`, and nothing else at the top level of a
- *  skill. Two path segments under `skills/`, no more and no fewer. */
-const CORRECT = /^skills\/[^/]+\/[^/]+\/SKILL\.md$/;
+ *  skill. Two path segments under `skills/`, no more and no fewer.
+ *
+ *  Or a plugin's skill, `plugins/{namespace}/{name}/skills/{skill}/SKILL.md`,
+ *  which is where the Agent Plugins layout puts them (ADR 0005). */
+const CORRECT = /^(?:skills\/[^/]+\/[^/]+|plugins\/[^/]+\/[^/]+\/skills\/[^/]+)\/SKILL\.md$/;
 
 /** A SKILL.md that is documentation rather than a skill.
  *
@@ -28,7 +31,8 @@ const CORRECT = /^skills\/[^/]+\/[^/]+\/SKILL\.md$/;
  *  documentation and templates, and no client loads a skill from either.
  */
 const EXEMPT = new RegExp(
-  `^skills/[^/]+/[^/]+/(${DOC_DIRECTORIES.join("|")})/.*SKILL\\.md$`);
+  `^(?:skills/[^/]+/[^/]+|plugins/[^/]+/[^/]+/skills/[^/]+)/` +
+  `(${DOC_DIRECTORIES.join("|")})/.*SKILL\\.md$`);
 
 const isSkillFile = (path: string) =>
   path === "SKILL.md" || path.endsWith("/SKILL.md");
@@ -52,10 +56,10 @@ export function checkChangedLayout(paths: string[]): Finding[] {
       ? clean.slice(0, clean.lastIndexOf("/"))
       : "your-skill";
     findings.push(finding(clean,
-      `a skill must live at skills/{your-github-username}/{skill-name}/SKILL.md. ` +
-      `This one is at ${clean}, so nothing in the registry reads it — the index ` +
-      `and the checks both look under skills/ only. Move ${suggestion} into ` +
-      `skills/{your-github-username}/.`));
+      `a skill must live at skills/{your-github-username}/{skill-name}/SKILL.md, ` +
+      `or inside a plugin at plugins/{your-github-username}/{plugin-name}/` +
+      `skills/{skill-name}/SKILL.md. This one is at ${clean}, so nothing in the ` +
+      `registry reads it. Move ${suggestion} into skills/{your-github-username}/.`));
   }
 
   return findings;
@@ -84,7 +88,7 @@ export function checkNamespaceCollisions(paths: string[]): Finding[] {
     const clean = path.trim();
     if (!clean) continue;
     const parts = clean.split("/");
-    if (parts[0] !== "skills" || !parts[1]) continue;
+    if ((parts[0] !== "skills" && parts[0] !== "plugins") || !parts[1]) continue;
 
     const namespace = parts[1];
     const key = namespace.toLowerCase();
