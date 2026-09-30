@@ -11,6 +11,12 @@
 # Contributor namespaces — no owner, so no CODEOWNER review required.
 /skills/
 
+# Plugins (ADR 0005) launch MCP servers and ship several skills' code at once.
+# Until the owner rules on how they are reviewed, every plugin pull request needs
+# a maintainer — stated here rather than left to the `*` line above, so that
+# opening plugins/ to contributors is a decision somebody makes, not a default.
+/plugins/  @AI-Lab-for-Cities-at-Harvard/maintainers
+
 # These are the levers. A PR touching any of them changes what the registry checks,
 # what it publishes, or who it trusts, and always needs maintainer review.
 /schema/            @AI-Lab-for-Cities-at-Harvard/maintainers
