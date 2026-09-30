@@ -152,6 +152,25 @@ describe("the plugin page", () => {
     expect(row?.textContent).toContain("executed");
   });
 
+  it("shows the plugin's own fit guidance and provenance, declared once for it", async () => {
+    serve({ "plugins/ns/housing-dashboards.json": detail({
+      use_when: "A city wants its housing picture in one place.",
+      avoid_when: "Not for individual case decisions.",
+      provenance: {
+        self_reported: true, affiliation: "government", deployment: "organization",
+        deployed_at: "City of Example", deployed_in: "US-IN / South Bend",
+        deployed_since: "2026",
+      },
+    }) });
+    render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+    const fit = await screen.findByRole("region", { name: /when to use this/i });
+    expect(fit.textContent).toMatch(/housing picture in one place/);
+    expect(fit.textContent).toMatch(/individual case decisions/);
+    const provenance = screen.getByRole("region", { name: /where it has been used/i });
+    expect(provenance.textContent).toMatch(/City of Example/);
+    expect(provenance.textContent).toMatch(/US-IN \/ South Bend/);
+  });
+
   it("says plainly when there is no such plugin", async () => {
     serve({});
     render(<PluginDetail namespace="ns" name="missing" />);

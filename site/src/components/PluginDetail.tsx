@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
 import { History } from "./History";
-import { TierBadge, LabBadge, SensitivityBadge } from "./Badges";
+import { TierBadge, LabBadge, SensitivityBadge, DeploymentBadge } from "./Badges";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { label } from "../lib/labels";
@@ -74,6 +74,7 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
           <TierBadge tier={detail.tier} reviewed={detail.reviewed} />
           <LabBadge namespace={detail.namespace} />
           <SensitivityBadge value={detail.data_sensitivity} />
+          <DeploymentBadge provenance={detail.provenance} detail />
         </div>
         <h1 className="detail__title">{detail.name}</h1>
         <p className="detail__desc" lang={language}>{detail.description}</p>
@@ -84,6 +85,28 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
 
       <div className="detail__grid">
         <div className="detail__main">
+          {(detail.use_when || detail.avoid_when) && (
+            /* The plugin's own, declared once in plugin.json (ADR 0005). */
+            <section aria-labelledby="plugin-fit-heading" className="detail__section">
+              <h2 className="h2" id="plugin-fit-heading">{d.fit.heading}</h2>
+              <p>{d.fit.caveat}</p>
+              <dl className="fit" lang={language}>
+                {detail.use_when && (
+                  <div className="fit__item">
+                    <dt>{d.fit.use}</dt>
+                    <dd>{detail.use_when}</dd>
+                  </div>
+                )}
+                {detail.avoid_when && (
+                  <div className="fit__item fit__item--avoid">
+                    <dt>{d.fit.avoid}</dt>
+                    <dd>{detail.avoid_when}</dd>
+                  </div>
+                )}
+              </dl>
+            </section>
+          )}
+
           <section aria-labelledby="plugin-skills-heading" className="detail__section">
             <h2 className="h2" id="plugin-skills-heading">{p.skills.heading}</h2>
             <p>{p.skills.caveat}</p>
@@ -178,6 +201,26 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
           </section>
 
           <History history={detail.history} version={detail.version} />
+
+          <section className="facts" aria-labelledby="plugin-prov-heading">
+            <h2 className="h3" id="plugin-prov-heading">{d.provenance.heading}</h2>
+            <p className="facts__note">{d.provenance.note}</p>
+            <dl>
+              <div>
+                <dt>{d.provenance.deployment}</dt>
+                <dd>{label(s.vocabulary.deployment, detail.provenance.deployment)}</dd>
+              </div>
+              {detail.provenance.deployed_at && (
+                <div><dt>{d.provenance.at}</dt><dd>{detail.provenance.deployed_at}</dd></div>
+              )}
+              {detail.provenance.deployed_in && (
+                <div><dt>{d.provenance.in}</dt><dd>{detail.provenance.deployed_in}</dd></div>
+              )}
+              {detail.provenance.deployed_since && (
+                <div><dt>{d.provenance.since}</dt><dd>{detail.provenance.deployed_since}</dd></div>
+              )}
+            </dl>
+          </section>
         </aside>
       </div>
     </div>

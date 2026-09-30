@@ -137,6 +137,10 @@ export interface Plugin {
   version: string | null;
   maintainer: string | null;
   keywords: string[];
+  /** The plugin's own, declared once in plugin.json (ADR 0005) — plain text. */
+  use_when: string | null;
+  avoid_when: string | null;
+  provenance: Provenance;
   /** Every category any of its skills declares. */
   categories: string[];
   languages: string[];

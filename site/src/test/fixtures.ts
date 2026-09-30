@@ -87,6 +87,12 @@ export function makePlugin(over: Partial<Plugin> = {}): Plugin {
     mcp_servers: [
       { name: "housing-census", type: "streamable-http", target: "census.example.org" },
     ],
+    use_when: null,
+    avoid_when: null,
+    provenance: {
+      self_reported: true, affiliation: "individual", deployment: "none",
+      deployed_at: null, deployed_in: null, deployed_since: null,
+    },
     tier: "community",
     reason: "no review attestation",
     verified_languages: null,
