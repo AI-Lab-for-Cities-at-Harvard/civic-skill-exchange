@@ -98,12 +98,78 @@ export interface SkillDetail extends Skill {
   archive?: { path: string; size: number };
 }
 
+/** One skill inside a plugin (ADR 0005): the fields a listed skill publishes
+ *  that describe what it does, and none of the per-listing ones — tier,
+ *  history and files belong to the plugin, which installs as one thing. */
+export interface PluginSkill {
+  name: string;
+  description: string;
+  allowed_tools: string[];
+  category: string | null;
+  category_secondary: string | null;
+  scope: string | null;
+  jurisdiction: string | null;
+  localization: Localization;
+  language: string | null;
+  data_sensitivity: string | null;
+  human_review: string | null;
+  use_when: string | null;
+  avoid_when: string | null;
+}
+
+/** An MCP server a plugin declares. `target` is the host a remote server
+ *  talks to, or the command a local one runs. */
+export interface McpServer {
+  name: string;
+  type: string;
+  target: string;
+}
+
+/** Several skills and the MCP servers they use, installed as one (ADR 0005).
+ *  Published in `index.json` as `plugins`, beside `skills` and never inside it. */
+export interface Plugin {
+  kind: "plugin";
+  id: string;
+  name: string;
+  namespace: string;
+  description: string;
+  license: string | null;
+  version: string | null;
+  maintainer: string | null;
+  keywords: string[];
+  /** Every category any of its skills declares. */
+  categories: string[];
+  languages: string[];
+  /** The most sensitive data any one of its skills handles. */
+  data_sensitivity: string | null;
+  skills: PluginSkill[];
+  mcp_servers: McpServer[];
+  tier: Tier;
+  reason: string;
+  reviewed?: { date: string; expires: string; reviewers: string[]; notes: string };
+  drift?: boolean;
+  verified_languages: string[] | null;
+  sha: string | null;
+  history: Skill["history"];
+  has_scripts: boolean;
+  script_files: string[];
+  path: string;
+  download: string;
+}
+
+export interface PluginDetail extends Plugin {
+  files: SkillFile[];
+  archive?: { path: string; size: number };
+}
+
 export interface Index {
   generated: string;
   repo: string;
-  counts: { total: number; reviewed: number; community: number };
+  counts: { total: number; reviewed: number; community: number; plugins?: number };
   disclaimer: string;
   skills: Skill[];
+  /** Absent from an index built before plugins existed. */
+  plugins?: Plugin[];
 }
 
 export interface Filters {

@@ -6,7 +6,7 @@
  * the mix of tiers the browse page has to render.
  */
 
-import type { Index, Skill } from "../lib/types";
+import type { Index, Plugin, Skill } from "../lib/types";
 
 export function makeSkill(over: Partial<Skill> = {}): Skill {
   return {
@@ -57,5 +57,45 @@ export function makeIndex(skills: Skill[]): Index {
     counts: { total: skills.length, reviewed, community: skills.length - reviewed },
     disclaimer: "Inclusion in this registry does not constitute endorsement.",
     skills,
+  };
+}
+
+export function makePlugin(over: Partial<Plugin> = {}): Plugin {
+  const skill = (name: string) => ({
+    name,
+    description: `The ${name} skill, part of the example plugin.`,
+    allowed_tools: ["Read"],
+    category: "planning-land-use", category_secondary: null, scope: "municipal",
+    jurisdiction: null, localization: null, language: "en",
+    data_sensitivity: "none", human_review: "advisory-only",
+    use_when: null, avoid_when: null,
+  });
+  return {
+    kind: "plugin",
+    id: "ns/housing-dashboards",
+    name: "housing-dashboards",
+    namespace: "ns",
+    description: "Housing dashboards and briefs for any U.S. city or county.",
+    license: "MIT",
+    version: "0.2.0",
+    maintainer: "Test Suite",
+    keywords: ["housing"],
+    categories: ["planning-land-use"],
+    languages: ["en"],
+    data_sensitivity: "none",
+    skills: [skill("build-housing-dashboard"), skill("housing-brief")],
+    mcp_servers: [
+      { name: "housing-census", type: "streamable-http", target: "census.example.org" },
+    ],
+    tier: "community",
+    reason: "no review attestation",
+    verified_languages: null,
+    sha: "b".repeat(40),
+    history: { first_seen: null, last_changed: null, commits: null, pull_request: null },
+    has_scripts: true,
+    script_files: ["mcp.json"],
+    path: "plugins/ns/housing-dashboards",
+    download: "https://example.test/plugin",
+    ...over,
   };
 }
