@@ -348,3 +348,19 @@ def test_it_leaves_room_for_an_answer_under_each():
 def test_the_pull_request_template_points_at_it():
     template = (ROOT / ".github" / "PULL_REQUEST_TEMPLATE" / "attestation.md")
     assert "--questionnaire" in template.read_text(encoding="utf-8")
+
+
+def test_a_plugin_attestation_is_filed_under_plugin():
+    """build_index.load_attestations keys a plugin's attestation by `plugin:`
+    (ADR 0005); one filed under `skill:` would never grant it a badge."""
+    import attestation
+    block = attestation.render("octocat/housing-dashboards", "a" * 40, notes="n",
+                               plugin=True)
+    assert block.startswith('- plugin: "octocat/housing-dashboards"\n')
+
+
+def test_a_plugin_needs_its_manifest_to_be_attested(tmp_path):
+    import attestation
+    (tmp_path / "p").mkdir()
+    with pytest.raises(attestation.Unusable, match="no plugin.json"):
+        attestation.check_clone(tmp_path, tmp_path / "p", plugin=True)

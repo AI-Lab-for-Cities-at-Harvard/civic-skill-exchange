@@ -948,3 +948,86 @@ def test_the_archive_is_built_from_the_skill_directory_alone(make_skill, tmp_pat
     assert archives, "no archive was written, so this test is checking nothing"
     for name in archives:
         assert (first / name).read_bytes() == (second / name).read_bytes(), name
+
+
+# --------------------------------------------------------------------------- #
+# Plugins (ADR 0005)
+
+
+def test_a_plugin_entry_describes_its_skills_and_servers(make_plugin):
+    plugin = make_plugin(manifest={"version": "0.2.0", "keywords": ["housing"]},
+                         files={"skills/build-dashboard/scripts/render.py": "print(1)\n"})
+    entry = build_index.build_plugin_entry(plugin, {}, {})
+    assert entry["kind"] == "plugin"
+    assert entry["id"] == "testuser/housing-dashboards"
+    assert entry["version"] == "0.2.0"
+    assert entry["maintainer"] == "Test Suite"
+    assert [s["name"] for s in entry["skills"]] == ["build-dashboard", "write-brief"]
+    assert entry["categories"] == ["finance"]
+    assert entry["mcp_servers"] == [
+        {"name": "census", "type": "streamable-http", "target": "census.example.org"}]
+    assert entry["script_files"] == ["mcp.json", "skills/build-dashboard/scripts/render.py"]
+    assert entry["path"] == "plugins/testuser/housing-dashboards"
+    assert entry["tier"] == "community"
+
+
+def test_a_plugin_reports_its_most_sensitive_skill(make_plugin):
+    plugin = make_plugin(skills=["a", "b"])
+    path = plugin / "skills/b/SKILL.md"
+    path.write_text(path.read_text(encoding="utf-8").replace(
+        'civic.data-sensitivity: "none"', 'civic.data-sensitivity: "pii"'), encoding="utf-8")
+    assert build_index.build_plugin_entry(plugin, {}, {})["data_sensitivity"] == "pii"
+
+
+def test_a_plugin_is_reviewed_only_by_a_plugin_attestation(make_plugin, monkeypatch):
+    plugin = make_plugin()
+    monkeypatch.setattr(build_index, "head_sha", lambda _: "a" * 40)
+    attestation = {"sha": "a" * 40, "expires": "2999-01-01", "reviewed": "2026-01-01"}
+    as_skill = {"testuser/housing-dashboards": attestation}
+    as_plugin = {build_index.plugin_key("testuser/housing-dashboards"): attestation}
+    assert build_index.build_plugin_entry(plugin, as_skill, {})["tier"] == "community"
+    assert build_index.build_plugin_entry(plugin, as_plugin, {})["tier"] == "reviewed"
+
+
+def test_the_ledger_files_a_plugin_attestation_apart(monkeypatch, tmp_path):
+    ledger = tmp_path / "registry" / "reviewed.yml"
+    ledger.parent.mkdir()
+    ledger.write_text(
+        "attestations:\n"
+        " - skill: \"a/b\"\n   sha: \"1\"\n"
+        " - plugin: \"a/b\"\n   sha: \"2\"\n", encoding="utf-8")
+    monkeypatch.setattr(build_index, "ROOT", tmp_path)
+    ledger_by_key = build_index.load_attestations()
+    assert ledger_by_key["a/b"]["sha"] == "1"
+    assert ledger_by_key["plugin:a/b"]["sha"] == "2"
+
+
+def test_a_plugin_without_a_readable_manifest_or_skill_is_skipped(make_plugin):
+    plugin = make_plugin(skills=[])
+    assert build_index.build_plugin_entry(plugin, {}, {}) is None
+    other = make_plugin(name="other")
+    (other / "plugin.json").write_text("{", encoding="utf-8")
+    assert build_index.build_plugin_entry(other, {}, {}) is None
+
+
+def test_the_plugin_detail_leaves_out_what_the_registry_generated(make_plugin):
+    plugin = make_plugin(files={".mcp.json": "{}", ".claude-plugin/plugin.json": "{}"})
+    entry = build_index.build_plugin_entry(plugin, {}, {})
+    paths = [f["path"] for f in build_index.build_plugin_detail(plugin, entry)["files"]]
+    assert ".mcp.json" not in paths and ".claude-plugin/plugin.json" not in paths
+    assert "mcp.json" in paths
+
+
+def test_plugins_are_published_beside_skills_not_among_them(make_skill, make_plugin,
+                                                          monkeypatch, tmp_path):
+    skill = make_skill()
+    make_plugin()
+    monkeypatch.setattr(build_index, "SKILLS_DIR", skill.parents[1])
+    out = tmp_path / "out"
+    build_index.main_with(out)
+    index = json.loads((out / "index.json").read_text(encoding="utf-8"))
+    assert [e["id"] for e in index["skills"]] == ["testuser/example-skill"]
+    assert [e["id"] for e in index["plugins"]] == ["testuser/housing-dashboards"]
+    assert index["counts"]["total"] == 1 and index["counts"]["plugins"] == 1
+    assert (out / "plugins" / "testuser" / "housing-dashboards.json").is_file()
+    assert (out / "plugins" / "testuser" / "housing-dashboards.zip").is_file()

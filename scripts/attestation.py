@@ -22,6 +22,7 @@ Usage:
     attestation.py civic-skills/plain-language-notice-rewriter
     attestation.py civic-skills/plain-language-notice-rewriter --notes "Read-only. No egress."
     attestation.py civic-skills/plain-language-notice-rewriter --reviewers "A N Other"
+    attestation.py octocat/housing-dashboards --plugin
 """
 
 from __future__ import annotations
@@ -112,9 +113,12 @@ def _git(args: list[str], cwd: Path) -> str:
     return out.stdout.strip()
 
 
-def check_clone(root: Path, skill: Path) -> None:
+def check_clone(root: Path, skill: Path, plugin: bool = False) -> None:
     """Refuse the four states that yield a SHA the build will not honour."""
-    if not (skill / "SKILL.md").is_file():
+    if plugin and not (skill / "plugin.json").is_file():
+        raise Unusable(
+            f"{skill} has no plugin.json — there is no plugin there to attest to.")
+    if not plugin and not (skill / "SKILL.md").is_file():
         raise Unusable(
             f"{skill} has no SKILL.md — there is no skill there to attest to.")
 
@@ -150,14 +154,18 @@ def behind_origin(root: Path) -> int:
 
 
 def render(skill_id: str, sha: str, notes: str | None = None,
-           reviewers: list[str] | None = None, today: date | None = None) -> str:
-    """The YAML block, in the order reviewed.yml's own header documents."""
+           reviewers: list[str] | None = None, today: date | None = None,
+           plugin: bool = False) -> str:
+    """The YAML block, in the order reviewed.yml's own header documents.
+
+    A plugin is filed under `plugin:` rather than `skill:` (ADR 0005), which is
+    what build_index.load_attestations keys it by."""
     reviewed = today or date.today()
     expires = reviewed.replace(year=reviewed.year + TERM_YEARS)
     names = ", ".join(f'"{r}"' for r in (reviewers or DEFAULT_REVIEWERS))
     body = (notes or NOTES_PLACEHOLDER).strip()
     return (
-        f'- skill: "{skill_id}"\n'
+        f'- {"plugin" if plugin else "skill"}: "{skill_id}"\n'
         f'  sha: "{sha}"\n'
         f"  reviewers: [{names}]\n"
         f"  reviewed: {reviewed.isoformat()}\n"
@@ -180,6 +188,8 @@ def main(argv: list[str] | None = None) -> int:
                              "review-request issue, and stop")
     parser.add_argument("--notes", help="what the next reviewer needs to know")
     parser.add_argument("--reviewers", help="comma-separated attesting parties")
+    parser.add_argument("--plugin", action="store_true",
+                        help="the id names a plugin under plugins/, not a skill")
     args = parser.parse_args(argv)
 
     if args.questionnaire:
@@ -191,10 +201,11 @@ def main(argv: list[str] | None = None) -> int:
     if "/" not in args.skill:
         parser.error("the skill id is {namespace}/{skill-name}, e.g. "
                      "civic-skills/plain-language-notice-rewriter")
-    skill = ROOT / "skills" / args.skill
+    tree = "plugins" if args.plugin else "skills"
+    skill = ROOT / tree / args.skill
 
     try:
-        check_clone(ROOT, skill)
+        check_clone(ROOT, skill, plugin=args.plugin)
     except Unusable as unusable:
         print(unusable, file=sys.stderr)
         return 1
@@ -215,8 +226,8 @@ def main(argv: list[str] | None = None) -> int:
                  if args.reviewers else None)
     print(f"# Append to registry/reviewed.yml under `attestations:`\n"
           f"# Reviewed at https://github.com/AI-Lab-for-Cities-at-Harvard/"
-          f"civic-skill-exchange/tree/{sha}/skills/{args.skill}\n")
-    print(render(args.skill, sha, args.notes, reviewers), end="")
+          f"civic-skill-exchange/tree/{sha}/{tree}/{args.skill}\n")
+    print(render(args.skill, sha, args.notes, reviewers, plugin=args.plugin), end="")
 
     if not args.notes:
         print("\n# Replace the notes before opening the pull request.",
