@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { validatePlugin, discoverAllPlugins } from "./plugin";
 import {
   MCP_SCHEMA_ID, MCP_TRANSPORTS, PLUGIN_FIELDS, PLUGIN_NAME_PATTERN, PLUGIN_SCHEMA_ID,
+  REGISTRY_EXTENSION,
   checkMcpConfig, checkPluginManifest, rejectedMcpUrl, summarizeMcpServers,
 } from "./plugin-core";
 import { checkChangedLayout } from "./layout";
@@ -28,9 +29,6 @@ metadata:
   civic.language: en
   civic.data-sensitivity: none
   civic.human-review: advisory-only
-  civic.maintainer: Test User
-  civic.affiliation: individual
-  civic.deployment: none
 ---
 
 # ${name}
@@ -46,6 +44,14 @@ const MANIFEST = {
   author: { name: "Test User" },
   license: "MIT",
   keywords: ["housing"],
+  extensions: {
+    "io.github.ai-lab-for-cities-at-harvard": {
+      "civic.maintainer": "Test User",
+      "civic.affiliation": "individual",
+      "civic.deployment": "none",
+      "civic.use-when": "A city wants one place to see its housing need and supply.",
+    },
+  },
 };
 
 const MCP = {
@@ -108,6 +114,18 @@ describe("validatePlugin", () => {
   it("checks a skill's name against its own directory", () => {
     write("skills/housing-brief/SKILL.md", frontmatter("housing-memo"));
     expect(messages(validate().findings)).toMatch(/does not match the directory 'housing-brief'/);
+  });
+
+  it("does not ask a plugin's skills for what the plugin declares once", () => {
+    expect(messages(validate().findings)).not.toMatch(/maintainer|affiliation|deployment/);
+  });
+
+  it("refuses a plugin-level field repeated in a skill, where the two could disagree", () => {
+    write("skills/housing-brief/SKILL.md", frontmatter("housing-brief").replace(
+      "civic.human-review: advisory-only",
+      "civic.human-review: advisory-only\n  civic.maintainer: Someone Else"));
+    expect(messages(validate().findings))
+      .toMatch(/skills\/housing-brief: civic\.maintainer: .*declared once, in plugin\.json/);
   });
 
   it("checks each skill's namespace against the author", () => {
@@ -216,9 +234,40 @@ describe("checkPluginManifest", () => {
       .toMatch(/not a valid Agent Plugins name/);
   });
 
-  it("refuses extensions, where hooks and apps are declared", () => {
-    expect(check({ ...MANIFEST, extensions: { "com.openai": { hooks: "./hooks.json" } } }))
-      .toMatch(/extensions are refused/);
+  it("refuses any extension but the registry's, since that is where hooks and apps go", () => {
+    expect(check({ ...MANIFEST, extensions: {
+      ...MANIFEST.extensions, "com.openai": { hooks: "./hooks.json" } } }))
+      .toMatch(/'com\.openai' is refused/);
+  });
+
+  it("uses the namespace the owner ruled on", () => {
+    expect(REGISTRY_EXTENSION).toBe("io.github.ai-lab-for-cities-at-harvard");
+  });
+
+  const civic = (meta: Record<string, unknown>) =>
+    check({ ...MANIFEST, extensions: { [REGISTRY_EXTENSION]: meta } });
+
+  it("needs the plugin-level metadata in the registry's extension", () => {
+    const { extensions: _, ...bare } = MANIFEST;
+    expect(check(bare)).toMatch(/civic metadata is required/);
+    const found = civic({});
+    for (const field of ["civic.maintainer", "civic.affiliation", "civic.deployment"]) {
+      expect(found).toContain(`${field} is required`);
+    }
+  });
+
+  it("holds the plugin-level fields to the skill rules", () => {
+    expect(civic({ ...MANIFEST.extensions[REGISTRY_EXTENSION], "civic.affiliation": "club" }))
+      .toMatch(/'club' is not one of/);
+    expect(civic({ ...MANIFEST.extensions[REGISTRY_EXTENSION], "civic.deployment": "organization" }))
+      .toMatch(/civic\.deployed-at is required/);
+    expect(civic({ ...MANIFEST.extensions[REGISTRY_EXTENSION], "civic.use-when": "x".repeat(501) }))
+      .toMatch(/500 characters or fewer/);
+  });
+
+  it("refuses a field in the extension that belongs to each skill", () => {
+    expect(civic({ ...MANIFEST.extensions[REGISTRY_EXTENSION], "civic.category": "housing" }))
+      .toMatch(/'civic\.category' is declared by each skill/);
   });
 
   it("refuses a field the specification does not define", () => {
