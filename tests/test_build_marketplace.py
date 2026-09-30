@@ -740,7 +740,8 @@ def test_the_claude_manifest_for_a_plugin_is_metadata_only(make_plugin):
         "name": "testuser-housing-dashboards",
         "description": "Housing dashboards and briefs for any U.S. city or county.",
         "version": "0.2.0",
-        "author": {"name": "Test Suite"},
+        # The exchange's maintainer, as for a skill — not the spec's author.
+        "author": {"name": "Plugin Maintainer"},
     }
 
 

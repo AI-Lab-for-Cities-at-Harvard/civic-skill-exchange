@@ -473,6 +473,9 @@ def build_detail(skill_dir: Path, entry: dict) -> dict:
 
 PLUGIN_MANIFEST = "plugin.json"
 PLUGIN_MCP_CONFIG = "mcp.json"
+#: Where a plugin declares what it says once for all of its skills: who
+#: maintains it, where it has been used, when it fits (ADR 0005).
+REGISTRY_EXTENSION = "io.github.ai-lab-for-cities-at-harvard"
 #: What build_marketplace.py writes into a plugin for Claude Code.
 PLUGIN_GENERATED = {".claude-plugin/plugin.json", ".mcp.json"}
 
@@ -567,6 +570,9 @@ def build_plugin_entry(plugin_dir: Path, attestations: dict, scans: dict) -> dic
     categories = sorted({c for s in skills for c in (s["category"], s["category_secondary"]) if c})
     sensitivities = {s["data_sensitivity"] for s in skills}
     author = manifest.get("author") if isinstance(manifest.get("author"), dict) else {}
+    extensions = manifest.get("extensions") if isinstance(manifest.get("extensions"), dict) else {}
+    civic = extensions.get(REGISTRY_EXTENSION)
+    civic = civic if isinstance(civic, dict) else {}
 
     entry = {
         "kind": "plugin",
@@ -576,8 +582,12 @@ def build_plugin_entry(plugin_dir: Path, attestations: dict, scans: dict) -> dic
         "description": str(manifest.get("description") or "").strip(),
         "license": manifest.get("license"),
         "version": manifest.get("version"),
-        "maintainer": author.get("name"),
+        "maintainer": civic.get("civic.maintainer") or author.get("name"),
         "keywords": manifest.get("keywords") or [],
+        # The plugin's own, declared once in plugin.json — never a skill's.
+        "use_when": civic.get("civic.use-when"),
+        "avoid_when": civic.get("civic.avoid-when"),
+        "provenance": build_provenance(civic),
         "categories": categories,
         "languages": sorted({s["language"] for s in skills if s["language"]}),
         "data_sensitivity": next((level for level in _SENSITIVITY_ORDER

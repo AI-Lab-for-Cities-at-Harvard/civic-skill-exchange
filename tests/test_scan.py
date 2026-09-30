@@ -471,8 +471,8 @@ def test_each_skill_keeps_its_own_localization(make_plugin):
     for skill, value in (("local", "localized"), ("general", "generalized")):
         path = plugin / "skills" / skill / "SKILL.md"
         path.write_text(path.read_text(encoding="utf-8").replace(
-            'civic.deployment: "none"',
-            f'civic.deployment: "none"\n  civic.localization: "{value}"'), encoding="utf-8")
+            'civic.human-review: "none"',
+            f'civic.human-review: "none"\n  civic.localization: "{value}"'), encoding="utf-8")
     flags = scan.scan_plugin(plugin)["flags"]
     assert [f["file"] for f in flags] == ["skills/general/references/portal.md"]
     assert flags[0]["explanation"] == scan.GENERALIZED_URL

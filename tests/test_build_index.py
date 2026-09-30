@@ -961,7 +961,7 @@ def test_a_plugin_entry_describes_its_skills_and_servers(make_plugin):
     assert entry["kind"] == "plugin"
     assert entry["id"] == "testuser/housing-dashboards"
     assert entry["version"] == "0.2.0"
-    assert entry["maintainer"] == "Test Suite"
+    assert entry["maintainer"] == "Plugin Maintainer"
     assert [s["name"] for s in entry["skills"]] == ["build-dashboard", "write-brief"]
     assert entry["categories"] == ["finance"]
     assert entry["mcp_servers"] == [
@@ -1031,3 +1031,16 @@ def test_plugins_are_published_beside_skills_not_among_them(make_skill, make_plu
     assert index["counts"]["total"] == 1 and index["counts"]["plugins"] == 1
     assert (out / "plugins" / "testuser" / "housing-dashboards.json").is_file()
     assert (out / "plugins" / "testuser" / "housing-dashboards.zip").is_file()
+
+
+def test_a_plugin_publishes_its_own_provenance_and_fit(make_plugin):
+    """Declared once, in plugin.json (ADR 0005), and published the way a
+    skill's are: self-reported, and never a factor in tier."""
+    entry = build_index.build_plugin_entry(make_plugin(), {}, {})
+    assert entry["provenance"] == {
+        "self_reported": True, "affiliation": "government",
+        "deployment": "organization", "deployed_at": "City of Example",
+        "deployed_in": None, "deployed_since": None,
+    }
+    assert entry["use_when"] == "A city wants its housing picture in one place."
+    assert entry["avoid_when"] is None

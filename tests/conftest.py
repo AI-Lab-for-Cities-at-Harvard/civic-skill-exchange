@@ -108,6 +108,9 @@ def make_skill(tmp_path):
 
 
 PLUGIN_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json"
+REGISTRY_EXTENSION = "io.github.ai-lab-for-cities-at-harvard"
+#: What a plugin declares once, in plugin.json (ADR 0005); its skills do not.
+PLUGIN_LEVEL = ("civic.maintainer", "civic.affiliation", "civic.deployment")
 MCP_SCHEMA = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json"
 
 
@@ -143,6 +146,13 @@ def make_plugin(tmp_path):
             "description": "Housing dashboards and briefs for any U.S. city or county.",
             "author": {"name": "Test Suite"},
             "license": "MIT",
+            "extensions": {REGISTRY_EXTENSION: {
+                "civic.maintainer": "Plugin Maintainer",
+                "civic.affiliation": "government",
+                "civic.deployment": "organization",
+                "civic.deployed-at": "City of Example",
+                "civic.use-when": "A city wants its housing picture in one place.",
+            }},
             **(manifest or {}),
         }
         (plugin_dir / "plugin.json").write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -156,9 +166,10 @@ def make_plugin(tmp_path):
                 encoding="utf-8")
 
         for skill in skills if skills is not None else ["build-dashboard", "write-brief"]:
+            meta = {k: v for k, v in VALID_FRONTMATTER["metadata"].items()
+                    if k not in PLUGIN_LEVEL}
             front = {**VALID_FRONTMATTER, "name": skill,
-                     "metadata": {**VALID_FRONTMATTER["metadata"],
-                                  "civic.category": category}}
+                     "metadata": {**meta, "civic.category": category}}
             path = plugin_dir / "skills" / skill / "SKILL.md"
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(render_frontmatter(front) + "\n\n# Skill\n\nBody.\n",

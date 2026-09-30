@@ -292,6 +292,10 @@ def build(root: Path = ROOT) -> dict:
 #: exempts exactly these paths from the ownership check.
 PLUGIN_GENERATED = (Path(".claude-plugin") / "plugin.json", Path(".mcp.json"))
 
+#: The registry's own extension namespace in a plugin.json (ADR 0005), which
+#: holds the metadata a plugin declares once for all of its skills.
+REGISTRY_EXTENSION = "io.github.ai-lab-for-cities-at-harvard"
+
 #: The specification's variables, as Claude Code spells them.
 CLAUDE_VARIABLES = {
     "${PLUGIN_ROOT}": "${CLAUDE_PLUGIN_ROOT}",
@@ -307,6 +311,13 @@ def read_plugin_manifest(plugin_dir: Path) -> dict:
     except (OSError, ValueError):
         return {}
     return doc if isinstance(doc, dict) else {}
+
+
+def plugin_civic(manifest: dict) -> dict:
+    """The registry's metadata in a plugin manifest, or `{}`."""
+    extensions = manifest.get("extensions")
+    civic = extensions.get(REGISTRY_EXTENSION) if isinstance(extensions, dict) else None
+    return civic if isinstance(civic, dict) else {}
 
 
 def plugin_dirs(root: Path = ROOT) -> list[Path]:
@@ -346,11 +357,14 @@ def claude_plugin_for_plugin(plugin_dir: Path) -> dict:
     manifest = read_plugin_manifest(plugin_dir)
     namespace, name = plugin_dir.parent.name, plugin_dir.name
     author = manifest.get("author") if isinstance(manifest.get("author"), dict) else {}
+    civic = plugin_civic(manifest)
     out = {
         "name": plugin_name(namespace, name),
         "description": str(manifest.get("description") or "").strip(),
         **({"version": str(manifest["version"])} if manifest.get("version") else {}),
-        "author": {"name": str(author.get("name") or namespace)},
+        # The exchange's maintainer, as a skill's manifest names it.
+        "author": {"name": str(civic.get("civic.maintainer") or author.get("name")
+                               or namespace)},
     }
     return {k: v for k, v in out.items() if v not in ("", None)}
 
