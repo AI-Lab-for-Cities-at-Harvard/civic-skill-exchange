@@ -1,7 +1,7 @@
 /** Validating one skill directory: read it, then apply both layers. */
 
 import { readFileSync, existsSync, readdirSync } from "node:fs";
-import { join, basename, dirname, relative, sep } from "node:path";
+import { join, basename, dirname } from "node:path";
 import { parse } from "yaml";
 import { checkFrontmatter, quarantineExtensions, RESERVED_NAMESPACES } from "./rules";
 import { checkStructure, checkYamlSafety, splitFrontmatter } from "./structure";
@@ -141,9 +141,14 @@ export function isGeneratedInSkill(path: string): boolean {
  *  same ownership work in both. */
 export const LISTING_ROOTS = ["skills", "plugins"] as const;
 
-/** Whether a listing directory is a plugin rather than a skill. */
-export function isPluginDir(root: string, dir: string): boolean {
-  return relative(root, dir).split(sep)[0] === "plugins";
+/** Whether a listing directory is a plugin rather than a skill: whether it
+ *  sits at `plugins/{namespace}/{name}`. Read from the directory's own path,
+ *  not relative to the repository, so a target given from another checkout is
+ *  classified the same way — and never from its contents, so a skill cannot
+ *  opt into the plugin rules by shipping a plugin.json. `root` is unused and
+ *  kept so callers read the same as the other discovery helpers. */
+export function isPluginDir(_root: string, dir: string): boolean {
+  return basename(dirname(dirname(dir))) === "plugins";
 }
 
 /** Map a list of changed paths to the distinct listing directories they

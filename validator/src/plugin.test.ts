@@ -13,7 +13,7 @@ import {
   checkMcpConfig, checkPluginManifest, rejectedMcpUrl, summarizeMcpServers,
 } from "./plugin-core";
 import { checkChangedLayout } from "./layout";
-import { checkChangedOwnership, discoverChanged, isGeneratedInSkill } from "./skill";
+import { checkChangedOwnership, discoverChanged, isGeneratedInSkill, isPluginDir } from "./skill";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const CATEGORIES = ["data-analysis", "housing"];
@@ -352,6 +352,13 @@ describe("plugins in the changed-path checks", () => {
     expect(isGeneratedInSkill("plugins/a/b/mcp.json")).toBe(false);
     expect(isGeneratedInSkill("plugins/a/b/skills/c/.mcp.json")).toBe(false);
     expect(isGeneratedInSkill("plugins/a/b/.codex-plugin/plugin.json")).toBe(false);
+  });
+
+  it("knows a plugin by its own path, wherever the checkout is", () => {
+    // A target outside the repository — `cli.ts /elsewhere/plugins/a/b` — was
+    // read as a skill because the path was compared against the repo root.
+    expect(isPluginDir(REPO, plugin)).toBe(true);
+    expect(isPluginDir(REPO, join(dir, "skills", "testuser", "x"))).toBe(false);
   });
 
   it("discovers changed plugins alongside changed skills", () => {
