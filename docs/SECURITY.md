@@ -55,7 +55,7 @@ A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is held to 
 Its `mcp.json` is read harder than a skill's `.mcp.json`. L0 requires every remote server to have a literal `https` URL, so the host a reviewer approves is the host the plugin talks to — a `${VAR}` URL would be expanded by Claude Code and sent literally by Codex. L2 blocks a credential-named header or environment variable with a value in it, since the specification makes both package data. L3 names every server and its host, once, for the reviewer.
 
 ### L1 — Ownership
-PR author's login matches the touched namespace. PR touches nothing outside `skills/{that-user}/` or `plugins/{that-user}/`. Anything else routes to CODEOWNERS. **Blocks.**
+PR author's login matches the touched namespace. PR touches nothing outside `skills/{that-user}/` or `plugins/{that-user}/`. A plugin PR also needs a maintainer's approval even inside the author's own namespace — `CODEOWNERS` names `/plugins/` (ADR 0005, decision 7). Anything else routes to CODEOWNERS. **Blocks.**
 
 The check runs over the changed-path list, not over the skill directories that
 survived the diff — so a **deletion** and **both sides of a move** are covered.

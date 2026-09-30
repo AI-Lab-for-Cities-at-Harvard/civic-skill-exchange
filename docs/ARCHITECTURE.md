@@ -51,7 +51,7 @@ civic-skills/
 └── docs/
 ```
 
-`CODEOWNERS` protects everything outside `skills/`. A PR that touches `schema/`, `scripts/`, `.github/`, or `registry/` requires maintainer review; a PR confined to one `skills/{user}/` directory does not.
+`CODEOWNERS` protects everything outside `skills/`. A PR that touches `schema/`, `scripts/`, `.github/`, or `registry/` requires maintainer review; a PR confined to one `skills/{user}/` directory does not. A plugin is the exception to that exception: a PR under `plugins/{user}/` always needs a maintainer, because a plugin launches MCP servers and brings several skills' code at once ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md), decision 7).
 
 ### Namespace ownership
 

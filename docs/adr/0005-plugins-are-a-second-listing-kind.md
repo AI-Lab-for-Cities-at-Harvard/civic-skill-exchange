@@ -94,6 +94,14 @@ installs as one thing.
 `index.json`, with the skills each carries and the servers it talks to. The
 `skills` array keeps its shape and its meaning.
 
+**7. Contributors submit plugins; a maintainer reviews every one before it
+merges** (ruling on #211). The namespace rule is the same as for a skill — a
+pull request writes only under `plugins/{its author}/` — but `CODEOWNERS` names
+`/plugins/` for the maintainers, so no plugin merges on the author's say-so,
+even in their own namespace. A plugin launches MCP servers and brings several
+skills' code in one pull request, which is more than a skill's author-only path
+was designed to carry.
+
 ## Consequences
 
 **A plugin shares one budget.** A hundred files and 2 MB across all of its
