@@ -1,0 +1,7 @@
+{
+  "name": "sgarcese-planificador-de-arbolado",
+  "description": "Plan de arborización urbana en tres fases a partir del portal de datos abiertos de una ciudad y su conector OpenContext, priorizando lo que el conector entrega directamente. Produce un inventario de los datos del portal útiles para una gestión basada en la naturaleza, con sus vacíos; un ranking de oportunidad de siembra por distrito, comuna o barrio que combina déficit de árboles, cobertura de copa y vulnerabilidad; y una propuesta de especies por barrio basada en el censo arbóreo de la propia ciudad. Úsalo cuando un equipo de medio ambiente o planeación pregunte qué datos abiertos sirven para enverdecer la ciudad, dónde sembrar primero, qué barrios tienen poca sombra y muchas personas mayores, o qué especies sembrar en un barrio, aunque no mencione el conector.",
+  "author": {
+    "name": "Santi Garces"
+  }
+}
