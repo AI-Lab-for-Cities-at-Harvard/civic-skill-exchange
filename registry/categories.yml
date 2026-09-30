@@ -11,6 +11,17 @@
 # labels.test.ts, and the facets, the About table and both marketplace manifests
 # are generated from it.
 #
+# The vocabulary is one list in every language the site speaks (#150). label_es
+# and description_es sit beside their English counterparts rather than in a
+# second file, and site/src/i18n/es.ts is held to label_es exactly as en.ts is
+# held to label. Anything machine-facing reads `label`: the ids never translate,
+# and both marketplace manifests are English.
+#
+# An _es value that is not translated yet is the English text behind the marker
+# "[es] ". Delete the marker as each one is written. The gate is indirect and
+# real: labels.test.ts holds es.ts's category map to label_es, so a translated
+# es.ts with an untranslated label_es here fails the site suite.
+#
 # Two axes on purpose (#102). The first six classify by the function inside the
 # organization — whose desk the work is on — which is what makes internal work
 # listable at all. The rest classify by the public service being delivered, which
@@ -22,92 +33,158 @@ categories:
   # --- By function inside the organization ---------------------------------- #
   - id: policy
     label: Policy
+    label_es: "Políticas Públicas"
     description: >
       Analysis, research, briefing, and legislative work — the practice of
       working out what an organization should do and writing it up.
+    description_es: >
+      Análisis, investigación, notas informativas y trabajo legislativo: la
+      práctica de definir qué debería hacer una organización y ponerlo por
+      escrito.
 
   - id: data-analysis
     label: Data Analysis
+    label_es: "Análisis de Datos"
     description: >
       Analysing the organization's own data: performance measurement,
       benchmarking against peers, and reporting.
+    description_es: >
+      Análisis de los datos propios de la organización: medición del desempeño,
+      comparación con pares y elaboración de informes.
 
   - id: communications
     label: Communications
+    label_es: "Comunicaciones"
     description: >
       Outbound work — notices, press, translation, plain language, and
       accessibility. What the organization says to people.
+    description_es: >
+      Trabajo hacia afuera: avisos, prensa, traducción, lenguaje claro y
+      accesibilidad. Lo que la organización le dice a la gente.
 
   - id: finance
     label: Finance
+    label_es: "Finanzas"
     description: >
       Budget, accounting, revenue, and procurement. Procurement sits here
       deliberately rather than in its own category; see #102.
+    description_es: >
+      Presupuesto, contabilidad, ingresos y compras públicas. Las compras van
+      aquí a propósito y no en una categoría propia; véase #102.
 
   - id: hr
     label: HR
+    label_es: "Recursos Humanos"
     description: >
       Hiring, onboarding, workforce planning, and labour relations.
+    description_es: >
+      Contratación, incorporación, planificación de personal y relaciones
+      laborales.
 
   - id: technology
     label: Technology
+    label_es: "Tecnología"
     description: >
       The organization's own IT: operations, systems, helpdesk, and
       integration. Not skills about AI work — those are AI Tools.
+    description_es: >
+      La informática propia de la organización: operaciones, sistemas, mesa de
+      ayuda e integración. No son habilidades sobre trabajo con IA: esas van en
+      Herramientas de IA.
 
   # --- By public service delivered ------------------------------------------ #
   - id: constituent-services
     label: Constituent Services
+    label_es: "Atención Ciudadana"
     description: >
       Inbound work — casework, 311, correspondence, and service requests. The
       work of responding to individual residents.
+    description_es: >
+      Trabajo hacia adentro: gestión de casos, línea 311, correspondencia y
+      solicitudes de servicio. El trabajo de responderle a cada residente.
 
   - id: benefits-eligibility
     label: Benefits & Eligibility
+    label_es: "Beneficios y Elegibilidad"
     description: >
       Determinations about what a person is entitled to. The highest-stakes
       work in the catalogue, and the reason civic.human-review exists.
+    description_es: >
+      Determinaciones sobre a qué tiene derecho una persona. El trabajo de
+      mayor riesgo del catálogo, y la razón por la que existe civic.human-review.
 
   - id: permitting-licensing
     label: Permitting & Licensing
+    label_es: "Permisos y Licencias"
     description: >
       Applications, inspections, approvals, and renewals, with their own
       workflows and statutory deadlines.
+    description_es: >
+      Solicitudes, inspecciones, aprobaciones y renovaciones, con sus propios
+      flujos de trabajo y plazos legales.
 
   - id: legal
     label: Legal
+    label_es: "Asuntos Jurídicos"
     description: >
       City attorney practice — contracts, ordinances, and litigation support.
       Distinct from Policy, which is analysis rather than practice.
+    description_es: >
+      La práctica jurídica de la ciudad: contratos, ordenanzas y apoyo en
+      litigios. Distinta de Políticas Públicas, que es análisis y no práctica.
 
   - id: public-records
     label: Public Records & Transparency
+    label_es: "Transparencia y Acceso a la Información"
     description: >
       Records requests, FOIA processing, redaction support, and open data
       publishing. A legal obligation with deadlines.
+    description_es: >
+      Solicitudes de información, tramitación de pedidos de acceso, apoyo a la
+      tachadura de datos y publicación de datos abiertos. Una obligación legal
+      con plazos.
 
   - id: operations
     label: Operations & Service Delivery
+    label_es: "Operaciones y Prestación de Servicios"
     description: >
       Public works, sanitation, transit, and facilities — the largest headcount
       in most organizations.
+    description_es: >
+      Obras públicas, saneamiento, transporte y edificios: el área con más
+      personal en la mayoría de las organizaciones.
 
   - id: emergency-public-safety
     label: Emergency Management & Public Safety
+    label_es: "Gestión de Emergencias y Seguridad Pública"
     description: >
       Preparedness, response, and policing and fire administration. A different
       tempo and a different risk posture from the rest of this list.
+    description_es: >
+      Preparación, respuesta y administración policial y de bomberos. Otro ritmo
+      y otra postura frente al riesgo que el resto de esta lista.
 
   - id: planning-land-use
     label: Planning & Land Use
+    label_es: "Planificación y Uso del Suelo"
     description: >
       Zoning, development review, and parcel-level work.
+    description_es: >
+      Zonificación, revisión de proyectos de desarrollo y trabajo a nivel de
+      predio.
 
   # --- The exchange's own work ---------------------------------------------- #
   - id: ai-tools
     label: AI Tools
+    label_es: "Herramientas de IA"
     description: >
       Skills whose subject is AI work itself — generalizing a skill, localizing
       one, evaluating a prompt. Defined by what it operates on, not by the fact
       that it uses AI: every skill here does that. A skill that uses AI to
       rewrite a permit notice is Communications.
+    description_es: >
+      Habilidades cuyo tema es el propio trabajo con IA: generalizar una
+      habilidad, localizar otra, evaluar un prompt. Se define por aquello sobre
+      lo que opera, no por el hecho de que use IA: todas las habilidades de aquí
+      lo hacen. Una habilidad que usa IA para reescribir el aviso de un permiso
+      es Comunicaciones.

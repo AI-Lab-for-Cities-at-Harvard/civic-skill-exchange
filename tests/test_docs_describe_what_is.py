@@ -209,3 +209,67 @@ def test_every_language_security_md_names_has_a_signature() -> None:
             "SECURITY.md claims Spanish coverage but the signature does not "
             "match a Spanish phrase"
         )
+
+
+def test_security_md_names_the_check_that_blocks_a_foreign_plugin_manifest() -> None:
+    """The reason SECURITY.md gives for allowing `.claude-plugin/plugin.json`
+    is that a differing copy is blocked. Since #188 the root manifest check
+    only warns, so the document has to name the check that does block (#193),
+    and that check has to exist."""
+    security = _text("docs/SECURITY.md")
+    validate = _text(".github/workflows/validate.yml")
+    assert "--check-in-skills" in validate
+    assert "--check-in-skills" in security
+    assert "a blocking step in `validate.yml`, with nothing repairing" not in security
+
+# --------------------------------------------------------------------------- #
+# #194: what a submitter reads about civic.deployed-in, and about manifests.
+
+
+def _organizational_details() -> list[str]:
+    """The fields the validator requires for team/organization deployments,
+    read from rules.ts so the docs are held to the code rather than to memory."""
+    rules = _text("validator/src/rules.ts")
+    m = re.search(r'ORGANIZATIONAL_DETAILS\s*=\s*\[([^\]]*)\]', rules)
+    assert m, "rules.ts no longer defines ORGANIZATIONAL_DETAILS"
+    return re.findall(r'"([^"]+)"', m.group(1))
+
+
+def test_deployed_in_is_documented_as_optional_wherever_it_is_required_by_nobody() -> None:
+    """#67 dropped the deployed-in requirement; three surfaces kept saying it
+    was required. Hold them to ORGANIZATIONAL_DETAILS."""
+    assert "civic.deployed-in" not in _organizational_details()
+    contributing = _text("CONTRIBUTING.md")
+    row = next(l for l in contributing.splitlines() if l.startswith("| `civic.deployed-in`"))
+    assert "Same rule" not in row and "Optional" in row, row
+    template = _text(".github/ISSUE_TEMPLATE/submit-skill.yml")
+    assert template.count('Required unless you answered "none".') == 0, (
+        "the issue template still says deployed-at/deployed-in are required unless none")
+    schema = json.loads(_text("schema/skill.schema.json"))
+    desc = schema["properties"]["metadata"]["properties"]["civic.deployed-in"]["description"]
+    assert "Required alongside" not in desc and "Optional" in desc, desc
+
+
+def test_contributing_does_not_ask_the_submitter_to_regenerate_manifests() -> None:
+    """Since #188 the registry regenerates after merge; the pull request check
+    is a warning. CONTRIBUTING.md may not tell a contributor to run the
+    generator and commit, or that the check fails the pull request."""
+    text = _text("CONTRIBUTING.md")
+    for demand in ("fails the pull request if the committed copy differs",
+                   "commit the result when you add"):
+        assert demand not in text, demand
+    assert re.search(r"after (your pull request |it )?merges|after merge", text), (
+        "CONTRIBUTING.md must say the registry regenerates the manifests after merge")
+
+
+def test_review_md_says_what_earns_a_language_entry() -> None:
+    """Question 5 on #143 was ruled: three checks, none about jurisdiction.
+    REVIEW.md may no longer call it undecided, and must name all three."""
+    review = _text("docs/REVIEW.md")
+    assert "not decided yet" not in review
+    section = re.sub(r"\s+", " ", review[review.index("### Verifying a language"):])
+    for check in ("realistic task", "every promise in `description`", "under `scripts/`"):
+        assert check in section, check
+    assert "jurisdiction" in section  # says what is deliberately not checked
+    # Still nine checklist items: the language check is a section, not item 10.
+    assert "### 10." not in review

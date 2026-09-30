@@ -201,4 +201,22 @@ describe("plugin-level files, over a real directory", () => {
     writeFileSync(join(skill, ".mcp.json"), '{"mcpServers": {}}\n');
     expect(checkStructure(skill)).toEqual([]);
   });
+
+  /* #183: the walk produces the `.claude-plugin` directory entry as well as
+     the file inside it, and the generated manifest has to survive both. */
+  it("accepts the generated .claude-plugin/plugin.json", () => {
+    mkdirSync(join(skill, ".claude-plugin"));
+    writeFileSync(join(skill, ".claude-plugin", "plugin.json"),
+      '{"name": "ns-name"}\n');
+    expect(checkStructure(skill)).toEqual([]);
+  });
+
+  it("rejects any other file under .claude-plugin/, naming it", () => {
+    mkdirSync(join(skill, ".claude-plugin"));
+    writeFileSync(join(skill, ".claude-plugin", "plugin.json"),
+      '{"name": "ns-name"}\n');
+    writeFileSync(join(skill, ".claude-plugin", "marketplace.json"), "{}\n");
+    expect(checkStructure(skill).map((f) => f.where))
+      .toEqual([".claude-plugin/marketplace.json"]);
+  });
 });

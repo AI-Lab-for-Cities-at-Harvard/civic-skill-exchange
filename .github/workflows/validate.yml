@@ -152,6 +152,16 @@ jobs:
       #
       # The step stays because a maintainer reads it: stale here means this
       # merge will trigger a regeneration, and current here means it will not.
+      # Inside a skill directory the rule is stricter, and it blocks. A generated
+      # file there — .claude-plugin/plugin.json, .codex-plugin/plugin.json — is
+      # allowed only because the registry writes it (#186); a hand-written copy
+      # could carry inline hooks or MCP servers, and with the root check a
+      # warning (#188) nothing else would stop it reaching main (#193). Absent
+      # is fine: the post-merge job writes it.
+      - name: Generated files inside skills are the registry's
+        if: steps.changes.outputs.skills == 'true'
+        run: python scripts/build_marketplace.py --check-in-skills
+
       - name: Marketplace manifest is current
         if: steps.changes.outputs.skills == 'true'
         continue-on-error: true   # nothing is needed from the submitter

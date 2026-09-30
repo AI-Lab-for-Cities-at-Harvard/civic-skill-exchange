@@ -9,6 +9,7 @@
 
 import { useStrings } from "../i18n/strings";
 import { communityNotice, type Counts } from "../lib/notice";
+import { DocLink } from "./DocLink";
 
 /** Above the results: what the two tiers mean, and the standing Community
  *  notice that replaced the paragraph once repeated on every card.
@@ -59,12 +60,8 @@ export function ContributeBand({ repo }: { repo: string }) {
         <h2 className="h3 band__heading" id="contribute-band-heading">{s.heading}</h2>
         <p className="band__lede">{s.lede}</p>
         <p className="band__links">
-          <a className="arrow-link" href={`${repo}/blob/main/CONTRIBUTING.md`}>
-            {s.guide} <span aria-hidden="true">&rarr;</span>
-          </a>
-          <a className="arrow-link" href={`${repo}/blob/main/docs/SECURITY.md`}>
-            {s.security} <span aria-hidden="true">&rarr;</span>
-          </a>
+          <DocLink href={`${repo}/blob/main/CONTRIBUTING.md`}>{s.guide}</DocLink>
+          <DocLink href={`${repo}/blob/main/docs/SECURITY.md`}>{s.security}</DocLink>
         </p>
         </div>
       </div>

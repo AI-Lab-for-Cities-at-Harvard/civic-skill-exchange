@@ -182,6 +182,50 @@ def build_codex(root: Path = ROOT) -> dict:
     return {"name": MARKETPLACE_NAME, "plugins": plugins}
 
 
+# --------------------------------------------------------------------------- #
+# Claude (#183).
+#
+# A plugin with a SKILL.md at its root, no `skills/` subdirectory and no
+# `skills` manifest field is loaded by Claude Code as a single-skill plugin —
+# documented, and the CLI installs this registry that way with no manifest at
+# all. The desktop app's plugin browser shows nothing from this marketplace and
+# reports no error, and the hypothesis under test here is that it wants
+# `.claude-plugin/plugin.json` in every plugin.
+#
+# Metadata only, and deliberately: `hooks`, `mcpServers`, `commands`, `agents`
+# and the rest are honoured by code rather than by a model, which is why L0
+# refuses an author's plugin-level files at all (#151). This file is allowed
+# inside a skill directory only because the generator produces it and
+# `build_marketplace.py --check` blocks a pull request whose copy differs, so
+# nothing an author writes here survives.
+#
+# No `skills` field. `"skills": "./"` is what the Codex manifest needs, and
+# setting it here would take away the very root-SKILL.md path that loads the
+# skill.
+
+
+def claude_plugin(skill_dir: Path) -> dict:
+    """The `.claude-plugin/plugin.json` for one skill."""
+    front = read_frontmatter(skill_dir / "SKILL.md") or {}
+    meta = front.get("metadata") or {}
+    namespace, name = skill_dir.parent.name, skill_dir.name
+
+    manifest = {
+        # The marketplace entry's plugin name, so the plugin a client installs
+        # and the plugin it loads are the same one.
+        "name": plugin_name(namespace, name),
+        "description": (front.get("description") or "").strip(),
+        # Same reasoning as the Codex manifest: no version is invented, and a
+        # declared one is published. `claude plugin validate --strict` warns
+        # without it, which is a warning the registry accepts rather than
+        # answering with a made-up number.
+        **({"version": str(meta["version"])} if meta.get("version") else {}),
+        # `--strict` treats a missing author as an error.
+        "author": {"name": str(meta.get("civic.maintainer") or namespace)},
+    }
+    return {k: v for k, v in manifest.items() if v not in ("", None)}
+
+
 def build(root: Path = ROOT) -> dict:
     plugins = []
     entries = []
@@ -238,7 +282,28 @@ def generated(root: Path) -> dict[Path, str]:
             continue
         out[skill_dir / ".codex-plugin" / "plugin.json"] = render(
             codex_plugin(skill_dir, labels))
+        out[skill_dir / ".claude-plugin" / "plugin.json"] = render(
+            claude_plugin(skill_dir))
     return out
+
+
+def foreign_generated_files(root: Path = ROOT) -> list[Path]:
+    """Generated files inside skills/ that exist and are not the generator's.
+
+    The root marketplaces may be stale on a pull request; that is a warning,
+    and the post-merge job repairs them (#188). A generated file inside a
+    skill directory is different: `.claude-plugin/plugin.json` can carry inline
+    `hooks` and `mcpServers`, and it is allowed in a listing only because the
+    registry writes it (#186). So inside skills/ the rule is absent, or exactly
+    what the generator writes — and it blocks (#193). Absent is fine: the
+    post-merge job will write it.
+    """
+    skills = root / "skills"
+    return sorted(
+        path for path, content in generated(root).items()
+        if skills in path.parents and path.is_file()
+        and path.read_text(encoding="utf-8") != content
+    )
 
 
 def write_all(root: Path = ROOT) -> list[Path]:
@@ -260,6 +325,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true",
                         help="exit non-zero if the committed manifest is stale")
+    parser.add_argument("--check-in-skills", action="store_true",
+                        help="exit non-zero if a generated file inside skills/ "
+                             "exists and is not what the generator writes; "
+                             "absent files and stale root marketplaces pass")
     parser.add_argument("--paths", action="store_true",
                         help="print the paths this script owns, one per line, "
                              "relative to the repository root, and write "
@@ -279,6 +348,21 @@ def main() -> int:
         for path in paths:
             print(path.relative_to(ROOT).as_posix())
         return 0
+
+    if args.check_in_skills:
+        try:
+            foreign = foreign_generated_files(ROOT)
+        except DuplicatePluginName as exc:
+            print(f"error {exc}", file=sys.stderr)
+            return 1
+        if not foreign:
+            print("ok    every generated file inside skills/ is the generator's, or absent")
+            return 0
+        for path in foreign:
+            print(f"FAIL  {path.relative_to(ROOT)}", file=sys.stderr)
+        print("      This file is written by the registry, never by hand. Delete it;\n"
+              "      the registry regenerates it after merge.", file=sys.stderr)
+        return 1
 
     if args.check:
         try:

@@ -84,9 +84,10 @@ export function discoverAll(root: string): string[] {
 /** Files the registry generates into a skill directory rather than the author
  *  writing them.
  *
- *  `.codex-plugin/plugin.json` is produced by scripts/build_marketplace.py for
- *  every listed skill, so any pull request that regenerates the manifests
- *  touches every namespace at once. Treating that as "this pull request changed
+ *  `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json` are both
+ *  produced by scripts/build_marketplace.py for every listed skill, so any
+ *  pull request that regenerates the manifests touches every namespace at
+ *  once. Treating that as "this pull request changed
  *  somebody's skill" makes L1's ownership check fire on maintenance work: a
  *  maintainer regenerating manifests fails because another person's namespace
  *  appears in the diff.
@@ -97,15 +98,17 @@ export function discoverAll(root: string): string[] {
  *  `build_marketplace.py --check`, which compares them against what the
  *  generator produces.
  *
- *  The pattern is the exact path the generator writes: one file, at the root of
- *  a `skills/{namespace}/{name}/` directory. It used to match
+ *  The pattern is the exact set of paths the generator writes: `plugin.json`
+ *  and nothing else, in one of those two directories, at the root of a
+ *  `skills/{namespace}/{name}/` directory. It used to match
  *  `.codex-plugin/plugin.json` at any depth, which exempted hand-written files
  *  the generator never touches — and an exemption here stops the ownership
  *  check seeing a path at all, so "near enough" is a hole rather than a
  *  convenience. `discover.test.ts` reads `scripts/build_marketplace.py` and
- *  checks this still describes what it writes, so the shape is asked for rather
- *  than kept as a second copy of the generator's list. */
-const GENERATED_IN_SKILL = /^skills\/[^/]+\/[^/]+\/\.codex-plugin\/plugin\.json$/;
+ *  checks this still describes every file it writes, so the shape is asked for
+ *  rather than kept as a second copy of the generator's list. */
+const GENERATED_IN_SKILL =
+  /^skills\/[^/]+\/[^/]+\/\.(?:codex|claude)-plugin\/plugin\.json$/;
 
 /** Whether a repository-relative path is one the manifest generator owns. */
 export function isGeneratedInSkill(path: string): boolean {

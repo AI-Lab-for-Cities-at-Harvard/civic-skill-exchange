@@ -119,7 +119,7 @@ Removal delists; it does not recall. Anyone who already cloned the skill still h
 
 | | |
 |---|---|
-| `skills/{namespace}/{name}/` | including its generated `.codex-plugin/plugin.json`, which travels with the directory |
+| `skills/{namespace}/{name}/` | including its generated `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json`, which travel with the directory |
 | Both marketplace manifests | `python scripts/build_marketplace.py` — regenerated, never hand-edited |
 | `registry/reviewed.yml` | if the skill carried an attestation. One outliving its skill is a badge with nothing under it, and `tests/test_attestation.py` fails on it |
 | `docs/` | anywhere the skill is named, and especially an install command that will no longer resolve |

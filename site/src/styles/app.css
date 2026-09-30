@@ -106,6 +106,20 @@ a:hover { color: var(--c-spot); }
 }
 .theme-toggle:hover { border-color: var(--c-border); }
 
+/* The language switcher, shaped like the theme toggle beside it: both are
+   settings for how the page is presented, and two different-looking controls in
+   the same corner would read as two different kinds of thing. A select, so it
+   grows with each locale — the native control is also the one every browser and
+   assistive technology already knows how to open. */
+.lang-switch {
+  flex: none; cursor: pointer;
+  background: var(--c-button-bg-subtle); color: var(--c-text);
+  border: 1px solid var(--c-border-light); border-radius: var(--radius-pill);
+  padding: var(--gap-1) var(--gap-3);
+  font: inherit; font-size: var(--t-xs);
+}
+.lang-switch:hover { border-color: var(--c-border); }
+
 /* ---- the canvas ---------------------------------------------------------
  * One 16-column grid, and named spans off it. Everything that used to pick its
  * own max-width now takes a span, so a themed band, a card grid and a column of
@@ -422,6 +436,12 @@ a:hover { color: var(--c-spot); }
   padding-bottom: 1px; color: var(--c-text);
 }
 .arrow-link:hover { color: var(--c-spot); }
+
+/* "(in English)" beside a link into docs/, which is not translated. Lighter and
+   smaller than the link it qualifies: it is a caveat about the destination, not
+   part of the link's name. Inherits weight from the link deliberately — a
+   different weight mid-link reads as two links. */
+.doc-link__note { color: var(--c-text-lighter); font-size: 0.9em; }
 
 .terms { max-width: var(--w-center); margin: 0 auto; }
 .terms p { font-size: var(--t-sm); }

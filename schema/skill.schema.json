@@ -280,7 +280,7 @@
         "civic.deployed-in": {
           "type": "string",
           "maxLength": 120,
-          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Required alongside civic.deployed-at, optional for 'personal', forbidden for 'none'.",
+          "description": "Where that organization operates: ISO 3166 country, optional subdivision, optional locality. e.g. 'US-MA / Boston', 'GB', 'CA-ON / Toronto'. Optional for every deployment except 'none', where it is forbidden; civic.deployed-at is the required half of an organizational claim (#67).",
           "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?( / .+)?$"
         },
         "civic.deployed-since": {

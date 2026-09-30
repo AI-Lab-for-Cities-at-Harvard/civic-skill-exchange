@@ -239,7 +239,8 @@ body:
     attributes:
       label: Which organization?
       description: >
-        Required unless you answered "none".
+        Required if you answered "team" or "organization"; not asked for
+        "personal"; leave empty for "none".
       placeholder: "City of Boston, Department of Innovation and Technology"
 
   - type: input
@@ -247,7 +248,7 @@ body:
     attributes:
       label: Where does that organization operate?
       description: >
-        Required unless you answered "none". ISO country code, then optionally a
+        Optional; leave empty for "none". ISO country code, then optionally a
         state or province, then optionally a city.
       placeholder: "US-MA / Boston   ·   GB   ·   CA-ON / Toronto"
 

@@ -37,6 +37,14 @@ Rules the automation enforces:
   directly, and these are refused outright rather than merely reviewed.
   `.mcp.json` is the one exception: it stays, and is treated as executed code
   like anything under `scripts/`. See [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
+- Two files inside your directory are **not yours to write**:
+  `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json`. The registry
+  generates both from your frontmatter after your pull request merges, in
+  `.github/workflows/manifest.yml` — so do not hand-edit them, and do not
+  commit them yourself. The pull request check that reports them stale is a
+  warning: nothing is needed from you. A generated file inside your skill
+  directory that is not the generator's is refused, because the registry
+  writes those.
 - **All four size limits**, so you can check before you hit them:
 
   | Limit | Value |
@@ -122,7 +130,7 @@ metadata:
 | `civic.affiliation` | `government`, `nonprofit`, `academic`, `vendor`, `individual` | Affiliation of the party in `civic.maintainer`. |
 | `civic.deployment` | `none`, `personal`, `team`, `organization` | The widest scope at which the skill has **actually** run. |
 | `civic.deployed-at` | free text | The organization where it ran. Required for `team` and `organization`; not asked of `personal`; forbidden for `none`. |
-| `civic.deployed-in` | e.g. `US-MA / Boston`, `GB` | Where that organization operates. Same rule. |
+| `civic.deployed-in` | e.g. `US-MA / Boston`, `GB` | Where that organization operates. Optional; forbidden for `none`. |
 | `civic.deployed-since` | `YYYY` or `YYYY-MM` | Optional. Duration carries more weight than any other part of the claim. |
 | `civic.localization` | `generalized`, `localized` | Optional. Where the skill sits on the jurisdiction axis — see [docs/LOCALIZATION.md](docs/LOCALIZATION.md). Omit it if the skill has no jurisdiction-specific content. |
 
