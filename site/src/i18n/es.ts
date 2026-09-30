@@ -1231,6 +1231,66 @@ export const strings: Strings = {
     github: "Ver en GitHub",
   },
 
+  plugins: {
+    heading: "Plugins",
+    intro:
+      "Varias habilidades que funcionan juntas y se instalan como una sola, " +
+      "con los servidores MCP a los que se conectan. Sus habilidades se " +
+      "describen en la página de cada plugin.",
+    card: {
+      cta: "Ver este plugin",
+      skills: (n: number) => `${n} habilidad${n === 1 ? "" : "es"}`,
+      servers: (n: number) => `${n} servidor${n === 1 ? "" : "es"} MCP`,
+      noServers: "Sin servidores MCP",
+    },
+    detail: {
+      skills: {
+        heading: "Habilidades de este plugin",
+        caveat:
+          "Cada una cumple las mismas reglas que una habilidad publicada por " +
+          "separado. Se instalan juntas y se verificaron juntas.",
+      },
+      servers: {
+        heading: "Servidores MCP",
+        caveat:
+          "**El plugin se conecta a estos servidores al cargarse.** Una " +
+          "persona revisora comprueba que cada host sea uno que el propósito " +
+          "del plugin necesita; compárelos con las reglas de su propia " +
+          "organización antes de instalarlo.",
+        none: "Ninguno. Este plugin no se conecta a ningún servidor MCP.",
+        remote: "Remoto",
+        local: "Se ejecuta en su equipo",
+      },
+      facts: {
+        categories: "Categorías",
+        languages: "Idiomas",
+        sensitivity: "Datos más sensibles que maneja",
+      },
+    },
+    download: {
+      heading: "Use este plugin",
+      community:
+        "**Nadie ha revisado este plugin.** Pasó verificaciones automatizadas " +
+        "de estructura y de firmas, que solo pueden rechazar: que las apruebe " +
+        "no significa que sea seguro. Lea el código fuente en GitHub antes de " +
+        "instalarlo, sobre todo el `scripts/` de cada habilidad y `mcp.json`.",
+      archive: (size: string) => `Descargar el plugin (${size})`,
+      archiveNote: "Un zip de esta carpeta, con todas sus habilidades.",
+      commands: {
+        claudeMarketplace: "Claude Code: agregue el marketplace, una sola vez",
+        claudeInstall: "Claude Code: instálelo",
+        codexMarketplace: "Codex: agregue el marketplace y luego instálelo desde la lista de plugins",
+      },
+      formatNote:
+        "Los plugins de este sitio siguen el formato abierto [Agent Plugins](spec). " +
+        "Las herramientas que reciben una habilidad a la vez pueden usar las " +
+        "habilidades incluidas en la descarga.",
+    },
+    errors: {
+      noSuchPlugin: (id: string) => `Aquí no hay ningún plugin publicado llamado ${id}.`,
+    },
+  },
+
   history: {
     heading: "Versión e historial",
 

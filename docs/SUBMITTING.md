@@ -245,5 +245,53 @@ If you also have Python to hand, `npm run check -- skills/{your-github-username}
 goes further: it runs the signature scan too and prints the comment your pull
 request will get, rendered by the code that posts it.
 
+### Sharing a plugin
+
+A plugin is several skills that belong together, with the MCP servers they use —
+for example, one skill that builds a dashboard, one that refreshes it and one
+that writes a brief from it. It goes under `plugins/` instead of `skills/`, in
+the [Agent Plugins](https://agent-plugins.org/specification) layout, and only
+from the command line for now:
+
+```
+plugins/{your-github-username}/{plugin-name}/
+  plugin.json          $schema, name "{your-github-username}-{plugin-name}", description,
+                       license, and the plugin's civic metadata (below)
+  mcp.json             optional — each server a literal https URL
+  README.md            optional
+  skills/{skill-name}/SKILL.md     one per skill
+```
+
+What describes the whole plugin is written once, in `plugin.json`; what can
+differ between its skills stays in each `SKILL.md`:
+
+```json
+"extensions": {
+  "io.github.ai-lab-for-cities-at-harvard": {
+    "civic.maintainer": "Your Name",
+    "civic.affiliation": "government",
+    "civic.deployment": "organization",
+    "civic.deployed-at": "City of Example",
+    "civic.use-when": "…",
+    "civic.avoid-when": "…"
+  }
+}
+```
+
+Each skill's frontmatter then carries `category`, `scope`, `language`,
+`data-sensitivity` and `human-review` (and `localization` or `jurisdiction` if
+they apply) — but not the fields above.
+
+```bash
+npx tsx validator/src/cli.ts plugins/{your-github-username}/{plugin-name}
+```
+
+Two things differ from a skill. Every MCP server needs its real `https`
+address, not one read from an environment variable, because a reviewer has to
+be able to see where it connects. And no credentials in `mcp.json`: anything
+there is published with the plugin. Do not write `.claude-plugin/` or `.mcp.json`
+yourself — the registry generates them after merge. Why it works this way is
+[ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md).
+
 [CONTRIBUTING.md](../CONTRIBUTING.md) is the full contract, with a worked example
 and the field tables.

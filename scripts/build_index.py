@@ -140,7 +140,7 @@ def _validate_languages(entry: dict, path: Path) -> None:
     if "languages" not in entry:
         return
     languages = entry["languages"]
-    skill = entry.get("skill", "?")
+    skill = entry.get("skill") or entry.get("plugin", "?")
     if not isinstance(languages, list) or not languages:
         raise ValueError(
             f"{path.relative_to(ROOT)}: {skill}'s `languages` must be a "
@@ -177,9 +177,22 @@ def load_attestations() -> dict[str, dict]:
         raise ValueError(
             f"{path.relative_to(ROOT)}: `attestations` must be a list, not "
             f"{type(entries).__name__}.")
+    out: dict[str, dict] = {}
     for entry in entries:
         _validate_languages(entry, path)
-    return {a["skill"]: a for a in entries}
+        # A plugin's attestation names it with `plugin:` rather than `skill:`
+        # (ADR 0005), and is keyed apart so neither kind can pick up the
+        # other's: an attestation is to one listing, not to a namespace/name.
+        if "plugin" in entry:
+            out[plugin_key(str(entry["plugin"]))] = entry
+        else:
+            out[entry["skill"]] = entry
+    return out
+
+
+def plugin_key(plugin_id: str) -> str:
+    """Where a plugin's attestation is filed in `load_attestations`."""
+    return f"plugin:{plugin_id}"
 
 
 def load_categories() -> list[dict]:
@@ -444,6 +457,178 @@ def build_detail(skill_dir: Path, entry: dict) -> dict:
     return {**entry, "files": files}
 
 
+# --------------------------------------------------------------------------- #
+# Plugins (ADR 0005).
+#
+# A plugin is published beside the skills rather than among them: `plugins` in
+# index.json, never inside `skills`. The skill list is a published API with a
+# fixed shape per entry, and a plugin does not have that shape — it has several
+# skills, each with its own category and scope, and servers a skill never has.
+# Folding it in would change what every consumer of `skills` can assume.
+#
+# Tier is derived exactly as for a skill: an unexpired attestation, filed under
+# `plugin:` in registry/reviewed.yml, whose sha is the plugin directory's
+# current commit. Any change to any of its skills demotes the whole plugin,
+# which is right — it installs as one thing, so it is reviewed as one thing.
+
+PLUGIN_MANIFEST = "plugin.json"
+PLUGIN_MCP_CONFIG = "mcp.json"
+#: Where a plugin declares what it says once for all of its skills: who
+#: maintains it, where it has been used, when it fits (ADR 0005).
+REGISTRY_EXTENSION = "io.github.ai-lab-for-cities-at-harvard"
+#: What build_marketplace.py writes into a plugin for Claude Code.
+PLUGIN_GENERATED = {".claude-plugin/plugin.json", ".mcp.json"}
+
+
+def read_plugin_manifest(plugin_dir: Path) -> dict | None:
+    try:
+        doc = json.loads((plugin_dir / PLUGIN_MANIFEST).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
+def is_executed_in_plugin(rel: str) -> bool:
+    """`is_executed`, for a plugin: each skill's `scripts/`, and the MCP
+    configuration — the author's `mcp.json` and the `.mcp.json` Claude Code
+    reads, which launch the same servers."""
+    parts = rel.split("/")
+    in_skill_scripts = len(parts) > 3 and parts[0] == "skills" and parts[2] == "scripts"
+    return in_skill_scripts or rel in (PLUGIN_MCP_CONFIG, MCP_CONFIG)
+
+
+def plugin_servers(plugin_dir: Path) -> list[dict]:
+    """Every MCP server the plugin declares: its name, its transport, and where
+    it goes — the host for a remote server, the command for a local one. The
+    catalogue shows these, because which servers a plugin talks to is the first
+    thing an adopter's security team will ask."""
+    try:
+        doc = json.loads((plugin_dir / PLUGIN_MCP_CONFIG).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    servers = doc.get("mcpServers") if isinstance(doc, dict) else None
+    if not isinstance(servers, dict):
+        return []
+    out = []
+    for name, server in sorted(servers.items()):
+        if not isinstance(server, dict):
+            continue
+        url = server.get("url")
+        target = (re.sub(r"^[a-z]+://", "", url).split("/")[0] if isinstance(url, str)
+                  else str(server.get("command") or ""))
+        out.append({"name": str(name), "type": str(server.get("type") or ""),
+                    "target": target})
+    return out
+
+
+def plugin_skill_summary(skill_dir: Path) -> dict | None:
+    """One skill inside a plugin: what the catalogue needs to describe it, from
+    the same frontmatter fields a listed skill publishes."""
+    front = read_frontmatter(skill_dir / "SKILL.md") if (skill_dir / "SKILL.md").is_file() else None
+    if not front:
+        return None
+    meta = front.get("metadata") or {}
+    return {
+        "name": skill_dir.name,
+        "description": str(front.get("description") or "").strip(),
+        "allowed_tools": normalize_tools(front.get("allowed-tools")),
+        "category": meta.get("civic.category"),
+        "category_secondary": meta.get("civic.category-secondary"),
+        "scope": meta.get("civic.scope"),
+        "jurisdiction": meta.get("civic.jurisdiction"),
+        "localization": meta.get("civic.localization"),
+        "language": meta.get("civic.language"),
+        "data_sensitivity": meta.get("civic.data-sensitivity"),
+        "human_review": meta.get("civic.human-review"),
+        "use_when": meta.get("civic.use-when"),
+        "avoid_when": meta.get("civic.avoid-when"),
+    }
+
+
+#: Ordered most to least sensitive, so a plugin reports the most sensitive
+#: thing any one of its skills handles — an adopter needs the ceiling.
+_SENSITIVITY_ORDER = ["protected", "pii", "none"]
+
+
+def build_plugin_entry(plugin_dir: Path, attestations: dict, scans: dict) -> dict | None:
+    manifest = read_plugin_manifest(plugin_dir)
+    if manifest is None:
+        return None
+    skills = [s for s in (plugin_skill_summary(d) for d in
+                          sorted(p for p in (plugin_dir / "skills").glob("*") if p.is_dir()))
+              if s]
+    if not skills:
+        return None
+
+    namespace, name = plugin_dir.parent.name, plugin_dir.name
+    plugin_id = f"{namespace}/{name}"
+    sha = head_sha(plugin_dir)
+    runs = sorted(
+        rel for rel in (p.relative_to(plugin_dir).as_posix()
+                        for p in plugin_dir.rglob("*") if p.is_file() and not p.is_symlink())
+        if is_executed_in_plugin(rel))
+    categories = sorted({c for s in skills for c in (s["category"], s["category_secondary"]) if c})
+    sensitivities = {s["data_sensitivity"] for s in skills}
+    author = manifest.get("author") if isinstance(manifest.get("author"), dict) else {}
+    extensions = manifest.get("extensions") if isinstance(manifest.get("extensions"), dict) else {}
+    civic = extensions.get(REGISTRY_EXTENSION)
+    civic = civic if isinstance(civic, dict) else {}
+
+    entry = {
+        "kind": "plugin",
+        "id": plugin_id,
+        "name": name,
+        "namespace": namespace,
+        "description": str(manifest.get("description") or "").strip(),
+        "license": manifest.get("license"),
+        "version": manifest.get("version"),
+        "maintainer": civic.get("civic.maintainer") or author.get("name"),
+        "keywords": manifest.get("keywords") or [],
+        # The plugin's own, declared once in plugin.json — never a skill's.
+        "use_when": civic.get("civic.use-when"),
+        "avoid_when": civic.get("civic.avoid-when"),
+        "provenance": build_provenance(civic),
+        "categories": categories,
+        "languages": sorted({s["language"] for s in skills if s["language"]}),
+        "data_sensitivity": next((level for level in _SENSITIVITY_ORDER
+                                  if level in sensitivities), None),
+        "skills": skills,
+        "mcp_servers": plugin_servers(plugin_dir),
+        "sha": sha,
+        "history": history(plugin_dir),
+        "has_scripts": bool(runs),
+        "script_files": runs,
+        "path": f"plugins/{namespace}/{name}",
+        "download": f"{REPO_URL}/tree/main/plugins/{namespace}/{name}",
+    }
+    entry.update(resolve_tier(plugin_id, sha, attestations.get(plugin_key(plugin_id))))
+
+    scan = scans.get(plugin_id)
+    entry["scan"] = {
+        "last_run": scans.get("_generated"),
+        "blocking": len(scan["blocking"]),
+        "flags": len(scan["flags"]),
+        "signatures": sorted({f["signature"] for f in scan.get("flags", [])}),
+    } if scan else {"last_run": None, "blocking": None, "flags": None, "signatures": []}
+    return entry
+
+
+def build_plugin_detail(plugin_dir: Path, entry: dict) -> dict:
+    """`build_detail`, for a plugin: structure only, never contents. The files
+    the registry generates are left out — they are derived, and listing them
+    would describe the plugin as something its author did not write."""
+    files = []
+    for path in sorted(plugin_dir.rglob("*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        rel = path.relative_to(plugin_dir).as_posix()
+        if rel in PLUGIN_GENERATED:
+            continue
+        files.append({"path": rel, "size": path.stat().st_size,
+                      "executed": is_executed_in_plugin(rel)})
+    return {**entry, "files": files}
+
+
 # A fixed timestamp for every archive entry. A zip that embeds wall-clock time
 # changes on every build even when the skill has not, which churns the Pages
 # artifact and makes the bytes a person downloads unstable for no reason.
@@ -481,14 +666,18 @@ def write_outputs(skill_dir: Path, entry: dict, out: Path) -> dict:
     that tells someone how large a download is before they start it is worth the
     ordering constraint.
     """
-    directory = out / "skills" / entry["namespace"]
+    # "skills" or "plugins", from the listing's own path, so the two kinds of
+    # listing cannot overwrite each other's payloads.
+    tree = entry["path"].split("/")[0]
+    directory = out / tree / entry["namespace"]
     directory.mkdir(parents=True, exist_ok=True)
 
-    detail = build_detail(skill_dir, entry)
+    detail = (build_plugin_detail(skill_dir, entry) if entry.get("kind") == "plugin"
+              else build_detail(skill_dir, entry))
     name = entry["name"]
     size = write_archive(skill_dir, entry, detail["files"], directory / f"{name}.zip")
     detail["archive"] = {
-        "path": f"data/skills/{entry['namespace']}/{name}.zip",
+        "path": f"data/{tree}/{entry['namespace']}/{name}.zip",
         "size": size,
     }
 
@@ -538,7 +727,20 @@ def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = 
             print(f"warn  skipped {skill_dir.relative_to(ROOT)}: unreadable frontmatter",
                   file=sys.stderr)
 
-    drifted = [e for e in entries if e.get("drift")]
+    # Beside whichever skills/ is being read, rather than a second constant: a
+    # test that points SKILLS_DIR at a throwaway tree must not pick up the
+    # repository's real plugins (test_no_listing_coupling.py).
+    plugins_dir = SKILLS_DIR.parent / "plugins"
+    plugins = []
+    for plugin_dir in sorted(p for p in plugins_dir.glob("*/*") if p.is_dir()):
+        entry = build_plugin_entry(plugin_dir, attestations, scans)
+        if entry:
+            plugins.append(entry)
+        else:
+            print(f"warn  skipped {plugin_dir.relative_to(ROOT)}: unreadable plugin.json "
+                  "or no readable skill", file=sys.stderr)
+
+    drifted = [e for e in [*entries, *plugins] if e.get("drift")]
     reviewed = [e for e in entries if e["tier"] == "reviewed"]
 
     index = {
@@ -548,6 +750,9 @@ def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = 
             "total": len(entries),
             "reviewed": len(reviewed),
             "community": len(entries) - len(reviewed),
+            # Plugins are counted apart: `total` has always meant skills, and a
+            # consumer that sums it should not start counting something else.
+            "plugins": len(plugins),
         },
         "disclaimer": (
             "Inclusion in this registry does not constitute endorsement, verification, "
@@ -556,6 +761,7 @@ def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = 
             "a statement that a skill is safe."
         ),
         "skills": sorted(entries, key=lambda e: e["id"]),
+        "plugins": sorted(plugins, key=lambda e: e["id"]),
     }
 
     out.mkdir(parents=True, exist_ok=True)
@@ -570,9 +776,12 @@ def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = 
 
     for entry in entries:
         write_outputs(SKILLS_DIR / entry["namespace"] / entry["name"], entry, out)
+    for entry in plugins:
+        write_outputs(plugins_dir / entry["namespace"] / entry["name"], entry, out)
 
     print(f"Wrote {len(entries)} skills to {out} "
-          f"({len(reviewed)} reviewed, {len(entries) - len(reviewed)} community).")
+          f"({len(reviewed)} reviewed, {len(entries) - len(reviewed)} community)"
+          f" and {len(plugins)} plugin{'' if len(plugins) == 1 else 's'}.")
 
     if drifted:
         print(f"\n{len(drifted)} skill(s) demoted for SHA drift — open an issue for each:")

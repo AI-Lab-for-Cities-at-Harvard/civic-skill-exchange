@@ -48,8 +48,14 @@ Matched on the first path segment, because the plugin root is the skill director
 
 **`.mcp.json` is the exception, and it is treated as executed.** An MCP server can be genuinely useful to a skill, so the file stays. The cost of keeping it is that a client launches what it declares, and nothing in the registry pretends otherwise: `build_index.py` lists it in `script_files` and marks it `executed` in the detail payload, the site names it beside `scripts/`, `scan.py` reads each server's `command`, `args` and `url` as the command it is, and [REVIEW.md](REVIEW.md) item 2 sends a reviewer through it line by line. A server that fetches a package off the network and runs it at launch — `npx -y`, `uvx`, a `curl` piped into a shell — blocks at L2: what it resolves next month is not what a reviewer read.
 
+#### Plugins
+
+A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is held to an allowlist at its root rather than the refusals above: `plugin.json`, `mcp.json`, `README.md`, `skills/`, and the two files the registry generates for Claude Code. Everything a client might act on beyond that — `hooks/`, `commands/`, `agents/`, `.lsp.json`, a reverse-domain extension directory, any `extensions` namespace in the manifest but the registry's own — is refused, because every client adds to that set and a denylist would be a list of last year's. Each of its skills carries the refusals above as well.
+
+Its `mcp.json` is read harder than a skill's `.mcp.json`. L0 requires every remote server to have a literal `https` URL, so the host a reviewer approves is the host the plugin talks to — a `${VAR}` URL would be expanded by Claude Code and sent literally by Codex. L2 blocks a credential-named header or environment variable with a value in it, since the specification makes both package data. L3 names every server and its host, once, for the reviewer.
+
 ### L1 — Ownership
-PR author's login matches the touched namespace. PR touches nothing outside `skills/{that-user}/`. Anything else routes to CODEOWNERS. **Blocks.**
+PR author's login matches the touched namespace. PR touches nothing outside `skills/{that-user}/` or `plugins/{that-user}/`. A plugin PR also needs a maintainer's approval even inside the author's own namespace — `CODEOWNERS` names `/plugins/` (ADR 0005, decision 7). Anything else routes to CODEOWNERS. **Blocks.**
 
 The check runs over the changed-path list, not over the skill directories that
 survived the diff — so a **deletion** and **both sides of a move** are covered.

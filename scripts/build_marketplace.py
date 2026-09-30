@@ -66,20 +66,27 @@ class DuplicatePluginName(Exception):
     here, at marketplace-manifest time."""
 
 
-def _assert_unique_plugin_names(entries: list[tuple[str, str]]) -> None:
+def _assert_unique_plugin_names(entries: list[tuple[str, ...]]) -> None:
     """`entries` is `(namespace, name)` per listing, in the order they will be
-    written. Raises naming both listings on the first collision found."""
-    seen: dict[str, tuple[str, str]] = {}
-    for namespace, name in entries:
+    written, or `(namespace, name, tree)` when the listing is not under
+    `skills/`. Raises naming both listings on the first collision found.
+
+    Skills and plugins share one marketplace, so they share one name space:
+    `skills/alice/housing` and `plugins/alice/housing` would both install as
+    `alice-housing` (ADR 0005)."""
+    seen: dict[str, str] = {}
+    for namespace, name, *rest in entries:
+        tree = rest[0] if rest else "skills"
         name_joined = plugin_name(namespace, name)
+        here = f"{tree}/{namespace}/{name}"
         other = seen.get(name_joined)
         if other is not None:
             raise DuplicatePluginName(
                 f"duplicate plugin name '{name_joined}': "
-                f"skills/{other[0]}/{other[1]} and skills/{namespace}/{name} "
+                f"{other} and {here} "
                 "both produce it. Plugin names must be unique across the "
                 "marketplace.")
-        seen[name_joined] = (namespace, name)
+        seen[name_joined] = here
 
 
 # --------------------------------------------------------------------------- #
@@ -178,6 +185,15 @@ def build_codex(root: Path = ROOT) -> dict:
             "policy": dict(CODEX_POLICY),
             "category": labels.get(str(meta.get("civic.category")), FALLBACK_CATEGORY),
         })
+    for plugin_dir in plugin_dirs(root):
+        namespace, name = plugin_dir.parent.name, plugin_dir.name
+        entries.append((namespace, name, "plugins"))
+        plugins.append({
+            "name": plugin_name(namespace, name),
+            "source": {"source": "local", "path": f"./plugins/{namespace}/{name}"},
+            "policy": dict(CODEX_POLICY),
+            "category": labels.get(str(plugin_category(plugin_dir)), FALLBACK_CATEGORY),
+        })
     _assert_unique_plugin_names(entries)
     return {"name": MARKETPLACE_NAME, "plugins": plugins}
 
@@ -242,9 +258,170 @@ def build(root: Path = ROOT) -> dict:
             "source": f"./skills/{namespace}/{name}",
             "description": (front.get("description") or "").strip(),
         })
+    for plugin_dir in plugin_dirs(root):
+        namespace, name = plugin_dir.parent.name, plugin_dir.name
+        entries.append((namespace, name, "plugins"))
+        plugins.append({
+            "name": plugin_name(namespace, name),
+            "source": f"./plugins/{namespace}/{name}",
+            "description": str(read_plugin_manifest(plugin_dir).get("description") or "").strip(),
+        })
 
     _assert_unique_plugin_names(entries)
     return {"name": MARKETPLACE_NAME, "owner": OWNER, "plugins": plugins}
+
+
+# --------------------------------------------------------------------------- #
+# Plugins (ADR 0005).
+#
+# A plugin is several skills and, optionally, MCP servers, in the Agent Plugins
+# 1.0.0 layout under `plugins/{namespace}/{name}/`. The author writes the two
+# portable files, `plugin.json` and `mcp.json`, and Codex reads them as they
+# are: an Agent Plugins manifest wins over `.codex-plugin/plugin.json`, so no
+# Codex manifest is generated for a plugin.
+#
+# Claude Code reads neither. It wants `.claude-plugin/plugin.json` and a
+# dotted `.mcp.json` whose remote transport is spelled `http` rather than
+# `streamable-http`, and whose plugin-root variable is `CLAUDE_PLUGIN_ROOT`. So
+# both are derived here, on the same terms as the per-skill manifests: the
+# registry writes them, L0 allows them only at the plugin root, and
+# `--check-in-skills` fails a copy the generator did not write. `skills/` is
+# found by both clients without a manifest field.
+
+#: What this script writes into a plugin directory. validator/src/skill.ts
+#: exempts exactly these paths from the ownership check.
+PLUGIN_GENERATED = (Path(".claude-plugin") / "plugin.json", Path(".mcp.json"))
+
+#: The registry's own extension namespace in a plugin.json (ADR 0005), which
+#: holds the metadata a plugin declares once for all of its skills.
+REGISTRY_EXTENSION = "io.github.ai-lab-for-cities-at-harvard"
+
+#: The specification's variables, as Claude Code spells them.
+CLAUDE_VARIABLES = {
+    "${PLUGIN_ROOT}": "${CLAUDE_PLUGIN_ROOT}",
+    "${PLUGIN_DATA}": "${CLAUDE_PLUGIN_DATA}",
+}
+
+
+def read_plugin_manifest(plugin_dir: Path) -> dict:
+    """The author's `plugin.json`, or `{}` when it is missing or unreadable —
+    L0's to report, the same posture as an unreadable SKILL.md."""
+    try:
+        doc = json.loads((plugin_dir / "plugin.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return doc if isinstance(doc, dict) else {}
+
+
+def plugin_civic(manifest: dict) -> dict:
+    """The registry's metadata in a plugin manifest, or `{}`."""
+    extensions = manifest.get("extensions")
+    civic = extensions.get(REGISTRY_EXTENSION) if isinstance(extensions, dict) else None
+    return civic if isinstance(civic, dict) else {}
+
+
+def plugin_dirs(root: Path = ROOT) -> list[Path]:
+    """Every listed plugin: a directory under plugins/*/* whose manifest reads."""
+    return sorted(p for p in (root / "plugins").glob("*/*")
+                  if p.is_dir() and read_plugin_manifest(p))
+
+
+def plugin_skills(plugin_dir: Path) -> list[Path]:
+    """The plugin's skills, where both clients look for them."""
+    return sorted(p for p in (plugin_dir / "skills").glob("*")
+                  if (p / "SKILL.md").is_file())
+
+
+def plugin_category(plugin_dir: Path) -> str | None:
+    """One category for a listing that carries several skills.
+
+    The marketplace entry has room for exactly one. The category most of its
+    skills declare, and the first skill's among equals — a plugin is usually
+    one piece of work split into steps, which share a category anyway."""
+    counts: dict[str, int] = {}
+    for skill in plugin_skills(plugin_dir):
+        meta = (read_frontmatter(skill / "SKILL.md") or {}).get("metadata") or {}
+        category = meta.get("civic.category")
+        if category:
+            counts[str(category)] = counts.get(str(category), 0) + 1
+    return max(counts, key=counts.get) if counts else None
+
+
+def claude_plugin_for_plugin(plugin_dir: Path) -> dict:
+    """The `.claude-plugin/plugin.json` for one plugin: the author's manifest,
+    reduced to the same metadata a skill's carries.
+
+    The name is the marketplace name, not whatever the author wrote. L0
+    already requires the two to match, so this changes nothing for a listing
+    that passes; for one that does not, it keeps the Claude side coherent."""
+    manifest = read_plugin_manifest(plugin_dir)
+    namespace, name = plugin_dir.parent.name, plugin_dir.name
+    author = manifest.get("author") if isinstance(manifest.get("author"), dict) else {}
+    civic = plugin_civic(manifest)
+    out = {
+        "name": plugin_name(namespace, name),
+        "description": str(manifest.get("description") or "").strip(),
+        **({"version": str(manifest["version"])} if manifest.get("version") else {}),
+        # The exchange's maintainer, as a skill's manifest names it.
+        "author": {"name": str(civic.get("civic.maintainer") or author.get("name")
+                               or namespace)},
+    }
+    return {k: v for k, v in out.items() if v not in ("", None)}
+
+
+def _claude_value(value: str) -> str:
+    for spec, claude in CLAUDE_VARIABLES.items():
+        value = value.replace(spec, claude)
+    return value
+
+
+def claude_mcp(plugin_dir: Path) -> dict | None:
+    """The `.mcp.json` Claude Code reads, from the author's `mcp.json`, or None
+    when the plugin declares no servers.
+
+    Only servers the specification defines are carried over. L0 has already
+    refused anything else, so a server dropped here is one that fails the pull
+    request anyway, and passing an unknown shape through to a client is the
+    wrong way to find out what it does with it."""
+    path = plugin_dir / "mcp.json"
+    if not path.is_file():
+        return None
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    servers = doc.get("mcpServers") if isinstance(doc, dict) else None
+    if not isinstance(servers, dict):
+        return None
+
+    out: dict[str, dict] = {}
+    for name, server in servers.items():
+        if not isinstance(server, dict):
+            continue
+        if server.get("type") == "streamable-http" and isinstance(server.get("url"), str):
+            entry = {"type": "http", "url": server["url"]}
+            if isinstance(server.get("headers"), dict):
+                entry["headers"] = dict(server["headers"])
+            out[str(name)] = entry
+        elif server.get("type") == "stdio" and isinstance(server.get("command"), str):
+            command = server["command"]
+            # A ./ command is relative to the plugin in the specification, and
+            # to wherever the client was started in Claude Code.
+            if command.startswith("./"):
+                command = "${CLAUDE_PLUGIN_ROOT}/" + command[2:]
+            entry = {"type": "stdio", "command": command}
+            if isinstance(server.get("args"), list):
+                entry["args"] = [_claude_value(str(a)) for a in server["args"]]
+            if isinstance(server.get("env"), dict):
+                entry["env"] = {str(k): _claude_value(str(v))
+                                for k, v in server["env"].items()}
+            if isinstance(server.get("cwd"), str):
+                cwd = server["cwd"]
+                if cwd.startswith("./"):
+                    cwd = "${CLAUDE_PLUGIN_ROOT}/" + cwd[2:]
+                entry["cwd"] = _claude_value(cwd)
+            out[str(name)] = entry
+    return {"mcpServers": out}
 
 
 def render(manifest: dict) -> str:
@@ -284,11 +461,18 @@ def generated(root: Path) -> dict[Path, str]:
             codex_plugin(skill_dir, labels))
         out[skill_dir / ".claude-plugin" / "plugin.json"] = render(
             claude_plugin(skill_dir))
+    for plugin_dir in plugin_dirs(root):
+        out[plugin_dir / ".claude-plugin" / "plugin.json"] = render(
+            claude_plugin_for_plugin(plugin_dir))
+        mcp = claude_mcp(plugin_dir)
+        if mcp is not None:
+            out[plugin_dir / ".mcp.json"] = render(mcp)
     return out
 
 
 def foreign_generated_files(root: Path = ROOT) -> list[Path]:
-    """Generated files inside skills/ that exist and are not the generator's.
+    """Generated files inside skills/ or plugins/ that exist and are not the
+    generator's.
 
     The root marketplaces may be stale on a pull request; that is a warning,
     and the post-merge job repairs them (#188). A generated file inside a
@@ -298,12 +482,22 @@ def foreign_generated_files(root: Path = ROOT) -> list[Path]:
     what the generator writes — and it blocks (#193). Absent is fine: the
     post-merge job will write it.
     """
-    skills = root / "skills"
-    return sorted(
-        path for path, content in generated(root).items()
-        if skills in path.parents and path.is_file()
+    trees = (root / "skills", root / "plugins")
+    owned = generated(root)
+    foreign = {
+        path for path, content in owned.items()
+        if any(tree in path.parents for tree in trees) and path.is_file()
         and path.read_text(encoding="utf-8") != content
-    )
+    }
+    # A plugin with no mcp.json gets no generated .mcp.json, so a hand-written
+    # one is not in `owned` to compare against — and Claude Code would launch
+    # it all the same. Present and unowned is foreign too.
+    for plugin_dir in plugin_dirs(root):
+        for rel in PLUGIN_GENERATED:
+            path = plugin_dir / rel
+            if path.is_file() and path not in owned:
+                foreign.add(path)
+    return sorted(foreign)
 
 
 def write_all(root: Path = ROOT) -> list[Path]:
@@ -327,6 +521,7 @@ def main() -> int:
                         help="exit non-zero if the committed manifest is stale")
     parser.add_argument("--check-in-skills", action="store_true",
                         help="exit non-zero if a generated file inside skills/ "
+                             "or plugins/ "
                              "exists and is not what the generator writes; "
                              "absent files and stale root marketplaces pass")
     parser.add_argument("--paths", action="store_true",
@@ -356,7 +551,7 @@ def main() -> int:
             print(f"error {exc}", file=sys.stderr)
             return 1
         if not foreign:
-            print("ok    every generated file inside skills/ is the generator's, or absent")
+            print("ok    every generated file inside skills/ and plugins/ is the generator's, or absent")
             return 0
         for path in foreign:
             print(f"FAIL  {path.relative_to(ROOT)}", file=sys.stderr)
