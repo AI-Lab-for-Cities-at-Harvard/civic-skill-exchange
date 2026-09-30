@@ -17,8 +17,6 @@ description: An example.
 Body.
 `;
 
-const b64 = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
-
 /** Answers the two API calls, and every raw file download, the way GitHub
  *  would. `files` maps a path to its content; SKILL.md defaults to SKILL. */
 function github(over: {
