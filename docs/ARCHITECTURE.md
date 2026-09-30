@@ -248,7 +248,8 @@ it lives in the code.
 | | Where |
 |---|---|
 | Structure, `plugin.json`, `mcp.json` | `validator/src/plugin-core.ts` (pure), read by `plugin.ts` |
-| Each skill's frontmatter | `checkSkillFile` in `validator/src/skill.ts` — the skill rules, per skill |
+| Each skill's frontmatter | `checkSkillFile` in `validator/src/skill.ts` — the skill rules, per skill, less what the plugin declares |
+| The plugin's own metadata | `checkPluginMetadata` in `validator/src/rules.ts`, over `plugin.json`'s `extensions["io.github.ai-lab-for-cities-at-harvard"]` |
 | The Claude files it derives | `claude_plugin_for_plugin` and `claude_mcp` in `scripts/build_marketplace.py` |
 | Credentials and endpoints in `mcp.json` | `scan_plugin_mcp` in `scripts/scan.py` |
 | The catalogue entry | `build_plugin_entry` in `scripts/build_index.py`, published as `plugins` in `index.json` |

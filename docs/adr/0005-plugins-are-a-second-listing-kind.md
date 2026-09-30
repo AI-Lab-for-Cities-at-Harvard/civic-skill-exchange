@@ -1,6 +1,7 @@
 # ADR 0005 — Plugins are a second listing kind
 
-**Status:** proposed, 2026-09-30
+**Status:** accepted, 2026-09-30
+**Rulings:** [#206](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/206)
 **Specification:** [Agent Plugins 1.0.0](https://agent-plugins.org/specification), schemas vendored in [`schema/agent-plugins/1.0.0/`](../../schema/agent-plugins/1.0.0/)
 
 ## Context
@@ -51,17 +52,28 @@ from them, under the rule the per-skill manifests already follow: allowed only
 at the plugin root, compared byte for byte by `--check-in-skills`, and foreign
 if the generator did not write them. No `.codex-plugin/` is generated.
 
-**3. Each skill in a plugin meets the skill rules.** The same frontmatter, the
-same metadata, the same vocabulary, checked per skill. The plugin as a whole
-meets the structural ones once: the same caps, the same file-type allowlist.
+**3. The exchange's metadata is split by what it describes.** What is true of
+the whole plugin — `civic.maintainer`, `civic.affiliation`, `civic.deployment`
+and its `deployed-*` details, `civic.use-when`, `civic.avoid-when` — is declared
+once, in `plugin.json` under `extensions["io.github.ai-lab-for-cities-at-harvard"]`,
+the reverse-domain namespace of the Lab's GitHub Pages domain. What varies per
+skill — `category`, `scope`, `language`, `data-sensitivity`, `human-review`,
+`localization`, and `jurisdiction`, which the rules check against the same
+skill's scope and localization — stays in each `SKILL.md`. A plugin-level field
+repeated in a skill fails: three copies of one fact are three chances for them
+to disagree. Both halves meet the rules a standalone skill's frontmatter does;
+the plugin as a whole meets the structural ones once — the same caps, the same
+file-type allowlist.
 
 **4. The registry is stricter than the specification where the specification
 leaves it to clients.**
 
-- *No `extensions`, and nothing at the plugin root but `plugin.json`,
-  `mcp.json`, `README.md` and `skills/`.* Client-specific namespaces are where
-  hooks and apps are declared: configuration honoured by code, with no model in
-  the path, the class #151 keeps out of skills.
+- *No `extensions` but the registry's own, and nothing at the plugin root but
+  `plugin.json`, `mcp.json`, `README.md` and `skills/`.* Client-specific
+  namespaces are where hooks and apps are declared: configuration honoured by
+  code, with no model in the path, the class #151 keeps out of skills. The
+  registry's namespace carries only the metadata in decision 3, which no client
+  reads — clients must ignore a namespace they do not implement.
 - *`stdio` and `streamable-http` only.* `sse` is legacy in the specification
   and Codex does not load it, so the listing would install differently in the
   two clients.

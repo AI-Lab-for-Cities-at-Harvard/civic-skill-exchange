@@ -50,7 +50,7 @@ Matched on the first path segment, because the plugin root is the skill director
 
 #### Plugins
 
-A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is held to an allowlist at its root rather than the refusals above: `plugin.json`, `mcp.json`, `README.md`, `skills/`, and the two files the registry generates for Claude Code. Everything a client might act on beyond that — `hooks/`, `commands/`, `agents/`, `.lsp.json`, a reverse-domain extension directory, `extensions` in the manifest — is refused, because every client adds to that set and a denylist would be a list of last year's. Each of its skills carries the refusals above as well.
+A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is held to an allowlist at its root rather than the refusals above: `plugin.json`, `mcp.json`, `README.md`, `skills/`, and the two files the registry generates for Claude Code. Everything a client might act on beyond that — `hooks/`, `commands/`, `agents/`, `.lsp.json`, a reverse-domain extension directory, any `extensions` namespace in the manifest but the registry's own — is refused, because every client adds to that set and a denylist would be a list of last year's. Each of its skills carries the refusals above as well.
 
 Its `mcp.json` is read harder than a skill's `.mcp.json`. L0 requires every remote server to have a literal `https` URL, so the host a reviewer approves is the host the plugin talks to — a `${VAR}` URL would be expanded by Claude Code and sent literally by Codex. L2 blocks a credential-named header or environment variable with a value in it, since the specification makes both package data. L3 names every server and its host, once, for the reviewer.
 

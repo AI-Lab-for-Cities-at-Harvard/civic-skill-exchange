@@ -255,11 +255,32 @@ from the command line for now:
 
 ```
 plugins/{your-github-username}/{plugin-name}/
-  plugin.json          $schema, name "{your-github-username}-{plugin-name}", description, license
+  plugin.json          $schema, name "{your-github-username}-{plugin-name}", description,
+                       license, and the plugin's civic metadata (below)
   mcp.json             optional — each server a literal https URL
   README.md            optional
-  skills/{skill-name}/SKILL.md     one per skill, same frontmatter as any skill
+  skills/{skill-name}/SKILL.md     one per skill
 ```
+
+What describes the whole plugin is written once, in `plugin.json`; what can
+differ between its skills stays in each `SKILL.md`:
+
+```json
+"extensions": {
+  "io.github.ai-lab-for-cities-at-harvard": {
+    "civic.maintainer": "Your Name",
+    "civic.affiliation": "government",
+    "civic.deployment": "organization",
+    "civic.deployed-at": "City of Example",
+    "civic.use-when": "…",
+    "civic.avoid-when": "…"
+  }
+}
+```
+
+Each skill's frontmatter then carries `category`, `scope`, `language`,
+`data-sensitivity` and `human-review` (and `localization` or `jurisdiction` if
+they apply) — but not the fields above.
 
 ```bash
 npx tsx validator/src/cli.ts plugins/{your-github-username}/{plugin-name}
