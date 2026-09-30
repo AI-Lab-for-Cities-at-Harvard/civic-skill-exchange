@@ -47,7 +47,7 @@ export function validatePlugin(
   // a finding says which of the plugin's skills it is about.
   for (const skill of pluginSkillNames(entries)) {
     const rel = `${PLUGIN_SKILLS_DIRECTORY}/${skill}`;
-    const result = checkSkillFile(join(pluginDir, rel), namespace, categories, author);
+    const result = checkSkillFile(join(pluginDir, rel), namespace, categories, author, true);
     findings.push(...result.findings.map((f) => ({ ...f, where: `${rel}: ${f.where}` })));
     notes.push(...result.notes.map((n) => `${rel}: ${n}`));
   }

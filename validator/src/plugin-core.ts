@@ -18,9 +18,11 @@
  * The registry is stricter than the specification in three places, each for a
  * reason the specification leaves to clients:
  *
- *   - `extensions` is refused. It is where a client-specific namespace puts
- *     hooks and apps — config honoured by code, with no model in the path,
- *     which is the class #151 keeps out of skills.
+ *   - `extensions` holds the registry's namespace and nothing else. A
+ *     client-specific namespace is where hooks and apps go — config honoured
+ *     by code, with no model in the path, which is the class #151 keeps out of
+ *     skills. The registry's own holds the plugin's exchange metadata, which
+ *     no client reads (ruling 5 on #206).
  *   - Only `stdio` and `streamable-http` servers. `sse` is legacy in the
  *     specification and Codex refuses it, so a listing using it would install
  *     differently in the two clients the marketplace serves.
@@ -29,6 +31,7 @@
  */
 
 import type { Finding } from "./types";
+import { checkPluginMetadata } from "./rules";
 import { DOC_DIRECTORIES, isLoadableNestedSkill, rejectedPluginPath, type Entry,
   type StructureLayout } from "./structure-core";
 
@@ -40,6 +43,12 @@ export const PLUGIN_SKILLS_DIRECTORY = "skills";
 
 export const PLUGIN_SCHEMA_ID = "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json";
 export const MCP_SCHEMA_ID = "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json";
+
+/** The registry's reverse-domain namespace, backed by the Lab's GitHub Pages
+ *  domain (ruling 6 on #206). Clients ignore a namespace they do not
+ *  implement, which is what makes it the place for metadata only the exchange
+ *  reads. */
+export const REGISTRY_EXTENSION = "io.github.ai-lab-for-cities-at-harvard";
 
 /** The manifest fields Agent Plugins 1.0.0 defines, less `extensions`. Held to
  *  schema/agent-plugins/1.0.0/plugin.schema.json by plugin.test.ts. */
@@ -222,11 +231,27 @@ export function checkPluginManifest(text: string, context: PluginContext): Findi
       `Plugins manifest from its own, and without it the plugin loads nothing.`));
   }
 
-  if ("extensions" in value) {
-    out.push(finding(at("extensions"),
-      `extensions are refused. A client-specific namespace is where hooks and ` +
-      `apps are declared — configuration a client runs with no model in the ` +
-      `path — and the registry lists what every client loads the same way.`));
+  const extensions = value["extensions"];
+  const civic = isObject(extensions) ? extensions[REGISTRY_EXTENSION] : undefined;
+  if (extensions !== undefined && !isObject(extensions)) {
+    out.push(finding(at("extensions"), "extensions must be an object keyed by namespace"));
+  }
+  for (const namespace of isObject(extensions) ? Object.keys(extensions) : []) {
+    if (namespace !== REGISTRY_EXTENSION) {
+      out.push(finding(at(`extensions.${namespace}`),
+        `'${namespace}' is refused. A client-specific namespace is where hooks ` +
+        `and apps are declared — configuration a client runs with no model in ` +
+        `the path — and the registry lists what every client loads the same ` +
+        `way. Only ${REGISTRY_EXTENSION}, the registry's own, is allowed.`));
+    }
+  }
+  if (!isObject(civic)) {
+    out.push(finding(at(`extensions.${REGISTRY_EXTENSION}`),
+      `the plugin's civic metadata is required here: who maintains it and ` +
+      `where it has been used, declared once for all of its skills.`));
+  } else {
+    out.push(...checkPluginMetadata(civic).map((f) =>
+      ({ ...f, where: at(`extensions.${REGISTRY_EXTENSION}.${f.where}`) })));
   }
   for (const key of Object.keys(value)) {
     if (key !== "extensions" && !(PLUGIN_FIELDS as readonly string[]).includes(key)) {

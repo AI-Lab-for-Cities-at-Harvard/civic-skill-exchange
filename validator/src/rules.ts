@@ -212,6 +212,24 @@ export const REQUIRED_METADATA = [
   LANGUAGE_FIELD,
 ] as const;
 
+/** What a plugin declares once, for all of its skills (ADR 0005, ruling 5 on
+ *  #206): who maintains it and where it has been used, and when it fits. They
+ *  live in plugin.json, under the registry's own extension namespace, because
+ *  they describe the plugin, and a copy per skill is three copies that can
+ *  disagree.
+ *
+ *  `civic.jurisdiction` is not here although it also names a place: the rules
+ *  check it against the same skill's scope and localization, so it stays with
+ *  them. */
+export const PLUGIN_REQUIRED_METADATA = [
+  "civic.maintainer", "civic.affiliation", "civic.deployment",
+] as const;
+export const PLUGIN_METADATA = [
+  ...PLUGIN_REQUIRED_METADATA,
+  "civic.deployed-at", "civic.deployed-in", "civic.deployed-since",
+  "civic.use-when", "civic.avoid-when",
+] as const;
+
 const finding = (where: string, message: string): Finding => ({ where, message });
 
 function str(value: unknown): string | undefined {
@@ -386,6 +404,27 @@ export function checkScope(meta: Record<string, unknown>): Finding[] {
       `or remove civic.jurisdiction.`));
   }
 
+  return findings;
+}
+
+/** The plugin-level metadata a plugin declares in plugin.json (ADR 0005):
+ *  the same rules the fields meet in a skill's frontmatter, applied once. */
+export function checkPluginMetadata(meta: Record<string, unknown>): Finding[] {
+  const findings: Finding[] = [];
+  for (const field of PLUGIN_REQUIRED_METADATA) {
+    if (!str(meta[field])) findings.push(finding(field, `${field} is required`));
+  }
+  for (const field of Object.keys(meta)) {
+    if (!(PLUGIN_METADATA as readonly string[]).includes(field)) {
+      findings.push(finding(field,
+        `'${field}' is declared by each skill, in its own frontmatter, or is ` +
+        `not a registry field. The plugin declares: ${PLUGIN_METADATA.join(", ")}`));
+    }
+  }
+  findings.push(...checkEnum(meta, "civic.affiliation", AFFILIATIONS));
+  findings.push(...checkEnum(meta, "civic.deployment", DEPLOYMENTS));
+  findings.push(...checkProvenance(meta));
+  findings.push(...checkFit(meta));
   return findings;
 }
 
@@ -603,8 +642,17 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
     return findings;
   }
 
+  // A skill inside a plugin leaves the plugin-level fields to plugin.json,
+  // and may not repeat them (ADR 0005).
+  const pluginLevel = context.inPlugin ? new Set<string>(PLUGIN_METADATA) : new Set<string>();
   for (const field of REQUIRED_METADATA) {
+    if (pluginLevel.has(field)) continue;
     if (!str(metadata[field])) findings.push(finding(field, `${field} is required`));
+  }
+  for (const field of Object.keys(metadata).filter((f) => pluginLevel.has(f))) {
+    findings.push(finding(field,
+      `${field} describes the whole plugin, so it is declared once, in ` +
+      `plugin.json — a copy in each skill is a copy that can disagree.`));
   }
 
   const category = str(metadata["civic.category"]);

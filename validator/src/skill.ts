@@ -41,6 +41,7 @@ export function validateSkill(
  *  skill is `skills/`, not its owner. */
 export function checkSkillFile(
   skillDir: string, namespace: string, categories: string[], author?: string,
+  inPlugin = false,
 ): SkillResult {
   const findings: Finding[] = [];
   const notes: string[] = [];
@@ -71,7 +72,7 @@ export function checkSkillFile(
   if (moved.length > 0) notes.push(`moved non-spec fields into metadata: ${moved.join(", ")}`);
 
   findings.push(...checkFrontmatter(frontmatter, {
-    categories, directoryName: name, author, namespace,
+    categories, directoryName: name, author, namespace, inPlugin,
   }));
 
   if (body.trim() === "") {
