@@ -102,6 +102,13 @@ even in their own namespace. A plugin launches MCP servers and brings several
 skills' code in one pull request, which is more than a skill's author-only path
 was designed to carry.
 
+**8. An environment read in a plugin is flagged, not blocked** (ruling 7 on
+#206). `credential-access` fails a skill that reads `os.environ`, `getenv` or
+`process.env`; in a plugin the same match routes to the reviewer, because a
+plugin's fallback scripts legitimately take the user's own API keys that way and
+decision 7 already puts a maintainer on every plugin. Reading credential files
+(`.ssh/`, `.aws/credentials`) or dumping the environment still blocks.
+
 ## Consequences
 
 **A plugin shares one budget.** A hundred files and 2 MB across all of its

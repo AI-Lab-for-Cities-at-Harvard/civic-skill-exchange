@@ -573,6 +573,43 @@ def scan_plugin_mcp(plugin_dir: Path) -> tuple[list[dict], list[dict]]:
     return blocking, flags
 
 
+#: Reading an environment variable, as distinct from the rest of what
+#: `credential-access` catches. Ruling 7 on #206: a plugin's fallback scripts
+#: legitimately take the user's own API keys from the environment, and every
+#: plugin is reviewed by a maintainer before merge, so in a plugin this one
+#: shape routes to the reviewer instead of failing the pull request. Reading
+#: credential files (`.ssh/`, `.aws/credentials`) or dumping the environment
+#: (`printenv`) is not a key the user supplied, and still blocks.
+ENVIRONMENT_READ = re.compile(r"^(?:os\.environ|getenv|process\.env)$")
+CREDENTIAL_FILES = re.compile(r"(?:printenv|\$AWS_|\.ssh/|\.aws/credentials)")
+
+ENVIRONMENT_READ_IN_PLUGIN = (
+    "Reads an environment variable. In a plugin this is flagged rather than "
+    "blocked (ruling 7 on #206): fallback scripts legitimately take the user's "
+    "own API keys this way. The maintainer reviewing the plugin should confirm "
+    "which variables are read, that each is documented, and that no value is "
+    "logged, saved to disk, or sent anywhere but the service it belongs to."
+)
+
+
+def plugin_hard_findings(text: str, rel: str) -> tuple[list[dict], list[dict]]:
+    """`(blocking, flags)` from the hard signatures, for a file in a plugin.
+
+    Everything blocks as it does in a skill, except an environment read, which
+    is flagged. Because scan_text reports one hit per signature per file, a
+    file whose first credential match is an environment read is searched again
+    for the shapes that still block, so the earlier match cannot hide them."""
+    blocking, flags = [], []
+    for f in scan_text(text, HARD, rel):
+        if f["signature"] == "credential-access" and ENVIRONMENT_READ.match(f["excerpt"]):
+            flags.append({**f, "explanation": ENVIRONMENT_READ_IN_PLUGIN})
+            for hit in scan_text(text, [("credential-access", CREDENTIAL_FILES, f["explanation"])], rel):
+                blocking.append(hit)
+        else:
+            blocking.append(f)
+    return blocking, flags
+
+
 def is_plugin(listing_dir: Path) -> bool:
     """Which tree the listing is in decides what it is — never its contents, so
     a skill cannot opt into the plugin rules by shipping a plugin.json."""
@@ -601,8 +638,9 @@ def scan_plugin(plugin_dir: Path) -> dict:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        blocking.extend(scan_text(text, HARD, rel))
-        file_flags = scan_text(text, SOFT, rel)
+        hard_blocking, hard_flags = plugin_hard_findings(text, rel)
+        blocking.extend(hard_blocking)
+        file_flags = hard_flags + scan_text(text, SOFT, rel)
         parts = rel.split("/")
         skill_dir = plugin_dir / "skills" / parts[1] if parts[0] == "skills" and len(parts) > 2 else None
         flags.extend(apply_localization(

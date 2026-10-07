@@ -311,6 +311,12 @@ fields that can differ between skills — `civic.category`, `civic.scope`,
 **Not yours to write:** `.claude-plugin/` and `.mcp.json`. The registry generates
 both from your files after merge, and a pull request carrying its own copy fails.
 
+**Scripts may read API keys from the environment**, for example a fallback that
+calls an agency's API with the user's own key. In a skill that fails the scan;
+in a plugin it is flagged for the reviewer instead. Say in your README which
+variables are read and what for, and never write a key to disk or a log.
+Reading credential files such as `~/.ssh` still fails.
+
 **A maintainer reviews every plugin before it merges**, even one entirely inside
 your own namespace. The automated checks run exactly as they do for a skill.
 

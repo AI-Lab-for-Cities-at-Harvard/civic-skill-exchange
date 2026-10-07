@@ -52,7 +52,7 @@ These are executed by the agent, not read by the model. Reviewing the prose is n
 
 Plugin hooks, client settings and `.lsp.json` never reach you: L0 refuses them outright, for the reason in [SECURITY.md](SECURITY.md).
 
-A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is one review, not one per skill: every skill's `scripts/`, and its `mcp.json`. The scan's `mcp-endpoint` findings list each server and its host — that list is what item 4 asks you to justify. The generated `.claude-plugin/plugin.json` and `.mcp.json` are derived from the author's files and checked byte for byte, so read the author's. Attest with `python scripts/attestation.py {namespace}/{name} --plugin`.
+A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is one review, not one per skill: every skill's `scripts/`, and its `mcp.json`. The scan's `mcp-endpoint` findings list each server and its host — that list is what item 4 asks you to justify. A `credential-access` flag in a plugin is an environment read that would have blocked a skill: check which variables, that the plugin documents each one, and that no value is logged, written to disk, or sent anywhere but the service it belongs to. The generated `.claude-plugin/plugin.json` and `.mcp.json` are derived from the author's files and checked byte for byte, so read the author's. Attest with `python scripts/attestation.py {namespace}/{name} --plugin`.
 
 The standard is simple: if you would not run this on your own laptop, it does not enter the Reviewed tier. Length is not an excuse — if it is too long to read, it is too long to attest to.
 
