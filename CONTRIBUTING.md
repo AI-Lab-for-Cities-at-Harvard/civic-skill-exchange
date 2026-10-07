@@ -31,6 +31,9 @@ Rules the automation enforces:
 - The folder namespace must match **your GitHub username** — the account opening the PR. It must be lowercase: GitHub usernames are case-insensitive, but the directory is the one canonical spelling, so an uppercase character is rejected rather than folded.
 - `{skill-name}` must match the `name` field in `SKILL.md` exactly.
 - Your PR may not touch anything outside your own namespace. Changes to schema, workflows, or documentation are separate PRs and need maintainer review.
+- Several skills that work together, with the MCP servers they use, are a
+  **plugin** and go under `plugins/{your-github-username}/{plugin-name}/`
+  instead — see [Plugins](#plugins) below.
 - No symlinks, no binaries, no nested `.git` directories, no compiled artifacts.
 - No `hooks/`, `.claude-plugin/`, `settings.json`, `settings.local.json`, or
   `.lsp.json` — the skill directory is a plugin root a client installs
@@ -252,6 +255,75 @@ You can run all of this locally. `npx tsx validator/src/cli.ts skills/your-name/
 **If L2 blocks you**, do not work around the signature. Open the PR anyway and explain what you're trying to do. There are legitimate reasons to need network access, and a maintainer would much rather discuss it than watch someone obfuscate past a check.
 
 Full detail, including the threat model behind these layers, is in [docs/SECURITY.md](docs/SECURITY.md).
+
+## Plugins
+
+A plugin is several skills that work together, installed as one, with the MCP
+servers they use. It follows the open [Agent Plugins](https://agent-plugins.org/specification)
+layout, and everything above about a skill applies to each skill inside it.
+The decisions behind the differences are
+[ADR 0005](docs/adr/0005-plugins-are-a-second-listing-kind.md).
+
+```
+plugins/{your-github-username}/{plugin-name}/
+├── plugin.json            the manifest — you write this
+├── mcp.json               optional — the MCP servers, you write this
+├── README.md              optional
+└── skills/
+    ├── {skill-name}/SKILL.md
+    └── {other-skill}/SKILL.md, scripts/, references/, assets/
+```
+
+**`plugin.json`** carries the Agent Plugins fields and, under the registry's
+own namespace, what is true of the whole plugin:
+
+```json
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "{your-github-username}-{plugin-name}",
+  "description": "At least 40 characters — what the catalogue and both clients show.",
+  "license": "MIT",
+  "extensions": {
+    "io.github.ai-lab-for-cities-at-harvard": {
+      "civic.maintainer": "Your Name",
+      "civic.affiliation": "government",
+      "civic.deployment": "none",
+      "civic.use-when": "…",
+      "civic.avoid-when": "…"
+    }
+  }
+}
+```
+
+**Each `SKILL.md`** carries `name`, `description`, `license`, and the civic
+fields that can differ between skills — `civic.category`, `civic.scope`,
+`civic.language`, `civic.data-sensitivity`, `civic.human-review`, and
+`civic.localization` or `civic.jurisdiction` where they apply. Not the fields in
+`plugin.json`: a copy in each skill is a copy that can disagree, so it fails.
+
+**`mcp.json`** declares each server once, for the whole plugin:
+
+- `streamable-http` with a literal `https` URL, or `stdio` with a command the
+  plugin ships or the host already has. Not `sse`, and not a URL read from an
+  environment variable — a reviewer has to be able to see where it connects.
+- No credentials in `headers` or `env`. Whatever is in the file is published.
+
+**Not yours to write:** `.claude-plugin/` and `.mcp.json`. The registry generates
+both from your files after merge, and a pull request carrying its own copy fails.
+
+**Scripts may read API keys from the environment**, for example a fallback that
+calls an agency's API with the user's own key. In a skill that fails the scan;
+in a plugin it is flagged for the reviewer instead. Say in your README which
+variables are read and what for, and never write a key to disk or a log.
+Reading credential files such as `~/.ssh` still fails.
+
+**A maintainer reviews every plugin before it merges**, even one entirely inside
+your own namespace. The automated checks run exactly as they do for a skill.
+
+```bash
+npx tsx validator/src/cli.ts plugins/{your-github-username}/{plugin-name}
+npm run check -- plugins/{your-github-username}/{plugin-name}
+```
 
 ## After merge
 

@@ -50,7 +50,10 @@ jobs:
           # the ownership check (#154). L1 is a statement about paths, and a
           # path that left the tree is still a path the pull request touched.
           git diff --name-only --no-renames "origin/$BASE_REF...HEAD" > changed.txt
-          if grep -q '^skills/' changed.txt; then
+          # plugins/ is the second kind of listing (ADR 0005) and gets every
+          # step skills/ does; the output keeps its name so the conditions
+          # below read the same.
+          if grep -qE '^(skills|plugins)/' changed.txt; then
             echo "skills=true" >> "$GITHUB_OUTPUT"
           else
             echo "skills=false" >> "$GITHUB_OUTPUT"
@@ -67,7 +70,7 @@ jobs:
 
       - name: Nothing to validate
         if: steps.changes.outputs.skills != 'true' && steps.changes.outputs.skillmd != 'true'
-        run: echo "This pull request touches no skills/, so there is nothing to validate."
+        run: echo "This pull request touches no skills/ or plugins/, so there is nothing to validate."
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         if: steps.changes.outputs.skills == 'true' || steps.changes.outputs.skillmd == 'true'

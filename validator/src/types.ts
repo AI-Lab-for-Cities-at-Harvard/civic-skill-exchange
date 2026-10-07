@@ -27,4 +27,7 @@ export interface RuleContext {
   author?: string;
   /** The namespace the skill was written into. */
   namespace?: string;
+  /** The skill is one of a plugin's, whose plugin.json declares the
+   *  plugin-level metadata instead (ADR 0005). */
+  inPlugin?: boolean;
 }

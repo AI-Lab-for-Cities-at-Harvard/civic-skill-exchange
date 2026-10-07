@@ -684,3 +684,127 @@ def test_a_stale_root_marketplace_is_not_foreign(make_skill):
     build_marketplace.write_all(root)
     (root / build_marketplace.CLAUDE_MANIFEST).write_text("{}\n", encoding="utf-8")
     assert build_marketplace.foreign_generated_files(root) == []
+
+
+# --------------------------------------------------------------------------- #
+# Plugins (ADR 0005). The author writes the Agent Plugins files, which Codex
+# reads as they are; the generator derives what Claude Code needs.
+
+
+def test_a_plugin_is_listed_in_both_marketplaces(make_skill, make_plugin):
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    make_plugin(name="housing", namespace="cityofx")
+    claude = build_marketplace.build(root)["plugins"]
+    codex = build_marketplace.build_codex(root)["plugins"]
+    assert [p["name"] for p in claude] == ["cityofx-alpha", "cityofx-housing"]
+    assert [p["name"] for p in codex] == ["cityofx-alpha", "cityofx-housing"]
+    assert claude[1]["source"] == "./plugins/cityofx/housing"
+    assert codex[1]["source"] == {"source": "local", "path": "./plugins/cityofx/housing"}
+    assert claude[1]["description"].startswith("Housing dashboards")
+
+
+def test_a_plugin_takes_the_category_most_of_its_skills_declare(make_plugin):
+    root = make_plugin(category="finance").parents[2]
+    entry = build_marketplace.build_codex(root)["plugins"][0]
+    assert entry["category"] == build_marketplace.category_labels(root)["finance"]
+    assert entry["policy"] == build_marketplace.CODEX_POLICY
+
+
+def test_a_plugin_with_an_unreadable_manifest_is_left_out(make_plugin):
+    plugin = make_plugin()
+    (plugin / "plugin.json").write_text("{", encoding="utf-8")
+    assert build_marketplace.build(plugin.parents[2])["plugins"] == []
+
+
+def test_a_skill_and_a_plugin_cannot_share_a_marketplace_name(make_skill, make_plugin):
+    root = make_skill(name="housing", namespace="cityofx").parents[2]
+    make_plugin(name="housing", namespace="cityofx")
+    with pytest.raises(build_marketplace.DuplicatePluginName,
+                       match="skills/cityofx/housing and plugins/cityofx/housing"):
+        build_marketplace.build(root)
+
+
+def test_no_codex_manifest_is_generated_for_a_plugin(make_plugin):
+    """Codex reads the author's Agent Plugins manifest, which wins over
+    `.codex-plugin/plugin.json` — a generated one would never be read."""
+    plugin = make_plugin()
+    owned = build_marketplace.generated(plugin.parents[2])
+    assert plugin / ".codex-plugin" / "plugin.json" not in owned
+    assert plugin / ".claude-plugin" / "plugin.json" in owned
+
+
+def test_the_claude_manifest_for_a_plugin_is_metadata_only(make_plugin):
+    plugin = make_plugin(manifest={"version": "0.2.0", "keywords": ["housing"]})
+    manifest = build_marketplace.claude_plugin_for_plugin(plugin)
+    assert manifest == {
+        "name": "testuser-housing-dashboards",
+        "description": "Housing dashboards and briefs for any U.S. city or county.",
+        "version": "0.2.0",
+        # The exchange's maintainer, as for a skill — not the spec's author.
+        "author": {"name": "Plugin Maintainer"},
+    }
+
+
+def test_claude_gets_a_dotted_mcp_config_with_its_own_transport_name(make_plugin):
+    plugin = make_plugin(mcp={
+        "census": {"type": "streamable-http", "url": "https://census.example.org/mcp",
+                   "headers": {"Accept": "application/json"}},
+        "local": {"type": "stdio", "command": "./bin/server",
+                  "args": ["--data", "${PLUGIN_DATA}/cache"],
+                  "env": {"ROOT": "${PLUGIN_ROOT}"}, "cwd": "./work"},
+        "bare": {"type": "stdio", "command": "node"},
+    })
+    assert build_marketplace.claude_mcp(plugin) == {"mcpServers": {
+        "census": {"type": "http", "url": "https://census.example.org/mcp",
+                   "headers": {"Accept": "application/json"}},
+        "local": {"type": "stdio", "command": "${CLAUDE_PLUGIN_ROOT}/bin/server",
+                  "args": ["--data", "${CLAUDE_PLUGIN_DATA}/cache"],
+                  "env": {"ROOT": "${CLAUDE_PLUGIN_ROOT}"},
+                  "cwd": "${CLAUDE_PLUGIN_ROOT}/work"},
+        "bare": {"type": "stdio", "command": "node"},
+    }}
+
+
+def test_no_mcp_config_is_generated_when_the_plugin_declares_none(make_plugin):
+    plugin = make_plugin(mcp=None)
+    assert plugin / ".mcp.json" not in build_marketplace.generated(plugin.parents[2])
+
+
+def test_a_server_outside_the_specification_is_not_carried_over(make_plugin):
+    plugin = make_plugin(mcp={"old": {"type": "sse", "url": "https://example.org/sse"}})
+    assert build_marketplace.claude_mcp(plugin) == {"mcpServers": {}}
+
+
+def test_write_then_check_agrees_for_a_plugin(make_plugin):
+    plugin = make_plugin()
+    root = plugin.parents[2]
+    build_marketplace.write_all(root)
+    assert (plugin / ".mcp.json").is_file()
+    assert build_marketplace.all_current(root)
+    assert build_marketplace.foreign_generated_files(root) == []
+
+
+def test_a_hand_written_claude_file_in_a_plugin_is_foreign(make_plugin):
+    plugin = make_plugin()
+    root = plugin.parents[2]
+    (plugin / ".mcp.json").write_text(
+        '{"mcpServers": {"x": {"command": "curl"}}}', encoding="utf-8")
+    assert build_marketplace.foreign_generated_files(root) == [plugin / ".mcp.json"]
+
+
+def test_a_hand_written_mcp_config_is_foreign_even_without_an_mcp_json(make_plugin):
+    """With no mcp.json the generator writes no .mcp.json, so there is nothing
+    to compare a hand-written one against — and Claude Code would launch it."""
+    plugin = make_plugin(mcp=None)
+    (plugin / ".mcp.json").write_text("{}", encoding="utf-8")
+    assert build_marketplace.foreign_generated_files(plugin.parents[2]) == [
+        plugin / ".mcp.json"]
+
+
+def test_every_path_the_generator_writes_into_a_plugin_is_declared(make_plugin):
+    """validator/src/skill.ts exempts PLUGIN_GENERATED from ownership, so
+    anything else written into a plugin would fail L1 on maintenance work."""
+    plugin = make_plugin()
+    written = {p.relative_to(plugin) for p in build_marketplace.generated(plugin.parents[2])
+               if plugin in p.parents}
+    assert written == set(build_marketplace.PLUGIN_GENERATED)

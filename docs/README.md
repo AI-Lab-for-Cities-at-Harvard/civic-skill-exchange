@@ -31,6 +31,7 @@ superseded by a later one.
 | [0002](adr/0002-lab-is-authorship-not-a-tier.md) | Lab is authorship, not a tier — and the Lab waives the waiting period on its own namespace |
 | [0003](adr/0003-no-backend-until-the-experience-requires-one.md) | No backend — a preference tested against the experience, with the conditions that would overturn it named in advance |
 | [0004](adr/0004-language-is-metadata-and-verification-not-translation.md) | Language is metadata and verification, not translation — a listing declares its language, the ledger records what a reviewer verified, and the site ships in Spanish |
+| [0005](adr/0005-plugins-are-a-second-listing-kind.md) | Plugins are a second listing kind — several skills and their MCP servers under `plugins/`, in the Agent Plugins layout, installable from both marketplaces |
 
 ## Spikes
 

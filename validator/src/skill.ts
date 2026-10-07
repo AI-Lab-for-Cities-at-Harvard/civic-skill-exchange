@@ -27,10 +27,25 @@ export function validateSkill(
   const findings: Finding[] = [];
   const notes: string[] = [];
 
-  const name = basename(skillDir);
-  const namespace = basename(dirname(skillDir));
-
   findings.push(...checkStructure(skillDir));
+  const skill = checkSkillFile(skillDir, basename(dirname(skillDir)), categories, author);
+  return { findings: [...findings, ...skill.findings], notes: [...notes, ...skill.notes] };
+}
+
+/** The SKILL.md half of validating a skill: frontmatter and body.
+ *
+ *  Separate from the structural half because a plugin's skills get exactly
+ *  these rules — the same metadata, the same vocabulary — while the plugin as
+ *  a whole gets the structural ones once (plugin.ts). `namespace` is passed
+ *  rather than read from the path, since inside a plugin the directory above a
+ *  skill is `skills/`, not its owner. */
+export function checkSkillFile(
+  skillDir: string, namespace: string, categories: string[], author?: string,
+  inPlugin = false,
+): SkillResult {
+  const findings: Finding[] = [];
+  const notes: string[] = [];
+  const name = basename(skillDir);
 
   const skillMd = join(skillDir, "SKILL.md");
   if (!existsSync(skillMd)) {
@@ -57,7 +72,7 @@ export function validateSkill(
   if (moved.length > 0) notes.push(`moved non-spec fields into metadata: ${moved.join(", ")}`);
 
   findings.push(...checkFrontmatter(frontmatter, {
-    categories, directoryName: name, author, namespace,
+    categories, directoryName: name, author, namespace, inPlugin,
   }));
 
   if (body.trim() === "") {
@@ -110,20 +125,43 @@ export function discoverAll(root: string): string[] {
 const GENERATED_IN_SKILL =
   /^skills\/[^/]+\/[^/]+\/\.(?:codex|claude)-plugin\/plugin\.json$/;
 
+/** The same exemption for a plugin (ADR 0005): the Claude manifest and the
+ *  Claude MCP config the generator derives from the author's plugin.json and
+ *  mcp.json, at the plugin root and nowhere else. `discover.test.ts` holds it
+ *  to the generator the same way. */
+const GENERATED_IN_PLUGIN_PATH =
+  /^plugins\/[^/]+\/[^/]+\/(?:\.claude-plugin\/plugin\.json|\.mcp\.json)$/;
+
 /** Whether a repository-relative path is one the manifest generator owns. */
 export function isGeneratedInSkill(path: string): boolean {
-  return GENERATED_IN_SKILL.test(path);
+  return GENERATED_IN_SKILL.test(path) || GENERATED_IN_PLUGIN_PATH.test(path);
 }
 
-/** Map a list of changed paths to the distinct skill directories they touch. */
+/** The two trees a listing can live in. `skills/{namespace}/{name}/` is a
+ *  skill and `plugins/{namespace}/{name}/` a plugin; the namespace does the
+ *  same ownership work in both. */
+export const LISTING_ROOTS = ["skills", "plugins"] as const;
+
+/** Whether a listing directory is a plugin rather than a skill: whether it
+ *  sits at `plugins/{namespace}/{name}`. Read from the directory's own path,
+ *  not relative to the repository, so a target given from another checkout is
+ *  classified the same way — and never from its contents, so a skill cannot
+ *  opt into the plugin rules by shipping a plugin.json. `root` is unused and
+ *  kept so callers read the same as the other discovery helpers. */
+export function isPluginDir(_root: string, dir: string): boolean {
+  return basename(dirname(dirname(dir))) === "plugins";
+}
+
+/** Map a list of changed paths to the distinct listing directories they
+ *  touch — skills and plugins both. */
 export function discoverChanged(root: string, changedFile: string): string[] {
   const dirs = new Set<string>();
   for (const line of readFileSync(changedFile, "utf8").split("\n")) {
     const path = line.trim();
     if (isGeneratedInSkill(path)) continue;
     const parts = path.split("/");
-    if (parts.length >= 3 && parts[0] === "skills") {
-      const candidate = join(root, parts[0], parts[1]!, parts[2]!);
+    if (parts.length >= 3 && (LISTING_ROOTS as readonly string[]).includes(parts[0]!)) {
+      const candidate = join(root, parts[0]!, parts[1]!, parts[2]!);
       if (existsSync(candidate)) dirs.add(candidate);
     }
   }
@@ -177,14 +215,15 @@ export function checkChangedOwnership(
 
   for (const line of paths) {
     const path = line.trim();
-    if (path === "" || !path.startsWith("skills/")) continue;
+    const tree = LISTING_ROOTS.find((r) => path.startsWith(`${r}/`));
+    if (path === "" || !tree) continue;
     if (isGeneratedInSkill(path)) continue;
 
     const parts = path.split("/");
     if (parts.length < 3 || parts[1] === "") {
       findings.push(finding(path,
-        `'${path}' is directly under skills/, which belongs to no namespace. ` +
-        `Everything a pull request adds there goes in skills/${author}/`));
+        `'${path}' is directly under ${tree}/, which belongs to no namespace. ` +
+        `Everything a pull request adds there goes in ${tree}/${author}/`));
       continue;
     }
 
@@ -199,8 +238,8 @@ export function checkChangedOwnership(
     findings.push(finding(path,
       `namespace '${namespace}' does not match the pull request author ` +
       `'${author}'. A pull request may only add, change, move or delete files ` +
-      `under skills/${author}/ — removing or migrating another namespace's ` +
-      `skill is a maintainer operation.`));
+      `under ${tree}/${author}/ — removing or migrating another namespace's ` +
+      `listing is a maintainer operation.`));
   }
 
   return findings;

@@ -14,6 +14,7 @@ Usage:
     scan.py all --out findings.json
     scan.py --changed changed.txt --out findings.json
     scan.py skills/octocat/permit-status-explainer
+    scan.py plugins/octocat/housing-dashboards
 
 Exit code 1 if any L2 signature matched, 0 otherwise.
 """
@@ -144,7 +145,7 @@ def apply_instruction_suppression_language(flags: list[dict]) -> list[dict]:
 SOFT: list[Signature] = [
     (
         "external-url",
-        re.compile(r"https?://(?!(?:www\.)?(?:github\.com|agentskills\.io|w3\.org|schema\.org))[^\s)\"'<>]+"),
+        re.compile(r"https?://(?!(?:www\.)?(?:github\.com|agentskills\.io|agent-plugins\.org|w3\.org|schema\.org))[^\s)\"'<>]+"),
         "External URL. Fires on virtually any skill that cites documentation, so it "
         "is useless as a blocker and useful as a triage signal — check the domains.",
     ),
@@ -432,14 +433,17 @@ def server_line(text: str, name: str) -> int:
     return text.count("\n", 0, match.start()) + 1 if match else 1
 
 
-def scan_mcp(skill_dir: Path) -> list[dict]:
+def scan_mcp(skill_dir: Path, config: str = MCP_CONFIG) -> list[dict]:
     """Blocking findings from the MCP servers a skill declares.
 
     One finding per server rather than one per file: each server is a separate
     decision by the author, and fixing one to discover the next on resubmission
     is a loop worth not building.
+
+    `config` is the file a client reads: `.mcp.json` at a skill's root, and the
+    author's `mcp.json` for a plugin, whose `.mcp.json` is generated from it.
     """
-    path = skill_dir / MCP_CONFIG
+    path = skill_dir / config
     if not path.is_file() or path.is_symlink():
         return []
     try:
@@ -452,11 +456,211 @@ def scan_mcp(skill_dir: Path) -> list[dict]:
         command = server_command(server)
         if not command:
             continue
-        for f in scan_text(command, MCP, MCP_CONFIG):
+        for f in scan_text(command, MCP, config):
             findings.append({**f,
                              "line": server_line(text, name),
                              "excerpt": f"{name}: {command}"[:160]})
     return findings
+
+
+# --------------------------------------------------------------------------- #
+# Plugins (ADR 0005).
+#
+# A plugin declares its servers in the Agent Plugins `mcp.json`, and two
+# things about it are worth more than the text scan gives them.
+#
+# Credentials, blocking. The specification says header values and environment
+# values are package data and must not hold secrets; a plugin that ships one
+# has published it, and every install sends it. Matched by the *name* of the
+# header or variable carrying a non-empty value — a value-shape heuristic would
+# miss the token nobody has seen before, and names are what authors choose.
+#
+# Where each server goes, routed to a human. REVIEW.md asks a reviewer to
+# reject egress the listing's purpose does not need, which they can only do by
+# reading every host. `external-url` would name them too, but among every
+# documentation link in the plugin; this names each server once, with what it
+# is, so the reviewer's list is the servers and nothing else.
+
+PLUGIN_MCP_CONFIG = "mcp.json"
+
+#: Paths the registry writes into a plugin (build_marketplace.PLUGIN_GENERATED).
+#: Derived from the author's files and compared byte for byte by
+#: `--check-in-skills`, so scanning them again would only repeat every finding.
+PLUGIN_GENERATED = {".claude-plugin/plugin.json", ".mcp.json"}
+
+CREDENTIAL_NAME = re.compile(
+    r"(?:^authorization$|^proxy-authorization$|^cookie$|token|secret|passw|api[-_]?key|"
+    r"access[-_]?key|private[-_]?key|credential|session)",
+    re.IGNORECASE)
+
+EMBEDDED_CREDENTIAL = (
+    "Credential in an MCP server's headers or environment. Agent Plugins treats "
+    "both as package data: this value is published with the listing and sent by "
+    "every install. Remove it; authentication belongs to the client, not the "
+    "package."
+)
+
+MCP_ENDPOINT = (
+    "The plugin connects to this server. Check that the listing's stated "
+    "purpose needs this host, and that whoever runs it is who the listing says "
+    "(docs/REVIEW.md)."
+)
+
+MCP_LOCAL = (
+    "The plugin launches this command on the user's machine when it loads. "
+    "Read what it runs (docs/REVIEW.md) — a command the plugin ships is in the "
+    "diff; one the host already has is whatever that host has installed."
+)
+
+#: Declared as a signature list, like HARD, SOFT and MCP, so the report's
+#: vocabulary (validator/src/report.ts) is checked against it. The patterns
+#: match a header or variable *name* and anything at all, respectively; the
+#: decision about which servers they apply to is scan_plugin_mcp's.
+PLUGIN_MCP: list[Signature] = [
+    (
+        "mcp-embedded-credential",
+        CREDENTIAL_NAME,
+        EMBEDDED_CREDENTIAL,
+    ),
+    (
+        "mcp-endpoint",
+        re.compile(r"."),
+        MCP_ENDPOINT,
+    ),
+]
+
+
+def scan_plugin_mcp(plugin_dir: Path) -> tuple[list[dict], list[dict]]:
+    """`(blocking, flags)` for a plugin's `mcp.json`."""
+    path = plugin_dir / PLUGIN_MCP_CONFIG
+    if not path.is_file() or path.is_symlink():
+        return [], []
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (UnicodeDecodeError, OSError):
+        return [], []
+
+    blocking = scan_mcp(plugin_dir, PLUGIN_MCP_CONFIG)
+    flags = []
+    for name, server in mcp_servers(text).items():
+        line = server_line(text, name)
+        for field in ("headers", "env"):
+            values = server.get(field)
+            if not isinstance(values, dict):
+                continue
+            for key, value in values.items():
+                if CREDENTIAL_NAME.search(str(key)) and str(value).strip():
+                    blocking.append({
+                        "signature": PLUGIN_MCP[0][0],
+                        "file": PLUGIN_MCP_CONFIG,
+                        "line": line,
+                        # The name, never the value: this goes into a public
+                        # pull request comment.
+                        "excerpt": f"{name}: {field}.{key}",
+                        "explanation": EMBEDDED_CREDENTIAL,
+                    })
+        url = server.get("url")
+        if isinstance(url, str):
+            host = re.sub(r"^[a-z]+://", "", url).split("/")[0]
+            flags.append({"signature": PLUGIN_MCP[1][0], "file": PLUGIN_MCP_CONFIG,
+                          "line": line, "excerpt": f"{name}: {host}",
+                          "explanation": MCP_ENDPOINT})
+        elif isinstance(server.get("command"), str):
+            flags.append({"signature": PLUGIN_MCP[1][0], "file": PLUGIN_MCP_CONFIG,
+                          "line": line,
+                          "excerpt": f"{name}: {server_command(server)}"[:160],
+                          "explanation": MCP_LOCAL})
+    return blocking, flags
+
+
+#: Reading an environment variable, as distinct from the rest of what
+#: `credential-access` catches. Ruling 7 on #206: a plugin's fallback scripts
+#: legitimately take the user's own API keys from the environment, and every
+#: plugin is reviewed by a maintainer before merge, so in a plugin this one
+#: shape routes to the reviewer instead of failing the pull request. Reading
+#: credential files (`.ssh/`, `.aws/credentials`) or dumping the environment
+#: (`printenv`) is not a key the user supplied, and still blocks.
+ENVIRONMENT_READ = re.compile(r"^(?:os\.environ|getenv|process\.env)$")
+CREDENTIAL_FILES = re.compile(r"(?:printenv|\$AWS_|\.ssh/|\.aws/credentials)")
+
+ENVIRONMENT_READ_IN_PLUGIN = (
+    "Reads an environment variable. In a plugin this is flagged rather than "
+    "blocked (ruling 7 on #206): fallback scripts legitimately take the user's "
+    "own API keys this way. The maintainer reviewing the plugin should confirm "
+    "which variables are read, that each is documented, and that no value is "
+    "logged, saved to disk, or sent anywhere but the service it belongs to."
+)
+
+
+def plugin_hard_findings(text: str, rel: str) -> tuple[list[dict], list[dict]]:
+    """`(blocking, flags)` from the hard signatures, for a file in a plugin.
+
+    Everything blocks as it does in a skill, except an environment read, which
+    is flagged. Because scan_text reports one hit per signature per file, a
+    file whose first credential match is an environment read is searched again
+    for the shapes that still block, so the earlier match cannot hide them."""
+    blocking, flags = [], []
+    for f in scan_text(text, HARD, rel):
+        if f["signature"] == "credential-access" and ENVIRONMENT_READ.match(f["excerpt"]):
+            flags.append({**f, "explanation": ENVIRONMENT_READ_IN_PLUGIN})
+            for hit in scan_text(text, [("credential-access", CREDENTIAL_FILES, f["explanation"])], rel):
+                blocking.append(hit)
+        else:
+            blocking.append(f)
+    return blocking, flags
+
+
+def is_plugin(listing_dir: Path) -> bool:
+    """Which tree the listing is in decides what it is — never its contents, so
+    a skill cannot opt into the plugin rules by shipping a plugin.json."""
+    return listing_dir.parent.parent.name == "plugins"
+
+
+def scan_plugin(plugin_dir: Path) -> dict:
+    """What scan_skill does for one skill, for a plugin and every skill in it.
+
+    Each skill keeps its own disposition: its `allowed-tools` is checked on its
+    own frontmatter, and `civic.localization` decides its own URLs. The files at
+    the plugin root belong to no skill and get the undisposed default.
+    """
+    blocking: list[dict] = []
+    flags: list[dict] = []
+
+    for path in sorted(plugin_dir.rglob("*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        if path.suffix.lower() not in SCANNABLE_SUFFIXES:
+            continue
+        rel = path.relative_to(plugin_dir).as_posix()
+        if rel in PLUGIN_GENERATED:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
+        hard_blocking, hard_flags = plugin_hard_findings(text, rel)
+        blocking.extend(hard_blocking)
+        file_flags = hard_flags + scan_text(text, SOFT, rel)
+        parts = rel.split("/")
+        skill_dir = plugin_dir / "skills" / parts[1] if parts[0] == "skills" and len(parts) > 2 else None
+        flags.extend(apply_localization(
+            file_flags, localization_of(skill_dir) if skill_dir else None))
+
+    for skill_dir in sorted(p for p in (plugin_dir / "skills").glob("*") if p.is_dir()):
+        rel = f"skills/{skill_dir.name}/SKILL.md"
+        caught = any(f["signature"] == "wildcard-bash-grant" and f["file"] == rel
+                     for f in blocking)
+        tools = allowed_tools_of(skill_dir)
+        if not caught and has_wildcard_bash_grant(tools):
+            blocking.append({"signature": "wildcard-bash-grant", "file": rel, "line": 1,
+                             "excerpt": str(tools)[:160],
+                             "explanation": WILDCARD_BASH_EXPLANATION})
+
+    mcp_blocking, mcp_flags = scan_plugin_mcp(plugin_dir)
+    blocking.extend(mcp_blocking)
+    flags.extend(mcp_flags)
+
+    return {"blocking": blocking, "flags": apply_instruction_suppression_language(flags)}
 
 
 def scan_skill(skill_dir: Path) -> dict:
@@ -506,11 +710,14 @@ def scan_skill(skill_dir: Path) -> dict:
     }
 
 
+PLUGINS_DIR = ROOT / "plugins"
+
+
 def discover(changed_file: Path) -> list[Path]:
     dirs: set[Path] = set()
     for line in changed_file.read_text(encoding="utf-8").splitlines():
         parts = Path(line.strip()).parts
-        if len(parts) >= 3 and parts[0] == "skills":
+        if len(parts) >= 3 and parts[0] in ("skills", "plugins"):
             candidate = ROOT / parts[0] / parts[1] / parts[2]
             if candidate.is_dir():
                 dirs.add(candidate)
@@ -528,7 +735,8 @@ def main() -> int:
     if args.changed:
         targets = discover(args.changed)
     elif args.target == "all":
-        targets = sorted(p for p in SKILLS_DIR.glob("*/*") if p.is_dir())
+        targets = sorted(p for p in [*SKILLS_DIR.glob("*/*"), *PLUGINS_DIR.glob("*/*")]
+                         if p.is_dir())
     elif args.target:
         targets = [Path(args.target).resolve()]
     else:
@@ -539,8 +747,10 @@ def main() -> int:
     total_flags = 0
 
     for skill_dir in targets:
+        # Plugins share the skills' id space: build_marketplace.py refuses a
+        # namespace/name that exists in both trees, so the id stays unique.
         skill_id = f"{skill_dir.parent.name}/{skill_dir.name}"
-        result = scan_skill(skill_dir)
+        result = scan_plugin(skill_dir) if is_plugin(skill_dir) else scan_skill(skill_dir)
         results[skill_id] = result
         total_blocking += len(result["blocking"])
         total_flags += len(result["flags"])
