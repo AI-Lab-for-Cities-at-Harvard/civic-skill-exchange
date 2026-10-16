@@ -25,6 +25,12 @@
 #   notes: >
 #     For the next reviewer, a year from now, with no memory of this conversation.
 #     What did you check closely? What would you look at first if it went wrong?
+#
+# A plugin (docs/adr/0005) is attested the same way, named with `plugin:`
+# instead of `skill:`, and pinned to its directory under plugins/:
+#
+# - plugin: "{namespace}/{plugin-name}"
+#   sha: "<40 chars: git log -1 --format=%H -- plugins/{namespace}/{name}, on main>"
 # ---------------------------------------------------------------------------
 
 attestations:

@@ -11,6 +11,8 @@ export * from "./types";
 // @types/node and compiles cleanly.
 export * from "./structure-core";
 export * from "./yaml-safety";
+// Plugin listings (ADR 0005) — pure, for the same reason as structure-core.
+export * from "./plugin-core";
 
 export { checkChangedLayout, checkNamespaceCollisions } from "./layout";
 

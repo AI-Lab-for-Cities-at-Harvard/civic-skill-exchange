@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { About } from "./components/About";
 import { BetaBadge } from "./components/Beta";
 import { Submit } from "./components/Submit";
 import { SkillDetail } from "./components/SkillDetail";
+import { PluginCard } from "./components/PluginCard";
 import { Facet } from "./components/Facets";
 import { SkillCard } from "./components/SkillCard";
 import { TierBand, ContributeBand } from "./components/Bands";
@@ -16,6 +17,12 @@ import { repoSlug } from "./lib/submit";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
 
 type Theme = "light" | "dark";
+
+/** Its own chunk, fetched only by somebody who opens a plugin — the way a
+ *  locale is (ADR 0004 decision 5): the page a few readers visit should not
+ *  cost every English visitor its bytes. */
+const PluginDetail = lazy(() =>
+  import("./components/PluginDetail").then((m) => ({ default: m.PluginDetail })));
 
 const GITHUB = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
@@ -112,6 +119,8 @@ export default function App() {
   // Memoised so the array identity is stable — a fresh [] on every render would
   // defeat the useMemo below it and re-filter the whole catalog on each keystroke.
   const skills = useMemo(() => index?.skills ?? [], [index]);
+  // Absent from an index built before plugins existed (ADR 0005).
+  const plugins = index?.plugins ?? [];
 
   // #/about/<section> rather than a fragment, because hash routing has only one
   // `#`. The scroll happens here rather than in About so it re-runs when the
@@ -210,6 +219,12 @@ export default function App() {
         <main id="results">
           <SkillDetail namespace={route.namespace} name={route.name} />
         </main>
+      ) : route.page === "plugin" ? (
+        <main id="results">
+          <Suspense fallback={<div className="page"><p className="notice">{s.errors.loading}</p></div>}>
+            <PluginDetail namespace={route.namespace} name={route.name} />
+          </Suspense>
+        </main>
       ) : (
       <>
       {index && <TierBand counts={index.counts} />}
@@ -281,6 +296,20 @@ export default function App() {
                 <div className="grid">
                   {results.map((sk) => <SkillCard key={sk.id} skill={sk} />)}
                 </div>
+              )}
+
+              {/* Below the skills and apart from them, by the ruling on #206:
+                  a plugin spans several categories and languages, so the
+                  facets above stay about skills, and its skills are described
+                  on its own page rather than listed here. */}
+              {plugins.length > 0 && (
+                <section className="plugins" aria-labelledby="plugins-heading">
+                  <h2 className="h2" id="plugins-heading">{s.plugins.heading}</h2>
+                  <p>{s.plugins.intro}</p>
+                  <div className="grid">
+                    {plugins.map((pl) => <PluginCard key={pl.id} plugin={pl} />)}
+                  </div>
+                </section>
               )}
             </>
           )}

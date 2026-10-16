@@ -51,7 +51,7 @@ civic-skills/
 └── docs/
 ```
 
-`CODEOWNERS` protects everything outside `skills/`. A PR that touches `schema/`, `scripts/`, `.github/`, or `registry/` requires maintainer review; a PR confined to one `skills/{user}/` directory does not.
+`CODEOWNERS` protects everything outside `skills/`. A PR that touches `schema/`, `scripts/`, `.github/`, or `registry/` requires maintainer review; a PR confined to one `skills/{user}/` directory does not. A plugin is the exception to that exception: a PR under `plugins/{user}/` always needs a maintainer, because a plugin launches MCP servers and brings several skills' code at once ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md), decision 7).
 
 ### Namespace ownership
 
@@ -231,6 +231,35 @@ hypothetical in this registry's domain. `DOC_DIRECTORIES` is the single source
 of that list; `layout.ts` reads it for the changed-path check rather than
 restating it.
 
+The rule is about `skills/`. Work that is several skills sharing scripts and
+servers is a plugin, and lives in its own tree.
+
+---
+
+## Plugins
+
+`plugins/{namespace}/{name}/` holds a plugin in the
+[Agent Plugins 1.0.0](https://agent-plugins.org/specification) layout: a root
+`plugin.json`, an optional root `mcp.json`, and skills at
+`skills/{skill}/SKILL.md`. The decision and what it costs are
+[ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md); what follows is where
+it lives in the code.
+
+| | Where |
+|---|---|
+| Structure, `plugin.json`, `mcp.json` | `validator/src/plugin-core.ts` (pure), read by `plugin.ts` |
+| Each skill's frontmatter | `checkSkillFile` in `validator/src/skill.ts` — the skill rules, per skill, less what the plugin declares |
+| The plugin's own metadata | `checkPluginMetadata` in `validator/src/rules.ts`, over `plugin.json`'s `extensions["io.github.ai-lab-for-cities-at-harvard"]` |
+| The Claude files it derives | `claude_plugin_for_plugin` and `claude_mcp` in `scripts/build_marketplace.py` |
+| Credentials and endpoints in `mcp.json` | `scan_plugin_mcp` in `scripts/scan.py` |
+| The catalogue entry | `build_plugin_entry` in `scripts/build_index.py`, published as `plugins` in `index.json` |
+
+The author writes `plugin.json` and `mcp.json`, which Codex reads as they are;
+Claude Code reads neither, so the generator writes `.claude-plugin/plugin.json`
+and `.mcp.json` from them. The name in `plugin.json` must be
+`{namespace}-{name}`, because Codex refuses a plugin whose manifest name is not
+its marketplace name, and here the manifest is the author's.
+
 ---
 
 ## Categories
@@ -309,7 +338,7 @@ a marketplace that surfaced nothing.
 | | Claude Code | Codex |
 |---|---|---|
 | Marketplace | `.claude-plugin/marketplace.json` | `.agents/plugins/marketplace.json` |
-| Per-plugin manifest | `.claude-plugin/plugin.json`, inside each skill | `.codex-plugin/plugin.json`, inside each skill |
+| Per-plugin manifest | `.claude-plugin/plugin.json`, inside each skill and each plugin | `.codex-plugin/plugin.json`, inside each skill; a plugin's own `plugin.json` |
 | Add | `/plugin marketplace add {owner}/{repo}` | `codex plugin marketplace add {owner}/{repo}` |
 
 **One plugin per skill in both**, with the same name, so the install command

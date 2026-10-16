@@ -250,6 +250,11 @@ a:hover { color: var(--c-spot); }
   font-size: var(--t-sm); color: var(--c-text-light);
   font-variant-numeric: tabular-nums;
 }
+/* Plugins sit below the skills and apart from them (ADR 0005, #206). */
+.plugins {
+  margin-top: var(--space-xl); padding-top: var(--gap-4);
+  border-top: 1px solid var(--c-border);
+}
 .grid {
   display: grid; gap: var(--gap-4);
   /* Sized so three cards fit the results' twelve columns at desktop. The tease

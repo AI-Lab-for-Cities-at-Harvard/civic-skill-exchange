@@ -139,3 +139,27 @@ describe("the generated-file exemption matches the generator", () => {
       .map((m) => [m[1]!, m[2]!]);
   }
 });
+
+/* The same guard for plugins (ADR 0005). The generator names what it writes
+   into a plugin in one tuple, PLUGIN_GENERATED, so that is what is read. */
+describe("the plugin exemption matches the generator", () => {
+  const generatedInPlugin = (): string[] => {
+    const source = readFileSync(
+      join(GENERATOR_ROOT, "scripts", "build_marketplace.py"), "utf8");
+    const tuple = /^PLUGIN_GENERATED = \((.*)\)$/m.exec(source)?.[1] ?? "";
+    return [...tuple.matchAll(/Path\(([^)]*)\)((?:\s*\/\s*"[^"]+")*)/g)].map((m) =>
+      [...`${m[1]}${m[2]}`.matchAll(/"([^"]+)"/g)].map((s) => s[1]).join("/"));
+  };
+
+  it("finds the paths the generator writes into a plugin", () => {
+    expect(generatedInPlugin()).toEqual([".claude-plugin/plugin.json", ".mcp.json"]);
+  });
+
+  it("exempts each of them at a plugin root, and nowhere deeper", () => {
+    for (const rel of generatedInPlugin()) {
+      expect(isGeneratedInSkill(`plugins/ns/name/${rel}`)).toBe(true);
+      expect(isGeneratedInSkill(`plugins/ns/name/skills/s/${rel}`)).toBe(false);
+      expect(isGeneratedInSkill(`plugins/ns/${rel}`)).toBe(false);
+    }
+  });
+});

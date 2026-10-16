@@ -1366,6 +1366,68 @@ export const en = {
     github: "View on GitHub",
   },
 
+  /** Plugins: several skills and the MCP servers they use, installed as one
+   *  (ADR 0005). Their own section and their own page, by the owner's ruling
+   *  on #206 — never cards among the skills, because a plugin's skills
+   *  install and are reviewed together. */
+  plugins: {
+    heading: "Plugins",
+    intro:
+      "Several skills that work together, installed as one, with the MCP " +
+      "servers they connect to. Their skills are described on each plugin's page.",
+    card: {
+      cta: "View this plugin",
+      skills: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,
+      servers: (n: number) => `${n} MCP server${n === 1 ? "" : "s"}`,
+      noServers: "No MCP servers",
+    },
+    detail: {
+      skills: {
+        heading: "Skills in this plugin",
+        caveat:
+          "Each one meets the same rules as a skill listed on its own. They " +
+          "install together and were checked together.",
+      },
+      servers: {
+        heading: "MCP servers",
+        caveat:
+          "**The plugin connects to these when it loads.** A reviewer checks " +
+          "that each host is one the plugin's purpose needs — check them " +
+          "against your organization's own rules before you install.",
+        none: "None. This plugin connects to no MCP server.",
+        remote: "Remote",
+        local: "Runs on your machine",
+      },
+      facts: {
+        categories: "Categories",
+        languages: "Languages",
+        sensitivity: "Most sensitive data it handles",
+      },
+    },
+    download: {
+      heading: "Use this plugin",
+      community:
+        "**Nobody has reviewed this plugin.** It passed automated structural " +
+        "and signature checks, which can only ever reject — a pass is not a " +
+        "statement that it is safe. Read the source on GitHub before you " +
+        "install it, particularly every skill's `scripts/` and `mcp.json`.",
+      archive: (size: string) => `Download the plugin (${size})`,
+      archiveNote: "A zip of this folder, every skill included.",
+      commands: {
+        claudeMarketplace: "Claude Code: add the marketplace, once",
+        claudeInstall: "Claude Code: install it",
+        codexMarketplace: "Codex: add the marketplace, then install it from the plugin list",
+      },
+      formatNote:
+        "Plugins here follow the open [Agent Plugins](spec) format. Tools " +
+        "that take one skill at a time can use the skills inside the download.",
+    },
+    errors: {
+      /** `id` is `{namespace}/{name}` as it appeared in the URL. */
+      noSuchPlugin: (id: string) => `No plugin called ${id} is listed here.`,
+    },
+  },
+
   /** When a skill arrived, when it last changed, and the version its author
    *  claims (#77).
    *

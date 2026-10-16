@@ -31,7 +31,8 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { renderReport, type ScanFindings } from "./report";
-import { discoverAll, loadCategories, validateSkill } from "./skill";
+import { discoverAll, isPluginDir, loadCategories, validateSkill } from "./skill";
+import { discoverAllPlugins, validatePlugin } from "./plugin";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -76,7 +77,8 @@ function runStructure(targets: string[], author?: string): boolean {
 
   for (const skillDir of targets) {
     const rel = relative(ROOT, skillDir) || skillDir;
-    const { findings, notes } = validateSkill(skillDir, categories, author);
+    const validate = isPluginDir(ROOT, skillDir) ? validatePlugin : validateSkill;
+    const { findings, notes } = validate(skillDir, categories, author);
 
     for (const note of notes) console.log(`note  ${rel}: ${note}`);
 
@@ -90,7 +92,7 @@ function runStructure(targets: string[], author?: string): boolean {
   }
 
   console.log(
-    `\n${targets.length - failed}/${targets.length} skills passed structural validation.`);
+    `\n${targets.length - failed}/${targets.length} listings passed structural validation.`);
   return failed === 0;
 }
 
@@ -132,7 +134,9 @@ function main(): number {
     return 2;
   }
 
-  const targets = target === "all" ? discoverAll(ROOT) : [resolve(target)];
+  const targets = target === "all"
+    ? [...discoverAll(ROOT), ...discoverAllPlugins(ROOT)]
+    : [resolve(target)];
   if (targets.length === 0) {
     console.log("No skill directories to check.");
     return 0;

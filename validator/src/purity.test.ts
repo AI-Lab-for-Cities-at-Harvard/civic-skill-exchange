@@ -30,6 +30,9 @@ const BROWSER_SAFE = [
   // report.ts renders findings.json into the pull request comment. It takes the
   // parsed document and returns a string; reading the file is check.ts's job.
   "report.ts",
+  // The plugin rules (ADR 0005). plugin.ts reads the directory; this checks
+  // what it read, so a submission page can check a plugin in the browser too.
+  "plugin-core.ts",
 ];
 
 /** Comments are stripped first: these files explain the rule in prose, and

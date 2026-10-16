@@ -233,27 +233,58 @@ export function rejectedPluginPath(rel: string): string | null {
     ?? (rel === first ? PLUGIN_FILES.get(first) ?? null : null);
 }
 
-export function checkStructureCore(entries: Entry[]): Finding[] {
+/** What differs between the two kinds of listing, and nothing else.
+ *
+ *  A skill and a plugin share every cap, the suffix allowlist, the UTF-8 rule
+ *  and the symlink and nested-git rules — those are about what a reviewer can
+ *  read, which does not depend on how many skills the directory holds. What
+ *  differs is which paths a client acts on: the plugin-level files it honours,
+ *  and where a SKILL.md is a skill rather than a hazard. plugin-core.ts
+ *  supplies the plugin's answers; the default is the skill's. */
+export interface StructureLayout {
+  /** Why this path is refused, or null. */
+  rejected(rel: string, kind: Entry["kind"]): string | null;
+  /** Why this SKILL.md is refused, or null when the layout expects it. */
+  misplacedSkill(rel: string): string | null;
+  /** "skill" or "plugin", for the size and count findings. */
+  noun: string;
+}
+
+export const SKILL_LAYOUT: StructureLayout = {
+  rejected: (rel) => rejectedPluginPath(rel),
+  misplacedSkill: (rel) => isLoadableNestedSkill(rel)
+    ? `${rel} is a second SKILL.md, and one directory is one skill. A client ` +
+      `installing this would load it as a skill of its own, while the ` +
+      `registry indexes it as an ordinary file — so the catalogue and the ` +
+      `agent would disagree about what this listing contains. Split it into ` +
+      `its own directory under skills/, move it to ` +
+      `${DOC_DIRECTORIES.join("/ or ")}/ if it is an example rather than a skill, ` +
+      `or submit the whole thing as a plugin under plugins/.`
+    : null,
+  noun: "skill",
+};
+
+export function checkStructureCore(
+  entries: Entry[], layout: StructureLayout = SKILL_LAYOUT,
+): Finding[] {
   const findings: Finding[] = [];
-  const reportedDirectories = new Set<string>();
+  const reportedDirectories: string[] = [];
   let total = 0;
   let files = 0;
 
   for (const entry of entries) {
     const rel = entry.path;
 
-    const plugin = rejectedPluginPath(rel);
-    if (plugin) {
+    const refused = layout.rejected(rel, entry.kind);
+    if (refused) {
       // Once per directory rather than once per file inside it: the finding
       // lands in a pull request comment, and three lines for one mistake is
       // how a comment stops being read. Entries arrive sorted, so the
       // directory precedes its contents — and a caller that passes no
       // directory entries at all still gets the file reported.
-      const first = rel.split("/")[0]!;
-      if (entry.kind === "dir" && rel === first) reportedDirectories.add(rel);
-      if (!(rel !== first && reportedDirectories.has(first))) {
-        findings.push(finding(rel, plugin));
-      }
+      const inside = reportedDirectories.some((dir) => rel.startsWith(`${dir}/`));
+      if (entry.kind === "dir" && !inside) reportedDirectories.push(rel);
+      if (!inside) findings.push(finding(rel, refused));
       continue;
     }
 
@@ -261,14 +292,10 @@ export function checkStructureCore(entries: Entry[]): Finding[] {
       findings.push(finding(rel, "symlinks are not permitted"));
       continue;
     }
-    if (entry.kind === "file" && isLoadableNestedSkill(rel)) {
-      findings.push(finding(rel,
-        `${rel} is a second SKILL.md, and one directory is one skill. A client ` +
-        `installing this would load it as a skill of its own, while the ` +
-        `registry indexes it as an ordinary file — so the catalogue and the ` +
-        `agent would disagree about what this listing contains. Split it into ` +
-        `its own directory under skills/, or move it to ` +
-        `${DOC_DIRECTORIES.join("/ or ")}/ if it is an example rather than a skill.`));
+    const misplaced = entry.kind === "file" && rel.split("/").pop() === "SKILL.md"
+      ? layout.misplacedSkill(rel) : null;
+    if (misplaced) {
+      findings.push(finding(rel, misplaced));
       continue;
     }
     if (entry.kind === "dir") {
@@ -306,10 +333,11 @@ export function checkStructureCore(entries: Entry[]): Finding[] {
 
   if (total > MAX_SKILL_BYTES) {
     findings.push(finding(".",
-      `skill directory is ${total} bytes, over the ${MAX_SKILL_BYTES}-byte cap`));
+      `${layout.noun} directory is ${total} bytes, over the ${MAX_SKILL_BYTES}-byte cap`));
   }
   if (files > MAX_FILES_PER_SKILL) {
-    findings.push(finding(".", `skill has ${files} files, over the ${MAX_FILES_PER_SKILL}-file cap`));
+    findings.push(finding(".",
+      `${layout.noun} has ${files} files, over the ${MAX_FILES_PER_SKILL}-file cap`));
   }
 
   return findings;

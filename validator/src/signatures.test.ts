@@ -16,6 +16,7 @@
  * Every list scan.py emits from has to be here. `MCP` arrived with #151 and was
  * a third one: a signature list the vocabulary check does not read is a
  * signature that reaches a pull request as `unrecognised-signature`.
+ * `PLUGIN_MCP` (ADR 0005) is the fourth.
  */
 
 import { describe, it, expect } from "vitest";
@@ -28,7 +29,7 @@ import { SIGNATURE_NAMES } from "./report";
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 /** Every list of signatures scan.py scans with. */
-const LISTS = ["HARD", "SOFT", "MCP"] as const;
+const LISTS = ["HARD", "SOFT", "MCP", "PLUGIN_MCP"] as const;
 
 /** The first element of each `(name, pattern, explanation)` tuple in one list. */
 const namesIn = (list: (typeof LISTS)[number]): string[] => {

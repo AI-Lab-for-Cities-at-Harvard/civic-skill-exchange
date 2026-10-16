@@ -4,7 +4,8 @@ export type Route =
   | { page: "browse" }
   | { page: "about"; section?: string }
   | { page: "submit"; mode: SubmitMode; add?: string }
-  | { page: "skill"; namespace: string; name: string };
+  | { page: "skill"; namespace: string; name: string }
+  | { page: "plugin"; namespace: string; name: string };
 
 /** A namespaced skill id, and nothing else. `add` becomes a path into GitHub's
  *  editor, so anything that is not exactly `{namespace}/{name}` is dropped
@@ -17,7 +18,7 @@ const SECTION = /^[a-z0-9-]+$/;
 
 /** Hash routing rather than a router library or path routing.
  *  GitHub Pages has no SPA fallback, so /about would 404 on a hard refresh.
- *  Four pages does not justify a dependency. */
+ *  Five pages does not justify a dependency. */
 export function parseRoute(hash: string): Route {
   const [rawPath, rawQuery = ""] = hash.replace(/^#\/?/, "").split("?");
   const parts = (rawPath ?? "").split("/").filter(Boolean).map(decodeURIComponent);
@@ -43,11 +44,20 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === "skill" && parts[1] && parts[2]) {
     return { page: "skill", namespace: parts[1], name: parts[2] };
   }
+  if (parts[0] === "plugin" && parts[1] && parts[2]) {
+    return { page: "plugin", namespace: parts[1], name: parts[2] };
+  }
   return { page: "browse" };
 }
 
 export function skillHref(namespace: string, name: string): string {
   return `#/skill/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
+}
+
+/** A plugin's page (ADR 0005). Its own route rather than a flavour of the
+ *  skill route, because the two pages read different payloads. */
+export function pluginHref(namespace: string, name: string): string {
+  return `#/plugin/${encodeURIComponent(namespace)}/${encodeURIComponent(name)}`;
 }
 
 /** Flow 2 on #24: a maintainer arriving to add newer fields to a listed skill. */

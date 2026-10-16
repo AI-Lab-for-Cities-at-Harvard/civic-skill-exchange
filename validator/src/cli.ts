@@ -11,6 +11,7 @@
  * Usage:
  *   validate-skills all
  *   validate-skills skills/octocat/permit-status-explainer
+ *   validate-skills plugins/octocat/housing-dashboards
  *   validate-skills --changed changed.txt --author octocat
  *   validate-skills --changed changed.txt --author octocat --maintainer
  *   validate-skills --layout changed.txt
@@ -23,8 +24,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, relative, resolve } from "node:path";
 import {
   loadCategories, validateSkill, discoverAll, discoverChanged, checkChangedOwnership,
-  authorForSkillCheck,
+  authorForSkillCheck, isPluginDir,
 } from "./skill";
+import { discoverAllPlugins, validatePlugin } from "./plugin";
 import { checkChangedLayout, checkNamespaceCollisions } from "./layout";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -89,7 +91,7 @@ function main(): number {
 
   let targets: string[];
   if (changed) targets = discoverChanged(ROOT, changed);
-  else if (target === "all") targets = discoverAll(ROOT);
+  else if (target === "all") targets = [...discoverAll(ROOT), ...discoverAllPlugins(ROOT)];
   else if (target) targets = [resolve(target)];
   else {
     console.error("Give a target, 'all', or --changed <file>.");
@@ -97,7 +99,7 @@ function main(): number {
   }
 
   if (targets.length === 0) {
-    console.log("No skill directories to validate.");
+    console.log("No skill or plugin directories to validate.");
     return 0;
   }
 
@@ -106,7 +108,8 @@ function main(): number {
 
   for (const skillDir of targets) {
     const rel = relative(ROOT, skillDir) || skillDir;
-    const { findings, notes } = validateSkill(
+    const validate = isPluginDir(ROOT, skillDir) ? validatePlugin : validateSkill;
+    const { findings, notes } = validate(
       skillDir, categories, authorForSkillCheck(author, maintainer));
 
     for (const note of notes) console.log(`note  ${rel}: ${note}`);
@@ -121,7 +124,7 @@ function main(): number {
   }
 
   console.log(
-    `\n${targets.length - failed}/${targets.length} skills passed structural validation.`);
+    `\n${targets.length - failed}/${targets.length} listings passed structural validation.`);
   if (failed > 0) {
     console.log("Structural validation checks form and ownership only — never content safety.");
   }
