@@ -41,5 +41,20 @@ updates:
     groups:
       javascript:
         patterns: ["*"]
+    # React 19.3 adds ~29 kB to the site's entry chunk (+8.9%, past the size
+    # gate's 3%) for nothing the site uses, so its minor releases are held
+    # (#220). Patches and majors still come through — a security fix is not
+    # held back with it. The type packages are held to stay matched to the
+    # runtime. Lift this when the site needs 19.3, and re-record the size
+    # baseline in the same commit.
+    ignore:
+      - dependency-name: react
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-minor"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-minor"]
     commit-message:
       prefix: ci
