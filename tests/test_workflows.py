@@ -16,6 +16,7 @@ import re
 from pathlib import Path
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 WORKFLOWS = sorted((ROOT / ".github" / "workflows").glob("*.yml"))
@@ -1175,3 +1176,19 @@ def test_the_skills_job_blocks_a_foreign_generated_file() -> None:
                and "--check-in-skills" not in s]
     assert warning and all("continue-on-error: true" in s for s in warning), (
         "the root manifest check stays a warning (#188)")
+
+
+#: #220: React 19.3 added ~29 kB to the site's entry chunk for nothing the site
+#: uses, so the npm group holds React's minor releases. Patches and majors still
+#: arrive, so a security fix is not held back with it.
+REACT_HELD = {"react", "react-dom", "@types/react", "@types/react-dom"}
+
+
+def test_dependabot_holds_react_minor_releases_and_nothing_else() -> None:
+    config = yaml.safe_load((ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8"))
+    npm = next(u for u in config["updates"] if u["package-ecosystem"] == "npm")
+    ignored = {i["dependency-name"]: i.get("update-types") for i in npm.get("ignore", [])}
+    assert set(ignored) == REACT_HELD, f"npm ignores {sorted(ignored)}"
+    for name, types in ignored.items():
+        assert types == ["version-update:semver-minor"], (
+            f"{name} ignores {types}; only minor releases are held (#220)")
