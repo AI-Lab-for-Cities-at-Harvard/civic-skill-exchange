@@ -1,12 +1,18 @@
 /** Reading a skill straight out of a public GitHub repository.
  *
  *  No backend and no token: api.github.com sends
- *  `access-control-allow-origin: *`, so the browser can do this itself. Three
- *  requests at most — the repository for its default branch, one recursive tree
- *  for every path and size, and SKILL.md.
+ *  `access-control-allow-origin: *`, so the browser can do this itself. Two API
+ *  requests, whatever the size of the skill — the repository for its default
+ *  branch, and one recursive tree for every path and size.
  *
  *  The limit is 60 an hour per address, so a rate-limited answer has to read as
  *  "try again later" and never as "your repository is wrong".
+ *
+ *  File contents come from raw.githubusercontent.com, which also allows any
+ *  origin and is not counted against that limit, each pinned to the commit the
+ *  tree was read at. Every file is fetched, because the corrected folder the
+ *  page hands back is built from these bytes: it once held zeros for everything
+ *  but SKILL.md, and zeros are valid UTF-8, so no check noticed (#212).
  *
  *  What comes back is a *copy*. The registry holds the content, which is what
  *  the SHA pin, the weekly re-scan and the published archive work against; the
@@ -19,6 +25,11 @@ import {
 import { strings } from "../i18n/strings";
 
 const API = "https://api.github.com";
+const RAW = "https://raw.githubusercontent.com";
+
+/** Downloads at once. Enough to be quick for a hundred files, few enough not to
+ *  look like a flood to the host. */
+const RAW_CONCURRENCY = 6;
 
 export interface RepoRef { owner: string; repo: string }
 
@@ -87,6 +98,41 @@ async function get(url: string, signal?: AbortSignal): Promise<Response | Import
 const isFailure = (v: unknown): v is ImportFailure =>
   typeof v === "object" && v !== null && "kind" in v;
 
+async function fetchRaw(
+  ref: RepoRef, commit: string, path: string, signal?: AbortSignal,
+): Promise<Uint8Array | ImportFailure> {
+  const url = `${RAW}/${ref.owner}/${ref.repo}/${commit}/` +
+    path.split("/").map(encodeURIComponent).join("/");
+  try {
+    const res = await fetch(url, { signal });
+    if (res.status === 429) return { kind: "rate-limited" };
+    if (!res.ok) return { kind: "offline" };
+    return new Uint8Array(await res.arrayBuffer());
+  } catch {
+    return { kind: "offline" };
+  }
+}
+
+async function fetchAll(
+  ref: RepoRef, commit: string, entries: Entry[], signal?: AbortSignal,
+): Promise<Entry[] | ImportFailure> {
+  const out: Entry[] = [...entries];
+  let failure: ImportFailure | null = null;
+  let next = 0;
+  const worker = async () => {
+    while (!failure && next < out.length) {
+      const i = next++;
+      const entry = out[i]!;
+      if (entry.kind !== "file") continue;
+      const bytes = await fetchRaw(ref, commit, entry.path, signal);
+      if (isFailure(bytes)) failure ??= bytes;
+      else out[i] = { ...entry, bytes };
+    }
+  };
+  await Promise.all(Array.from({ length: RAW_CONCURRENCY }, worker));
+  return failure ?? out;
+}
+
 export async function importFromRepo(
   input: string,
   signal?: AbortSignal,
@@ -133,23 +179,17 @@ export async function importFromRepo(
       skipped.push(`${node.path} — larger than ${MAX_FILE_BYTES / 1024} KB`);
       continue;
     }
-    // Sizes come from the tree, so the structural checks run without fetching
-    // any content. Only SKILL.md is downloaded.
     entries.push({ path: node.path, kind: "file", bytes: new Uint8Array(size) });
   }
 
   if (!entries.some((e) => e.path === "SKILL.md")) return { kind: "no-skill-md" };
 
-  const fileRes = await get(
-    `${API}/repos/${ref.owner}/${ref.repo}/contents/SKILL.md?ref=${encodeURIComponent(branch)}`,
-    signal,
-  );
-  if (isFailure(fileRes)) return fileRes;
-  const file = await fileRes.json() as { content?: string; encoding?: string };
-  if (file.encoding !== "base64" || !file.content) return { kind: "no-skill-md" };
-  const skillMd = new TextDecoder().decode(
-    Uint8Array.from(atob(file.content.replace(/\n/g, "")), (c) => c.charCodeAt(0)),
-  );
+  // Every file, at the commit the tree came from. One that cannot be fetched
+  // fails the import: a folder with a file missing is not the skill.
+  const fetched = await fetchAll(ref, tree.sha, entries, signal);
+  if (isFailure(fetched)) return fetched;
+  const skill = fetched.find((e) => e.path === "SKILL.md");
+  const skillMd = skill?.kind === "file" ? new TextDecoder().decode(skill.bytes) : "";
 
-  return { ref, branch, commit: tree.sha, entries, skillMd, skipped };
+  return { ref, branch, commit: tree.sha, entries: fetched, skillMd, skipped };
 }

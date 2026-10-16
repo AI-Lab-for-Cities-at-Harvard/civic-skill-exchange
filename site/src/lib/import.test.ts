@@ -17,22 +17,29 @@ description: An example.
 Body.
 `;
 
-const b64 = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
-
-/** Answers each of the three calls in the order importFromRepo makes them. */
+/** Answers the two API calls, and every raw file download, the way GitHub
+ *  would. `files` maps a path to its content; SKILL.md defaults to SKILL. */
 function github(over: {
-  repo?: unknown; tree?: unknown; file?: unknown; status?: Record<string, number>;
+  repo?: unknown; tree?: unknown; files?: Record<string, string>;
+  status?: Record<string, number>;
 } = {}) {
   const status = over.status ?? {};
+  const files: Record<string, string> = { "SKILL.md": SKILL, ...over.files };
   const routes: [RegExp, unknown, string][] = [
     [/\/git\/trees\//, over.tree ?? {
       sha: "c".repeat(40), truncated: false,
       tree: [{ path: "SKILL.md", type: "blob", size: 120 }],
     }, "tree"],
-    [/\/contents\/SKILL\.md/, over.file ?? { encoding: "base64", content: b64(SKILL) }, "file"],
     [/\/repos\/[^/]+\/[^/]+$/, over.repo ?? { default_branch: "main" }, "repo"],
   ];
   return vi.fn(async (url: string) => {
+    const raw = /^https:\/\/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[0-9a-f]{40}\/(.+)$/.exec(url);
+    if (raw) {
+      const path = raw[1]!.split("/").map(decodeURIComponent).join("/");
+      const code = status["raw"] ?? (path in files ? 200 : 404);
+      const bytes = new TextEncoder().encode(files[path] ?? "");
+      return { status: code, ok: code < 300, arrayBuffer: async () => bytes.buffer };
+    }
     for (const [re, body, key] of routes) {
       if (re.test(url)) {
         const code = status[key] ?? 200;
@@ -42,6 +49,9 @@ function github(over: {
     throw new Error(`unexpected request: ${url}`);
   });
 }
+
+const apiCalls = (mock: ReturnType<typeof github>) =>
+  mock.mock.calls.filter((c) => String(c[0]).startsWith("https://api.github.com"));
 
 describe("parseRepoRef", () => {
   it("takes what people actually paste", () => {
@@ -77,7 +87,9 @@ describe("parseRepoRef", () => {
 });
 
 describe("importFromRepo", () => {
-  it("reads the tree and SKILL.md in three requests", async () => {
+  it("spends two API requests, whatever the size of the skill", async () => {
+    // The unauthenticated API allows 60 an hour per address (ADR 0003 (e));
+    // file contents come from raw.githubusercontent.com, which is not counted.
     const fetchMock = github();
     vi.stubGlobal("fetch", fetchMock);
     const out = await importFromRepo("sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill");
@@ -86,7 +98,44 @@ describe("importFromRepo", () => {
     expect(out.skillMd).toContain("name: civic-analytics");
     expect(out.commit).toBe("c".repeat(40));
     expect(out.branch).toBe("main");
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(apiCalls(fetchMock)).toHaveLength(2);
+  });
+
+  it("downloads every file's real bytes, pinned to the commit it read (#212)", async () => {
+    // The corrected folder is built from these entries, and it used to hold
+    // zeros for everything but SKILL.md — valid UTF-8, so nothing noticed.
+    const fetchMock = github({
+      tree: {
+        sha: "c".repeat(40), truncated: false,
+        tree: [
+          { path: "SKILL.md", type: "blob", size: 120 },
+          { path: "scripts/run me.py", type: "blob", size: 12 },
+        ],
+      },
+      files: { "scripts/run me.py": "print('hi')\n" },
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const out = await importFromRepo("a/b");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    const script = out.entries.find((e) => e.path === "scripts/run me.py");
+    expect(script?.kind === "file" && new TextDecoder().decode(script.bytes))
+      .toBe("print('hi')\n");
+    expect(fetchMock.mock.calls.map((c) => String(c[0]))).toContain(
+      `https://raw.githubusercontent.com/a/b/${"c".repeat(40)}/scripts/run%20me.py`);
+  });
+
+  it("fails rather than hand over a folder with a file missing", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: {
+        sha: "c".repeat(40), truncated: false,
+        tree: [
+          { path: "SKILL.md", type: "blob", size: 120 },
+          { path: "scripts/gone.py", type: "blob", size: 12 },
+        ],
+      },
+    }));
+    const out = await importFromRepo("a/b");
+    expect("kind" in out ? out.kind : "ok").toBe("offline");
   });
 
   it("follows a default branch that is not main", async () => {
@@ -97,9 +146,9 @@ describe("importFromRepo", () => {
     expect(fetchMock.mock.calls.some((c) => String(c[0]).includes("trunk"))).toBe(true);
   });
 
-  it("builds entries from the tree without downloading any of them", async () => {
-    // Sizes come from the tree, so the structural checks cost no requests.
+  it("builds entries from the tree, keeping only files", async () => {
     vi.stubGlobal("fetch", github({
+      files: { "scripts/run.py": "x".repeat(4096) },
       tree: {
         sha: "c".repeat(40), truncated: false,
         tree: [
@@ -202,9 +251,9 @@ describe("importFromRepo — a real repository", () => {
       };
       return vi.fn(async (url: string) => ({
         status: 200, ok: true,
-        json: async () => /\/git\/trees\//.test(url) ? tree
-          : /\/contents\//.test(url) ? { encoding: "base64", content: b64(SKILL) }
-          : { default_branch: "main" },
+        arrayBuffer: async () => new TextEncoder().encode(
+          url.endsWith("/SKILL.md") ? SKILL : "x").buffer,
+        json: async () => /\/git\/trees\//.test(url) ? tree : { default_branch: "main" },
       }));
     })());
 
