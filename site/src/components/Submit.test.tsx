@@ -395,20 +395,24 @@ describe("Submit — importing from a repository", () => {
   afterEach(() => { vi.unstubAllGlobals(); });
 
   const SKILL = "---\nname: civic-analytics\ndescription: An example skill.\n---\nBody.\n";
-  const b64 = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
 
+  /** The two API calls, and raw.githubusercontent.com for file contents
+   *  (#212): SKILL.md is SKILL, anything else a line of text. */
   function github(tree?: unknown, status?: Record<string, number>) {
     return vi.fn(async (url: string) => {
-      const which = /\/git\/trees\//.test(url) ? "tree"
-        : /\/contents\//.test(url) ? "file"
+      const which = url.startsWith("https://raw.githubusercontent.com/") ? "file"
+        : /\/git\/trees\//.test(url) ? "tree"
         : /api\.github\.com\/users\//.test(url) ? "user" : "repo";
       const body = which === "tree"
         ? tree ?? { sha: "c".repeat(40), truncated: false,
                     tree: [{ path: "SKILL.md", type: "blob", size: 120 }] }
-        : which === "file" ? { encoding: "base64", content: b64(SKILL) }
         : { default_branch: "main" };
+      const bytes = new TextEncoder().encode(url.endsWith("/SKILL.md") ? SKILL : "text\n");
       const code = status?.[which] ?? 200;
-      return { status: code, ok: code < 300, json: async () => body };
+      return {
+        status: code, ok: code < 300, json: async () => body,
+        arrayBuffer: async () => bytes.buffer,
+      };
     });
   }
 
