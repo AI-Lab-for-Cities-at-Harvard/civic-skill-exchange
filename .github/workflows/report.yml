@@ -66,7 +66,7 @@ jobs:
       # to #33 — and a permanently red check is one nobody reads.
       - name: Download findings
         continue-on-error: true
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: findings
           run-id: ${{ github.event.workflow_run.id }}
@@ -95,7 +95,7 @@ jobs:
       # The version matters: Node runs report-cli.ts's TypeScript directly, which
       # is unflagged from 22.18 and 24. Pinning the major keeps that a property of
       # the workflow rather than of whatever the runner image ships today.
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.artifact.outputs.present == 'true'
         with:
           node-version: "24"
