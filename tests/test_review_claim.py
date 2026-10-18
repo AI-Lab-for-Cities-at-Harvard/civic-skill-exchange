@@ -305,3 +305,19 @@ def test_the_site_stops_calling_the_pin_a_content_hash():
     """#110 corrected this in the documents and missed the site. The pin is the
     commit that last touched the directory, which is stricter."""
     assert "content hash" not in _about_page_copy().lower()
+
+
+# Ruling 2 on #211: one plugin addendum, not a second checklist. It sits outside
+# the numbered items, which attestation.py --questionnaire reads as the
+# checklist and must stay nine.
+
+
+def test_review_md_has_a_plugin_addendum_outside_the_numbered_checklist():
+    import re
+    text = (ROOT / "docs" / "REVIEW.md").read_text(encoding="utf-8")
+    assert re.search(r"^### Reviewing a plugin$", text, re.MULTILINE), "no plugin addendum"
+    section = text.split("### Reviewing a plugin", 1)[1].split("\n## ", 1)[0]
+    for must in ("mcp-endpoint", "scripts/", "inside the plugin", "use-when",
+                 "attestation.py", "--plugin"):
+        assert must in section, f"the plugin addendum does not cover {must!r}"
+    assert len(re.findall(r"^### \d+\. ", text, re.MULTILINE)) == 9
