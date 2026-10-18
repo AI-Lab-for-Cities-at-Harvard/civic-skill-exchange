@@ -363,6 +363,11 @@ export const en = {
       noSuchUser: (login: string) =>
         `No GitHub user called ${login}. A submission whose folder does not ` +
         "match the account that opens the pull request is rejected.",
+      /** `login` is what was typed. */
+      badLogin: (login: string) =>
+        `\u201c${login}\u201d is not a GitHub username. A username has only ` +
+        "letters, numbers and single hyphens, like `maria-lopez` — it is the " +
+        "name in your github.com address, not your full name or email.",
 
       nameLabel: "Skill name",
       namePlaceholder: "Permit Status Explainer",
@@ -651,11 +656,6 @@ export const en = {
         "A maintainer reviews every plugin before it is listed. Its servers " +
         "and scripts run for whoever installs it, so a person reads them first.",
 
-      /** `login` is what was typed. */
-      badLogin: (login: string) =>
-        `\u201c${login}\u201d is not a GitHub username. A username has only ` +
-        "letters, numbers and single hyphens, like `maria-lopez` — it is the " +
-        "name in your github.com address, not your full name or email.",
       /** Stands in for the username in an example name until one is typed. */
       youExample: "your-username",
       /** Answered already, by plugin.json. `fields` is a joined list of

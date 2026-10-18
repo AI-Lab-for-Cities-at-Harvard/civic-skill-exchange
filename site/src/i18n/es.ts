@@ -312,6 +312,11 @@ export const strings: Strings = {
       noSuchUser: (login: string) =>
         `No existe un usuario de GitHub llamado ${login}. Se rechaza toda ` +
         "propuesta cuya carpeta no coincida con la cuenta que abre el pull request.",
+      badLogin: (login: string) =>
+        `\u201c${login}\u201d no es un nombre de usuario de GitHub. Un nombre de ` +
+        "usuario solo tiene letras, números y guiones sueltos, como " +
+        "`maria-lopez`: es el nombre de su dirección en github.com, no su " +
+        "nombre completo ni su correo.",
 
       nameLabel: "Nombre de la habilidad",
       namePlaceholder: "Explicador de Estado de Permisos",
@@ -581,11 +586,6 @@ export const strings: Strings = {
         "Un mantenedor revisa cada plugin antes de publicarlo. Sus servidores y " +
         "scripts se ejecutan para quien lo instale, así que una persona los lee primero.",
 
-      badLogin: (login: string) =>
-        `\u201c${login}\u201d no es un nombre de usuario de GitHub. Un nombre de ` +
-        "usuario solo tiene letras, números y guiones sueltos, como " +
-        "`maria-lopez`: es el nombre de su dirección en github.com, no su " +
-        "nombre completo ni su correo.",
       youExample: "su-usuario",
       fromFile: (fields: string) =>
         `Leído de plugin.json: ${fields}. Cambie lo que no sea correcto: si otra ` +
