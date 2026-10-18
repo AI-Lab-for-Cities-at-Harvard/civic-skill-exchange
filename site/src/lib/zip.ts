@@ -17,13 +17,18 @@
  */
 
 import { unzipSync } from "fflate";
-import {
-  MAX_FILE_BYTES, MAX_SKILL_BYTES, isRepositoryFurniture, type Entry,
-} from "@civic-skill-exchange/validator";
+import type { Entry } from "@civic-skill-exchange/validator";
+import { MAX_FILE_BYTES, MAX_SKILL_BYTES, isRepositoryFurniture } from "@civic-skill-exchange/validator/structure-core";
 import { strings } from "../i18n/strings";
 
 export interface SkillArchive {
   entries: Entry[];
+  /** A root plugin.json: the folder is a plugin, not a skill (#213, ruling 1). */
+  plugin: boolean;
+  /** A Claude Code package — `.claude-plugin/plugin.json` and no root
+   *  plugin.json. Not a listing the exchange reads yet, and worth telling the
+   *  submitter apart from "no SKILL.md". */
+  clientPackage: boolean;
   /** The stripped root directory, when there was one. checkFrontmatter compares
    *  it against `name`, which is a check the form alone cannot make. */
   directoryName?: string;
@@ -37,6 +42,23 @@ const unsafe = (path: string) =>
   path.startsWith("/") ||
   path.includes("\\") ||
   path.split("/").some((seg) => seg === ".." || seg === ".");
+
+/** Finder's resource-fork shadows. A zip made with macOS's Compress carries a
+ *  `__MACOSX/` copy of every file, which would otherwise hide the wrapper
+ *  folder and arrive as `._SKILL.md` files the checks refuse. */
+const isFinderJunk = (path: string) =>
+  path.startsWith("__MACOSX/") || path.split("/").pop() === ".DS_Store";
+
+/** What marks a plugin: the validator's PLUGIN_MANIFEST, spelled out here
+ *  because importing it pulls the whole of plugin-core into the entry chunk,
+ *  and the plugin form that needs the rest loads separately (#213). zip.test.ts
+ *  holds the two equal. */
+export const PLUGIN_ROOT_MANIFEST = "plugin.json";
+
+/** What the registry writes into a plugin for each client (ADR 0005), and what
+ *  Codex reads instead of plugin.json. A copy in the submitter's folder is
+ *  theirs, not the generator's, and #231's check would refuse it. */
+export const CLIENT_FILES = /^(?:\.claude-plugin\/|\.codex-plugin\/|\.mcp\.json$)/;
 
 /** A single root directory, if every entry shares one. The published archive
  *  has one; a zip made by selecting the files inside a folder does not. */
@@ -83,7 +105,7 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
     },
   });
 
-  const names = Object.keys(unpacked);
+  const names = Object.keys(unpacked).filter((n) => !isFinderJunk(n));
   const root = commonRoot(names);
   const strip = (p: string) => (root ? p.slice(root.length + 1) : p);
 
@@ -110,11 +132,25 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
   }
   entries.sort((a, b) => a.path.localeCompare(b.path));
 
-  const skill = entries.find((e) => e.path === "SKILL.md");
+  const plugin = entries.some((e) => e.path === PLUGIN_ROOT_MANIFEST);
+  // Only without a SKILL.md: every skill the registry lists carries a
+  // generated .claude-plugin/plugin.json, and dropping one back is a skill.
+  const clientPackage = !plugin &&
+    !entries.some((e) => e.path === "SKILL.md") &&
+    entries.some((e) => e.path === ".claude-plugin/plugin.json");
+  const kept = plugin
+    ? entries.filter((e) => {
+      if (!CLIENT_FILES.test(e.path)) return true;
+      problems.push(say.clientFileLeftOut(e.path));
+      return false;
+    })
+    : entries;
+
+  const skill = kept.find((e) => e.path === "SKILL.md");
   const skillMd = skill && skill.kind === "file"
     ? new TextDecoder().decode(skill.bytes)
     : null;
-  if (!skillMd) problems.push(say.noSkillMdInZip);
+  if (!skillMd && !plugin && !clientPackage) problems.push(say.noSkillMdInZip);
 
-  return { entries, directoryName: root, skillMd, problems };
+  return { entries: kept, plugin, clientPackage, directoryName: root, skillMd, problems };
 }

@@ -16,7 +16,7 @@
  */
 
 import { parseDocument, isMap } from "yaml";
-import { checkYamlSafety } from "@civic-skill-exchange/validator";
+import { checkYamlSafety } from "@civic-skill-exchange/validator/yaml-safety";
 import { strings } from "../i18n/strings";
 
 /** The same rule as the validator's `splitFrontmatter` — frontmatter opens the

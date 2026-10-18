@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
+import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { History } from "./History";
 import { TierBadge, LabBadge, SensitivityBadge, DeploymentBadge } from "./Badges";
 import { rich } from "../i18n/rich";

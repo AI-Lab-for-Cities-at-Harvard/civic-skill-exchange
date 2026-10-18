@@ -110,6 +110,8 @@ Install paths differ across agent tools — `.claude/skills/`, `.agents/skills/`
 
 Open a pull request adding your skill under `skills/{your-github-username}/{skill-name}/`. Automated checks run on the PR and report back in a comment. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contract and a worked example.
 
+A plugin — several skills that work together, with the MCP servers they use — goes under `plugins/{your-github-username}/{plugin-name}/` instead, and a maintainer reviews every one before it merges. The [submission page](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/submit) takes both; [docs/SUBMITTING.md](docs/SUBMITTING.md#sharing-a-plugin) walks through a plugin.
+
 You can also open a [skill submission issue](../../issues/new?template=submit-skill.yml) if you'd rather not work in git directly.
 
 ---

@@ -259,7 +259,10 @@ Full detail, including the threat model behind these layers, is in [docs/SECURIT
 ## Plugins
 
 A plugin is several skills that work together, installed as one, with the MCP
-servers they use. It follows the open [Agent Plugins](https://agent-plugins.org/specification)
+servers they use. The [submission page](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/submit)
+takes one the way it takes a skill and writes the registry's fields into your
+files for you ([docs/SUBMITTING.md](docs/SUBMITTING.md#sharing-a-plugin)); this
+section is the contract it fills in. It follows the open [Agent Plugins](https://agent-plugins.org/specification)
 layout, and everything above about a skill applies to each skill inside it.
 The decisions behind the differences are
 [ADR 0005](docs/adr/0005-plugins-are-a-second-listing-kind.md).

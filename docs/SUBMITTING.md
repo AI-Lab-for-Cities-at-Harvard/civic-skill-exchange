@@ -109,7 +109,10 @@ when something has gone wrong.
 ### Step 1 — Give the page your skill
 
 Drop in a `.zip` of the skill folder, paste the address of the repository it
-lives in, or paste your `SKILL.md` directly.
+lives in, or paste your `SKILL.md` directly. If the skill is one folder of a
+larger repository, paste that folder's address —
+`github.com/you/repo/tree/main/my-skill` — and only that folder is read.
+A plugin goes in the same way; see [Sharing a plugin](#sharing-a-plugin).
 
 The archive is unpacked **in your browser**. It is not sent anywhere. The page
 reads what is already in your `SKILL.md` and fills itself in.
@@ -251,8 +254,32 @@ request will get, rendered by the code that posts it.
 A plugin is several skills that belong together, with the MCP servers they use —
 for example, one skill that builds a dashboard, one that refreshes it and one
 that writes a brief from it. It goes under `plugins/` instead of `skills/`, in
-the [Agent Plugins](https://agent-plugins.org/specification) layout, and only
-from the command line for now:
+the [Agent Plugins](https://agent-plugins.org/specification) layout.
+
+The [submission page](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/submit)
+takes a plugin the way it takes a skill. Drop the folder as a `.zip` (a
+`.plugin` file is a zip too), or paste the address of its repository or of the
+folder inside one. A folder with `plugin.json` at its top switches the page to
+the plugin form by itself. The page:
+
+- shows the plugin's skills and each MCP server with the host it connects to;
+- asks what describes the whole plugin once, and each skill only what its
+  `SKILL.md` leaves unanswered — a skill with nothing missing starts closed
+  and marked complete;
+- writes `$schema`, the name `{your-github-username}-{plugin-name}` and your
+  answers into `plugin.json`, and each skill's answers into its own `SKILL.md`,
+  and shows you the lines it added;
+- hands the folder back for the upload into `plugins/{your-github-username}/`,
+  through the same fork, upload and pull request steps as a skill of several
+  files.
+
+A plugin exported from Claude Code has `.claude-plugin/plugin.json` and
+`.mcp.json` but no `plugin.json` or `mcp.json` at its top. The page tells you
+so: add the two files described below, and drop the folder again. It leaves out
+`.claude-plugin/`, `.codex-plugin/` and `.mcp.json` from a plugin it reads,
+because the registry writes those.
+
+By hand, the folder looks like this:
 
 ```
 plugins/{your-github-username}/{plugin-name}/

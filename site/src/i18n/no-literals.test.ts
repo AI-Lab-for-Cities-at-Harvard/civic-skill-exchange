@@ -43,12 +43,15 @@ const FILES = [
   "components/DocLink.tsx",
   "components/DownloadBox.tsx",
   "components/Facets.tsx",
+  "components/Field.tsx",
   "components/History.tsx",
   "components/PluginCard.tsx",
   "components/PluginDetail.tsx",
   "components/SkillCard.tsx",
   "components/SkillDetail.tsx",
+  "components/PluginSubmit.tsx",
   "components/Submit.tsx",
+  "components/UploadSteps.tsx",
 ];
 
 /** Attributes and props whose value is read by a person, not by a machine. */

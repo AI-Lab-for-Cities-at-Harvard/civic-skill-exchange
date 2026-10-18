@@ -14,7 +14,7 @@ import {
   toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, repoSlug, slugify,
   URL_BUDGET,
   fitsInUrl,
-  forkUploadUrl, pullRequestUrl, registryUploadUrl, parseForkRef,
+  forkUploadUrl, pullRequestUrl, registryUploadUrl, parseForkRef, skillPath, namespacePath,
   EMPTY_DRAFT,
   type Draft,
 } from "./submit";
@@ -398,5 +398,22 @@ describe("the declared language", () => {
       { categories: ["constituent-services"] },
     );
     expect(findings.filter((f) => f.where.startsWith("civic.language"))).toEqual([]);
+  });
+});
+
+// #213: a plugin uploads into plugins/{namespace}, the same way a skill does
+// into skills/{namespace}.
+describe("the hand-off for a plugin", () => {
+  const P = { author: "SGarcese", name: "housing-dashboards" };
+  it("opens the upload page at plugins/{namespace}", () => {
+    expect(forkUploadUrl("sgarcese-hbs/my-copy", P, "plugins"))
+      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/plugins/sgarcese");
+    expect(registryUploadUrl(REPO, { ...P, author: "civic-skills" }, "plugins"))
+      .toBe(`https://github.com/${REPO}/upload/main/plugins/civic-skills`);
+  });
+
+  it("names the plugin's path", () => {
+    expect(skillPath(P, "plugins")).toBe("plugins/sgarcese/housing-dashboards");
+    expect(namespacePath(P, "plugins")).toBe("plugins/sgarcese");
   });
 });

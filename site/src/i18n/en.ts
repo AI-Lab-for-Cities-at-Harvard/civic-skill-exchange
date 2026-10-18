@@ -291,7 +291,8 @@ export const en = {
         `\`${commit}\`.`,
 
       archiveLabel: "Or upload the skill folder as a .zip",
-      archiveHint: "Unpacked in your browser. It is not sent anywhere.",
+      archiveHint:
+        "A plugin folder works too. Unpacked in your browser. It is not sent anywhere.",
 
       pasteLabel: "Or paste your SKILL.md",
 
@@ -621,6 +622,93 @@ export const en = {
         "yours is not listed yet, [submit it as a new skill](new) first.",
     },
 
+    /** A plugin dropped or imported instead of a skill (#213). The page switches
+     *  by itself on a root plugin.json; the plugin is asked about once and each
+     *  skill only where its SKILL.md is silent. */
+    plugin: {
+      heading: "About the plugin",
+      /** `name` is the plugin's folder name. */
+      summary: (name: string, skills: number, servers: number) =>
+        `**${name}** is a plugin of ${skills} skill${skills === 1 ? "" : "s"}` +
+        (servers === 0
+          ? ", connecting to no MCP servers."
+          : `, connecting to ${servers} MCP server${servers === 1 ? "" : "s"}.`),
+      skillsLabel: "Its skills",
+      serversLabel: "What it connects to",
+      /** A remote server is named with the host it talks to, which is what a
+       *  reviewer approves; a local one with the program it runs. */
+      remoteServer: (name: string, host: string) => `**${name}** — \`${host}\``,
+      localServer: (name: string, command: string) =>
+        `**${name}** — runs \`${command}\` on the computer it is installed on`,
+      reviewed:
+        "A maintainer reviews every plugin before it is listed. Its servers " +
+        "and scripts run for whoever installs it, so a person reads them first.",
+
+      /** `login` is what was typed. */
+      badLogin: (login: string) =>
+        `\u201c${login}\u201d is not a GitHub username. A username has only ` +
+        "letters, numbers and single hyphens, like `maria-lopez` — it is the " +
+        "name in your github.com address, not your full name or email.",
+      /** Stands in for the username in an example name until one is typed. */
+      youExample: "your-username",
+      /** Answered already, by plugin.json. `fields` is a joined list of
+       *  `fieldNames` values. */
+      fromFile: (fields: string) =>
+        `Read from plugin.json: ${fields}. Change anything that is not right \u2014 ` +
+        "if someone else wrote the plugin and you will look after it, put your own name.",
+      maintainerLabel: "Who maintains it?",
+      deploymentLabel: "Have you used it?",
+      versionHint:
+        "Your own number for it, like `1.0` or `0.3.4`. Optional, and nothing " +
+        "checks it.",
+      downloadWhy: "Enter your GitHub username above, and the download is ready.",
+
+      nameLabel: "Plugin name",
+      /** `manifestName` is `{namespace}-{name}`, which the page writes. */
+      nameHint: (manifestName: string) =>
+        `Its folder in the exchange. We name it \`${manifestName}\` inside ` +
+        "plugin.json for you, which is the name Claude Code and Codex install.",
+      descriptionHint:
+        "What the plugin does as a whole. The catalogue, Claude Code and Codex " +
+        "all show this.",
+      fitHint:
+        "When the plugin as a whole fits, and when it does not. A skill's own " +
+        "fit stays in its SKILL.md.",
+
+      skillsHeading: "Its skills",
+      skillsLede:
+        "Each skill keeps its own answers in its own SKILL.md. Only what a file " +
+        "leaves unanswered is asked here.",
+      skillComplete: "Complete",
+      skillOpen: (n: number) => `${n} to answer`,
+      skillOther: "Also flagged in this skill\u2019s SKILL.md:",
+      /** `file` is plugin.json or mcp.json. */
+      fileFindings: (file: string) => `Flagged in ${file}:`,
+
+      multiFileNote: (files: number) =>
+        `Your plugin is ${files} files. GitHub takes a whole folder, but only ` +
+        "from its own upload page — so the last steps happen there, with the " +
+        "folder this page hands back.",
+      folderBody:
+        "Your files, unchanged, with the answers above written into " +
+        "`plugin.json` and each skill\u2019s `SKILL.md`. This folder — not your " +
+        "original — is what you upload: the answers exist only in this copy. " +
+        "Unzip it first.",
+      /** `file` is a path inside the plugin. */
+      addedSummary: (file: string, lines: number) =>
+        `What we added to ${file} — ${lines} line${lines === 1 ? "" : "s"}`,
+
+      /** A Claude Code package: `.claude-plugin/plugin.json` and no root
+       *  plugin.json. `docs` is the guide's plugin section. */
+      clientPackage:
+        "This looks like a Claude Code plugin: it has `.claude-plugin/plugin.json` " +
+        "but no `plugin.json` at the top. The exchange lists plugins in the " +
+        "Agent Plugins layout, which Claude Code and Codex both read — a " +
+        "`plugin.json`, and an `mcp.json` if it connects to anything, at the top " +
+        "of the folder. Add them and drop the folder again. [The guide](docs) " +
+        "shows what goes in each.",
+    },
+
     /** What went wrong reading what somebody brought.
      *
      *  Read by a submitter mid-hand-off, so they say what to do next rather
@@ -648,6 +736,10 @@ export const en = {
         "No SKILL.md at the root of the archive. A skill is a directory with " +
         "SKILL.md at its top level.",
       notAZip: "This file could not be read as a zip archive.",
+      /** A plugin's client manifests are the registry's to write (ADR 0005):
+       *  dropped from the copy, named so nothing vanishes quietly. */
+      clientFileLeftOut: (path: string) =>
+        `${path} — the exchange makes this file for you, so it was left out.`,
       /** Left out is not the same as wrong: these name what was skipped so
        *  nothing vanishes quietly, and they do not stop the hand-off. */
       pathEscape: (path: string) =>
@@ -664,6 +756,7 @@ export const en = {
       noFrontmatterToAmend:
         "This file does not start with a --- block, so there is nothing to amend.",
       invalidYaml: (reason: string) => `The --- block is not valid YAML: ${reason}`,
+      invalidPluginJson: (reason: string) => `plugin.json is not valid JSON: ${reason}`,
     },
   },
 
@@ -1053,9 +1146,10 @@ export const en = {
       lede:
         "The [submission page](submit) does most of this for you: drop in a " +
         "folder or point it at a repository, and it reads what is already " +
-        "there and asks only for what it could not find. You will need a " +
-        "**GitHub account** \u2014 it is free, and it is what records the " +
-        "skill as yours.",
+        "there and asks only for what it could not find. A plugin \u2014 several " +
+        "skills with the MCP servers they use \u2014 goes in the same way, and a " +
+        "maintainer reviews every one. You will need a **GitHub account** " +
+        "\u2014 it is free, and it is what records the skill as yours.",
       byHand: "What it produces, and what you would build by hand:",
       steps: {
         namespaceTitle: "Put it in your own namespace",

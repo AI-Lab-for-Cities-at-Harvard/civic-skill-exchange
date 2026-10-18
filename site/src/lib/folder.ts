@@ -15,21 +15,35 @@
 import { zipSync } from "fflate";
 import type { Entry } from "@civic-skill-exchange/validator";
 
-/** The entries as read, with SKILL.md replaced by the amended text. Everything
- *  else is copied byte for byte — the page has no business rewriting a script. */
+/** The entries as read, with each path in `replacements` holding the amended
+ *  text instead. Everything else is copied byte for byte — the page has no
+ *  business rewriting a script. A replacement for a path the entries lack is
+ *  added, so a patched file reaches the submitter even if the original was
+ *  filtered out. */
+export function buildFolderZip(
+  entries: Entry[],
+  directoryName: string,
+  replacements: Record<string, string>,
+): Uint8Array {
+  const files: Record<string, Uint8Array> = {};
+  for (const entry of entries) {
+    if (entry.kind !== "file") continue;
+    const replaced = replacements[entry.path];
+    files[`${directoryName}/${entry.path}`] =
+      replaced === undefined ? entry.bytes : new TextEncoder().encode(replaced);
+  }
+  for (const [path, text] of Object.entries(replacements)) {
+    files[`${directoryName}/${path}`] ??= new TextEncoder().encode(text);
+  }
+  return zipSync(files);
+}
+
+/** A skill: the same, with SKILL.md the one file amended. A plugin goes
+ *  through buildFolderZip directly and gains no root SKILL.md (#213). */
 export function buildSkillZip(
   entries: Entry[],
   directoryName: string,
   skillMd: string,
 ): Uint8Array {
-  const files: Record<string, Uint8Array> = {};
-  for (const entry of entries) {
-    if (entry.kind !== "file") continue;
-    files[`${directoryName}/${entry.path}`] =
-      entry.path === "SKILL.md" ? new TextEncoder().encode(skillMd) : entry.bytes;
-  }
-  // A skill read from a repository whose SKILL.md was filtered out still gets
-  // one, because the patched text is what the submitter is being handed.
-  files[`${directoryName}/SKILL.md`] ??= new TextEncoder().encode(skillMd);
-  return zipSync(files);
+  return buildFolderZip(entries, directoryName, { "SKILL.md": skillMd });
 }

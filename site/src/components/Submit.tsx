@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  checkFrontmatter, checkStructureCore, RESERVED_NAMESPACES,
-  type Finding, type Entry,
-} from "@civic-skill-exchange/validator";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import type { Finding, Entry } from "@civic-skill-exchange/validator";
+import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
+import { checkStructureCore } from "@civic-skill-exchange/validator/structure-core";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
-  forkUrl, forkUploadUrl, registryUploadUrl, pullRequestUrl, parseForkRef,
-  fitsInUrl, skillPath, namespacePath, slugify, type Draft,
+  fitsInUrl, skillPath, slugify, type Draft,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
@@ -15,7 +13,9 @@ import { draftFromSkillMd } from "../lib/parse";
 import { checkGitHubUser, type UserCheck } from "../lib/github";
 import { importFromRepo, failureMessages, type ImportResult } from "../lib/import";
 import { rich } from "../i18n/rich";
-import { useStrings, type Strings } from "../i18n/strings";
+import { useStrings } from "../i18n/strings";
+import { Choice, Field, type FieldNames } from "./Field";
+import { UploadSteps } from "./UploadSteps";
 import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
@@ -29,6 +29,11 @@ import type { Skill } from "../lib/types";
  */
 export const SUBMISSIONS_EMAIL = "";
 
+/** The plugin form, loaded only when a plugin arrives (#213). The entry chunk
+ *  is held to a size budget, and most visitors never bring one. */
+const PluginSubmit = lazy(() =>
+  import("./PluginSubmit").then((m) => ({ default: m.PluginSubmit })));
+
 /** The canonical value list, which does not vary by locale — so it is read off
  *  the English table rather than the current one. */
 const CATEGORIES = Object.keys(en.vocabulary.category);
@@ -36,53 +41,6 @@ const CATEGORIES = Object.keys(en.vocabulary.category);
 const OFFERED_LANGUAGES = new Set(
   en.submit.form.languageChoices.map(([value]) => value),
 );
-
-type FieldNames = Strings["submit"]["form"]["fieldNames"];
-
-/** Findings are written for a reviewer reading a diff, and name the raw key.
- *  Swapped for the question the submitter actually answered. */
-function readable(finding: Finding, names: FieldNames): string {
-  const name = names[finding.where as keyof FieldNames];
-  return name ? finding.message.replaceAll(finding.where, name) : finding.message;
-}
-
-function Field(
-  { label, hint, id, findings, children }: {
-    label: string; hint?: React.ReactNode; id: string; findings: Finding[];
-    children: React.ReactNode;
-  },
-) {
-  const names = useStrings().submit.form.fieldNames;
-  const mine = findings.filter((f) => f.where === id);
-  return (
-    <div className={`field${mine.length ? " field--flagged" : ""}`}>
-      <label className="field__label" htmlFor={id}>{label}</label>
-      {hint && <p className="field__hint">{hint}</p>}
-      {children}
-      {mine.map((f) => (
-        <p className="field__finding" key={f.message}>{readable(f, names)}</p>
-      ))}
-    </div>
-  );
-}
-
-function Choice(
-  { id, label, hint, value, options, findings, onChange, placeholder }: {
-    id: string; label: string; hint?: React.ReactNode; value: string;
-    options: [string, string][]; findings: Finding[];
-    onChange: (v: string) => void; placeholder?: string;
-  },
-) {
-  return (
-    <Field id={id} label={label} hint={hint} findings={findings}>
-      <select id={id} className="select" value={value}
-        onChange={(e) => onChange(e.target.value)}>
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-      </select>
-    </Field>
-  );
-}
 
 export function Submit(
   { repo, skills, mode, add }: {
@@ -108,6 +66,18 @@ export function Submit(
     { skillMd: string; entries: Entry[]; directoryName: string } | null
   >(null);
   const [notes, setNotes] = useState<string[]>([]);
+  // A folder with plugin.json at its root switches the page by itself (#213,
+  // ruling 1). Keyed by arrival, so a second plugin starts a fresh form.
+  const [plugin, setPlugin] = useState<
+    { entries: Entry[]; directoryName: string; left: string[]; key: number } | null
+  >(null);
+  const [clientPackage, setClientPackage] = useState(false);
+  const enterPlugin = (entries: Entry[], directoryName: string, left: string[]) => {
+    setArchive(null);
+    setSource(null);
+    setNotes([]);
+    setPlugin((prev) => ({ entries, directoryName, left, key: (prev?.key ?? 0) + 1 }));
+  };
   const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
   const [repoUrl, setRepoUrl] = useState("");
   const [importing, setImporting] = useState(false);
@@ -189,14 +159,6 @@ export function Submit(
   const multiFile = (source?.entries.length ?? 0) > 1;
   const folderName = draft.name.trim() || source?.directoryName || "skill";
 
-  // A reserved namespace is not a person. Its submitter has write access —
-  // CODEOWNERS gates the folder — so forking is both unnecessary and impossible
-  // to follow, because the fork the page would point at does not exist.
-  const forkRef = parseForkRef(forkInput);
-  const uploadHref = reserved
-    ? registryUploadUrl(repo, draft)
-    : forkUploadUrl(forkInput, draft);
-  const prHref = reserved ? null : pullRequestUrl(repo, forkInput);
 
   // What the download is for, shown rather than asserted (#82).
   const added = useMemo(
@@ -240,6 +202,8 @@ export function Submit(
   const onImport = async () => {
     setImporting(true);
     setImported(null);
+    setPlugin(null);
+    setClientPackage(false);
     const out = await importFromRepo(repoUrl);
     setImporting(false);
     if ("kind" in out) {
@@ -248,6 +212,15 @@ export function Submit(
       return;
     }
     setImported(out);
+    if (out.plugin) {
+      enterPlugin(out.entries, out.directoryName, out.skipped);
+      return;
+    }
+    if (out.clientPackage) {
+      setArchive(null);
+      setClientPackage(true);
+      return;
+    }
     setArchive({
       name: `${out.ref.owner}/${out.ref.repo}`,
       files: out.entries.length,
@@ -258,7 +231,7 @@ export function Submit(
       structural: checkStructureCore(out.entries),
     });
     setSource({
-      skillMd: out.skillMd, entries: out.entries, directoryName: out.ref.repo,
+      skillMd: out.skillMd, entries: out.entries, directoryName: out.directoryName,
     });
     // Fill from the file, then stamp on where this copy came from and the
     // commit it was taken at.
@@ -277,8 +250,20 @@ export function Submit(
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
+    setImported(null);
+    setPlugin(null);
+    setClientPackage(false);
     try {
       const read = readSkillZip(new Uint8Array(await file.arrayBuffer()));
+      if (read.plugin) {
+        enterPlugin(read.entries, read.directoryName ?? "", read.problems);
+        return;
+      }
+      if (read.clientPackage) {
+        setArchive(null);
+        setClientPackage(true);
+        return;
+      }
       setArchive({
         name: file.name, files: read.entries.length,
         left: read.problems,
@@ -421,7 +406,7 @@ export function Submit(
 
           <Field id="archive" label={t.intake.archiveLabel} findings={[]} hint={t.intake.archiveHint}>
             <input
-              id="archive" type="file" accept=".zip,application/zip" className="input"
+              id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
               onChange={(e) => onFile(e.target.files?.[0])}
             />
           </Field>
@@ -430,7 +415,12 @@ export function Submit(
             <textarea
               id="paste" className="textarea" rows={5} value={pasted}
               placeholder={"---\nname: my-skill\n..."}
-              onChange={(e) => { setPasted(e.target.value); load(e.target.value); }}
+              onChange={(e) => {
+                setPasted(e.target.value);
+                setPlugin(null);
+                setClientPackage(false);
+                load(e.target.value);
+              }}
             />
           </Field>
 
@@ -467,7 +457,23 @@ export function Submit(
           {blocked && (
             <p className="submit__blocked" data-testid="blocked">{t.intake.blocked}</p>
           )}
+
+          {clientPackage && (
+            <p className="submit__blocked" data-testid="client-package">
+              {rich(t.plugin.clientPackage, {
+                docs: `https://github.com/${repo}/blob/main/docs/SUBMITTING.md#sharing-a-plugin`,
+              })}
+            </p>
+          )}
         </section>
+
+        {plugin ? (
+          <Suspense fallback={null}>
+            <PluginSubmit key={plugin.key} repo={repo} entries={plugin.entries}
+              directoryName={plugin.directoryName} left={plugin.left} />
+          </Suspense>
+        ) : (
+        <>
 
         <section className="prose__block">
           <h2 className="h2">{f.heading}</h2>
@@ -714,75 +720,13 @@ export function Submit(
               <p className="submit__note" data-testid="multi-file-note">
                 {t.send.multiFileNote(source?.entries.length ?? 0)}
               </p>
-              <ol className="steps" data-testid="manual-steps">
-                <li className="steps__item">
-                  <h3 className="steps__title">{t.send.folderTitle}</h3>
-                  <p className="steps__body">{rich(t.send.folderBody)}</p>
-                  <button
-                    className="btn btn--strong" onClick={download}
-                    disabled={!ready || blocked} data-testid="download-folder"
-                  >
-                    {t.send.downloadFolder(folderName)}
-                  </button>
-                </li>
-
-                {!reserved && (
-                  <li className="steps__item">
-                    <h3 className="steps__title">{t.send.forkTitle}</h3>
-                    <p className="steps__body">{t.send.forkBody}</p>
-                    <p className="cta-row">
-                      <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
-                        target="_blank" rel="noreferrer">{t.send.forkCta}</a>
-                    </p>
-                    <Field
-                      id="fork" label={t.send.forkLabel} findings={[]} hint={t.send.forkHint}
-                    >
-                      <input
-                        id="fork" className="input" value={forkInput}
-                        placeholder={t.send.forkPlaceholder}
-                        onChange={(e) => setForkInput(e.target.value)}
-                      />
-                      {forkInput.trim() !== "" && !forkRef && (
-                        <p className="field__finding" data-testid="fork-unparsed">
-                          {rich(t.send.forkUnparsed)}
-                        </p>
-                      )}
-                    </Field>
-                  </li>
-                )}
-
-                <li className="steps__item">
-                  <h3 className="steps__title">{t.send.uploadTitle}</h3>
-                  <p className="steps__body" data-testid="upload-step-body">
-                    {rich(t.send.uploadBody(
-                      folderName, reserved, namespacePath(draft), skillPath(draft),
-                    ))}
-                  </p>
-                  {uploadHref ? (
-                    <a className="btn" href={uploadHref}
-                      data-testid="step-upload" target="_blank" rel="noreferrer">
-                      {t.send.uploadCta}
-                    </a>
-                  ) : (
-                    <p className="submit__note" data-testid="upload-waiting">
-                      {t.send.uploadWaiting}
-                    </p>
-                  )}
-                </li>
-
-                {!reserved && (
-                  <li className="steps__item">
-                    <h3 className="steps__title">{t.send.pullRequestTitle}</h3>
-                    <p className="steps__body">{t.send.pullRequestBody}</p>
-                    {prHref && (
-                      <a className="btn" href={prHref}
-                        data-testid="step-pr" target="_blank" rel="noreferrer">
-                        {t.send.pullRequestCta}
-                      </a>
-                    )}
-                  </li>
-                )}
-              </ol>
+              <UploadSteps
+                repo={repo} reserved={reserved} tree="skills"
+                draft={draft} folderName={folderName}
+                folderBody={t.send.folderBody}
+                forkInput={forkInput} onForkInput={setForkInput}
+                onDownload={download} canDownload={ready && !blocked}
+              />
             </>
           ) : (
             <p className="cta-row">
@@ -845,6 +789,8 @@ export function Submit(
   git push origin add-${draft.name || "your-skill"}`}</code></pre>
           </details>
         </section>
+        </>
+        )}
         </>
       )}
 

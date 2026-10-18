@@ -6,7 +6,8 @@
  */
 
 import { parse } from "yaml";
-import { splitFrontmatter, checkYamlSafety } from "@civic-skill-exchange/validator";
+import { splitFrontmatter } from "@civic-skill-exchange/validator/structure-core";
+import { checkYamlSafety } from "@civic-skill-exchange/validator/yaml-safety";
 import { EMPTY_DRAFT, type Draft } from "./submit";
 import { strings } from "../i18n/strings";
 
@@ -62,6 +63,7 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
         ? front["allowed-tools"].map(text).join(", ")
         : text(front["allowed-tools"]),
       category: text(meta["civic.category"]),
+      categorySecondary: text(meta["civic.category-secondary"]),
       scope: text(meta["civic.scope"]),
       scopeSecondary: text(meta["civic.scope-secondary"]),
       jurisdiction: text(meta["civic.jurisdiction"]),

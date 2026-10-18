@@ -734,6 +734,11 @@ a:hover { color: var(--c-spot); }
 }
 .submit__ok { color: var(--c-ok); font-size: var(--t-sm); }
 .submit__note { font-size: var(--t-sm); color: var(--c-text-light); }
+/* What a complete skill in a plugin already says (#213): question, then answer. */
+.submit__answers { font-size: var(--t-sm); margin: var(--s-2, 0.5rem) 0; }
+.submit__answers div { display: flex; flex-wrap: wrap; gap: 0 0.5em; }
+.submit__answers dt { color: var(--c-text-light); }
+.submit__answers dd { margin: 0; }
 
 /* The manual hand-off, as numbered steps.
  *

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
+import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { bytes } from "../lib/format";

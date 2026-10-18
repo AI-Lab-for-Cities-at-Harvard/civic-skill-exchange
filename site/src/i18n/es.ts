@@ -248,11 +248,13 @@ export const strings: Strings = {
       reading: "Leyendo…",
 
       imported: (files: number, repo: string, commit: string) =>
-        `Se leyó${files === 1 ? "" : "eron"} ${files} archivo${files === 1 ? "" : "s"} ` +
+        `Se ${files === 1 ? "leyó" : "leyeron"} ${files} archivo${files === 1 ? "" : "s"} ` +
         `de \`${repo}\` en \`${commit}\`.`,
 
       archiveLabel: "O suba la carpeta de la habilidad como .zip",
-      archiveHint: "Se descomprime en su navegador. No se envía a ninguna parte.",
+      archiveHint:
+        "También sirve la carpeta de un plugin. Se descomprime en su navegador. " +
+        "No se envía a ninguna parte.",
 
       pasteLabel: "O pegue su SKILL.md",
 
@@ -555,6 +557,77 @@ export const strings: Strings = {
         "habilidad nueva](new).",
     },
 
+    plugin: {
+      heading: "Sobre el plugin",
+      summary: (name: string, skills: number, servers: number) =>
+        `**${name}** es un plugin de ${skills} habilidad${skills === 1 ? "" : "es"}` +
+        (servers === 0
+          ? ", que no se conecta a ningún servidor MCP."
+          : `, que se conecta a ${servers} servidor${servers === 1 ? "" : "es"} MCP.`),
+      skillsLabel: "Sus habilidades",
+      serversLabel: "A qué se conecta",
+      remoteServer: (name: string, host: string) => `**${name}** — \`${host}\``,
+      localServer: (name: string, command: string) =>
+        `**${name}** — ejecuta \`${command}\` en el equipo donde se instala`,
+      reviewed:
+        "Un mantenedor revisa cada plugin antes de publicarlo. Sus servidores y " +
+        "scripts se ejecutan para quien lo instale, así que una persona los lee primero.",
+
+      badLogin: (login: string) =>
+        `\u201c${login}\u201d no es un nombre de usuario de GitHub. Un nombre de ` +
+        "usuario solo tiene letras, números y guiones sueltos, como " +
+        "`maria-lopez`: es el nombre de su dirección en github.com, no su " +
+        "nombre completo ni su correo.",
+      youExample: "su-usuario",
+      fromFile: (fields: string) =>
+        `Leído de plugin.json: ${fields}. Cambie lo que no sea correcto: si otra ` +
+        "persona escribió el plugin y usted lo va a mantener, ponga su propio nombre.",
+      maintainerLabel: "¿Quién lo mantiene?",
+      deploymentLabel: "¿Lo ha usado?",
+      versionHint:
+        "Su propio número para él, como `1.0` o `0.3.4`. Es opcional y nada lo verifica.",
+      downloadWhy: "Escriba arriba su nombre de usuario de GitHub y la descarga estará lista.",
+
+      nameLabel: "Nombre del plugin",
+      nameHint: (manifestName: string) =>
+        `Su carpeta en el intercambio. Dentro de plugin.json lo llamamos ` +
+        `\`${manifestName}\` por usted: es el nombre que instalan Claude Code y Codex.`,
+      descriptionHint:
+        "Lo que hace el plugin en conjunto. Lo muestran el catálogo, Claude Code y Codex.",
+      fitHint:
+        "Cuándo conviene el plugin en conjunto y cuándo no. Lo que conviene a " +
+        "cada habilidad se queda en su SKILL.md.",
+
+      skillsHeading: "Sus habilidades",
+      skillsLede:
+        "Cada habilidad guarda sus propias respuestas en su propio SKILL.md. " +
+        "Aquí solo se pregunta lo que el archivo deja sin responder.",
+      skillComplete: "Completa",
+      skillOpen: (n: number) => `${n} por responder`,
+      skillOther: "También señalado en el SKILL.md de esta habilidad:",
+      fileFindings: (file: string) => `Señalado en ${file}:`,
+
+      multiFileNote: (files: number) =>
+        `Su plugin tiene ${files} archivos. GitHub acepta una carpeta entera, ` +
+        "pero solo desde su propia página de carga, así que los últimos pasos " +
+        "ocurren allí, con la carpeta que le entrega esta página.",
+      folderBody:
+        "Sus archivos, sin cambios, con las respuestas de arriba escritas en " +
+        "`plugin.json` y en el `SKILL.md` de cada habilidad. Esta carpeta, y no " +
+        "la original, es la que debe subir: las respuestas solo existen en esta " +
+        "copia. Descomprímala primero.",
+      addedSummary: (file: string, lines: number) =>
+        `Lo que añadimos a ${file}: ${lines} línea${lines === 1 ? "" : "s"}`,
+
+      clientPackage:
+        "Parece un plugin de Claude Code: tiene `.claude-plugin/plugin.json` " +
+        "pero no hay un `plugin.json` en la raíz. El intercambio publica plugins " +
+        "con la estructura de Agent Plugins, que leen tanto Claude Code como " +
+        "Codex: un `plugin.json`, y un `mcp.json` si se conecta a algo, en la " +
+        "raíz de la carpeta. Añádalos y vuelva a soltar la carpeta. [La guía](docs) " +
+        "muestra qué va en cada uno.",
+    },
+
     problems: {
       notARepo:
         "Eso no parece un repositorio de GitHub. Pegue su dirección, como " +
@@ -577,6 +650,8 @@ export const strings: Strings = {
         "No hay un SKILL.md en la raíz del archivo comprimido. Una habilidad " +
         "es un directorio con SKILL.md en su nivel superior.",
       notAZip: "No se pudo leer este archivo como un archivo zip.",
+      clientFileLeftOut: (path: string) =>
+        `${path} — el intercambio crea este archivo por usted, así que se omitió.`,
 
       pathEscape: (path: string) =>
         `${path} — la ruta se sale del directorio de la habilidad, así que se omitió.`,
@@ -592,6 +667,7 @@ export const strings: Strings = {
       noFrontmatterToAmend:
         "Este archivo no empieza con un bloque ---, así que no hay nada que modificar.",
       invalidYaml: (reason: string) => `El bloque --- no es YAML válido: ${reason}`,
+      invalidPluginJson: (reason: string) => `plugin.json no es un JSON válido: ${reason}`,
     },
   },
 
@@ -933,7 +1009,9 @@ export const strings: Strings = {
       lede:
         "La [página de envío](submit) hace casi todo esto por usted: suelte " +
         "una carpeta o indíquele un repositorio, y leerá lo que ya está ahí y " +
-        "le pedirá solo lo que no pudo encontrar. Necesitará una **cuenta de " +
+        "le pedirá solo lo que no pudo encontrar. Un plugin (varias habilidades " +
+        "con los servidores MCP que usan) se envía igual, y un mantenedor revisa " +
+        "cada uno. Necesitará una **cuenta de " +
         "GitHub**: es gratuita y es lo que deja constancia de que la habilidad " +
         "es suya.",
       byHand: "Lo que produce, y lo que usted armaría a mano:",
