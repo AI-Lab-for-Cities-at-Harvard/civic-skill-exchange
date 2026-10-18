@@ -122,6 +122,13 @@ describe("the plugin page", () => {
     expect(within(servers).getByText("census.example.org")).toBeInTheDocument();
   });
 
+  it("names Latin American Spanish among its languages rather than es-419 (#252)", async () => {
+    serve({ "plugins/ns/housing-dashboards.json": detail({ languages: ["en", "es-419"] }) });
+    render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+    const facts = await screen.findByRole("region", { name: /at a glance/i });
+    expect(facts).toHaveTextContent("English · Spanish (Latin America)");
+  });
+
   it("says so when the plugin connects to no server", async () => {
     serve({ "plugins/ns/housing-dashboards.json": detail({ mcp_servers: [] }) });
     render(<PluginDetail namespace="ns" name="housing-dashboards" />);
