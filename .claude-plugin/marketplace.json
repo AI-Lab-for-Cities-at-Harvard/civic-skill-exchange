@@ -38,7 +38,7 @@
     {
       "name": "sgarcese-housing-dashboards",
       "source": "./plugins/sgarcese/housing-dashboards",
-      "description": "Housing dashboards, refreshes and briefs for any U.S. city or county from Census ACS, BLS and HUD open data: demand and tenure, construction costs and labor, and federally assisted housing, compared with the surrounding region, state and nation."
+      "description": "Housing dashboards, refreshes and briefs for any U.S. city or county (a state works too, with fewer comparisons) from Census ACS, BLS and HUD open data: demand and tenure, construction costs and labor, and federally assisted housing, compared with the surrounding region, state and nation."
     }
   ]
 }

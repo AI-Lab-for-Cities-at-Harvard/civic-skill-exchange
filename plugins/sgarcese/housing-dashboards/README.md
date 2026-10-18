@@ -1,6 +1,6 @@
 # housing-dashboards
 
-Builds housing dashboards and briefs for any U.S. city or county from federal open data. The reference build is the South Bend, IN dashboard.
+Builds housing dashboards and briefs for any U.S. city or county (a state works too, with fewer comparisons) from federal open data. The reference build is the South Bend, IN dashboard.
 
 ## Skills
 | Skill | Use it for |

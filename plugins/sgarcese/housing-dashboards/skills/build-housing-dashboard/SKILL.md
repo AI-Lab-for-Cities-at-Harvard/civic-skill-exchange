@@ -1,9 +1,9 @@
 ---
 name: build-housing-dashboard
-description: "Builds an interactive housing dashboard for any U.S. city or county from federal open data: ACS demand and tenure, BLS construction costs, jobs and wages, and HUD assisted housing (Section 8, 202/811, public housing, vouchers, LIHTC), compared with surrounding jurisdictions, the state and the nation. Use when someone asks for a housing dashboard, housing needs snapshot, housing market profile or affordable-housing overview for a city or county, for example a housing dashboard for Fort Wayne or a housing profile for Marion County."
+description: "Builds an interactive housing dashboard for any U.S. city or county (a state works too, with fewer comparisons) from federal open data: ACS demand and tenure, BLS construction costs, jobs and wages, and HUD assisted housing (Section 8, 202/811, public housing, vouchers, LIHTC), compared with surrounding jurisdictions, the state and the nation. Use when someone asks for a housing dashboard, housing needs snapshot, housing market profile or affordable-housing overview for a city or county, for example a housing dashboard for Fort Wayne or a housing profile for Marion County."
 license: MIT
 compatibility: >
-  U.S. cities and counties only — it reads federal Census, BLS and HUD data. Uses the bundled MCP servers, or direct access to api.census.gov, api.bls.gov, www.bls.gov and services.arcgis.com through the fallback scripts. The fallback scripts need your own credentials: a contact email for BLS (BLS_CONTACT_EMAIL), and API keys (BLS_API_KEY, CENSUS_API_KEY) for anything beyond light use. The plugin ships none. Python 3.9+; Node 18+ for the map.
+  U.S. cities and counties; a state works with fewer comparisons. It reads federal Census, BLS and HUD data. Uses the bundled MCP servers, or direct access to api.census.gov, api.bls.gov, www.bls.gov and services.arcgis.com through the fallback scripts. The fallback scripts need your own credentials: a contact email for BLS (BLS_CONTACT_EMAIL), and API keys (BLS_API_KEY, CENSUS_API_KEY) for anything beyond light use. The plugin ships none. Python 3.9+; Node 18+ for the map.
 metadata:
   civic.category: data-analysis
   civic.category-secondary: planning-land-use
@@ -30,7 +30,7 @@ All scripts live in this skill's `scripts/` folder and the page template in `ass
 ## Step 1 — Set up the run and resolve geography
 
 1. Create a run folder `housing-runs/<slug>/` (slug like `fort-wayne-in`) in the user's project or connected folder if there is one, otherwise in the working directory. It holds `config.json`, `data/`, `build/` and the output HTML, and is what the refresh skill reuses.
-2. Resolve the focus place and build the comparison set following `references/geography.md`: focus (city or county), home county (for a city), 3–6 ring counties, up to 3 peer cities, the state, the nation, the metro (CBSA) for each county, and 4–8 map labels. Use the Census connector's `census_resolve_place` and the BLS connector's `bls_resolve_place` for identifiers and CBSA codes.
+2. Resolve the focus place and build the comparison set following `references/geography.md`: focus (city or county; a state only as `references/geography.md` describes), home county (for a city), 3–6 ring counties, up to 3 peer cities, the state, the nation, the metro (CBSA) for each county, and 4–8 map labels. Use the Census connector's `census_resolve_place` and the BLS connector's `bls_resolve_place` for identifiers and CBSA codes.
 3. Unless the session is unattended, show the proposed comparison set to the user (with the host's question tool if it has one, recommended set first) before pulling anything. Rings are a judgment call and the user often knows the commuter-shed better.
 4. Write `config.json` (schema in `references/geography.md`) and run `config.py check <run_dir>`. Fix any errors it reports. It fills the ACS vintages, LAUS series ids, CPI region and CES series ids.
 

@@ -3,7 +3,7 @@ name: refresh-housing-dashboard
 description: "Refreshes an existing housing dashboard made by build-housing-dashboard with the latest federal data releases (new ACS year, monthly BLS prices and jobs, annual QCEW and OEWS, HUD portfolio and Fair Market Rent updates), reports what changed, rewrites affected findings and republishes to the same link. Use when someone asks to update or refresh a housing dashboard, add the new ACS or new FMRs, or rerun it for the latest month."
 license: MIT
 compatibility: >
-  U.S. cities and counties only. Reuses build-housing-dashboard's scripts and run folder, so both must be installed together. The fallback scripts need your own credentials: a contact email for BLS (BLS_CONTACT_EMAIL), and API keys (BLS_API_KEY, CENSUS_API_KEY) for anything beyond light use. The plugin ships none.
+  U.S. cities and counties; a state works with fewer comparisons. Reuses build-housing-dashboard's scripts and run folder, so both must be installed together. The fallback scripts need your own credentials: a contact email for BLS (BLS_CONTACT_EMAIL), and API keys (BLS_API_KEY, CENSUS_API_KEY) for anything beyond light use. The plugin ships none.
 metadata:
   civic.category: data-analysis
   civic.category-secondary: planning-land-use
