@@ -103,17 +103,134 @@ describe("PluginSubmit — detection", () => {
     expect(archiveInput().getAttribute("accept")).toContain(".plugin");
   });
 
-  it("says what a Claude Code package is missing, rather than 'no SKILL.md'", async () => {
+});
+
+// --------------------------------------------------------------------------- //
+// A plugin exported from Claude Code, converted by the page (#246).
+
+const CLAUDE_MANIFEST = JSON.stringify({
+  name: "housing-dashboards", version: "0.3.4", license: "MIT",
+  description: "Housing dashboards, refreshes and briefs for any U.S. city or county.",
+  hooks: "./hooks/hooks.json",
+}, null, 2);
+
+const CLAUDE_MCP = JSON.stringify({
+  mcpServers: {
+    census: { type: "http", url: "https://census-mcp.responsive.city/mcp" },
+    hud: { type: "http", url: "${HOUSING_HUD_MCP_URL}" },
+  },
+}, null, 2);
+
+const EXPORT = (extra: Record<string, string> = {}) => zip("housing-dashboards-0.3.4.plugin", {
+  ".claude-plugin/plugin.json": CLAUDE_MANIFEST,
+  ".mcp.json": CLAUDE_MCP,
+  ".codex-plugin/plugin.json": "{}",
+  "skills/housing-brief/SKILL.md": COMPLETE,
+  "skills/refresh-housing-dashboard/SKILL.md": BARE,
+  "hooks/hooks.json": "{}",
+  ...extra,
+});
+
+describe("PluginSubmit — a Claude Code export", () => {
+  it("enters the plugin form, and says it rearranged a Claude Code plugin", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT());
+    const note = screen.getByTestId("converted");
+    expect(note).toHaveTextContent("Claude Code");
+    expect(note).toHaveTextContent(".claude-plugin/plugin.json");
+    expect(screen.queryByTestId("client-package")).not.toBeInTheDocument();
+    expect(screen.getByTestId("plugin-summary")).toHaveTextContent("census-mcp.responsive.city");
+    expect(screen.getByTestId("skill-refresh-housing-dashboard")).toHaveAttribute("open");
+  });
+
+  it("lists what it could not carry across: the hooks, the ${VAR} server, the hooks/ folder", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT());
+    const findings = screen.getByTestId("conversion-findings");
+    expect(findings).toHaveTextContent(".claude-plugin/plugin.json#hooks");
+    expect(findings).toHaveTextContent(".mcp.json#hud.url");
+    expect(findings).toHaveTextContent("${HOUSING_HUD_MCP_URL}");
+    expect(findings).toHaveTextContent("hooks/");
+    // Left out of the conversion is not structural: the hand-off is not blocked.
+    expect(screen.queryByTestId("blocked")).not.toBeInTheDocument();
+    expect(screen.getByTestId("left-out")).toHaveTextContent(".codex-plugin/plugin.json");
+  });
+
+  it("shows the new plugin.json and mcp.json in what we added", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT());
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    const manifest = screen.getByTestId("added-plugin.json").textContent ?? "";
+    expect(manifest).toContain(`"$schema": "${PLUGIN_SCHEMA_ID}"`);
+    expect(manifest).toContain('"name": "sgarcese-housing-dashboards"');
+    expect(manifest).toContain('"license": "MIT"');
+    const mcp = screen.getByTestId("added-mcp.json").textContent ?? "";
+    expect(mcp).toContain('"type": "streamable-http"');
+    expect(mcp).toContain("census-mcp.responsive.city");
+    expect(mcp).not.toContain("${");
+  });
+
+  it("hands back the converted files and none of the client ones", async () => {
+    const user = userEvent.setup();
+    let blob: Blob | undefined;
+    vi.spyOn(URL, "createObjectURL").mockImplementation((b) => { blob = b as Blob; return "blob:x"; });
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    await dropPlugin(user, EXPORT());
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await user.click(screen.getByTestId("download-folder"));
+
+    const read = readSkillZip(new Uint8Array(await blob!.arrayBuffer()));
+    const paths = read.entries.map((e) => e.path).sort();
+    expect(read.plugin).toBe(true);
+    expect(read.directoryName).toBe("housing-dashboards");
+    expect(paths).toEqual([
+      "mcp.json", "plugin.json",
+      "skills/housing-brief/SKILL.md", "skills/refresh-housing-dashboard/SKILL.md",
+    ]);
+    const text = (p: string) => {
+      const e = read.entries.find((x) => x.path === p);
+      return e?.kind === "file" ? strFromU8(e.bytes) : "";
+    };
+    expect(JSON.parse(text("plugin.json")).name).toBe("sgarcese-housing-dashboards");
+    expect(JSON.parse(text("mcp.json")).mcpServers.census.type).toBe("streamable-http");
+  });
+
+  it("converts one imported from a repository", async () => {
+    const files: Record<string, string> = {
+      ".claude-plugin/plugin.json": CLAUDE_MANIFEST,
+      ".mcp.json": CLAUDE_MCP,
+      "skills/housing-brief/SKILL.md": COMPLETE,
+    };
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const raw = /^https:\/\/raw\.githubusercontent\.com\/[^/]+\/[^/]+\/[0-9a-f]{40}\/(.+)$/.exec(url);
+      const body = /\/git\/trees\//.test(url)
+        ? { sha: "c".repeat(40), truncated: false,
+            tree: Object.keys(files).map((path) => ({ path, type: "blob", size: 10 })) }
+        : { default_branch: "main" };
+      const bytes = strToU8(raw ? files[raw[1]!] ?? "" : "");
+      return { status: 200, ok: true, json: async () => body, arrayBuffer: async () => bytes.buffer };
+    }));
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
-    await user.upload(archiveInput(), zip("h.plugin", {
-      ".claude-plugin/plugin.json": "{}", ".mcp.json": "{}",
-      "skills/a/SKILL.md": BARE,
-    }));
-    const note = await screen.findByTestId("client-package");
-    expect(note).toHaveTextContent("plugin.json");
-    expect(note).toHaveTextContent("mcp.json");
-    expect(screen.queryByTestId("plugin-mode")).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/GitHub repository/i),
+      "https://github.com/sgarcese/housing-dashboards");
+    await user.click(screen.getByTestId("import"));
+    expect(await screen.findByTestId("converted")).toBeInTheDocument();
+    expect(screen.getByTestId("added-mcp.json")).toHaveTextContent("streamable-http");
+  });
+
+  it("says so in Spanish too", async () => {
+    setLocale("es");
+    try {
+      const user = userEvent.setup();
+      await dropPlugin(user, EXPORT());
+      expect(screen.getByTestId("converted")).toHaveTextContent("Claude Code");
+      expect(screen.getByTestId("conversion-findings"))
+        .toHaveTextContent(es.submit.plugin.convertedFindings);
+    } finally {
+      setLocale("en");
+    }
   });
 });
 

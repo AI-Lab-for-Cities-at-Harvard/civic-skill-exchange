@@ -318,3 +318,25 @@ def test_submitting_tells_a_fork_submitter_to_commit_to_main() -> None:
     for m in re.finditer(r"create a new branch", text):
         assert "the registry itself" in text[max(0, m.start() - 250):m.start()], (
             "a web-upload step still sends a fork's submitter to a new branch")
+
+
+# --------------------------------------------------------------------------- #
+# #246: the submission page converts a Claude Code plugin export itself, so
+# the guide no longer sends the submitter away to rearrange the files.
+
+
+def _sharing_a_plugin() -> str:
+    doc = _text("docs/SUBMITTING.md")
+    start = doc.index("### Sharing a plugin")
+    end = doc.index("\n## ", start) if "\n## " in doc[start:] else len(doc)
+    return re.sub(r"\s+", " ", doc[start:end])
+
+
+def test_submitting_md_says_the_page_converts_a_claude_code_export() -> None:
+    section = _sharing_a_plugin()
+    assert "drop the folder again" not in section, (
+        "SUBMITTING.md still tells a Claude Code user to add plugin.json and "
+        "mcp.json themselves; the page converts the export now (#246)")
+    for claim in ("converts", "`.claude-plugin/plugin.json`", "`.mcp.json`",
+                  "`streamable-http`", "`sse`", "`${CLAUDE_PLUGIN_ROOT}`"):
+        assert claim in section, claim
