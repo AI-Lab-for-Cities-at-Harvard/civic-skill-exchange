@@ -1192,3 +1192,31 @@ def test_dependabot_holds_react_minor_releases_and_nothing_else() -> None:
     for name, types in ignored.items():
         assert types == ["version-update:semver-minor"], (
             f"{name} ignores {types}; only minor releases are held (#220)")
+
+
+# #225: the test above held the action to one release, so every Dependabot bump
+# of it failed CI whatever it changed. What it protects is the pin, not which
+# release: a full commit SHA with the version beside it. Reviewing the version
+# move is the Dependabot pull request's job (dependabot.yml says what to check).
+
+SHA = "64ab729a6294000f5aa4a4bc0b73d1f32bc45510"
+
+
+@pytest.mark.parametrize("uses", [
+    f"actions/create-github-app-token@{SHA} # v3.3.0",
+    f"actions/create-github-app-token@{SHA} # v3.2.0",
+    f"actions/create-github-app-token@{SHA} # v4.0.0",
+])
+def test_the_token_action_pin_accepts_any_release(uses: str) -> None:
+    assert pins_app_token_action(f"        uses: {uses}\n")
+
+
+@pytest.mark.parametrize("uses", [
+    "actions/create-github-app-token@v3",                        # a tag moves
+    "actions/create-github-app-token@main",                      # so does a branch
+    f"actions/create-github-app-token@{SHA[:12]} # v3.3.0",      # a short SHA
+    f"actions/create-github-app-token@{SHA}",                    # no version beside it
+    f"someone/create-github-app-token@{SHA} # v3.3.0",           # not the action
+])
+def test_the_token_action_pin_refuses_anything_else(uses: str) -> None:
+    assert not pins_app_token_action(f"        uses: {uses}\n")
