@@ -266,6 +266,10 @@ describe("PluginSubmit — importing a plugin repository", () => {
     await user.click(screen.getByTestId("import"));
     expect(await screen.findByTestId("plugin-mode")).toBeInTheDocument();
     expect(screen.getByTestId("plugin-summary")).toHaveTextContent("housing-brief");
+    const note = screen.getByTestId("imported");
+    expect(note).toHaveTextContent("plugins/h");
+    expect(note).toHaveTextContent("main");
+    expect(note).toHaveTextContent("sgarcese/plugins");
   });
 });
 

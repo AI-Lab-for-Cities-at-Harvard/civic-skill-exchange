@@ -326,6 +326,25 @@ describe("importFromRepo with a plugin", () => {
     expect(apiCalls(fetchMock).length).toBeLessThanOrEqual(2);
   });
 
+  it("hands back the folder and the branch the address gave, for the note (#245)", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: tree(["skills/a/SKILL.md"]),
+      files: { "skills/a/SKILL.md": SKILL },
+    }));
+    const out = await importFromRepo("github.com/a/b/tree/dev/skills/a");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.ref.path).toBe("skills/a");
+    expect(out.ref.branch).toBe("dev");
+  });
+
+  it("leaves the folder and the branch out for a whole repository (#245)", async () => {
+    vi.stubGlobal("fetch", github());
+    const out = await importFromRepo("a/b");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.ref.path).toBeUndefined();
+    expect(out.ref.branch).toBeUndefined();
+  });
+
   it("imports a skill out of a sub-folder too", async () => {
     vi.stubGlobal("fetch", github({
       tree: tree(["skills/a/SKILL.md", "skills/a/scripts/x.py", "skills/b/SKILL.md"]),

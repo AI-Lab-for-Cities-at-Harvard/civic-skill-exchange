@@ -285,10 +285,13 @@ export const en = {
       repoPlaceholder: "github.com/you/your-skill",
       read: "Read it",
       reading: "Reading…",
-      /** `repo` is `owner/name` and `commit` an abbreviated sha. */
-      imported: (files: number, repo: string, commit: string) =>
-        `Read ${files} file${files === 1 ? "" : "s"} from \`${repo}\` at ` +
-        `\`${commit}\`.`,
+      /** `repo` is `owner/name` and `commit` an abbreviated sha. `folder` is
+       *  the sub-folder an address named, and `branch` the one it gave; both
+       *  are left out for a whole repository (#245). */
+      imported: (files: number, repo: string, commit: string, folder?: string, branch?: string) =>
+        `Read ${files} file${files === 1 ? "" : "s"} from ` +
+        (folder ? `\`${folder}\` in ` : "") + `\`${repo}\`` +
+        (folder && branch ? ` (branch \`${branch}\`)` : "") + ` at \`${commit}\`.`,
 
       archiveLabel: "Or upload the skill folder as a .zip",
       archiveHint:

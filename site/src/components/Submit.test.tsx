@@ -16,6 +16,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { zipSync, strToU8 } from "fflate";
 import { Submit, SUBMISSIONS_EMAIL } from "./Submit";
+import { setLocale } from "../i18n/strings";
 import { makeSkill } from "../test/fixtures";
 import { JUDGMENT_QUESTIONS } from "../lib/labels";
 
@@ -428,6 +429,49 @@ describe("Submit — importing from a repository", () => {
     await importInto(user, "github.com/sgarcese/Civic-Analytics");
     expect(await screen.findByTestId("imported")).toHaveTextContent("sgarcese/Civic-Analytics");
     expect(screen.getByLabelText(/^Skill name/i)).toHaveValue("civic-analytics");
+  });
+
+  it("names the folder and the branch when the address gave them (#245)", async () => {
+    vi.stubGlobal("fetch", github({
+      sha: "c".repeat(40), truncated: false,
+      tree: [{ path: "skills/a/SKILL.md", type: "blob", size: 120 }],
+    }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "https://github.com/sgarcese/plugins/tree/dev/skills/a");
+    const note = await screen.findByTestId("imported");
+    expect(note).toHaveTextContent("skills/a");
+    expect(note).toHaveTextContent("dev");
+    expect(note).toHaveTextContent("sgarcese/plugins");
+    expect(note).toHaveTextContent("ccccccc");
+  });
+
+  it("names the folder in Spanish too (#245)", async () => {
+    setLocale("es");
+    try {
+      vi.stubGlobal("fetch", github({
+        sha: "c".repeat(40), truncated: false,
+        tree: [{ path: "skills/a/SKILL.md", type: "blob", size: 120 }],
+      }));
+      const user = userEvent.setup();
+      render(<Submit repo={REPO} skills={[]} mode="new" />);
+      await importInto(user, "https://github.com/sgarcese/plugins/tree/dev/skills/a");
+      const note = await screen.findByTestId("imported");
+      expect(note).toHaveTextContent("skills/a");
+      expect(note).toHaveTextContent("dev");
+      expect(note).toHaveTextContent("Se leyó 1 archivo");
+    } finally {
+      setLocale("en");
+    }
+  });
+
+  it("reads as before for a whole repository (#245)", async () => {
+    vi.stubGlobal("fetch", github());
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "https://github.com/sgarcese/Civic-Analytics/tree/main");
+    expect(await screen.findByTestId("imported")).toHaveTextContent(
+      /^Read 1 file from sgarcese\/Civic-Analytics at ccccccc\.$/);
   });
 
   it("records the repository and the exact commit it read", async () => {
