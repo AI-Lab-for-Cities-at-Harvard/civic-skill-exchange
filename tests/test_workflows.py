@@ -201,6 +201,19 @@ def test_the_changed_paths_are_written_unquoted() -> None:
     assert "git config core.quotePath false" in step
 
 
+def test_a_quoted_changed_path_fails_the_step_before_any_gate() -> None:
+    """Even unquoted, git quotes a path holding a control character, a quote or
+    a backslash. Such a line starts with `"`, matches no `^(skills|plugins)/`
+    gate, and would skip every listing check — so the step fails on it before
+    the gates are evaluated."""
+    after = VALIDATE_YML.split("> changed.txt", 1)[1]
+    guard = after.find("grep -q '^\"' changed.txt")
+    gate = after.find("grep -qE '^(skills|plugins)/' changed.txt")
+    assert guard != -1, "no check for a quoted line in changed.txt"
+    assert guard < gate
+    assert "exit 1" in after[guard:gate]
+
+
 def test_maintainer_status_is_resolved_in_the_workflow() -> None:
     """Who maintains the exchange is a fact about the organization, not about a
     skill. Hardcoding it in the validator would put an access-control list in a
