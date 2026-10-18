@@ -417,3 +417,16 @@ describe("the hand-off for a plugin", () => {
     expect(namespacePath(P, "plugins")).toBe("plugins/sgarcese");
   });
 });
+
+describe("the version's place in the file (#239)", () => {
+  it("is written under metadata, where the validator reads it", () => {
+    const f = toFrontmatter(draft({ version: "1.0" }));
+    expect(f).not.toHaveProperty("version");
+    expect(f.metadata?.version).toBe("1.0");
+    expect(toYaml(f)).toMatch(/^metadata:\n(?: {2}.*\n)* {2}version: "1.0"$/m);
+  });
+
+  it("is omitted when empty", () => {
+    expect(toFrontmatter(draft({ version: "" })).metadata).not.toHaveProperty("version");
+  });
+});

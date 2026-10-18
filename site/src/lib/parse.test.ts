@@ -54,4 +54,15 @@ describe("draftFromSkillMd", () => {
   it("reports a broken block rather than throwing", () => {
     expect(draftFromSkillMd("---\n: : :\n---\n").problems.length).toBeGreaterThan(0);
   });
+
+  it("reads metadata.version into the form, where the validator looks (#239)", () => {
+    const v = "---\nname: a\nmetadata:\n  version: \"2.1\"\n---\nBody.\n";
+    expect(draftFromSkillMd(v).draft.version).toBe("2.1");
+  });
+
+  it("leaves the form's version empty for a file with none, or a legacy top-level one (#239)", () => {
+    expect(draftFromSkillMd(SKILL).draft.version).toBe("");
+    const legacy = "---\nname: a\nversion: 1.0\n---\nBody.\n";
+    expect(draftFromSkillMd(legacy).draft.version).toBe("");
+  });
 });
