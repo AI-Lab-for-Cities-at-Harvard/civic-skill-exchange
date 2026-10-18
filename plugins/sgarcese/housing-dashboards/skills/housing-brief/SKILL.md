@@ -1,9 +1,9 @@
 ---
 name: housing-brief
-description: "Writes a short housing conditions brief or memo for a U.S. city or county, with recommendations first and then demand, construction economy and assisted-housing findings, using the same Census, BLS and HUD data as the housing dashboard. Use when someone asks for a housing memo, briefing, one-pager, talking points or what the data says about housing in a place, with or without an existing dashboard."
+description: "Writes a short housing conditions brief or memo for a U.S. city or county (a state works too, with fewer comparisons), with recommendations first and then demand, construction economy and assisted-housing findings, using the same Census, BLS and HUD data as the housing dashboard. Use when someone asks for a housing memo, briefing, one-pager, talking points or what the data says about housing in a place, with or without an existing dashboard."
 license: MIT
 compatibility: >
-  U.S. cities and counties only. Reuses build-housing-dashboard's data and scripts, so both must be installed together. The fallback scripts need your own credentials: a contact email for BLS (BLS_CONTACT_EMAIL), and API keys (BLS_API_KEY, CENSUS_API_KEY) for anything beyond light use. The plugin ships none.
+  U.S. cities and counties; a state works with fewer comparisons. Reuses build-housing-dashboard's data and scripts, so both must be installed together. The fallback scripts need your own credentials: a contact email for BLS (BLS_CONTACT_EMAIL), and API keys (BLS_API_KEY, CENSUS_API_KEY) for anything beyond light use. The plugin ships none.
 metadata:
   civic.category: policy
   civic.category-secondary: data-analysis
