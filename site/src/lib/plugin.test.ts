@@ -221,6 +221,12 @@ describe("a plugin's skills", () => {
     expect(skillMd).toContain("# Refresh");
   });
 
+  it("hands back a complete skill's SKILL.md byte for byte", () => {
+    const withSecond = COMPLETE_SKILL.replace(
+      "  civic.scope:", "  civic.category-secondary: data-analysis\n  civic.scope:");
+    expect(patchPluginSkill(withSecond, skillDraftFromFile(withSecond)).skillMd).toBe(withSecond);
+  });
+
   it("checks a skill's patched text, with the plugin-level fields left to plugin.json", () => {
     const patched = patchPluginSkill(BARE_SKILL, {
       ...skillDraftFromFile(BARE_SKILL),

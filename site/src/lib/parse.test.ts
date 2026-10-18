@@ -36,6 +36,12 @@ describe("draftFromSkillMd", () => {
     expect(draftFromSkillMd(asList).draft.tools).toBe("Read, Grep");
   });
 
+  it("reads a second category, so amending the file does not drop it (#213)", () => {
+    const two = "---\nname: a\nmetadata:\n  civic.category: policy\n" +
+      "  civic.category-secondary: data-analysis\n---\nBody.\n";
+    expect(draftFromSkillMd(two).draft.categorySecondary).toBe("data-analysis");
+  });
+
   it("says so when there is no --- block", () => {
     expect(draftFromSkillMd("# Just a heading").problems[0]).toMatch(/---/);
   });
