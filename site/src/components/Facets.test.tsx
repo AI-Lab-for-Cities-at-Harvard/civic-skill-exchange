@@ -1,12 +1,13 @@
 /** The catalogue's facets render from the index rather than a fixed list, so a
  *  facet exists exactly when some listing has a value for it. */
 
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Facet } from "./Facets";
 import { LANGUAGE_LABELS } from "../lib/labels";
 import { EMPTY_FILTERS } from "../lib/types";
 import { makeSkill } from "../test/fixtures";
+import { DEFAULT_LOCALE, setLocale, strings } from "../i18n/strings";
 
 const skills = [
   makeSkill({ id: "a/1", language: "en" }),
@@ -45,5 +46,32 @@ describe("the language facet", () => {
         skills={[makeSkill({ language: "pt-BR" })]} />,
     );
     expect(screen.getByRole("group", { name: /language/i })).toHaveTextContent("pt-BR");
+  });
+});
+
+// #252: the exchange has a listing in Latin American Spanish, and `es-419` is a
+// tag few people read. It gets a name; any other unnamed tag still shows as the tag.
+describe("Latin American Spanish", () => {
+  afterEach(async () => { await setLocale(DEFAULT_LOCALE); });
+
+  const facet = () => render(
+    <Facet legend="Language" field="language" filterKey="language"
+      labels={strings().vocabulary.language} filters={EMPTY_FILTERS} onChange={vi.fn()}
+      skills={[makeSkill({ language: "es-419" })]} />,
+  );
+
+  it("is named in English", () => {
+    facet();
+    const group = screen.getByRole("group", { name: /language/i });
+    expect(group).toHaveTextContent("Spanish (Latin America)");
+    expect(group).not.toHaveTextContent("es-419");
+  });
+
+  it("is named in Spanish", async () => {
+    await setLocale("es");
+    facet();
+    const group = screen.getByRole("group", { name: /language/i });
+    expect(group).toHaveTextContent("Español (Latam)");
+    expect(group).not.toHaveTextContent("es-419");
   });
 });

@@ -82,7 +82,9 @@ export const en = {
       supranational: "Supranational",
     },
 
-    /** The two languages the exchange itself ships in, and nothing more.
+    /** The two languages the exchange itself ships in, plus Latin American
+     *  Spanish, which a listing already declares and whose tag (`es-419`)
+     *  few readers recognise (#252).
      *
      *  Deliberately not a language-name table. A full one is hundreds of
      *  entries in each locale the site speaks, it would go stale, and a tag the
@@ -92,6 +94,7 @@ export const en = {
     language: {
       en: "English",
       es: "Spanish",
+      "es-419": "Spanish (Latin America)",
     },
 
     sensitivity: {

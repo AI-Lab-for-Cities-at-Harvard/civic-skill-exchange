@@ -75,6 +75,13 @@ describe("the detail page says what language the listing is in", () => {
     expect(facts).toHaveTextContent("Spanish");
   });
 
+  it("names Latin American Spanish rather than showing es-419 (#252)", async () => {
+    served(detail({ language: "es-419" }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    expect(await screen.findByRole("region", { name: /at a glance/i }))
+      .toHaveTextContent("Spanish (Latin America)");
+  });
+
   it("shows an unmapped tag as the tag itself rather than nothing", async () => {
     served(detail({ language: "pt-BR" }));
     render(<SkillDetail namespace="ns" name="example-skill" />);
