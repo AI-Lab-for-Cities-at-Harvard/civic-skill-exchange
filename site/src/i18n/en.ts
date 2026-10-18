@@ -1127,9 +1127,10 @@ export const en = {
       lede:
         "The [submission page](submit) does most of this for you: drop in a " +
         "folder or point it at a repository, and it reads what is already " +
-        "there and asks only for what it could not find. You will need a " +
-        "**GitHub account** \u2014 it is free, and it is what records the " +
-        "skill as yours.",
+        "there and asks only for what it could not find. A plugin \u2014 several " +
+        "skills with the MCP servers they use \u2014 goes in the same way, and a " +
+        "maintainer reviews every one. You will need a **GitHub account** " +
+        "\u2014 it is free, and it is what records the skill as yours.",
       byHand: "What it produces, and what you would build by hand:",
       steps: {
         namespaceTitle: "Put it in your own namespace",

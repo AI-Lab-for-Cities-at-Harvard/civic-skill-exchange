@@ -994,7 +994,9 @@ export const strings: Strings = {
       lede:
         "La [página de envío](submit) hace casi todo esto por usted: suelte " +
         "una carpeta o indíquele un repositorio, y leerá lo que ya está ahí y " +
-        "le pedirá solo lo que no pudo encontrar. Necesitará una **cuenta de " +
+        "le pedirá solo lo que no pudo encontrar. Un plugin (varias habilidades " +
+        "con los servidores MCP que usan) se envía igual, y un mantenedor revisa " +
+        "cada uno. Necesitará una **cuenta de " +
         "GitHub**: es gratuita y es lo que deja constancia de que la habilidad " +
         "es suya.",
       byHand: "Lo que produce, y lo que usted armaría a mano:",
