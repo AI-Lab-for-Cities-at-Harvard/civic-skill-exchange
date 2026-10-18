@@ -895,3 +895,39 @@ describe("Submit — the language it asks for", () => {
       .toContain('civic.languages-tested: "en, es"');
   });
 });
+
+describe("Submit — a username GitHub would not issue", () => {
+  afterEach(() => { vi.unstubAllGlobals(); });
+
+  it("refuses it with the plugin form's message, and holds the hand-off", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ status: 200, ok: true }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "Maria Lopez");
+    await user.type(screen.getByLabelText(/^Skill name/i), "permit-status-explainer");
+    expect(screen.getByTestId("bad-login")).toHaveTextContent("Maria Lopez");
+    expect(screen.getByTestId("bad-login")).toHaveTextContent(/single hyphens/i);
+    expect(screen.getByTestId("handoff")).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByTestId("handoff")).not.toHaveAttribute("href");
+  });
+
+  it("refuses a name over 39 characters", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ status: 200, ok: true }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "x".repeat(40));
+    expect(screen.getByTestId("bad-login")).toBeInTheDocument();
+  });
+
+  it("lets the hand-off through once the name is valid", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ status: 200, ok: true }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "Maria Lopez");
+    await user.type(screen.getByLabelText(/^Skill name/i), "permit-status-explainer");
+    await user.clear(screen.getByLabelText(/GitHub username/i));
+    await user.type(screen.getByLabelText(/GitHub username/i), "maria-lopez");
+    expect(screen.queryByTestId("bad-login")).not.toBeInTheDocument();
+    expect(screen.getByTestId("handoff")).toHaveAttribute("aria-disabled", "false");
+  });
+});
