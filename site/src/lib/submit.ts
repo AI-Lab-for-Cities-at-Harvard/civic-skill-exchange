@@ -174,12 +174,18 @@ export function slugify(input: string): string {
  *  directory is the one canonical spelling, and the validator rejects an
  *  uppercase character in it (#155), so the page never hands back a folder CI
  *  would refuse. */
-export function namespaceOf(draft: Draft): string {
+/** Which tree a listing lives in (ADR 0005). */
+export type ListingTree = "skills" | "plugins";
+
+/** What a path needs from a draft: a skill's and a plugin's both carry these. */
+type Named = Pick<Draft, "author" | "name">;
+
+export function namespaceOf(draft: Pick<Draft, "author">): string {
   return trim(draft.author).toLowerCase();
 }
 
-export function skillPath(draft: Draft): string {
-  return `skills/${namespaceOf(draft)}/${trim(draft.name)}`;
+export function skillPath(draft: Named, tree: ListingTree = "skills"): string {
+  return `${tree}/${namespaceOf(draft)}/${trim(draft.name)}`;
 }
 
 /** The directory the skill goes *into*, which is where an upload must open.
@@ -191,8 +197,10 @@ export function skillPath(draft: Draft): string {
  *  way. The parent is the correct target: drop `{name}` into `skills/{ns}` and
  *  the result is `skills/{ns}/{name}`.
  */
-export function namespacePath(draft: Draft): string {
-  return `skills/${namespaceOf(draft)}`;
+export function namespacePath(
+  draft: Pick<Draft, "author">, tree: ListingTree = "skills",
+): string {
+  return `${tree}/${namespaceOf(draft)}`;
 }
 
 /** GitHub's new-file editor, prefilled.
@@ -310,9 +318,11 @@ export function parseForkRef(input: string): string | null {
  *  which is the whole reason this path exists: `value=` prefills one new file and
  *  has no equivalent for a directory.
  */
-export function forkUploadUrl(fork: string, draft: Draft): string | null {
+export function forkUploadUrl(
+  fork: string, draft: Pick<Draft, "author">, tree: ListingTree = "skills",
+): string | null {
   const ref = parseForkRef(fork);
-  return ref ? `https://github.com/${ref}/upload/main/${namespacePath(draft)}` : null;
+  return ref ? `https://github.com/${ref}/upload/main/${namespacePath(draft, tree)}` : null;
 }
 
 /** The upload page in the registry itself, for somebody who can write to it.
@@ -325,8 +335,10 @@ export function forkUploadUrl(fork: string, draft: Draft): string | null {
  *  GitHub's upload page offers "create a new branch and start a pull request" at
  *  commit time, which is the branch this path needs and never main.
  */
-export function registryUploadUrl(repo: string, draft: Draft): string {
-  return `https://github.com/${repo}/upload/main/${namespacePath(draft)}`;
+export function registryUploadUrl(
+  repo: string, draft: Pick<Draft, "author">, tree: ListingTree = "skills",
+): string {
+  return `https://github.com/${repo}/upload/main/${namespacePath(draft, tree)}`;
 }
 
 /** The pull request, opened from the fork back to the registry.
