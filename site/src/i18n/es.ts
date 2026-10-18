@@ -232,7 +232,7 @@ export const strings: Strings = {
       "La habilidad se publicará como habilidad de Comunidad hasta que sea revisada.",
 
     intake: {
-      heading: "Enviar una habilidad o plugin nuevo",
+      heading: "Subir una habilidad o plugin nuevo",
       lede:
         "¿Ya tiene una? Suéltela aquí y el resto de esta página se completa " +
         "solo. Si su habilidad vive en su propio repositorio, **Code → " +
