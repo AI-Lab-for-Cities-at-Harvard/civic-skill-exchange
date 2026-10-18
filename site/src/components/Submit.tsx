@@ -11,6 +11,7 @@ import { buildSkillZip } from "../lib/folder";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
 import { checkGitHubUser, type UserCheck } from "../lib/github";
+import { isGitHubLogin } from "../lib/login";
 import { importFromRepo, failureMessages, type ImportResult } from "../lib/import";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
@@ -121,7 +122,7 @@ export function Submit(
     const login = draft.author.trim();
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      if (!login || RESERVED_NAMESPACES.has(login.toLowerCase())) {
+      if (!login || !isGitHubLogin(login) || RESERVED_NAMESPACES.has(login.toLowerCase())) {
         setUserCheck("unknown");
         return;
       }
@@ -171,7 +172,8 @@ export function Submit(
     () => newFileUrl(repo, draft, fileText), [repo, draft, fileText],
   );
   const urlFits = useMemo(() => fitsInUrl(url), [url]);
-  const ready = draft.author.trim() !== "" && draft.name.trim() !== "";
+  const badLogin = draft.author.trim() !== "" && !isGitHubLogin(draft.author.trim());
+  const ready = draft.author.trim() !== "" && !badLogin && draft.name.trim() !== "";
 
   // The one thing that blocks. A path escape, a symlink, a blocked file type or
   // a size cap cannot be fixed by editing a field, and handing off would open a
@@ -498,6 +500,10 @@ export function Submit(
             {reserved ? (
               <p className="field__hint" data-testid="reserved-namespace">
                 {rich(f.reservedNamespace(draft.author.trim()))}
+              </p>
+            ) : badLogin ? (
+              <p className="field__finding" data-testid="bad-login">
+                {rich(f.badLogin(draft.author.trim()))}
               </p>
             ) : userCheck === "missing" && draft.author.trim() !== "" && (
               <p className="field__finding" data-testid="no-such-user">

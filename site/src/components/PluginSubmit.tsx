@@ -27,15 +27,11 @@ import {
 } from "../lib/plugin";
 import { slugify, skillPath, type Draft } from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
+import { isGitHubLogin } from "../lib/login";
 import { Choice, Field, type FieldNames } from "./Field";
 import { UploadSteps } from "./UploadSteps";
 
 const CATEGORIES = Object.keys(en.vocabulary.category);
-
-/** GitHub's own rule for a login: letters, digits and single hyphens, not at
- *  either end, at most 39 characters. A name with a space in it would become a
- *  folder and a plugin name CI refuses. */
-const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 
 /** Which draft key answers each per-skill question. */
 const SKILL_DRAFT_KEY: Record<string, keyof Draft> = {
@@ -161,7 +157,7 @@ export function PluginSubmit(
   const blocked = check.structural.length > 0;
   const folderName = draft.name.trim() || directoryName || "plugin";
   const ns = draft.author.trim().toLowerCase();
-  const badLogin = ns !== "" && !LOGIN.test(ns);
+  const badLogin = ns !== "" && !isGitHubLogin(ns);
   const ready = ns !== "" && !badLogin && draft.name.trim() !== "";
 
   // What plugin.json already answered, named so a submitter who did not write
@@ -321,7 +317,7 @@ export function PluginSubmit(
             </p>
           ) : badLogin ? (
             <p className="field__finding" data-testid="bad-login">
-              {rich(p.badLogin(draft.author.trim()))}
+              {rich(f.badLogin(draft.author.trim()))}
             </p>
           ) : userCheck === "missing" && draft.author.trim() !== "" && (
             <p className="field__finding" data-testid="no-such-user">
