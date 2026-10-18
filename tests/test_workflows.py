@@ -193,6 +193,14 @@ def test_the_changed_paths_step_lists_deletions_and_both_sides_of_a_move() -> No
             )
 
 
+def test_the_changed_paths_are_written_unquoted() -> None:
+    """git quotes a path with a non-ASCII byte in it, and a quoted line matches
+    no path the checks compare against — --check-in-skills reads this list to
+    decide which generated files to compare (#231)."""
+    step = VALIDATE_YML.split("git diff --name-only", 1)[0].rsplit("run: |", 1)[1]
+    assert "git config core.quotePath false" in step
+
+
 def test_maintainer_status_is_resolved_in_the_workflow() -> None:
     """Who maintains the exchange is a fact about the organization, not about a
     skill. Hardcoding it in the validator would put an access-control list in a

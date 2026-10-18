@@ -776,6 +776,19 @@ def test_main_check_in_skills_reads_the_changed_paths(make_skill, monkeypatch, c
     assert "skills/cityofx/alpha/.claude-plugin/plugin.json" in capsys.readouterr().err
 
 
+def test_main_check_in_skills_refuses_a_quoted_changed_path(make_skill, monkeypatch, capsys, tmp_path):
+    """A git-quoted line names no path the check can match, so it would let a
+    file through unseen. Fail closed instead."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    changed = tmp_path / "changed.txt"
+    changed.write_text('"skills/cityofx/\\303\\251/.claude-plugin/plugin.json"\n', encoding="utf-8")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--check-in-skills",
+                                     "--changed", str(changed)])
+    assert build_marketplace.main() != 0
+    assert "quoted" in capsys.readouterr().err
+
+
 # --------------------------------------------------------------------------- #
 # Plugins (ADR 0005). The author writes the Agent Plugins files, which Codex
 # reads as they are; the generator derives what Claude Code needs.
