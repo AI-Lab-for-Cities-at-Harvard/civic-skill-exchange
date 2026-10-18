@@ -53,6 +53,14 @@ jobs:
           # line matches nothing the checks below compare against (#231).
           git config core.quotePath false
           git diff --name-only --no-renames "origin/$BASE_REF...HEAD" > changed.txt
+          # Quoting survives for a control character, a quote or a backslash,
+          # and a quoted line matches none of the gates below, so it would skip
+          # every listing check. No listing path needs any of them.
+          if grep -q '^"' changed.txt; then
+            echo "::error::A changed path holds a character no listing path may:"
+            grep '^"' changed.txt
+            exit 1
+          fi
           # plugins/ is the second kind of listing (ADR 0005) and gets every
           # step skills/ does; the output keeps its name so the conditions
           # below read the same.
