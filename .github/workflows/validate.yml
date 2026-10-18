@@ -160,10 +160,12 @@ jobs:
       # allowed only because the registry writes it (#186); a hand-written copy
       # could carry inline hooks or MCP servers, and with the root check a
       # warning (#188) nothing else would stop it reaching main (#193). Absent
-      # is fine: the post-merge job writes it.
+      # is fine: the post-merge job writes it. Only a file this pull request
+      # wrote is compared (#231): one it did not touch is the registry's own,
+      # and an honest edit to a listing leaves it stale until the job runs.
       - name: Generated files inside skills are the registry's
         if: steps.changes.outputs.skills == 'true'
-        run: python scripts/build_marketplace.py --check-in-skills
+        run: python scripts/build_marketplace.py --check-in-skills --changed changed.txt
 
       - name: Marketplace manifest is current
         if: steps.changes.outputs.skills == 'true'
