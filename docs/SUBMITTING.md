@@ -60,15 +60,22 @@ same `SKILL.md` format Claude, ChatGPT, Codex, Gemini CLI, Copilot, Cursor and
 others read. So a skill from this registry works in all of them. **What differs
 is how you get it there.**
 
-**Codex has its own marketplace, and this registry publishes one:**
+**Codex has its own marketplace, and this registry publishes one.** For now,
+use it for **plugins**:
 
 ```
 codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
-codex plugin add {namespace}-{skill-name}@civic-skill-exchange
+codex plugin add {namespace}-{plugin-name}@civic-skill-exchange
 ```
 
 The plugin names match the Claude ones on purpose, so the command reads the same
 in both tools.
+
+A **single skill** installs from Codex's marketplace but does not load yet:
+Codex looks for skills one folder deeper than a single-skill listing keeps them
+([#207](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/207)).
+Until every listing takes the plugin layout, use the download below — the
+**Codex** line says where to put it.
 
 **For everything else, the download link on the skill's page.**
 It is a `.zip` of the skill folder rooted at a single directory, which is exactly

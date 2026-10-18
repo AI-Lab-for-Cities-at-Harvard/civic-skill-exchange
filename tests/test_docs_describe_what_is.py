@@ -275,3 +275,32 @@ def test_review_md_says_what_earns_a_language_entry() -> None:
     assert "jurisdiction" in section  # says what is deliberately not checked
     # Still nine checklist items: the language check is a section, not item 10.
     assert "### 10." not in review
+
+
+# --------------------------------------------------------------------------- #
+# #240 (ruling 4 on #207): `codex plugin add` installs a single-skill listing
+# and loads nothing, so until every listing is a plugin (M9) the docs offer the
+# Codex marketplace for plugins only, and the download for a single skill.
+
+CODEX_DOCS = ("README.md", "docs/SUBMITTING.md")
+
+
+def test_no_doc_offers_codex_plugin_add_for_a_single_skill() -> None:
+    for doc in CODEX_DOCS:
+        for line in _text(doc).splitlines():
+            if "codex plugin add" in line:
+                assert "{skill-name}" not in line, (
+                    f"{doc} offers `codex plugin add` for a single skill, which "
+                    f"installs and loads nothing (#207): {line.strip()}")
+
+
+def test_the_codex_marketplace_is_still_offered_for_plugins() -> None:
+    for doc in CODEX_DOCS:
+        assert "codex plugin add {namespace}-{plugin-name}@civic-skill-exchange" in _text(doc), doc
+
+
+def test_a_codex_user_with_a_single_skill_is_pointed_at_the_download() -> None:
+    for doc in CODEX_DOCS:
+        text = _text(doc)
+        assert ".agents/skills/" in text, doc
+        assert "#207" in text, f"{doc} does not say why single skills are not in Codex's marketplace yet"

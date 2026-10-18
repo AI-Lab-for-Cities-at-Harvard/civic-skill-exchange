@@ -74,15 +74,22 @@ to install a skill.
 Fuller instructions for both Claude and ChatGPT, and how to submit one, are in
 [docs/SUBMITTING.md](docs/SUBMITTING.md).
 
-**In Codex**, which has its own marketplace:
+**In Codex**, which has its own marketplace — for **plugins**, for now:
 
 ```
 codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
-codex plugin add {namespace}-{skill-name}@civic-skill-exchange
+codex plugin add {namespace}-{plugin-name}@civic-skill-exchange
 ```
 
 The plugin names are the same as Claude's, on purpose, so the command reads the
 same in both tools.
+
+A **single skill** installs from Codex's marketplace but does not load yet: Codex
+looks for skills one folder deeper than a single-skill listing keeps them
+([#207](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/207)).
+Until every listing takes the plugin layout, use the download link on the
+skill's page and unzip it into `.agents/skills/` in your project, or
+`~/.agents/skills/`.
 
 **In other agent tools.** Skills here follow the open
 [Agent Skills](https://agentskills.io) format, so they work anywhere that has
