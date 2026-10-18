@@ -283,10 +283,26 @@ the plugin form by itself. The page:
   files.
 
 A plugin exported from Claude Code has `.claude-plugin/plugin.json` and
-`.mcp.json` but no `plugin.json` or `mcp.json` at its top. The page tells you
-so: add the two files described below, and drop the folder again. It leaves out
-`.claude-plugin/`, `.codex-plugin/` and `.mcp.json` from a plugin it reads,
-because the registry writes those.
+`.mcp.json` but no `plugin.json` or `mcp.json` at its top. The page converts it
+for you, says so above the form, and shows the two new files with the lines it
+added:
+
+- `plugin.json` is written from `.claude-plugin/plugin.json`, with `$schema`
+  first and the fields Agent Plugins defines (`name`, `version`,
+  `description`, `author`, `homepage`, `repository`, `license`, `keywords`).
+  Claude Code settings it has no place for — `hooks`, `commands`, `agents` and
+  the like — are left out, each named with the reason.
+- `mcp.json` is written from `.mcp.json`, with `$schema`, an `http` server
+  becoming `streamable-http` and a `stdio` server left as it is.
+- What it cannot carry across is listed, not written through: a server whose
+  address or header is a `${VAR}` filled in from your computer, a `stdio`
+  server that runs through `${CLAUDE_PLUGIN_ROOT}`, an `sse` server (which
+  Codex does not load), and files outside `skills/` other than `README.md`.
+  A server left out is one the listed plugin will not connect to, so add its
+  `https` address to `mcp.json` in the folder the page hands back if you need it.
+
+It leaves out `.claude-plugin/`, `.codex-plugin/` and `.mcp.json` from every
+plugin it reads, because the registry writes those.
 
 By hand, the folder looks like this:
 

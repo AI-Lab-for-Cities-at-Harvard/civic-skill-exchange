@@ -68,16 +68,21 @@ export function Submit(
   >(null);
   const [notes, setNotes] = useState<string[]>([]);
   // A folder with plugin.json at its root switches the page by itself (#213,
-  // ruling 1). Keyed by arrival, so a second plugin starts a fresh form.
-  const [plugin, setPlugin] = useState<
-    { entries: Entry[]; directoryName: string; left: string[]; key: number } | null
-  >(null);
-  const [clientPackage, setClientPackage] = useState(false);
-  const enterPlugin = (entries: Entry[], directoryName: string, left: string[]) => {
+  // ruling 1), and so does a Claude Code export, which the plugin form
+  // rearranges first (#246). Keyed by arrival, so a second plugin starts a
+  // fresh form.
+  const [plugin, setPlugin] = useState<{
+    entries: Entry[]; directoryName: string; left: string[]; claudeCode: boolean; key: number;
+  } | null>(null);
+  const enterPlugin = (
+    entries: Entry[], directoryName: string, left: string[], claudeCode = false,
+  ) => {
     setArchive(null);
     setSource(null);
     setNotes([]);
-    setPlugin((prev) => ({ entries, directoryName, left, key: (prev?.key ?? 0) + 1 }));
+    setPlugin((prev) => ({
+      entries, directoryName, left, claudeCode, key: (prev?.key ?? 0) + 1,
+    }));
   };
   const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
   const [repoUrl, setRepoUrl] = useState("");
@@ -205,7 +210,6 @@ export function Submit(
     setImporting(true);
     setImported(null);
     setPlugin(null);
-    setClientPackage(false);
     const out = await importFromRepo(repoUrl);
     setImporting(false);
     if ("kind" in out) {
@@ -214,13 +218,8 @@ export function Submit(
       return;
     }
     setImported(out);
-    if (out.plugin) {
-      enterPlugin(out.entries, out.directoryName, out.skipped);
-      return;
-    }
-    if (out.clientPackage) {
-      setArchive(null);
-      setClientPackage(true);
+    if (out.plugin || out.clientPackage) {
+      enterPlugin(out.entries, out.directoryName, out.skipped, out.clientPackage);
       return;
     }
     setArchive({
@@ -254,16 +253,10 @@ export function Submit(
     if (!file) return;
     setImported(null);
     setPlugin(null);
-    setClientPackage(false);
     try {
       const read = readSkillZip(new Uint8Array(await file.arrayBuffer()));
-      if (read.plugin) {
-        enterPlugin(read.entries, read.directoryName ?? "", read.problems);
-        return;
-      }
-      if (read.clientPackage) {
-        setArchive(null);
-        setClientPackage(true);
+      if (read.plugin || read.clientPackage) {
+        enterPlugin(read.entries, read.directoryName ?? "", read.problems, read.clientPackage);
         return;
       }
       setArchive({
@@ -422,7 +415,6 @@ export function Submit(
               onChange={(e) => {
                 setPasted(e.target.value);
                 setPlugin(null);
-                setClientPackage(false);
                 load(e.target.value);
               }}
             />
@@ -461,20 +453,13 @@ export function Submit(
           {blocked && (
             <p className="submit__blocked" data-testid="blocked">{t.intake.blocked}</p>
           )}
-
-          {clientPackage && (
-            <p className="submit__blocked" data-testid="client-package">
-              {rich(t.plugin.clientPackage, {
-                docs: `https://github.com/${repo}/blob/main/docs/SUBMITTING.md#sharing-a-plugin`,
-              })}
-            </p>
-          )}
         </section>
 
         {plugin ? (
           <Suspense fallback={null}>
             <PluginSubmit key={plugin.key} repo={repo} entries={plugin.entries}
-              directoryName={plugin.directoryName} left={plugin.left} />
+              directoryName={plugin.directoryName} left={plugin.left}
+              claudeCode={plugin.claudeCode} />
           </Suspense>
         ) : (
         <>

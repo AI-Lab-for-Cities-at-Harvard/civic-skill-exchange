@@ -246,6 +246,15 @@ describe("convertClaudeCode — the server file", () => {
     expect(servers(out.mcp).geo).toEqual({ type: "streamable-http", url: "https://geo.example/mcp" });
   });
 
+  it("reads a .mcp.json that lists its servers at the top, without mcpServers", () => {
+    const out = convertClaudeCode([
+      file(".claude-plugin/plugin.json", EXPORT_MANIFEST),
+      file(".mcp.json", JSON.stringify({ geo: { type: "http", url: "https://geo.example/mcp" } })),
+      file("skills/housing-brief/SKILL.md", SKILL),
+    ]);
+    expect(servers(out.mcp).geo).toEqual({ type: "streamable-http", url: "https://geo.example/mcp" });
+  });
+
   it("writes no mcp.json for a plugin that connects to nothing", () => {
     const out = withManifest({ name: "h" });
     expect(out.mcp).toBeNull();

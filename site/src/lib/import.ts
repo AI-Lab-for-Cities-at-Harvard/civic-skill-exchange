@@ -79,7 +79,8 @@ export interface ImportResult {
   skillMd: string;
   /** A root plugin.json (#213, ruling 1). */
   plugin: boolean;
-  /** `.claude-plugin/plugin.json` and no root plugin.json. */
+  /** `.claude-plugin/plugin.json` and no root plugin.json: a Claude Code
+   *  export, fetched whole for the plugin form to rearrange (#246). */
   clientPackage: boolean;
   /** What the folder is called: the sub-folder's last segment, or the
    *  repository's name. */
