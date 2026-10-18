@@ -143,7 +143,7 @@ describe("the page is titled for plugins as well as skills (#247)", () => {
     await setLocale("es");
     view();
     expect(heading("Comparta una habilidad o plugin")).toBeInTheDocument();
-    expect(heading("Enviar una habilidad o plugin nuevo")).toBeInTheDocument();
+    expect(heading("Subir una habilidad o plugin nuevo")).toBeInTheDocument();
   });
 
   it("labels the navigation item 'Subir' in Spanish and leaves English alone", async () => {
