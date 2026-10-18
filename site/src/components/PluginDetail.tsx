@@ -89,7 +89,7 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
             /* The plugin's own, declared once in plugin.json (ADR 0005). */
             <section aria-labelledby="plugin-fit-heading" className="detail__section">
               <h2 className="h2" id="plugin-fit-heading">{d.fit.heading}</h2>
-              <p>{d.fit.caveat}</p>
+              <p>{p.fit.caveat}</p>
               <dl className="fit" lang={language}>
                 {detail.use_when && (
                   <div className="fit__item">
