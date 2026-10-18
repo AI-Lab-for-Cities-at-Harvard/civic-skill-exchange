@@ -380,6 +380,20 @@ describe("importFromRepo with a plugin", () => {
     expect(out.skillMd).toBe(SKILL);
   });
 
+  it("fetches a Claude Code export whole, client files and all, for the form to rearrange", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: tree([".claude-plugin/plugin.json", ".mcp.json", "skills/brief/SKILL.md"]),
+      files: { ".claude-plugin/plugin.json": MANIFEST, ".mcp.json": "{}",
+        "skills/brief/SKILL.md": SKILL },
+    }));
+    const out = await importFromRepo("a/b");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.clientPackage).toBe(true);
+    const manifest = out.entries.find((e) => e.path === ".claude-plugin/plugin.json");
+    expect(manifest?.kind === "file" && new TextDecoder().decode(manifest.bytes)).toBe(MANIFEST);
+    expect(out.entries.map((e) => e.path)).toContain(".mcp.json");
+  });
+
   it("still fails a folder that is neither a skill nor a plugin", async () => {
     vi.stubGlobal("fetch", github({ tree: tree(["README.md", "notes/x.md"]) }));
     const out = await importFromRepo("a/b");

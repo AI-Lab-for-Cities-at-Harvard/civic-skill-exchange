@@ -18,10 +18,11 @@ import { en } from "../i18n/en";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { checkGitHubUser, type UserCheck } from "../lib/github";
+import { convertClaudeCode } from "../lib/convert";
 import { buildFolderZip } from "../lib/folder";
 import { addedFrontmatterLines } from "../lib/patch";
 import {
-  checkPlugin, gapsOf, patchPluginJson, patchPluginSkill, pluginDraftFromManifest,
+  checkPlugin, gapsOf, newFileLines, patchPluginJson, patchPluginSkill, pluginDraftFromManifest,
   pluginFieldId, readPluginSource, skillDraftFromFile, skillMdPath,
   type PluginDraft,
 } from "../lib/plugin";
@@ -83,10 +84,13 @@ function Added({ file, lines, summary }: { file: string; lines: string[]; summar
 }
 
 export function PluginSubmit(
-  { repo, entries, directoryName, left }: {
+  { repo, entries, directoryName, left, claudeCode = false }: {
     repo: string; entries: Entry[]; directoryName: string;
     /** Named as left out by the reader — client manifests, oversized files. */
     left: string[];
+    /** A Claude Code export, to be rearranged into plugin.json and mcp.json
+     *  before anything else reads it (#246). */
+    claudeCode?: boolean;
   },
 ) {
   const s = useStrings();
@@ -94,7 +98,11 @@ export function PluginSubmit(
   const f = t.form;
   const p = t.plugin;
 
-  const source = useMemo(() => readPluginSource(entries, directoryName), [entries, directoryName]);
+  const conversion = useMemo(() => (claudeCode ? convertClaudeCode(entries) : null),
+    [claudeCode, entries]);
+  const source = useMemo(() => readPluginSource(conversion?.entries ?? entries, directoryName),
+    [conversion, entries, directoryName]);
+  const leftOut = conversion ? [...left, ...conversion.leftOut] : left;
   const [read] = useState(() => pluginDraftFromManifest(source.manifest, directoryName, ""));
   const [draft, setDraft] = useState<PluginDraft>(read.draft);
   const [typedName, setTypedName] = useState(read.draft.name);
@@ -146,6 +154,9 @@ export function PluginSubmit(
     namespace: draft.author, author: draft.author, directoryName: draft.name,
   }), [source, manifest, skills, draft.author, draft.name]);
   const servers = useMemo(() => summarizeMcpServers(source.mcp ?? ""), [source]);
+  // A converted file is new, so all of it is added, not only what the form changed.
+  const manifestAdded = conversion ? newFileLines(manifest.text) : manifest.added;
+  const mcpAdded = conversion?.mcp ? newFileLines(conversion.mcp) : [];
 
   const names = f.fieldNames;
   const manifestFindings = check.manifest.map((x) => plain(x, names));
@@ -271,6 +282,25 @@ export function PluginSubmit(
     <div data-testid="plugin-mode">
       <section className="prose__block" data-testid="plugin-summary">
         <h2 className="h2">{p.heading}</h2>
+        {conversion && (
+          <>
+            <p className="submit__note" data-testid="converted">
+              {rich(p.converted, {
+                docs: `https://github.com/${repo}/blob/main/docs/SUBMITTING.md#sharing-a-plugin`,
+              })}
+            </p>
+            {conversion.findings.length > 0 && (
+              <div data-testid="conversion-findings">
+                <p className="submit__note">{p.convertedFindings}</p>
+                <ul className="submit__findings">
+                  {conversion.findings.map((x) => (
+                    <li key={`${x.where}${x.message}`}><code>{x.where}</code> {rich(x.message)}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
+        )}
         <p>{rich(p.summary(folderName, source.skills.length, servers.length))}</p>
         <h3 className="h3">{p.skillsLabel}</h3>
         <ul>
@@ -290,9 +320,9 @@ export function PluginSubmit(
         )}
         <p className="submit__warn">{p.reviewed}</p>
 
-        {left.length > 0 && (
+        {leftOut.length > 0 && (
           <ul className="submit__findings" data-testid="left-out">
-            {left.map((m) => <li key={m}>{m}</li>)}
+            {leftOut.map((m) => <li key={m}>{m}</li>)}
           </ul>
         )}
         <FindingList findings={check.structural} testid="structural" />
@@ -435,8 +465,10 @@ export function PluginSubmit(
       <section className="prose__block">
         <h2 className="h2">{t.send.heading}</h2>
         <p className="submit__note">{t.send.addedNote}</p>
-        <Added file={PLUGIN_MANIFEST} lines={manifest.added}
-          summary={p.addedSummary(PLUGIN_MANIFEST, manifest.added.length)} />
+        <Added file={PLUGIN_MANIFEST} lines={manifestAdded}
+          summary={p.addedSummary(PLUGIN_MANIFEST, manifestAdded.length)} />
+        <Added file={PLUGIN_MCP_CONFIG} lines={mcpAdded}
+          summary={p.addedSummary(PLUGIN_MCP_CONFIG, mcpAdded.length)} />
         {source.skills.map((sk) => {
           const path = skillMdPath(sk.name);
           const lines = addedFrontmatterLines(sk.skillMd, skills[sk.name]!.skillMd);

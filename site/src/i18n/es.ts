@@ -628,13 +628,61 @@ export const strings: Strings = {
       addedSummary: (file: string, lines: number) =>
         `Lo que añadimos a ${file}: ${lines} línea${lines === 1 ? "" : "s"}`,
 
-      clientPackage:
-        "Parece un plugin de Claude Code: tiene `.claude-plugin/plugin.json` " +
-        "pero no hay un `plugin.json` en la raíz. El intercambio publica plugins " +
-        "con la estructura de Agent Plugins, que leen tanto Claude Code como " +
-        "Codex: un `plugin.json`, y un `mcp.json` si se conecta a algo, en la " +
-        "raíz de la carpeta. Añádalos y vuelva a soltar la carpeta. [La guía](docs) " +
-        "muestra qué va en cada uno.",
+      converted:
+        "Este es un plugin exportado desde Claude Code, así que lo reorganizamos " +
+        "con la estructura que publica el intercambio, que leen tanto Claude Code " +
+        "como Codex: `plugin.json` a partir de `.claude-plugin/plugin.json`, y " +
+        "`mcp.json` a partir de `.mcp.json`. Los archivos nuevos están más abajo, " +
+        "en “Lo que añadimos”, y sus habilidades no cambian. [La guía](docs) " +
+        "explica la estructura.",
+      convertedFindings:
+        "Lo que se omitió al reorganizarlo. Nada de esto impide la carga, pero " +
+        "léalo: un servidor omitido es uno al que el plugin no se conectará.",
+      conversion: {
+        field: (field: string) =>
+          `\`${field}\` es un ajuste de Claude Code que Agent Plugins no contempla. ` +
+          "El intercambio publica lo que todos los clientes cargan de la misma " +
+          "manera —habilidades y servidores MCP—, así que se omitió de `plugin.json`.",
+        skillsField:
+          "El intercambio solo lee habilidades de `skills/{habilidad}/SKILL.md`, " +
+          "así que se omitió de `plugin.json` otra carpeta de habilidades.",
+        mcpServersField:
+          "Los servidores se leen de `.mcp.json` o de este mismo archivo; este " +
+          "ajuste apunta a otro lugar, así que sus servidores no se trasladaron.",
+        fromEnvironment: (field: string, value: string) =>
+          `\`${field}\` es \`${value}\`, que se completa con la configuración de ` +
+          "su equipo. El intercambio no puede verla, así que se omitió.",
+        notJson: (file: string, reason: string) =>
+          `${file} no es un JSON válido (${reason}), así que no se leyó nada de él.`,
+        fileOutside: (path: string) =>
+          `\`${path}\` está fuera de \`skills/\`, donde la estructura solo admite ` +
+          "`README.md`. Claude Code actúa sobre él sin consultar al modelo, así " +
+          "que se omitió. Los scripts y los datos van dentro de la habilidad que los usa.",
+        serverUrl: (server: string, url: string) =>
+          `**${server}** se conecta a \`${url}\`, una dirección que se completa con ` +
+          "la configuración de su equipo. Quien revisa tiene que ver adónde se " +
+          "conecta un servidor, así que se omitió de `mcp.json`. Añada allí su " +
+          "dirección `https` para publicarlo.",
+        serverHeader: (server: string, header: string, value: string) =>
+          `**${server}** envía el encabezado \`${header}\` como \`${value}\`, que ` +
+          "se completa con la configuración de su equipo, así que se omitió el " +
+          "encabezado. Nunca escriba una clave ni una contraseña en `mcp.json`: " +
+          "se publica con el plugin.",
+        serverPluginRoot: (server: string, field: string) =>
+          `**${server}** ejecuta un programa mediante \`\${CLAUDE_PLUGIN_ROOT}\` en ` +
+          `su \`${field}\`, una carpeta que solo completa Claude Code, así que se ` +
+          "omitió de `mcp.json`.",
+        serverCommand: (server: string, field: string, value: string) =>
+          `**${server}** tiene \`${value}\` en su \`${field}\`, que se completa con ` +
+          "la configuración de su equipo, así que se omitió de `mcp.json`.",
+        serverEnv: (server: string, key: string, value: string) =>
+          `**${server}** asigna \`${value}\` a \`${key}\`, que se completa con la ` +
+          "configuración de su equipo, así que se omitió ese ajuste. Quien " +
+          "instale el plugin lo configura por su cuenta.",
+        serverField: (server: string, field: string) =>
+          `**${server}** tiene \`${field}\`, que Agent Plugins no define para este ` +
+          "tipo de servidor, así que se omitió de `mcp.json`.",
+      },
     },
 
     problems: {

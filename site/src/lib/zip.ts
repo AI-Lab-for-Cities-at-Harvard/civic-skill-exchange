@@ -26,8 +26,8 @@ export interface SkillArchive {
   /** A root plugin.json: the folder is a plugin, not a skill (#213, ruling 1). */
   plugin: boolean;
   /** A Claude Code package — `.claude-plugin/plugin.json` and no root
-   *  plugin.json. Not a listing the exchange reads yet, and worth telling the
-   *  submitter apart from "no SKILL.md". */
+   *  plugin.json. Its client files are kept, because the plugin form
+   *  rearranges it from them (#246, lib/convert.ts). */
   clientPackage: boolean;
   /** The stripped root directory, when there was one. checkFrontmatter compares
    *  it against `name`, which is a check the form alone cannot make. */

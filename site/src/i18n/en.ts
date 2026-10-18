@@ -708,15 +708,65 @@ export const en = {
       addedSummary: (file: string, lines: number) =>
         `What we added to ${file} — ${lines} line${lines === 1 ? "" : "s"}`,
 
-      /** A Claude Code package: `.claude-plugin/plugin.json` and no root
-       *  plugin.json. `docs` is the guide's plugin section. */
-      clientPackage:
-        "This looks like a Claude Code plugin: it has `.claude-plugin/plugin.json` " +
-        "but no `plugin.json` at the top. The exchange lists plugins in the " +
-        "Agent Plugins layout, which Claude Code and Codex both read — a " +
-        "`plugin.json`, and an `mcp.json` if it connects to anything, at the top " +
-        "of the folder. Add them and drop the folder again. [The guide](docs) " +
-        "shows what goes in each.",
+      /** A Claude Code package — `.claude-plugin/plugin.json` and no root
+       *  plugin.json — which the page rearranged itself (#246). `docs` is the
+       *  guide's plugin section. */
+      converted:
+        "This is a plugin exported from Claude Code, so we rearranged it into " +
+        "the layout the exchange lists, which Claude Code and Codex both read: " +
+        "`plugin.json` from `.claude-plugin/plugin.json`, and `mcp.json` from " +
+        "`.mcp.json`. The new files are under “What we added” below, and " +
+        "your skills are unchanged. [The guide](docs) explains the layout.",
+      /** Heading over what the conversion could not carry across. */
+      convertedFindings:
+        "Left out when we rearranged it. Nothing here stops the upload, but " +
+        "read it: a server left out is one the plugin will not connect to.",
+      /** Why each thing was left out of the converted files. `server` is a
+       *  name in `.mcp.json`; `value` is the text it held. */
+      conversion: {
+        field: (field: string) =>
+          `\`${field}\` is a Claude Code setting that Agent Plugins has no place ` +
+          "for. The exchange lists what every client loads the same way — " +
+          "skills and MCP servers — so it was left out of `plugin.json`.",
+        skillsField:
+          "The exchange reads skills from `skills/{skill}/SKILL.md` only, so a " +
+          "different skills folder was left out of `plugin.json`.",
+        mcpServersField:
+          "Servers are read from `.mcp.json` or from this file itself; this " +
+          "setting points somewhere else, so its servers were not carried across.",
+        fromEnvironment: (field: string, value: string) =>
+          `\`${field}\` is \`${value}\`, which is filled in from the settings ` +
+          "on your computer. The exchange cannot see those, so it was left out.",
+        notJson: (file: string, reason: string) =>
+          `${file} is not valid JSON (${reason}), so nothing was read from it.`,
+        fileOutside: (path: string) =>
+          `\`${path}\` is outside \`skills/\`, where the layout carries nothing ` +
+          "but `README.md`. Claude Code acts on it without asking the model, " +
+          "so it was left out. Scripts and data belong inside the skill that uses them.",
+        serverUrl: (server: string, url: string) =>
+          `**${server}** connects to \`${url}\`, an address filled in from the ` +
+          "settings on your computer. A reviewer has to see where a server " +
+          "connects, so it was left out of `mcp.json`. Add its `https` address " +
+          "there to list it.",
+        serverHeader: (server: string, header: string, value: string) =>
+          `**${server}** sends the header \`${header}\` as \`${value}\`, filled in ` +
+          "from the settings on your computer, so the header was left out. Never " +
+          "write a key or password into `mcp.json`: it is published with the plugin.",
+        serverPluginRoot: (server: string, field: string) =>
+          `**${server}** runs a program through \`\${CLAUDE_PLUGIN_ROOT}\` in its ` +
+          `\`${field}\`, a folder only Claude Code fills in, so it was left out of ` +
+          "`mcp.json`.",
+        serverCommand: (server: string, field: string, value: string) =>
+          `**${server}** has \`${value}\` in its \`${field}\`, filled in from the ` +
+          "settings on your computer, so it was left out of `mcp.json`.",
+        serverEnv: (server: string, key: string, value: string) =>
+          `**${server}** sets \`${key}\` to \`${value}\`, filled in from the ` +
+          "settings on your computer, so that setting was left out. Whoever " +
+          "installs the plugin sets it themselves.",
+        serverField: (server: string, field: string) =>
+          `**${server}** has \`${field}\`, which Agent Plugins does not define ` +
+          "for this kind of server, so it was left out of `mcp.json`.",
+      },
     },
 
     /** What went wrong reading what somebody brought.

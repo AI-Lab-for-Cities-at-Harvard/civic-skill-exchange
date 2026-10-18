@@ -152,6 +152,10 @@ const namespaceOf = (draft: { author: string }) => draft.author.trim().toLowerCa
 const valueLines = (json: string) =>
   json.split("\n").map((l) => l.trim()).filter((l) => /^"/.test(l));
 
+/** A file the page wrote whole — plugin.json or mcp.json converted from a
+ *  Claude Code export (#246) — is added line for line. */
+export const newFileLines = valueLines;
+
 export interface PatchedManifest {
   /** The submitter's plugin.json, amended. Unchanged when it could not be read. */
   text: string;
