@@ -1,5 +1,5 @@
 name: Request Reviewed-tier consideration
-description: Ask for a skill already listed in Community to be reviewed for promotion.
+description: Ask for a skill or plugin already listed in Community to be reviewed for promotion.
 title: "Review request: "
 labels: ["review-request"]
 
@@ -19,10 +19,22 @@ body:
         Working the checklist against your own skill first is the fastest way to
         write something that passes it.
 
-  - type: input
-    id: skill
+  - type: dropdown
+    id: kind
     attributes:
-      label: Skill ID
+      label: What kind of listing
+      description: A plugin is reviewed and attested as one thing, under `plugin:` (ADR 0005).
+      options:
+        - Skill
+        - Plugin
+    validations:
+      required: true
+
+  - type: input
+    id: listing
+    attributes:
+      label: Listing ID
+      description: "{namespace}/{name} — the folder under skills/ for a skill, or under plugins/ for a plugin."
       placeholder: cityofx/permit-status-explainer
     validations:
       required: true
@@ -58,6 +70,7 @@ body:
         7. Civic appropriateness — ...
         8. License applicable — ...
         9. Portable beyond one jurisdiction — ...
+        For a plugin, also the four checks under "Reviewing a plugin" in REVIEW.md.
     validations:
       required: true
 
