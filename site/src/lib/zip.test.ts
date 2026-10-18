@@ -116,3 +116,79 @@ describe("readSkillZip refuses a decompression bomb before inflating it", () => 
     expect(problems.join(" ")).toMatch(/whole skill|total/i);
   });
 });
+
+// --------------------------------------------------------------------------- //
+// #213: a plugin is a folder with plugin.json at its root, and dropping one
+// switches the page into plugin mode by itself (ruling 1).
+
+const MANIFEST = JSON.stringify({ name: "housing-dashboards", description: "x" });
+
+describe("readSkillZip with a plugin", () => {
+  const plugin = (root = "housing-dashboards/") => archive({
+    [`${root}plugin.json`]: MANIFEST,
+    [`${root}mcp.json`]: "{}",
+    [`${root}skills/housing-brief/SKILL.md`]: SKILL,
+    [`${root}skills/housing-brief/references/brief.md`]: "# Brief\n",
+  });
+
+  it("says a root plugin.json is a plugin, and a skill is not", () => {
+    expect(readSkillZip(plugin()).plugin).toBe(true);
+    expect(readSkillZip(PUBLISHED()).plugin).toBe(false);
+  });
+
+  it("does not ask a plugin for a root SKILL.md", () => {
+    const read = readSkillZip(plugin());
+    expect(read.skillMd).toBeNull();
+    expect(read.problems).toEqual([]);
+  });
+
+  it("reads a plugin zipped without a wrapper folder", () => {
+    const read = readSkillZip(plugin(""));
+    expect(read.plugin).toBe(true);
+    expect(read.directoryName).toBeUndefined();
+    expect(read.entries.map((e) => e.path)).toContain("skills/housing-brief/SKILL.md");
+  });
+
+  it("finds the wrapper folder past the __MACOSX folder Finder adds", () => {
+    const zip = archive({
+      "housing-dashboards/plugin.json": MANIFEST,
+      "housing-dashboards/skills/housing-brief/SKILL.md": SKILL,
+      "__MACOSX/housing-dashboards/._plugin.json": "junk",
+      "__MACOSX/housing-dashboards/skills/housing-brief/._SKILL.md": "junk",
+    });
+    const read = readSkillZip(zip);
+    expect(read.directoryName).toBe("housing-dashboards");
+    expect(read.plugin).toBe(true);
+    expect(read.entries.map((e) => e.path).sort()).toEqual([
+      "plugin.json", "skills/housing-brief/SKILL.md",
+    ]);
+  });
+
+  it("leaves out the files a client or the registry writes, and says so", () => {
+    const zip = archive({
+      "plugin.json": MANIFEST,
+      "skills/housing-brief/SKILL.md": SKILL,
+      ".claude-plugin/plugin.json": "{}",
+      ".codex-plugin/plugin.json": "{}",
+      ".mcp.json": "{}",
+    });
+    const read = readSkillZip(zip);
+    expect(read.entries.map((e) => e.path).sort()).toEqual([
+      "plugin.json", "skills/housing-brief/SKILL.md",
+    ]);
+    expect(read.problems).toHaveLength(3);
+    expect(read.problems.join("\n")).toContain(".codex-plugin/plugin.json");
+  });
+
+  it("recognises a Claude Code package, which has no plugin.json at its root", () => {
+    const zip = archive({
+      ".claude-plugin/plugin.json": "{}",
+      ".mcp.json": "{}",
+      "skills/housing-brief/SKILL.md": SKILL,
+    });
+    const read = readSkillZip(zip);
+    expect(read.plugin).toBe(false);
+    expect(read.clientPackage).toBe(true);
+    expect(read.problems).toEqual([]);
+  });
+});
