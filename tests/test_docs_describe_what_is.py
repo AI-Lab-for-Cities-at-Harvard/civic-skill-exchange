@@ -221,6 +221,8 @@ def test_security_md_names_the_check_that_blocks_a_foreign_plugin_manifest() -> 
     assert "--check-in-skills" in validate
     assert "--check-in-skills" in security
     assert "a blocking step in `validate.yml`, with nothing repairing" not in security
+    # #231: it compares only the generated files the pull request wrote.
+    assert "the pull request wrote" in security
 
 # --------------------------------------------------------------------------- #
 # #194: what a submitter reads about civic.deployed-in, and about manifests.

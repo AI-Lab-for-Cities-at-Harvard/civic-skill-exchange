@@ -1180,6 +1180,9 @@ def test_the_skills_job_blocks_a_foreign_generated_file() -> None:
     assert blocking and all("continue-on-error" not in s for s in blocking), (
         "the in-skills check must block; it is what stops a hand-written "
         "plugin manifest carrying inline hooks (#193)")
+    assert all("--changed changed.txt" in s for s in blocking), (
+        "the in-skills check reads the changed paths the job already built, so "
+        "a generated file the pull request did not write is not failed (#231)")
     warning = [s for s in steps if "build_marketplace.py --check" in s
                and "--check-in-skills" not in s]
     assert warning and all("continue-on-error: true" in s for s in warning), (
