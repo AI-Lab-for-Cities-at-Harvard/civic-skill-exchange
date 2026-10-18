@@ -660,10 +660,18 @@ def test_no_workflow_references_the_site_lockfile(wf: Path) -> None:
 
 MANIFEST_YML_PATH = ROOT / ".github" / "workflows" / "manifest.yml"
 
-APP_TOKEN_ACTION = (
-    "actions/create-github-app-token@"
-    "bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0"
-)
+#: The action the job mints its token with, pinned to a full commit SHA with
+#: its release beside it — any release (#225). A tag or branch would let the
+#: code holding write access to main change without a pull request here.
+APP_TOKEN_ACTION = "actions/create-github-app-token"
+APP_TOKEN_PIN = re.compile(
+    r"^\s*uses:\s*actions/create-github-app-token@[0-9a-f]{40} # v\d+\.\d+\.\d+\s*$",
+    re.MULTILINE)
+
+
+def pins_app_token_action(workflow: str) -> bool:
+    """Whether a workflow uses the token action pinned as the job needs it."""
+    return APP_TOKEN_PIN.search(workflow) is not None
 
 
 def test_manifest_yml_exists() -> None:
@@ -726,9 +734,9 @@ def test_the_regeneration_job_only_runs_after_a_green_checks_run_on_main() -> No
 def test_the_regeneration_job_mints_a_github_app_token() -> None:
     """Pinned, and reading the two named secrets. The App is org-owned and
     installed on this repository alone; the token lives for the run."""
-    assert APP_TOKEN_ACTION in MANIFEST_YML, (
-        "manifest.yml must mint its token with the pinned "
-        f"{APP_TOKEN_ACTION.split('@')[0]} action"
+    assert pins_app_token_action(MANIFEST_YML), (
+        f"manifest.yml must mint its token with {APP_TOKEN_ACTION}, pinned to a "
+        "full commit SHA with its release in a comment"
     )
     assert "app-id: ${{ secrets.MANIFEST_APP_ID }}" in MANIFEST_YML
     assert "private-key: ${{ secrets.MANIFEST_APP_PRIVATE_KEY }}" in MANIFEST_YML
