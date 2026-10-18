@@ -157,3 +157,33 @@ describe("addedFrontmatterLines", () => {
     expect(addedFrontmatterLines(before, after)).toEqual([]);
   });
 });
+
+describe("patchSkillMd and the version (#239)", () => {
+  const WITH = `---
+name: a
+metadata:
+  civic.category: permits
+  version: "1.2"
+---
+Body.
+`;
+
+  it("writes a typed version under metadata, not at the top level", () => {
+    const out = patchSkillMd(FILE, { version: "2.0" });
+    expect(out.skillMd).toMatch(/^metadata:\n {2}version: ["']?2\.0["']?$/m);
+    expect(out.skillMd).not.toMatch(/^version:/m);
+  });
+
+  it("leaves a file that has metadata.version byte for byte when the form carries it back", () => {
+    expect(patchSkillMd(WITH, { version: "1.2" }).skillMd).toBe(WITH);
+  });
+
+  it("leaves a file with no version without one when the form's is empty", () => {
+    expect(patchSkillMd(FILE, { version: "" }).skillMd).toBe(FILE);
+  });
+
+  it("leaves a legacy top-level version untouched", () => {
+    const legacy = FILE.replace("license: MIT", "license: MIT\nversion: 0.9");
+    expect(patchSkillMd(legacy, { version: "" }).skillMd).toBe(legacy);
+  });
+});
