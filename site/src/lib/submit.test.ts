@@ -423,7 +423,7 @@ describe("the version's place in the file (#239)", () => {
     const f = toFrontmatter(draft({ version: "1.0" }));
     expect(f).not.toHaveProperty("version");
     expect(f.metadata?.version).toBe("1.0");
-    expect(toYaml(f)).toMatch(/^metadata:\n(?:  .*\n)*  version: "1.0"$/m);
+    expect(toYaml(f)).toMatch(/^metadata:\n(?: {2}.*\n)* {2}version: "1.0"$/m);
   });
 
   it("is omitted when empty", () => {
