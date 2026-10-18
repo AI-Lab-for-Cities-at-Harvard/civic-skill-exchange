@@ -133,7 +133,10 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
   entries.sort((a, b) => a.path.localeCompare(b.path));
 
   const plugin = entries.some((e) => e.path === PLUGIN_ROOT_MANIFEST);
+  // Only without a SKILL.md: every skill the registry lists carries a
+  // generated .claude-plugin/plugin.json, and dropping one back is a skill.
   const clientPackage = !plugin &&
+    !entries.some((e) => e.path === "SKILL.md") &&
     entries.some((e) => e.path === ".claude-plugin/plugin.json");
   const kept = plugin
     ? entries.filter((e) => {

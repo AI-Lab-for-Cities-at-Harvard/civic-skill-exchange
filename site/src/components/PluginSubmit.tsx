@@ -26,10 +26,16 @@ import {
   type PluginDraft,
 } from "../lib/plugin";
 import { slugify, skillPath, type Draft } from "../lib/submit";
+import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { Choice, Field, type FieldNames } from "./Field";
 import { UploadSteps } from "./UploadSteps";
 
 const CATEGORIES = Object.keys(en.vocabulary.category);
+
+/** GitHub's own rule for a login: letters, digits and single hyphens, not at
+ *  either end, at most 39 characters. A name with a space in it would become a
+ *  folder and a plugin name CI refuses. */
+const LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/;
 
 /** Which draft key answers each per-skill question. */
 const SKILL_DRAFT_KEY: Record<string, keyof Draft> = {
@@ -155,7 +161,16 @@ export function PluginSubmit(
   const blocked = check.structural.length > 0;
   const folderName = draft.name.trim() || directoryName || "plugin";
   const ns = draft.author.trim().toLowerCase();
-  const ready = ns !== "" && draft.name.trim() !== "";
+  const badLogin = ns !== "" && !LOGIN.test(ns);
+  const ready = ns !== "" && !badLogin && draft.name.trim() !== "";
+
+  // What plugin.json already answered, named so a submitter who did not write
+  // it sees whose name they are about to publish under.
+  const fromFile = (["description", "license", "version", "maintainer", "affiliation",
+    "deployment"] as const)
+    .filter((k) => read.draft[k].trim() !== "")
+    .map((k) => names[(k in EXTENSION_KEYS ? EXTENSION_KEYS[k as keyof typeof EXTENSION_KEYS]
+      : k) as keyof FieldNames] ?? k);
 
   const replacements = useMemo(() => ({
     [PLUGIN_MANIFEST]: manifest.text,
@@ -232,6 +247,30 @@ export function PluginSubmit(
     }
   };
 
+  /** What a complete skill's SKILL.md already says, so "Complete" can be
+   *  checked rather than taken on trust. */
+  const answered = (skill: string) => {
+    const d = skillDrafts[skill]!;
+    const label = (options: readonly (readonly [string, string])[], v: string) =>
+      options.find(([o]) => o === v)?.[1] ?? v;
+    const rows: [string, string][] = [
+      [f.categoryLabel, s.vocabulary.category[d.category as keyof typeof s.vocabulary.category] ?? d.category],
+      [f.scopeLabel, label(f.scopeChoices, d.scope)],
+      [f.languageLabel, label(f.languageChoices, d.language)],
+      [s.questions["civic.data-sensitivity"].question,
+        label(s.questions["civic.data-sensitivity"].options, d.dataSensitivity)],
+      [s.questions["civic.human-review"].question,
+        label(s.questions["civic.human-review"].options, d.humanReview)],
+    ];
+    return (
+      <dl className="submit__answers" data-testid="skill-answers">
+        {rows.filter(([, v]) => v).map(([k, v]) => (
+          <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+        ))}
+      </dl>
+    );
+  };
+
   return (
     <div data-testid="plugin-mode">
       <section className="prose__block" data-testid="plugin-summary">
@@ -270,12 +309,19 @@ export function PluginSubmit(
       </section>
 
       <section className="prose__block">
+        {fromFile.length > 0 && (
+          <p className="submit__ok" data-testid="plugin-from-file">{p.fromFile(fromFile.join(", "))}</p>
+        )}
         <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={f.namespaceHint}>
           <input id="namespace" className="input" value={draft.author}
             onChange={onInput("author")} autoComplete="off" />
           {reserved ? (
             <p className="field__hint" data-testid="reserved-namespace">
               {rich(f.reservedNamespace(draft.author.trim()))}
+            </p>
+          ) : badLogin ? (
+            <p className="field__finding" data-testid="bad-login">
+              {rich(p.badLogin(draft.author.trim()))}
             </p>
           ) : userCheck === "missing" && draft.author.trim() !== "" && (
             <p className="field__finding" data-testid="no-such-user">
@@ -286,7 +332,7 @@ export function PluginSubmit(
 
         <Field id="plugin-name" label={p.nameLabel} findings={[]}
           hint={rich(p.nameHint(expectedPluginName({
-            namespace: ns || "you", directoryName: draft.name || "plugin",
+            namespace: ns && !badLogin ? ns : p.youExample, directoryName: draft.name || "plugin",
           })))}>
           <input id="plugin-name" className="input" value={typedName}
             onChange={(e) => { setTypedName(e.target.value); set("name")(slugify(e.target.value)); }} />
@@ -304,12 +350,12 @@ export function PluginSubmit(
         </Field>
 
         <Field id={id("version")} label={f.versionLabel} findings={manifestFindings}
-          hint={rich(f.versionHint)}>
+          hint={rich(p.versionHint)}>
           <input id={id("version")} className="input" value={draft.version}
             onChange={onInput("version")} placeholder={f.versionPlaceholder} />
         </Field>
 
-        <Field id={id("maintainer")} label={f.maintainerLabel} findings={manifestFindings}
+        <Field id={id("maintainer")} label={p.maintainerLabel} findings={manifestFindings}
           hint={f.maintainerHint}>
           <input id={id("maintainer")} className="input" value={draft.maintainer}
             onChange={onInput("maintainer")} />
@@ -319,7 +365,7 @@ export function PluginSubmit(
           findings={manifestFindings} placeholder={f.choose}
           onChange={set("affiliation")} options={f.affiliationChoices} />
 
-        <Choice id={id("deployment")} label={f.deploymentLabel} value={draft.deployment}
+        <Choice id={id("deployment")} label={p.deploymentLabel} value={draft.deployment}
           findings={manifestFindings} placeholder={f.choose}
           onChange={set("deployment")} options={f.deploymentChoices}
           hint={draft.deployment === "team" || draft.deployment === "organization"
@@ -379,6 +425,7 @@ export function PluginSubmit(
                 </span>
               </summary>
               {questions.map((key) => question(sk.name, key, findings))}
+              {questions.length === 0 && answered(sk.name)}
               <FindingList findings={other} testid={`findings-skills/${sk.name}`}
                 heading={p.skillOther} />
               {skills[sk.name]!.problems.map((m) => (
@@ -404,6 +451,9 @@ export function PluginSubmit(
         <p className="submit__note" data-testid="multi-file-note">
           {p.multiFileNote(source.entries.length)}
         </p>
+        {!ready && !blocked && (
+          <p className="submit__note" data-testid="download-why">{p.downloadWhy}</p>
+        )}
         <UploadSteps
           repo={repo} reserved={reserved} tree="plugins"
           draft={draft} folderName={folderName} folderBody={p.folderBody}

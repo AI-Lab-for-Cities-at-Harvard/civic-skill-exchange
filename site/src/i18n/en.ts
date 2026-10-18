@@ -644,6 +644,25 @@ export const en = {
         "A maintainer reviews every plugin before it is listed. Its servers " +
         "and scripts run for whoever installs it, so a person reads them first.",
 
+      /** `login` is what was typed. */
+      badLogin: (login: string) =>
+        `\u201c${login}\u201d is not a GitHub username. A username has only ` +
+        "letters, numbers and single hyphens, like `maria-lopez` — it is the " +
+        "name in your github.com address, not your full name or email.",
+      /** Stands in for the username in an example name until one is typed. */
+      youExample: "your-username",
+      /** Answered already, by plugin.json. `fields` is a joined list of
+       *  `fieldNames` values. */
+      fromFile: (fields: string) =>
+        `Read from plugin.json: ${fields}. Change anything that is not right \u2014 ` +
+        "if someone else wrote the plugin and you will look after it, put your own name.",
+      maintainerLabel: "Who maintains it?",
+      deploymentLabel: "Have you used it?",
+      versionHint:
+        "Your own number for it, like `1.0` or `0.3.4`. Optional, and nothing " +
+        "checks it.",
+      downloadWhy: "Enter your GitHub username above, and the download is ready.",
+
       nameLabel: "Plugin name",
       /** `manifestName` is `{namespace}-{name}`, which the page writes. */
       nameHint: (manifestName: string) =>
@@ -720,7 +739,7 @@ export const en = {
       /** A plugin's client manifests are the registry's to write (ADR 0005):
        *  dropped from the copy, named so nothing vanishes quietly. */
       clientFileLeftOut: (path: string) =>
-        `${path} — written by the exchange for each app, so it was left out.`,
+        `${path} — the exchange makes this file for you, so it was left out.`,
       /** Left out is not the same as wrong: these name what was skipped so
        *  nothing vanishes quietly, and they do not stop the hand-off. */
       pathEscape: (path: string) =>

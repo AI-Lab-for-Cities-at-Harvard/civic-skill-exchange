@@ -250,6 +250,7 @@ export function Submit(
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
+    setImported(null);
     setPlugin(null);
     setClientPackage(false);
     try {

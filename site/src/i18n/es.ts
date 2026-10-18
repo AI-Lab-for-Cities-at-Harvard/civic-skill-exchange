@@ -248,7 +248,7 @@ export const strings: Strings = {
       reading: "Leyendo…",
 
       imported: (files: number, repo: string, commit: string) =>
-        `Se leyó${files === 1 ? "" : "eron"} ${files} archivo${files === 1 ? "" : "s"} ` +
+        `Se ${files === 1 ? "leyó" : "leyeron"} ${files} archivo${files === 1 ? "" : "s"} ` +
         `de \`${repo}\` en \`${commit}\`.`,
 
       archiveLabel: "O suba la carpeta de la habilidad como .zip",
@@ -573,6 +573,21 @@ export const strings: Strings = {
         "Un mantenedor revisa cada plugin antes de publicarlo. Sus servidores y " +
         "scripts se ejecutan para quien lo instale, así que una persona los lee primero.",
 
+      badLogin: (login: string) =>
+        `\u201c${login}\u201d no es un nombre de usuario de GitHub. Un nombre de ` +
+        "usuario solo tiene letras, números y guiones sueltos, como " +
+        "`maria-lopez`: es el nombre de su dirección en github.com, no su " +
+        "nombre completo ni su correo.",
+      youExample: "su-usuario",
+      fromFile: (fields: string) =>
+        `Leído de plugin.json: ${fields}. Cambie lo que no sea correcto: si otra ` +
+        "persona escribió el plugin y usted lo va a mantener, ponga su propio nombre.",
+      maintainerLabel: "¿Quién lo mantiene?",
+      deploymentLabel: "¿Lo ha usado?",
+      versionHint:
+        "Su propio número para él, como `1.0` o `0.3.4`. Es opcional y nada lo verifica.",
+      downloadWhy: "Escriba arriba su nombre de usuario de GitHub y la descarga estará lista.",
+
       nameLabel: "Nombre del plugin",
       nameHint: (manifestName: string) =>
         `Su carpeta en el intercambio. Dentro de plugin.json lo llamamos ` +
@@ -636,7 +651,7 @@ export const strings: Strings = {
         "es un directorio con SKILL.md en su nivel superior.",
       notAZip: "No se pudo leer este archivo como un archivo zip.",
       clientFileLeftOut: (path: string) =>
-        `${path} — lo escribe el intercambio para cada aplicación, así que se omitió.`,
+        `${path} — el intercambio crea este archivo por usted, así que se omitió.`,
 
       pathEscape: (path: string) =>
         `${path} — la ruta se sale del directorio de la habilidad, así que se omitió.`,
