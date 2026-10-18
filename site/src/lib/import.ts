@@ -20,9 +20,10 @@
  */
 
 import {
-  MAX_FILE_BYTES, isRepositoryFurniture, type Entry,
+  MAX_FILE_BYTES, PLUGIN_MANIFEST, isRepositoryFurniture, type Entry,
 } from "@civic-skill-exchange/validator";
 import { strings } from "../i18n/strings";
+import { CLIENT_FILES } from "./zip";
 
 const API = "https://api.github.com";
 const RAW = "https://raw.githubusercontent.com";
@@ -31,7 +32,16 @@ const RAW = "https://raw.githubusercontent.com";
  *  look like a flood to the host. */
 const RAW_CONCURRENCY = 6;
 
-export interface RepoRef { owner: string; repo: string }
+export interface RepoRef {
+  owner: string;
+  repo: string;
+  /** From a `/tree/{branch}` address. Otherwise the default branch is asked for. */
+  branch?: string;
+  /** From a `/tree/{branch}/{path}` address: the folder to import, and nothing
+   *  outside it (#213). A branch with a slash in its name cannot be told from
+   *  a folder in this form, so the first segment is taken as the branch. */
+  path?: string;
+}
 
 /** Accepts what someone actually pastes: a browser URL, a clone URL, or the
  *  slug on its own. */
@@ -44,7 +54,13 @@ export function parseRepoRef(input: string): RepoRef | null {
   const m = /^(?:(?:https?:\/\/)?(?:www\.)?github\.com\/|git@github\.com:)?([A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)\/([\w.-]+)/
     .exec(trimmed);
   if (!m || !m[1] || !m[2]) return null;
-  return { owner: m[1], repo: m[2] };
+  const ref: RepoRef = { owner: m[1], repo: m[2] };
+  const rest = trimmed.slice(m[0].length).split("/").filter(Boolean);
+  if (rest[0] === "tree" && rest[1]) {
+    ref.branch = decodeURIComponent(rest[1]);
+    if (rest.length > 2) ref.path = rest.slice(2).map(decodeURIComponent).join("/");
+  }
+  return ref;
 }
 
 export type ImportFailure =
@@ -60,7 +76,15 @@ export interface ImportResult {
   branch: string;
   commit: string;
   entries: Entry[];
+  /** Empty for a plugin, which has no root SKILL.md. */
   skillMd: string;
+  /** A root plugin.json (#213, ruling 1). */
+  plugin: boolean;
+  /** `.claude-plugin/plugin.json` and no root plugin.json. */
+  clientPackage: boolean;
+  /** What the folder is called: the sub-folder's last segment, or the
+   *  repository's name. */
+  directoryName: string;
   /** Paths dropped before the checks ran, with why. */
   skipped: string[];
 }
@@ -114,7 +138,7 @@ async function fetchRaw(
 }
 
 async function fetchAll(
-  ref: RepoRef, commit: string, entries: Entry[], signal?: AbortSignal,
+  ref: RepoRef, commit: string, prefix: string, entries: Entry[], signal?: AbortSignal,
 ): Promise<Entry[] | ImportFailure> {
   const out: Entry[] = [...entries];
   let failure: ImportFailure | null = null;
@@ -124,7 +148,7 @@ async function fetchAll(
       const i = next++;
       const entry = out[i]!;
       if (entry.kind !== "file") continue;
-      const bytes = await fetchRaw(ref, commit, entry.path, signal);
+      const bytes = await fetchRaw(ref, commit, prefix + entry.path, signal);
       if (isFailure(bytes)) failure ??= bytes;
       else out[i] = { ...entry, bytes };
     }
@@ -140,9 +164,13 @@ export async function importFromRepo(
   const ref = parseRepoRef(input);
   if (!ref) return { kind: "not-a-repo" };
 
-  const meta = await get(`${API}/repos/${ref.owner}/${ref.repo}`, signal);
-  if (isFailure(meta)) return meta;
-  const { default_branch: branch } = await meta.json() as { default_branch: string };
+  // A `/tree/{branch}` address names the branch, which saves a request.
+  let branch = ref.branch;
+  if (!branch) {
+    const meta = await get(`${API}/repos/${ref.owner}/${ref.repo}`, signal);
+    if (isFailure(meta)) return meta;
+    ({ default_branch: branch } = await meta.json() as { default_branch: string });
+  }
 
   const treeRes = await get(
     `${API}/repos/${ref.owner}/${ref.repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`,
@@ -157,9 +185,14 @@ export async function importFromRepo(
   // would produce checks that passed only because entries were missing.
   if (tree.truncated) return { kind: "too-big" };
 
+  // Inside a sub-folder, paths are the folder's own. The trailing slash keeps
+  // `plugins/a` from taking in `plugins/a-old`.
+  const prefix = ref.path ? `${ref.path}/` : "";
   const skipped: string[] = [];
   const entries: Entry[] = [];
-  for (const node of tree.tree) {
+  for (const whole of tree.tree) {
+    if (!whole.path.startsWith(prefix)) continue;
+    const node = { ...whole, path: whole.path.slice(prefix.length) };
     if (node.type === "tree") continue;
     if (node.type !== "blob") {
       // Submodules and symlinks. checkStructureCore rejects symlinks anyway;
@@ -182,14 +215,31 @@ export async function importFromRepo(
     entries.push({ path: node.path, kind: "file", bytes: new Uint8Array(size) });
   }
 
-  if (!entries.some((e) => e.path === "SKILL.md")) return { kind: "no-skill-md" };
+  const plugin = entries.some((e) => e.path === PLUGIN_MANIFEST);
+  const clientPackage = !plugin &&
+    entries.some((e) => e.path === ".claude-plugin/plugin.json");
+  if (!plugin && !clientPackage && !entries.some((e) => e.path === "SKILL.md")) {
+    return { kind: "no-skill-md" };
+  }
+  // A plugin's client manifests are the registry's to write, as in a zip.
+  const kept = plugin
+    ? entries.filter((e) => {
+      if (!CLIENT_FILES.test(e.path)) return true;
+      skipped.push(strings().submit.problems.clientFileLeftOut(e.path));
+      return false;
+    })
+    : entries;
 
   // Every file, at the commit the tree came from. One that cannot be fetched
   // fails the import: a folder with a file missing is not the skill.
-  const fetched = await fetchAll(ref, tree.sha, entries, signal);
+  const fetched = await fetchAll(ref, tree.sha, prefix, kept, signal);
   if (isFailure(fetched)) return fetched;
   const skill = fetched.find((e) => e.path === "SKILL.md");
   const skillMd = skill?.kind === "file" ? new TextDecoder().decode(skill.bytes) : "";
+  const directoryName = ref.path?.split("/").pop() ?? ref.repo;
 
-  return { ref, branch, commit: tree.sha, entries: fetched, skillMd, skipped };
+  return {
+    ref, branch, commit: tree.sha, entries: fetched, skillMd,
+    plugin, clientPackage, directoryName, skipped,
+  };
 }

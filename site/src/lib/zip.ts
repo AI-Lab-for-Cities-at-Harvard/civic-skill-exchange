@@ -53,7 +53,7 @@ const isFinderJunk = (path: string) =>
 /** What the registry writes into a plugin for each client (ADR 0005), and what
  *  Codex reads instead of plugin.json. A copy in the submitter's folder is
  *  theirs, not the generator's, and #231's check would refuse it. */
-const CLIENT_FILES = /^(?:\.claude-plugin\/|\.codex-plugin\/|\.mcp\.json$)/;
+export const CLIENT_FILES = /^(?:\.claude-plugin\/|\.codex-plugin\/|\.mcp\.json$)/;
 
 /** A single root directory, if every entry shares one. The published archive
  *  has one; a zip made by selecting the files inside a folder does not. */
