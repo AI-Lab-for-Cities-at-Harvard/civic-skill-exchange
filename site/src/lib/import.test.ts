@@ -60,13 +60,19 @@ describe("parseRepoRef", () => {
       "https://github.com/sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill",
       "https://github.com/sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill/",
       "https://github.com/sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill.git",
-      "https://github.com/sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill/tree/main",
       "git@github.com:sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill.git",
       "sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill",
       "  github.com/sgarcese/Civic-Analytics-Agent-Workflow-Claude-Skill  ",
     ]) {
       expect(parseRepoRef(input)).toEqual(want);
     }
+  });
+
+  it("reads the branch and folder out of a sub-folder address (#213)", () => {
+    expect(parseRepoRef("https://github.com/sgarcese/plugins/tree/main"))
+      .toEqual({ owner: "sgarcese", repo: "plugins", branch: "main" });
+    expect(parseRepoRef("github.com/sgarcese/plugins/tree/dev/housing/dashboards/"))
+      .toEqual({ owner: "sgarcese", repo: "plugins", branch: "dev", path: "housing/dashboards" });
   });
 
   it("takes a bare host, which is what people paste most", () => {
@@ -267,5 +273,86 @@ describe("importFromRepo — a real repository", () => {
     expect(out.skipped.join(" ")).toMatch(/\.gitignore/);
     // index.html is on the allowlist. Nothing about it needs an opinion here.
     expect(out.entries.map((e) => e.path)).toContain("index.html");
+  });
+});
+
+// --------------------------------------------------------------------------- //
+// #213: a plugin repository, and a plugin in a sub-folder of a larger one.
+
+const MANIFEST = '{"name": "housing-dashboards", "description": "x"}';
+
+describe("importFromRepo with a plugin", () => {
+  const tree = (paths: string[]) => ({
+    sha: "c".repeat(40), truncated: false,
+    tree: paths.map((path) => ({ path, type: "blob", size: 10 })),
+  });
+
+  it("reads a repository with plugin.json at its root as a plugin", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: tree(["plugin.json", "skills/brief/SKILL.md"]),
+      files: { "plugin.json": MANIFEST, "skills/brief/SKILL.md": SKILL },
+    }));
+    const out = await importFromRepo("a/housing");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.plugin).toBe(true);
+    expect(out.directoryName).toBe("housing");
+    expect(out.entries.map((e) => e.path).sort()).toEqual(["plugin.json", "skills/brief/SKILL.md"]);
+  });
+
+  it("imports only the folder a sub-folder address names", async () => {
+    const fetchMock = github({
+      tree: tree([
+        "README.md", "other/SKILL.md",
+        "plugins/housing-dashboards/plugin.json",
+        "plugins/housing-dashboards/skills/brief/SKILL.md",
+        "plugins/housing-dashboards-old/plugin.json",
+      ]),
+      files: {
+        "plugins/housing-dashboards/plugin.json": MANIFEST,
+        "plugins/housing-dashboards/skills/brief/SKILL.md": SKILL,
+      },
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const out = await importFromRepo("https://github.com/a/b/tree/dev/plugins/housing-dashboards");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.plugin).toBe(true);
+    expect(out.branch).toBe("dev");
+    expect(out.directoryName).toBe("housing-dashboards");
+    expect(out.entries.map((e) => e.path).sort()).toEqual(["plugin.json", "skills/brief/SKILL.md"]);
+    const brief = out.entries.find((e) => e.path === "skills/brief/SKILL.md");
+    expect(brief?.kind === "file" && new TextDecoder().decode(brief.bytes)).toBe(SKILL);
+    expect(fetchMock.mock.calls.map((c) => String(c[0]))).toContain(
+      "https://api.github.com/repos/a/b/git/trees/dev?recursive=1");
+    expect(apiCalls(fetchMock).length).toBeLessThanOrEqual(2);
+  });
+
+  it("imports a skill out of a sub-folder too", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: tree(["skills/a/SKILL.md", "skills/a/scripts/x.py", "skills/b/SKILL.md"]),
+      files: { "skills/a/SKILL.md": SKILL, "skills/a/scripts/x.py": "x\n" },
+    }));
+    const out = await importFromRepo("github.com/a/b/tree/main/skills/a");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.plugin).toBe(false);
+    expect(out.skillMd).toBe(SKILL);
+    expect(out.entries.map((e) => e.path).sort()).toEqual(["SKILL.md", "scripts/x.py"]);
+  });
+
+  it("leaves out a plugin's client manifests, and names them", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: tree(["plugin.json", "skills/brief/SKILL.md", ".codex-plugin/plugin.json", ".mcp.json"]),
+      files: { "plugin.json": MANIFEST, "skills/brief/SKILL.md": SKILL,
+        ".codex-plugin/plugin.json": "{}", ".mcp.json": "{}" },
+    }));
+    const out = await importFromRepo("a/b");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.entries.map((e) => e.path).sort()).toEqual(["plugin.json", "skills/brief/SKILL.md"]);
+    expect(out.skipped.join("\n")).toContain(".codex-plugin/plugin.json");
+  });
+
+  it("still fails a folder that is neither a skill nor a plugin", async () => {
+    vi.stubGlobal("fetch", github({ tree: tree(["README.md", "notes/x.md"]) }));
+    const out = await importFromRepo("a/b");
+    expect("kind" in out ? out.kind : "ok").toBe("no-skill-md");
   });
 });
