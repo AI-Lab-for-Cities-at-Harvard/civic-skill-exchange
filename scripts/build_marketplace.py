@@ -566,6 +566,16 @@ def main() -> int:
                 changed = {line.strip() for line in
                            args.changed.read_text(encoding="utf-8").splitlines()
                            if line.strip()}
+                # A git-quoted path matches nothing below, so it would pass a
+                # file unseen. Fail closed rather than guess at the unquoting.
+                quoted = sorted(p for p in changed if p.startswith('"'))
+                if quoted:
+                    for path in quoted:
+                        print(f"FAIL  quoted path in {args.changed}: {path}",
+                              file=sys.stderr)
+                    print("      Write the list with core.quotePath false.",
+                          file=sys.stderr)
+                    return 1
             foreign = foreign_generated_files(ROOT, changed)
         except DuplicatePluginName as exc:
             print(f"error {exc}", file=sys.stderr)

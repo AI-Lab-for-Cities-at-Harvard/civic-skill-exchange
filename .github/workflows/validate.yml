@@ -49,6 +49,9 @@ jobs:
           # alone, so the namespace a skill was moved *out of* was invisible to
           # the ownership check (#154). L1 is a statement about paths, and a
           # path that left the tree is still a path the pull request touched.
+          # Unquoted: git quotes a path with a non-ASCII byte, and a quoted
+          # line matches nothing the checks below compare against (#231).
+          git config core.quotePath false
           git diff --name-only --no-renames "origin/$BASE_REF...HEAD" > changed.txt
           # plugins/ is the second kind of listing (ADR 0005) and gets every
           # step skills/ does; the output keeps its name so the conditions
