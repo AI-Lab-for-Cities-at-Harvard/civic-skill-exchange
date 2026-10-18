@@ -402,6 +402,8 @@ export function Submit(
                 imported.entries.length,
                 `${imported.ref.owner}/${imported.ref.repo}`,
                 imported.commit.slice(0, 7),
+                imported.ref.path,
+                imported.ref.branch,
               ))}
             </p>
           )}

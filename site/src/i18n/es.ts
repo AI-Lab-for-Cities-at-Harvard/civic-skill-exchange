@@ -247,9 +247,10 @@ export const strings: Strings = {
       read: "Leerlo",
       reading: "Leyendo…",
 
-      imported: (files: number, repo: string, commit: string) =>
-        `Se ${files === 1 ? "leyó" : "leyeron"} ${files} archivo${files === 1 ? "" : "s"} ` +
-        `de \`${repo}\` en \`${commit}\`.`,
+      imported: (files: number, repo: string, commit: string, folder?: string, branch?: string) =>
+        `Se ${files === 1 ? "leyó" : "leyeron"} ${files} archivo${files === 1 ? "" : "s"} de ` +
+        (folder ? `\`${folder}\` en ` : "") + `\`${repo}\`` +
+        (folder && branch ? ` (rama \`${branch}\`)` : "") + ` en \`${commit}\`.`,
 
       archiveLabel: "O suba la carpeta de la habilidad como .zip",
       archiveHint:
