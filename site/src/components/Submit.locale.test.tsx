@@ -127,3 +127,41 @@ describe("the mail to a maintainer stays in English", () => {
     expect(decodeURIComponent(url)).toContain("A skill for the Civic Skill Exchange.");
   });
 });
+
+describe("the page is titled for plugins as well as skills (#247)", () => {
+  const view = () => render(<Submit repo={REPO} skills={[]} mode="new" />);
+  const heading = (name: string) =>
+    screen.getByRole("heading", { level: 2, name });
+
+  it("is titled 'Share a skill or plugin' in English", () => {
+    view();
+    expect(heading("Share a skill or plugin")).toBeInTheDocument();
+    expect(heading("Submit a new skill or plugin")).toBeInTheDocument();
+  });
+
+  it("is titled 'Comparta una habilidad o plugin' in Spanish", async () => {
+    await setLocale("es");
+    view();
+    expect(heading("Comparta una habilidad o plugin")).toBeInTheDocument();
+    expect(heading("Subir una habilidad o plugin nuevo")).toBeInTheDocument();
+  });
+
+  it("labels the navigation item 'Subir' in Spanish and leaves English alone", async () => {
+    expect(en.chrome.nav.submit).toBe("Submit");
+    await setLocale("es");
+    expect(strings().chrome.nav.submit).toBe("Subir");
+  });
+
+  it("names the About page's call to action the same way", async () => {
+    expect(en.about.submitting.cta).toBe("Share a skill or plugin");
+    await setLocale("es");
+    expect(strings().about.submitting.cta).toBe("Comparta una habilidad o plugin");
+  });
+
+  it("keeps update mode skills-only", () => {
+    render(<Submit repo={REPO} skills={[]} mode="update" />);
+    expect(en.submit.update.heading).toBe("Update a skill you already listed");
+    expect(screen.getByRole("heading", { level: 2, name: en.submit.update.heading }))
+      .toBeInTheDocument();
+  });
+});

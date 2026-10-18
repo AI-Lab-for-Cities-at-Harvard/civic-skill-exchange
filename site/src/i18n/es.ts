@@ -161,7 +161,7 @@ export const strings: Strings = {
       label: "Principal",
       browse: "Explorar",
       about: "Acerca de",
-      submit: "Enviar",
+      submit: "Subir",
       github: "GitHub",
     },
     docsInEnglish: "en inglés",
@@ -211,7 +211,7 @@ export const strings: Strings = {
   },
 
   submit: {
-    heading: "Comparta una habilidad",
+    heading: "Comparta una habilidad o plugin",
     lede:
       "Complete este formulario y nosotros le daremos la forma correcta. " +
       "Toma unos minutos.",
@@ -232,7 +232,7 @@ export const strings: Strings = {
       "La habilidad se publicará como habilidad de Comunidad hasta que sea revisada.",
 
     intake: {
-      heading: "Enviar una habilidad nueva",
+      heading: "Subir una habilidad o plugin nuevo",
       lede:
         "¿Ya tiene una? Suéltela aquí y el resto de esta página se completa " +
         "solo. Si su habilidad vive en su propio repositorio, **Code → " +
@@ -1042,7 +1042,7 @@ export const strings: Strings = {
           "comentario. Solo pueden rechazar: que una habilidad las apruebe no " +
           "significa que sea segura.",
       },
-      cta: "Comparta una habilidad",
+      cta: "Comparta una habilidad o plugin",
       guide: "La guía para contribuir",
     },
 
