@@ -470,7 +470,9 @@ def generated(root: Path) -> dict[Path, str]:
     return out
 
 
-def foreign_generated_files(root: Path = ROOT) -> list[Path]:
+def foreign_generated_files(
+    root: Path = ROOT, changed: set[str] | None = None,
+) -> list[Path]:
     """Generated files inside skills/ or plugins/ that exist and are not the
     generator's.
 
@@ -481,6 +483,13 @@ def foreign_generated_files(root: Path = ROOT) -> list[Path]:
     registry writes it (#186). So inside skills/ the rule is absent, or exactly
     what the generator writes — and it blocks (#193). Absent is fine: the
     post-merge job will write it.
+
+    `changed` is the pull request's changed paths, relative to the root
+    (#231). Only a generated file the pull request wrote can be foreign: one it
+    did not touch is the registry's own, written by the post-merge job from the
+    previous tree, and an honest edit to a description or version makes it
+    stale without the contributor having written it. `None` checks every file,
+    which is the strict local run.
     """
     trees = (root / "skills", root / "plugins")
     owned = generated(root)
@@ -497,6 +506,8 @@ def foreign_generated_files(root: Path = ROOT) -> list[Path]:
             path = plugin_dir / rel
             if path.is_file() and path not in owned:
                 foreign.add(path)
+    if changed is not None:
+        foreign = {p for p in foreign if p.relative_to(root).as_posix() in changed}
     return sorted(foreign)
 
 
@@ -524,6 +535,10 @@ def main() -> int:
                              "or plugins/ "
                              "exists and is not what the generator writes; "
                              "absent files and stale root marketplaces pass")
+    parser.add_argument("--changed", type=Path, metavar="FILE",
+                        help="with --check-in-skills: the pull request's "
+                             "changed paths, one per line; only a generated "
+                             "file listed there can fail")
     parser.add_argument("--paths", action="store_true",
                         help="print the paths this script owns, one per line, "
                              "relative to the repository root, and write "
@@ -546,7 +561,22 @@ def main() -> int:
 
     if args.check_in_skills:
         try:
-            foreign = foreign_generated_files(ROOT)
+            changed = None
+            if args.changed is not None:
+                changed = {line.strip() for line in
+                           args.changed.read_text(encoding="utf-8").splitlines()
+                           if line.strip()}
+                # A git-quoted path matches nothing below, so it would pass a
+                # file unseen. Fail closed rather than guess at the unquoting.
+                quoted = sorted(p for p in changed if p.startswith('"'))
+                if quoted:
+                    for path in quoted:
+                        print(f"FAIL  quoted path in {args.changed}: {path}",
+                              file=sys.stderr)
+                    print("      Write the list with core.quotePath false.",
+                          file=sys.stderr)
+                    return 1
+            foreign = foreign_generated_files(ROOT, changed)
         except DuplicatePluginName as exc:
             print(f"error {exc}", file=sys.stderr)
             return 1
@@ -555,8 +585,9 @@ def main() -> int:
             return 0
         for path in foreign:
             print(f"FAIL  {path.relative_to(ROOT)}", file=sys.stderr)
-        print("      This file is written by the registry, never by hand. Delete it;\n"
-              "      the registry regenerates it after merge.", file=sys.stderr)
+        print("      This pull request wrote a file the registry generates, with\n"
+              "      content the generator would not write. Drop it from the pull\n"
+              "      request; the registry regenerates it after merge.", file=sys.stderr)
         return 1
 
     if args.check:

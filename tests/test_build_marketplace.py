@@ -686,6 +686,109 @@ def test_a_stale_root_marketplace_is_not_foreign(make_skill):
     assert build_marketplace.foreign_generated_files(root) == []
 
 
+# #231: a generated file the pull request did not touch is the registry's own,
+# written by the post-merge job from the previous tree. An honest edit to a
+# listing makes it stale, and that is not the contributor's doing, so the check
+# reads only the paths the pull request changed.
+
+
+def _rel(root, *paths):
+    return {p.relative_to(root).as_posix() for p in paths}
+
+
+def test_a_stale_manifest_the_pull_request_did_not_touch_passes(make_skill):
+    skill = make_skill(name="alpha", namespace="cityofx")
+    root = skill.parents[2]
+    build_marketplace.write_all(root)
+    md = skill / "SKILL.md"
+    md.write_text(md.read_text(encoding="utf-8").replace(
+        "description:", "description: Now reworded.", 1), encoding="utf-8")
+    assert build_marketplace.foreign_generated_files(root) != [], (
+        "precondition: the committed manifest is stale against the new tree")
+    assert build_marketplace.foreign_generated_files(
+        root, changed=_rel(root, md)) == []
+
+
+def test_a_stale_plugin_manifest_the_pull_request_did_not_touch_passes(make_plugin):
+    plugin = make_plugin()
+    root = plugin.parents[2]
+    build_marketplace.write_all(root)
+    manifest = plugin / "plugin.json"
+    manifest.write_text(manifest.read_text(encoding="utf-8").replace(
+        "Housing dashboards", "Reworded housing dashboards"), encoding="utf-8")
+    assert build_marketplace.foreign_generated_files(root) != []
+    assert build_marketplace.foreign_generated_files(
+        root, changed=_rel(root, manifest)) == []
+
+
+def test_a_generated_file_the_pull_request_wrote_is_still_foreign(make_skill, make_plugin):
+    skill = make_skill(name="alpha", namespace="cityofx")
+    plugin = make_plugin()
+    root = skill.parents[2]
+    hand = {
+        skill / ".claude-plugin" / "plugin.json": '{"name": "alpha", "hooks": {}}\n',
+        skill / ".codex-plugin" / "plugin.json": "{}\n",
+        plugin / ".claude-plugin" / "plugin.json": "{}\n",
+        plugin / ".mcp.json": '{"mcpServers": {"x": {"command": "curl"}}}',
+    }
+    for path, text in hand.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    changed = _rel(root, *hand) | {"README.md"}
+    assert build_marketplace.foreign_generated_files(root, changed=changed) == sorted(hand)
+
+
+def test_a_written_mcp_config_without_an_mcp_json_is_foreign_when_changed(make_plugin):
+    plugin = make_plugin(mcp=None)
+    root = plugin.parents[2]
+    (plugin / ".mcp.json").write_text("{}", encoding="utf-8")
+    assert build_marketplace.foreign_generated_files(
+        root, changed=_rel(root, plugin / ".mcp.json")) == [plugin / ".mcp.json"]
+    assert build_marketplace.foreign_generated_files(root, changed=set()) == []
+
+
+def test_a_generated_file_written_identically_passes(make_skill):
+    skill = make_skill(name="alpha", namespace="cityofx")
+    root = skill.parents[2]
+    build_marketplace.write_all(root)
+    written = skill / ".claude-plugin" / "plugin.json"
+    assert build_marketplace.foreign_generated_files(
+        root, changed=_rel(root, written)) == []
+
+
+def test_main_check_in_skills_reads_the_changed_paths(make_skill, monkeypatch, capsys, tmp_path):
+    skill = make_skill(name="alpha", namespace="cityofx")
+    root = skill.parents[2]
+    build_marketplace.write_all(root)
+    md = skill / "SKILL.md"
+    md.write_text(md.read_text(encoding="utf-8").replace(
+        "description:", "description: Now reworded.", 1), encoding="utf-8")
+    changed = tmp_path / "changed.txt"
+    changed.write_text("skills/cityofx/alpha/SKILL.md\n", encoding="utf-8")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--check-in-skills",
+                                     "--changed", str(changed)])
+    assert build_marketplace.main() == 0
+
+    changed.write_text("skills/cityofx/alpha/SKILL.md\n"
+                       "skills/cityofx/alpha/.claude-plugin/plugin.json\n", encoding="utf-8")
+    assert build_marketplace.main() != 0
+    assert "skills/cityofx/alpha/.claude-plugin/plugin.json" in capsys.readouterr().err
+
+
+def test_main_check_in_skills_refuses_a_quoted_changed_path(make_skill, monkeypatch, capsys, tmp_path):
+    """A git-quoted line names no path the check can match, so it would let a
+    file through unseen. Fail closed instead."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    changed = tmp_path / "changed.txt"
+    changed.write_text('"skills/cityofx/\\303\\251/.claude-plugin/plugin.json"\n', encoding="utf-8")
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    monkeypatch.setattr("sys.argv", ["build_marketplace.py", "--check-in-skills",
+                                     "--changed", str(changed)])
+    assert build_marketplace.main() != 0
+    assert "quoted" in capsys.readouterr().err
+
+
 # --------------------------------------------------------------------------- #
 # Plugins (ADR 0005). The author writes the Agent Plugins files, which Codex
 # reads as they are; the generator derives what Claude Code needs.

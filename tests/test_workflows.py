@@ -193,6 +193,27 @@ def test_the_changed_paths_step_lists_deletions_and_both_sides_of_a_move() -> No
             )
 
 
+def test_the_changed_paths_are_written_unquoted() -> None:
+    """git quotes a path with a non-ASCII byte in it, and a quoted line matches
+    no path the checks compare against — --check-in-skills reads this list to
+    decide which generated files to compare (#231)."""
+    step = VALIDATE_YML.split("git diff --name-only", 1)[0].rsplit("run: |", 1)[1]
+    assert "git config core.quotePath false" in step
+
+
+def test_a_quoted_changed_path_fails_the_step_before_any_gate() -> None:
+    """Even unquoted, git quotes a path holding a control character, a quote or
+    a backslash. Such a line starts with `"`, matches no `^(skills|plugins)/`
+    gate, and would skip every listing check — so the step fails on it before
+    the gates are evaluated."""
+    after = VALIDATE_YML.split("> changed.txt", 1)[1]
+    guard = after.find("grep -q '^\"' changed.txt")
+    gate = after.find("grep -qE '^(skills|plugins)/' changed.txt")
+    assert guard != -1, "no check for a quoted line in changed.txt"
+    assert guard < gate
+    assert "exit 1" in after[guard:gate]
+
+
 def test_maintainer_status_is_resolved_in_the_workflow() -> None:
     """Who maintains the exchange is a fact about the organization, not about a
     skill. Hardcoding it in the validator would put an access-control list in a
@@ -1180,6 +1201,9 @@ def test_the_skills_job_blocks_a_foreign_generated_file() -> None:
     assert blocking and all("continue-on-error" not in s for s in blocking), (
         "the in-skills check must block; it is what stops a hand-written "
         "plugin manifest carrying inline hooks (#193)")
+    assert all("--changed changed.txt" in s for s in blocking), (
+        "the in-skills check reads the changed paths the job already built, so "
+        "a generated file the pull request did not write is not failed (#231)")
     warning = [s for s in steps if "build_marketplace.py --check" in s
                and "--check-in-skills" not in s]
     assert warning and all("continue-on-error: true" in s for s in warning), (
