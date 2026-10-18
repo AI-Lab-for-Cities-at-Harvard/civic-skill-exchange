@@ -616,7 +616,7 @@ def test_the_check_notices_an_altered_claude_manifest(make_skill):
 
 def test_the_sparse_install_command_covers_every_claude_manifest():
     """docs/SUBMITTING.md tells a Claude Code user to add the marketplace with
-    `--sparse .claude-plugin skills`, which clones only those two paths. A file
+    `--sparse .claude-plugin skills plugins`, which clones only those paths. A file
     Claude reads that fell outside both would be missing from the very checkout
     the client installs from.
 
@@ -808,3 +808,48 @@ def test_every_path_the_generator_writes_into_a_plugin_is_declared(make_plugin):
     written = {p.relative_to(plugin) for p in build_marketplace.generated(plugin.parents[2])
                if plugin in p.parents}
     assert written == set(build_marketplace.PLUGIN_GENERATED)
+
+
+# #228: the documented --sparse install named `.claude-plugin skills`, so once
+# plugins/ existed a Claude user saw a plugin in the marketplace and could not
+# install it. The test above reads the real tree and so could not fire until a
+# plugin was listed; these build one.
+
+
+def _sparse_roots(doc: str) -> list[str]:
+    flag = "--sparse "
+    line = next(l for l in doc.splitlines() if flag in l and "marketplace add" in l)
+    return line.split(flag, 1)[1].split()
+
+
+def _claude_reads(path: Path) -> bool:
+    """A generated file Claude Code reads: its marketplace, a plugin manifest,
+    or a plugin's MCP config. The Codex marketplace is Codex's."""
+    return ".claude-plugin" in path.parts or path.name == ".mcp.json"
+
+
+def test_the_sparse_install_covers_a_plugin(make_skill, make_plugin):
+    root = make_skill().parents[2]
+    make_plugin()
+    roots = _sparse_roots(
+        (build_marketplace.ROOT / "docs" / "SUBMITTING.md").read_text(encoding="utf-8"))
+    claude = [p for p in build_marketplace.generated(root) if _claude_reads(p)]
+    assert any(p.name == ".mcp.json" for p in claude), "the fixture plugin has servers"
+    for path in claude:
+        rel = path.relative_to(root).as_posix()
+        assert any(rel == r or rel.startswith(f"{r}/") for r in roots), (
+            f"{rel} is generated for Claude but outside the --sparse roots {roots}")
+
+
+def test_the_readme_gives_the_same_sparse_install():
+    root = build_marketplace.ROOT
+    assert _sparse_roots((root / "README.md").read_text(encoding="utf-8")) == _sparse_roots(
+        (root / "docs" / "SUBMITTING.md").read_text(encoding="utf-8"))
+
+
+def test_the_sparse_install_explanation_quotes_no_fixed_size():
+    """The 60 KB the docs quoted was the skills alone; a listing's size is the
+    author's, so a number here goes stale with the next submission."""
+    root = build_marketplace.ROOT
+    for doc in ("README.md", "docs/SUBMITTING.md"):
+        assert "60 KB" not in (root / doc).read_text(encoding="utf-8"), doc

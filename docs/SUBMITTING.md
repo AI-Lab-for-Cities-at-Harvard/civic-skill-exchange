@@ -33,7 +33,7 @@ Three things worth knowing before you rely on it:
 The registry is a plugin marketplace, so it is two commands:
 
 ```
-/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .claude-plugin skills
+/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .claude-plugin skills plugins
 /plugin install {namespace}-{skill-name}@civic-skill-exchange
 ```
 
@@ -41,10 +41,11 @@ Every skill page on the site shows its exact second line, ready to copy.
 
 **Why `--sparse`.** Adding a marketplace **clones the whole repository** into
 `~/.claude/plugins/marketplaces/`, and this one carries a website, a validator, a
-test suite and documentation you have no use for. `--sparse .claude-plugin skills`
-takes the manifest and the skills and leaves the rest — roughly 60 KB instead of
-400 KB. It works fine without the flag; the flag just stops you downloading the
-site source in order to install a skill.
+test suite and documentation you have no use for. `--sparse .claude-plugin skills plugins`
+takes the marketplace and the listings — every skill and every plugin — and
+leaves the rest. It works fine without the flag; the flag just stops you
+downloading the site source in order to install a skill. Keep all three paths:
+leave out `plugins` and a plugin shows up in the marketplace but cannot install.
 
 The plugin name carries the namespace — `civic-skills-plain-language-notice-rewriter`
 rather than `plain-language-notice-rewriter` — because two people may publish a
