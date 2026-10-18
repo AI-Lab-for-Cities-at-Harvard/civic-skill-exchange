@@ -304,3 +304,17 @@ def test_a_codex_user_with_a_single_skill_is_pointed_at_the_download() -> None:
         text = _text(doc)
         assert ".agents/skills/" in text, doc
         assert "#207" in text, f"{doc} does not say why single skills are not in Codex's marketplace yet"
+
+
+# --------------------------------------------------------------------------- #
+# #243 (ruling a): the page's pull request link compares the fork's `main`, so
+# the upload step tells a fork's submitter to commit straight to `main`.
+
+def test_submitting_tells_a_fork_submitter_to_commit_to_main() -> None:
+    text = " ".join(_text("docs/SUBMITTING.md").split())
+    assert "commit directly to the `main` branch" in text
+    assert "A fork is your own copy of the exchange on GitHub" in text
+    # The only remaining "new branch" instruction is the registry's own namespace.
+    for m in re.finditer(r"create a new branch", text):
+        assert "the registry itself" in text[max(0, m.start() - 250):m.start()], (
+            "a web-upload step still sends a fork's submitter to a new branch")

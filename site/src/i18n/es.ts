@@ -473,6 +473,9 @@ export const strings: Strings = {
 
       forkTitle: "Haga su propia copia del registro",
       forkBody:
+        "Un fork es su propia copia del intercambio en GitHub. Los cambios que " +
+        "haga allí no afectan a nadie más hasta que pida que se agreguen, que " +
+        "es el pull request del paso siguiente. " +
         "Un botón en GitHub y luego vuelva y pegue la dirección que le dé. No " +
         "podemos adivinarla: puede cambiarle el nombre a la copia o tenerla en " +
         "otra cuenta.",
@@ -494,8 +497,13 @@ export const strings: Strings = {
         `descomprimida, con el nombre \`${folder}\`, con subcarpetas y todo. ` +
         "No la abra antes: GitHub conserva el nombre de la carpeta, que es lo " +
         "que hace que caiga en el lugar correcto. Luego use **Commit changes** " +
-        "y elija *create a new branch and start a pull request* en lugar de " +
-        "confirmar en `main`." +
+        "y elija " +
+        (reserved
+          ? "*create a new branch and start a pull request* en lugar de " +
+            "confirmar en `main`."
+          : "*commit directly to the `main` branch*, es decir, confirmar " +
+            "directamente en la rama `main`. Es su propia copia, así que nada " +
+            "se ve afectado hasta la solicitud del paso siguiente.") +
         (reserved ? " Esto abre el registro en " : " Esto abre su copia en ") +
         `\`${namespacePath}\`, de modo que el resultado es \`${skillPath}\`.`,
       uploadCta: "Subir la carpeta",
@@ -505,9 +513,9 @@ export const strings: Strings = {
 
       pullRequestTitle: "Abra el pull request",
       pullRequestBody:
-        "Si GitHub ya le ofreció uno al final del paso 3, este paso ya está " +
-        "hecho. Las verificaciones se ejecutan sobre él, y desde ahí sigue un " +
-        "mantenedor.",
+        "Este botón compara su copia con el registro y le deja abrir el pull " +
+        "request. Las verificaciones se ejecutan sobre él, y desde ahí sigue " +
+        "un mantenedor.",
       pullRequestCta: "Abrir el pull request",
 
       handoff: "Continuar en GitHub",

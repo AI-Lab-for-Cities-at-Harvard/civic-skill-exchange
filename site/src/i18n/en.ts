@@ -534,6 +534,9 @@ export const en = {
 
       forkTitle: "Make your own copy of the registry",
       forkBody:
+        "A fork is your own copy of the exchange on GitHub. Changes you make " +
+        "there don\u2019t affect anyone else until you ask for them to be " +
+        "added, which is the pull request in the next step. " +
         "One button on GitHub, then come back and paste the address it gives " +
         "you. We cannot guess it — you may rename the copy, or keep it under a " +
         "different account.",
@@ -554,8 +557,12 @@ export const en = {
         `Drop in the whole folder you **downloaded** in step 1 — unzipped, ` +
         `named \`${folder}\`, subfolders and all. Do not open it first: ` +
         "GitHub keeps the folder\u2019s name, which is how it lands in the " +
-        "right place. Then **Commit changes**, choosing *create a new branch " +
-        "and start a pull request* rather than committing to `main`." +
+        "right place. Then **Commit changes**, choosing " +
+        (reserved
+          ? "*create a new branch and start a pull request* rather than " +
+            "committing to `main`."
+          : "*commit directly to the `main` branch*. It is your own copy, so " +
+            "nothing is affected until the pull request in the next step.") +
         (reserved ? " This opens the registry at " : " This opens your copy at ") +
         `\`${namespacePath}\`, so the result is \`${skillPath}\`.`,
       uploadCta: "Upload the folder",
@@ -565,8 +572,8 @@ export const en = {
 
       pullRequestTitle: "Open the pull request",
       pullRequestBody:
-        "If GitHub already offered you one at the end of step 3, that is this " +
-        "step done. The checks run on it, and a maintainer takes it from there.",
+        "This button compares your copy with the registry and lets you open the " +
+        "pull request. The checks run on it, and a maintainer takes it from there.",
       pullRequestCta: "Open the pull request",
 
       handoff: "Continue on GitHub",
