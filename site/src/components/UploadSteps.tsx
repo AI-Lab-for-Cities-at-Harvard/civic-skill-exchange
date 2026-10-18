@@ -60,7 +60,7 @@ export function UploadSteps(
       {!reserved && (
         <li className="steps__item">
           <h3 className="steps__title">{t.send.forkTitle}</h3>
-          <p className="steps__body">{t.send.forkBody}</p>
+          <p className="steps__body" data-testid="fork-step-body">{t.send.forkBody}</p>
           <p className="cta-row">
             <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
               target="_blank" rel="noreferrer">{t.send.forkCta}</a>

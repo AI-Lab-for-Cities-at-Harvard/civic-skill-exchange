@@ -165,8 +165,10 @@ already in it. Commit, and GitHub offers the pull request. You are done.
 
 1. **Download the corrected folder** and unzip it.
 2. **Fork the registry** — one button — then paste the address back into the
-   page. It cannot guess it: you may rename your copy, or keep it under a
-   different account.
+   page. A fork is your own copy of the exchange on GitHub. Changes you make
+   there don't affect anyone else until you ask for them to be added, which is
+   the pull request in the next step. The page cannot guess its address: you may
+   rename your copy, or keep it under a different account.
 
    ![GitHub's Create a new fork dialog. Leave the Repository name field exactly as it is — GitHub invites you to change it, and a renamed fork is one the page cannot find.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-01-fork-dialog.png)
 
@@ -177,19 +179,19 @@ already in it. Commit, and GitHub offers the pull request. You are done.
 
    ![GitHub's upload page in your fork. Check the breadcrumb reads skills / your-username before you drop anything, and note that Commit directly to the main branch is selected by default.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-02-upload-page.png)
 
-   Then **Commit changes**, choosing **create a new branch and start a pull
-   request** rather than committing to `main`.
+   Then **Commit changes**, choosing **commit directly to the `main` branch**.
+   It is your own copy, so nothing is affected until the pull request in the
+   next step.
 
-   ![The commit box at the foot of the upload page, with Create a new branch for this commit and start a pull request selected instead of the default, and a branch name filled in.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-03-commit-box.png)
-
-4. **Open the pull request.** If GitHub offered you one at the end of step 3,
-   that is this step already done.
+4. **Open the pull request.** The button on the page compares your fork's `main`
+   with the registry and lets you open it.
 
 
 
 **If you are submitting into the Lab's own namespace**, there is no fork step —
-you have write access, so you upload straight into the registry and take the same
-*create a new branch* option.
+you have write access, so you upload straight into the registry. Because that is
+the registry itself and not your own copy, choose *create a new branch and start
+a pull request* rather than committing to `main`.
 
 ### Step 5 — The checks run, and report back
 
