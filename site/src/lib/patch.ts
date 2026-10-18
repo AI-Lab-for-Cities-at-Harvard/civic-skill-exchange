@@ -18,6 +18,7 @@
 import { parseDocument, isMap } from "yaml";
 import { checkYamlSafety } from "@civic-skill-exchange/validator/yaml-safety";
 import { strings } from "../i18n/strings";
+import { inMetadata } from "./submit";
 
 /** The same rule as the validator's `splitFrontmatter` — frontmatter opens the
  *  file, and a `---` further down is a horizontal rule — but it consumes
@@ -39,10 +40,11 @@ export interface PatchedSkill {
   problems: string[];
 }
 
-/** `civic.*` lives under `metadata:`; everything else is a top-level key. The
- *  dot is part of the key, not a path separator, so it is passed whole. */
+/** `civic.*` and `version` live under `metadata:`; everything else is a
+ *  top-level key. The dot is part of the key, not a path separator, so it is
+ *  passed whole. A legacy top-level `version` is never read or written here. */
 const pathOf = (key: string): string[] =>
-  key.startsWith("civic.") ? ["metadata", key] : [key];
+  inMetadata(key) ? ["metadata", key] : [key];
 
 function keysIn(doc: ReturnType<typeof parseDocument>): string[] {
   const out: string[] = [];

@@ -62,6 +62,7 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
       tools: Array.isArray(front["allowed-tools"])
         ? front["allowed-tools"].map(text).join(", ")
         : text(front["allowed-tools"]),
+      version: text(meta.version),
       category: text(meta["civic.category"]),
       categorySecondary: text(meta["civic.category-secondary"]),
       scope: text(meta["civic.scope"]),

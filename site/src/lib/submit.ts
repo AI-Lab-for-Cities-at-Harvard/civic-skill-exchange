@@ -101,6 +101,11 @@ export function toFields(draft: Draft): Record<string, string> {
   };
 }
 
+/** Whether a `toFields` key lives under `metadata:`. The `civic.*` keys do, and
+ *  so does `version`: the validator reads `metadata.version` (#77, #239). */
+export const inMetadata = (key: string): boolean =>
+  key.startsWith("civic.") || key === "version";
+
 export function toFrontmatter(draft: Draft): Frontmatter & { metadata?: Record<string, unknown> } {
   const front: Record<string, unknown> = {};
   const meta: Record<string, unknown> = {};
@@ -109,7 +114,7 @@ export function toFrontmatter(draft: Draft): Frontmatter & { metadata?: Record<s
   // absent one.
   for (const [key, value] of Object.entries(toFields(draft))) {
     if (!value) continue;
-    if (key.startsWith("civic.")) meta[key] = value;
+    if (inMetadata(key)) meta[key] = value;
     else front[key] = value;
   }
   front.metadata = meta;
