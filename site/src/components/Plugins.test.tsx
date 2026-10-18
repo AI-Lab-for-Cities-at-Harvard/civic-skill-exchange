@@ -15,6 +15,7 @@ import { findViolations, describeViolations } from "../test/axe";
 import { parseRoute, pluginHref } from "../lib/route";
 import { PluginCard } from "./PluginCard";
 import { PluginDetail } from "./PluginDetail";
+import { DEFAULT_LOCALE, setLocale } from "../i18n/strings";
 import type { Index, PluginDetail as Detail } from "../lib/types";
 
 const detail = (over: Partial<Detail> = {}): Detail => ({
@@ -138,11 +139,39 @@ describe("the plugin page", () => {
       .toBeInTheDocument();
   });
 
-  it("warns that a community plugin is unreviewed, beside the commands", async () => {
-    serve({ "plugins/ns/housing-dashboards.json": detail() });
+  /* #230: a maintainer reviews every plugin before it merges (ruling 1 on
+     #211), so a Community plugin was reviewed — it is the Reviewed-tier
+     attestation it lacks. The skill wording, copied here, said otherwise. */
+  describe("says what a Community plugin has and has not had", () => {
+    afterEach(async () => { await setLocale(DEFAULT_LOCALE); });
+
+    it("in English", async () => {
+      serve({ "plugins/ns/housing-dashboards.json": detail() });
+      render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+      const box = await screen.findByRole("region", { name: /use this plugin/i });
+      expect(box.textContent).toMatch(/A maintainer reviewed this plugin before listing it\./);
+      expect(box.textContent).toMatch(/not been attested to the Reviewed tier/);
+      expect(box.textContent).not.toMatch(/nobody has reviewed/i);
+    });
+
+    it("in Spanish", async () => {
+      await setLocale("es");
+      serve({ "plugins/ns/housing-dashboards.json": detail() });
+      render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+      const box = await screen.findByRole("region", { name: /use este plugin/i });
+      expect(box.textContent).toMatch(/Un mantenedor revisó este plugin antes de publicarlo\./);
+      expect(box.textContent).not.toMatch(/Nadie ha revisado/);
+    });
+  });
+
+  it("says the fit guidance was written about the plugin, not a skill", async () => {
+    serve({ "plugins/ns/housing-dashboards.json": detail({
+      use_when: "A city wants its housing picture in one place.",
+    }) });
     render(<PluginDetail namespace="ns" name="housing-dashboards" />);
-    const box = await screen.findByRole("region", { name: /use this plugin/i });
-    expect(box.textContent).toMatch(/nobody has reviewed this plugin/i);
+    const fit = await screen.findByRole("region", { name: /when to use this/i });
+    expect(fit.textContent).toMatch(/Written by whoever submitted the plugin/);
+    expect(fit.textContent).not.toMatch(/submitted the skill/);
   });
 
   it("tags the files that run", async () => {
