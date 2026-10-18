@@ -1,0 +1,324 @@
+<title>{{TITLE}}</title>
+<meta name="description" content="{{DESC}}">
+<style>
+:root{
+  --paper:#f2f4f3; --surface:#fcfcfb; --surface-2:#eceeec; --ink:#14201f; --ink-2:#4a5553; --ink-3:#6f7876;
+  --rule:#d9dddb; --grid:#e6e9e7; --accent:#1d4e6b; --accent-soft:#dfe9ef;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s7:#4a3aa7; --bench:#9aa19f; --other:#b9c3c9;
+  --seq-lo:#86b6ef; --seq-hi:#1c5cab; --seq-mid:#3f7fcf; --seq-pale:#c3d9f3;
+  --good:#1a7f4b; --warn:#b26b00; --crit:#c0392b;
+  --display:"Avenir Next Condensed","Helvetica Neue","Roboto Condensed","Arial Narrow","Liberation Sans Narrow",system-ui,sans-serif; --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans","Liberation Sans",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111615; --surface:#1a1f1e; --surface-2:#232a29; --ink:#eef2f1; --ink-2:#b9c2c0; --ink-3:#8f9997;
+    --rule:#2f3736; --grid:#2a3130; --accent:#8cc0de; --accent-soft:#1d3240;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s7:#9085e9; --bench:#7d8584; --other:#4c5a63;
+    --seq-lo:#5598e7; --seq-hi:#184f95; --seq-mid:#2a6cc0; --seq-pale:#2d4d73; --good:#4cc38a; --warn:#e0a13a; --crit:#ef6b5e; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111615; --surface:#1a1f1e; --surface-2:#232a29; --ink:#eef2f1; --ink-2:#b9c2c0; --ink-3:#8f9997;
+  --rule:#2f3736; --grid:#2a3130; --accent:#8cc0de; --accent-soft:#1d3240;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s7:#9085e9; --bench:#7d8584; --other:#4c5a63;
+  --seq-lo:#5598e7; --seq-hi:#184f95; --seq-mid:#2a6cc0; --seq-pale:#2d4d73; --good:#4cc38a; --warn:#e0a13a; --crit:#ef6b5e; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;margin:0;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:clamp(16px,3vw,32px)}
+h1,h2,h3{font-family:var(--display);font-stretch:85%;text-wrap:balance;margin:0;line-height:1.1}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,td.n,th.n{font-variant-numeric:tabular-nums}
+
+/* masthead */
+header.mast{padding-block:36px 20px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.mast h1{font-size:clamp(34px,5.4vw,58px);font-weight:800;letter-spacing:-.01em;margin-top:8px}
+.mast p.lede{max-width:70ch;color:var(--ink-2);margin:12px 0 0;font-size:16px}
+.scope{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);background:var(--surface);border-radius:999px;padding:3px 10px;font-size:12.5px;color:var(--ink-2)}
+.chip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+
+nav.sect{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--rule)}
+nav.sect .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.sect a{flex:none;text-decoration:none;color:var(--ink-2);font-weight:600;font-size:13.5px;padding:12px 12px;border-bottom:2px solid transparent}
+nav.sect a:hover{color:var(--ink)}
+nav.sect a.on{color:var(--ink);border-bottom-color:var(--accent)}
+
+section.part{padding-block:44px 8px;scroll-margin-top:48px}
+.part-head{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:22px}
+.part-head .tag{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.part-head h2{font-size:clamp(26px,3.4vw,38px);font-weight:750}
+.part-head p{max-width:72ch;color:var(--ink-2);margin:0}
+
+/* findings */
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:26px}
+.finding{background:var(--surface);padding:16px 18px}
+.finding b{display:block;font-family:var(--display);font-stretch:90%;font-size:26px;font-weight:750;line-height:1.1;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.finding span{color:var(--ink-2);font-size:14px}
+
+/* KPI strip */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-block:26px 8px}
+.kpi{padding:14px 0 0;border-top:2px solid var(--ink)}
+.kpi .l{font-size:12.5px;color:var(--ink-2);font-weight:600}
+.kpi .v{font-size:30px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+.kpi .d{font-size:12.5px;color:var(--ink-3)}
+.kpi .d em{font-style:normal;font-weight:600}
+.up{color:var(--crit)} .dn{color:var(--good)}
+
+/* panels */
+.grid{display:grid;gap:18px;grid-template-columns:repeat(12,minmax(0,1fr))}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:18px 18px 14px;grid-column:span 6;min-width:0}
+.panel.w12{grid-column:span 12}.panel.w7{grid-column:span 7}.panel.w5{grid-column:span 5}.panel.w8{grid-column:span 8}.panel.w4{grid-column:span 4}
+@media (max-width:900px){.panel,.panel.w7,.panel.w5,.panel.w8,.panel.w4{grid-column:span 12}}
+.panel h3{font-size:19px;font-weight:700}
+.panel .sub{color:var(--ink-2);font-size:13.5px;margin:4px 0 12px;max-width:75ch}
+.src{font-size:11.5px;color:var(--ink-3);margin-top:12px;border-top:1px solid var(--grid);padding-top:8px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--ink-2);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legend i.ln{height:3px;border-radius:2px;width:16px}
+.legend i.dot{border-radius:50%;width:10px;height:10px}
+
+/* html bar charts */
+.bars{display:grid;gap:5px}
+.brow{display:grid;grid-template-columns:minmax(92px,128px) minmax(0,1fr) 64px;align-items:center;gap:10px;font-size:13px}
+.brow .lab{color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brow.hl .lab{color:var(--ink);font-weight:700}
+.brow.sep{margin-top:8px}
+.track{position:relative;height:18px;display:flex;gap:2px}
+.seg{height:100%;border-radius:0}
+.track .seg:last-child{border-radius:0 4px 4px 0}
+.brow .val{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+.moe{position:absolute;top:50%;height:1.5px;background:var(--ink-2);opacity:.8}
+.moe::before,.moe::after{content:"";position:absolute;top:-4px;width:1.5px;height:9px;background:var(--ink-2)}
+.moe::before{left:0}.moe::after{right:0}
+.axisnote{display:grid;grid-template-columns:minmax(92px,128px) minmax(0,1fr) 64px;gap:10px;font-size:11px;color:var(--ink-3)}
+.axisnote div:nth-child(2){display:flex;justify-content:space-between}
+
+/* dumbbell */
+.db .track{height:20px;display:block}
+.db .line{position:absolute;top:50%;height:2px;background:var(--other);transform:translateY(-1px)}
+.db .pt{position:absolute;top:50%;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 2px var(--surface)}
+.db .gridl{position:absolute;top:0;bottom:0;width:1px;background:var(--grid)}
+
+/* pyramid */
+.pyr{display:grid;gap:4px}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);gap:6px;align-items:center;font-size:12.5px}
+.prow .l{display:flex;justify-content:flex-end}
+.prow .l .seg{border-radius:4px 0 0 4px}
+.prow .r .seg{border-radius:0 4px 4px 0}
+.prow .age{text-align:center;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.prow .seg{height:16px}
+.pyrhead{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);gap:6px;font-size:12px;font-weight:600;color:var(--ink-2)}
+.pyrhead div:first-child{text-align:right}
+
+/* columns */
+.cols{display:flex;align-items:flex-end;gap:4px;height:180px;border-bottom:1px solid var(--rule);padding-top:18px}
+.col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;min-width:0;height:100%;position:relative}
+.col .bar{width:100%;max-width:26px;border-radius:4px 4px 0 0}
+.col .cv{font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums;margin-bottom:3px}
+.colx{display:flex;gap:4px;font-size:11px;color:var(--ink-3);margin-top:4px}
+.colx div{flex:1;text-align:center;min-width:0}
+
+/* svg charts */
+svg text{fill:var(--ink-3);font-family:var(--body);font-size:11px}
+svg .gl{stroke:var(--grid);stroke-width:1}
+svg .base{stroke:var(--rule);stroke-width:1}
+svg .xh{stroke:var(--ink-3);stroke-width:1}
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+
+/* small multiples */
+.sm{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.smc{border:1px solid var(--grid);border-radius:8px;padding:10px 10px 6px}
+.smc .t{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.25;min-height:2.5em}
+.smc .n{display:flex;gap:10px;font-size:12px;color:var(--ink-2);margin-top:2px;font-variant-numeric:tabular-nums}
+.smc .n b{font-size:18px;color:var(--ink)}
+
+/* tables */
+.tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--grid);white-space:nowrap}
+thead th{font-size:11.5px;font-weight:600;color:var(--ink-2);border-bottom:1px solid var(--rule);vertical-align:bottom;white-space:normal;min-width:70px}
+td.n,th.n{text-align:right}
+tr.hl td{background:var(--accent-soft)}
+td.dim{color:var(--ink-3)}
+td .m{color:var(--ink-3);font-size:11px}
+tbody tr:hover td{background:var(--surface-2)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor}
+.pill.crit{color:var(--crit)}.pill.warn{color:var(--warn)}.pill.good{color:var(--good)}.pill.neu{color:var(--ink-3)}
+
+/* map */
+.map svg{overflow:hidden}
+.map .chart{overflow:hidden}
+.map svg .cty{fill:var(--surface-2);stroke:var(--surface);stroke-width:1.2}
+.map svg .cty.ring{fill:var(--grid);stroke:var(--rule)}
+.map svg .cty.focus{fill:var(--accent-soft)}
+.map svg .stl{fill:none;stroke:var(--ink-3);stroke-width:1;stroke-dasharray:none;opacity:.6}
+.map svg .clab{font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:.06em;fill:var(--ink-3);text-transform:uppercase}
+.map svg .city{font-size:11px;fill:var(--ink);font-weight:600}
+.map svg circle.p{stroke:var(--surface);stroke-width:1.5;cursor:pointer}
+.map svg circle.p:hover{stroke:var(--ink);stroke-width:2}
+.seg-ctl{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.seg-ctl button{font:inherit;font-size:12.5px;padding:5px 12px;background:var(--surface);color:var(--ink-2);border:0;cursor:pointer}
+.seg-ctl button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+
+/* tooltip */
+#tip{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--surface);font-size:12.5px;line-height:1.4;padding:8px 10px;border-radius:6px;max-width:280px;box-shadow:0 4px 18px rgb(0 0 0/.18);opacity:0;transition:opacity .08s}
+#tip b{font-weight:700}
+#tip .r{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}
+#tip .r i{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* methods */
+.methods{columns:2 340px;column-gap:32px;font-size:13.5px;color:var(--ink-2)}
+.methods h4{font-size:13px;margin:0 0 4px;color:var(--ink);break-after:avoid}
+.methods div{break-inside:avoid;margin-bottom:14px}
+.methods ul{margin:0;padding-left:18px}
+.methods li{overflow-wrap:anywhere}
+footer{padding-block:28px 48px;color:var(--ink-3);font-size:12.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="mast"><div class="wrap">
+  <div class="eyebrow">Housing conditions · federal open data · built {{BUILT}}</div>
+  <h1>{{TITLE}}</h1>
+  <p class="lede">{{LEDE}}</p>
+  <div class="scope" id="scope"></div>
+</div></header>
+
+<nav class="sect" aria-label="Sections"><div class="wrap">
+  <a href="#overview">Overview</a><a href="#demand">1 · Demand</a><a href="#economy">2 · Construction economy</a><a href="#assisted">3 · Assisted housing</a><a href="#compare">Compare places</a><a href="#methods">Sources &amp; methods</a>
+</div></nav>
+
+<main class="wrap">
+<section class="part" id="overview">
+  <div class="part-head"><span class="tag">Overview</span><h2>{{FOCUS}} at a glance</h2>
+  <p>Headline figures for the city, with the county, state and nation for reference. ACS figures are {{L5}} five-year estimates compared with {{P5}}; dollar amounts are not adjusted for inflation.</p></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="findings" id="topfind"></div>
+</section>
+
+<section class="part" id="demand">
+  <div class="part-head"><span class="tag">1 · Demand</span><h2>Who lives here, who rents, and who is stretched</h2>
+  <p>Household growth, tenure, income and cost burden from the American Community Survey, for the city, the county, the surrounding counties and cities, and the state and nation.</p></div>
+  <div class="findings" id="find-demand"></div>
+  <div class="grid">
+    <div data-need="trend" class="panel w12"><h3>Rents and home values, year by year</h3><p class="sub">Median gross rent and median home value from the ACS 1-year estimates (places of 65,000+ only). The Census Bureau did not release standard 1-year estimates for 2020, so the line breaks there.</p>
+      <div class="seg-ctl" role="group" aria-label="Measure"><button id="tr-rent" aria-pressed="true">Median gross rent</button><button id="tr-value" aria-pressed="false">Median home value</button><button id="tr-income" aria-pressed="false">Median household income</button></div>
+      <div class="legend" id="tr-leg"></div><div class="chart" id="ch-trend"></div>
+      <div class="src">U.S. Census Bureau, ACS 1-year estimates, tables B25064, B25077, B19013. Nominal dollars.</div></div>
+
+    <div class="panel w7"><h3>Share of households renting</h3><p class="sub">Renter-occupied households as a share of all occupied units, {{P5}} (open circle) and {{L5}} (filled).</p>
+      <div class="legend"><span><i class="dot" style="background:var(--surface);box-shadow:inset 0 0 0 2px var(--ink-3)"></i>{{P5}}</span><span><i class="dot" style="background:var(--s1)"></i>{{L5}}</span></div>
+      <div class="bars db" id="ch-tenure"></div>
+      <div class="src">ACS 5-year, table B25003.</div></div>
+    <div class="panel w5"><h3>Householders by age and tenure, {{FOCUS}}</h3><p class="sub">Renter and owner households by age of the householder.</p>
+      <div class="pyrhead"><div>Renters</div><div></div><div>Owners</div></div>
+      <div class="pyr" id="ch-pyr"></div>
+      <div class="src">ACS 5-year {{L5}}, table B25007.</div></div>
+
+    <div class="panel w7"><h3>Renters paying 30% or more of income on housing</h3><p class="sub">Share of renter households whose gross rent is 30–49.9% of income (moderately burdened) or 50% or more (severely burdened). Whiskers show the 90% margin of error on the total.</p>
+      <div class="legend"><span><i style="background:var(--seq-lo)"></i>30–49.9% of income</span><span><i style="background:var(--seq-hi)"></i>50% or more</span></div>
+      <div class="bars" id="ch-burden"></div>
+      <div class="src">ACS 5-year {{L5}}, table B25070. Excludes households for which the ratio is not computed.</div></div>
+    <div class="panel w5"><h3>Homeownership by race and ethnicity</h3><p class="sub">Share of householders who own their home, {{L5}}. Groups with fewer than 300 households are omitted.</p>
+      <div class="legend"><span><i class="dot" style="background:var(--s1)"></i>White, not Hispanic</span><span><i class="dot" style="background:var(--s2)"></i>Black</span><span><i class="dot" style="background:var(--s3)"></i>Hispanic (any race)</span></div>
+      <div class="bars db" id="ch-race"></div>
+      <div class="src">ACS 5-year {{L5}}, tables B25003H, B25003B, B25003I.</div></div>
+
+    <div class="panel w6"><h3>Age of the housing stock</h3><p class="sub">Share of housing units by the decade the structure was built.</p>
+      <div class="legend" id="leg-yb"></div><div class="bars" id="ch-yb"></div>
+      <div class="src">ACS 5-year {{L5}}, table B25034.</div></div>
+    <div class="panel w6"><h3>Type of housing</h3><p class="sub">Share of housing units by number of units in the structure.</p>
+      <div class="legend" id="leg-st"></div><div class="bars" id="ch-st"></div>
+      <div class="src">ACS 5-year {{L5}}, table B25024.</div></div>
+  </div>
+</section>
+
+<section class="part" id="economy">
+  <div class="part-head"><span class="tag">2 · Construction economy</span><h2>What it costs to build, and who builds it</h2>
+  <p>Material prices from the Producer Price Index (national only), construction employment and wages from QCEW and OEWS for each county and metro, and the rent a local wage can support.</p></div>
+  <div class="findings" id="find-econ"></div>
+  <div class="grid">
+    <div data-need="bls" class="panel w7"><h3>Material costs have outrun construction pay</h3><p class="sub">Index, January 2020 = 100. The PPI for inputs to new residential construction against average hourly earnings in construction and consumer prices, all U.S.</p>
+      <div class="legend" id="cw-leg"></div><div class="chart" id="ch-costwage"></div>
+      <div class="src">BLS PPI series WPUIP231100; CES series CEU2000000003; CPI-U series CUUR0000SA0. Not seasonally adjusted. Latest months are preliminary.</div></div>
+    <div data-need="hwage" class="panel w5"><h3>The housing wage</h3><p class="sub">Hourly pay needed to rent a two-bedroom unit at HUD's Fair Market Rent without spending more than 30% of income (full-time, 2,080 hours), against the median hourly wage for all jobs in the matching metro.</p>
+      <div class="legend"><span><i style="background:var(--s2)"></i>Housing wage (2BR FMR)</span><span><i style="background:var(--s1)"></i>Median wage, all occupations</span></div>
+      <div class="bars" id="ch-hwage"></div>
+      <div class="src">HUD Fair Market Rents; BLS OEWS. Counties outside a metro have no metro wage estimate and show the housing wage only.</div></div>
+
+    <div data-need="bls" class="panel w12"><h3>Construction material prices</h3><p class="sub">Producer price indexes rebased to January 2020 = 100, monthly since 2016. The figure on each card is the change since January 2020; the second is the change over the past year.</p>
+      <div class="sm" id="ch-ppi"></div>
+      <div class="src">BLS Producer Price Index, commodity data, not seasonally adjusted, national. Latest four months are preliminary and subject to revision.</div></div>
+
+    <div data-need="qcew" class="panel w7"><h3>Building construction employment</h3><p class="sub">Private employment in construction of buildings (NAICS 236), annual average, indexed to {{QY0}} = 100. Hover for the job count.</p>
+      <div class="legend" id="qc-leg"></div><div class="chart" id="ch-qcew"></div>
+      <div class="src">BLS QCEW annual averages, private ownership. NAICS 236 is the headline because BLS often suppresses the all-construction total (NAICS 23) for smaller areas.</div></div>
+    <div data-need="qcew" class="panel w5"><h3>Construction pay versus all private jobs</h3><p class="sub">Average weekly wage in {{QY}}: construction of buildings (NAICS 236) and all private industries.</p>
+      <div class="legend"><span><i style="background:var(--s2)"></i>Construction of buildings</span><span><i style="background:var(--bench)"></i>All private industries</span></div>
+      <div class="bars" id="ch-qwage"></div>
+      <div class="src">BLS QCEW, {{QY}} annual averages.</div></div>
+
+    <div data-need="oews" class="panel w12"><h3>Construction trades: employment and median pay by metro</h3><p class="sub">May {{OY}} median annual wage, with the change since May {{OY0}} (nominal). Blank cells are estimates BLS did not publish for that area.</p>
+      <div class="tscroll"><table id="tb-oews"></table></div>
+      <div class="src">BLS Occupational Employment and Wage Statistics, cross-industry. Metro areas can include counties outside the comparison region.</div></div>
+
+    <div data-need="bls" class="panel w12"><h3>Labor market and shelter prices</h3><p class="sub">Construction employment from the monthly CES survey, unemployment rates from LAUS, and shelter inflation from the CPI.</p>
+      <div class="tscroll"><table id="tb-labor"></table></div><p id="cpi-note" style="font-size:13px;color:var(--ink-2);margin:12px 0 0;max-width:90ch"></p>
+      <div class="src">BLS CES (mining, logging &amp; construction for metros; construction for the state and U.S.), LAUS, CPI-U. Not seasonally adjusted.</div></div>
+  </div>
+</section>
+
+<section class="part" id="assisted">
+  <div class="part-head"><span class="tag">3 · Assisted housing</span><h2>Federally assisted rental housing</h2>
+  <p>Project-based Section 8, Section 202 (elderly) and 811 (disabilities), public housing, Housing Choice Vouchers and Low-Income Housing Tax Credit properties, from HUD's open data.</p></div>
+  <div class="findings" id="find-hud"></div>
+  <div class="grid">
+    <div data-need="hud" class="panel w7"><h3>Assisted units per 1,000 renter households</h3><p class="sub">HUD rental assistance by program, per 1,000 renter-occupied households (ACS {{L5}}). LIHTC is shown on its own row because tax-credit units often also carry Section 8 or voucher assistance.</p>
+      <div class="legend" id="leg-hud"></div><div class="bars" id="ch-hud"></div>
+      <div class="src">HUD Multifamily Assisted, Public Housing Developments, Housing Choice Vouchers by Tract, LIHTC database. Voucher counts are a floor: HUD suppresses tracts with fewer than 11 vouchers.</div></div>
+    <div data-need="hud" class="panel w5"><h3>Expiring project-based contracts, {{HOME}}</h3><p class="sub">Assisted units by the year the property's first HUD rental assistance contract expires. Most are renewed, but each expiration is a point where an owner can opt out.</p>
+      <div id="ch-exp"></div>
+      <div class="src">HUD Multifamily Properties – Assisted, contract 1 expiration date.</div></div>
+
+    <div data-need="map" class="panel w7 map"><h3>Where assisted properties are</h3><p class="sub">HUD multifamily assisted properties, public housing developments and LIHTC properties. Dot size shows units. Hover a dot for details.</p>
+      <div class="legend"><span><i class="dot" style="background:var(--s1)"></i>HUD multifamily (Section 8, 202, 811)</span><span><i class="dot" style="background:var(--s2)"></i>Public housing</span><span><i class="dot" style="background:var(--s3)"></i>LIHTC</span></div>
+      <div class="chart" id="ch-map"></div>
+      <div class="src">HUD open data; county boundaries from the Census Bureau cartographic files (us-atlas).</div></div>
+    <div data-need="hud" class="panel w5"><h3>Tax-credit production, {{HOME}}</h3><p class="sub">Low-income units placed in service, by five-year period.</p>
+      <div id="ch-lihtc"></div>
+      <div class="src">HUD LIHTC database. The most recent years are usually incomplete. Duplicate project records were merged.</div></div>
+
+    <div data-need="hud" class="panel w12"><h3>Public housing authorities in the region</h3><p class="sub">Public housing units and Housing Choice Vouchers under contract, with HUD's Public Housing Assessment System designation.</p>
+      <div class="tscroll"><table id="tb-pha"></table></div>
+      <div class="src">HUD Public Housing Authorities layer. Authorities with no public housing administer vouchers only.</div></div>
+
+    <div data-need="hud" class="panel w12"><h3>HUD multifamily assisted properties, {{HOME}}</h3><p class="sub">Every property in HUD's assisted multifamily portfolio in the county, sorted by contract expiration.</p>
+      <div class="tscroll"><table id="tb-mf"></table></div>
+      <div class="src">HUD Multifamily Properties – Assisted. REAC score is the most recent physical inspection (0–100). Resident income and rent are HUD averages; blank where HUD suppresses them.</div></div>
+  </div>
+</section>
+
+<section class="part" id="compare">
+  <div class="part-head"><span class="tag">Compare places</span><h2>All demand indicators, side by side</h2>
+  <p>ACS 5-year {{L5}} estimates for every geography, with the 90% margin of error for the three cities. Change columns compare with {{P5}}.</p></div>
+  <div class="panel w12"><div class="tscroll"><table id="tb-compare"></table></div>
+  <div class="src">U.S. Census Bureau, ACS 5-year {{L5}} and {{P5}}. Dollar values are in each period's final-year dollars.</div></div>
+</section>
+
+<section class="part" id="methods">
+  <div class="part-head"><span class="tag">Sources &amp; methods</span><h2>How this was built</h2></div>
+  <div class="methods" id="methods-body"></div>
+</section>
+</main>
+<footer><div class="wrap">Built {{BUILT}} from Census, BLS and HUD open data. Estimates carry sampling error; treat small-area ACS figures as indicative.</div></footer>
+<div id="tip" role="tooltip"></div>
+
+<script id="data" type="application/json">{{DATA}}</script>
+<script>
+{{JS}}
+</script>
