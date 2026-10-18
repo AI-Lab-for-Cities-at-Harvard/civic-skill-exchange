@@ -88,6 +88,7 @@ export const strings: Strings = {
     language: {
       en: "Inglés",
       es: "Español",
+      "es-419": "Español (Latam)",
     },
 
     sensitivity: {
