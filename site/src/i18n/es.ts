@@ -702,7 +702,7 @@ export const strings: Strings = {
 
   bands: {
     tiers: {
-      heading: "Qué significa y qué no significa una publicación aquí",
+      heading: "Dos niveles:",
       communityTerm: "Comunidad",
       community:
         "Está bien formada y no tiene ningún defecto mecánico. Se integra una " +

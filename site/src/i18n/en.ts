@@ -810,7 +810,7 @@ export const en = {
   /** The full-bleed sections above and below the catalogue. */
   bands: {
     tiers: {
-      heading: "What a listing here does and does not mean",
+      heading: "Two Tiers:",
       communityTerm: "Community",
       community:
         "Well-formed, and nothing mechanical is wrong with it. Merged once it " +
