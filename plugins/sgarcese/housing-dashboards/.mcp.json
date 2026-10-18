@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "census": {
+      "type": "http",
+      "url": "https://census-mcp.responsive.city/mcp"
+    },
+    "bls": {
+      "type": "http",
+      "url": "https://bls-mcp.responsive.city/mcp"
+    },
+    "hud": {
+      "type": "http",
+      "url": "https://hud.responsive.city/mcp"
+    },
+    "hud-user": {
+      "type": "http",
+      "url": "https://hud-user.responsive.city/mcp"
+    },
+    "geo": {
+      "type": "http",
+      "url": "https://geo-mcp.responsive.city/mcp"
+    }
+  }
+}

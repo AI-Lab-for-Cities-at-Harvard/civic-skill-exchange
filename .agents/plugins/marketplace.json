@@ -72,6 +72,18 @@
         "authentication": "ON_USE"
       },
       "category": "Data Analysis"
+    },
+    {
+      "name": "sgarcese-housing-dashboards",
+      "source": {
+        "source": "local",
+        "path": "./plugins/sgarcese/housing-dashboards"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Data Analysis"
     }
   ]
 }
