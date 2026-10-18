@@ -62,10 +62,10 @@ findings('#topfind', F.overview); findings('#find-demand', F.demand); findings('
   const f = dm(FOCUS), fp = dp(FOCUS), s = dm(STATE), us = dm(NATION), h = HOME ? dm(HOME) : null;
   const ref = (h && HOME !== FOCUS) ? ['county', h] : ['state', s];
   const k = [
-    kpi(`Households, ${G[FOCUS].name}`, n0(f.hh), `<em>${sgn(chg(f.hh, fp.hh))}</em> since ${D.acs.prior5 - 4}–${String(D.acs.prior5).slice(2)}; population ${sgn(chg(f.pop, fp.pop))}`),
+    kpi(`Households, ${G[FOCUS].name}`, n0(f.hh), `<em>${sgn(chg(f.hh, fp.hh))}</em> since ${esc(D.acs.prior5 - 4)}–${esc(String(D.acs.prior5).slice(2))}; population ${sgn(chg(f.pop, fp.pop))}`),
     kpi('Median gross rent', usd(f.med_rent), `<em>${sgn(chg(f.med_rent, fp.med_rent))}</em> · ${ref[0]} ${usd(ref[1].med_rent)} · U.S. ${usd(us.med_rent)}`),
     kpi('Median home value', usdk(f.med_value), `<em>${sgn(chg(f.med_value, fp.med_value))}</em> · ${ref[0]} ${usdk(ref[1].med_value)} · state ${usdk(s.med_value)}`),
-    kpi('Renters cost-burdened', pct(f.rent_burden30, 0), `±${f.rent_burden30_moe ?? '–'} pts · ${pct(f.rent_burden50, 0)} pay half or more`)];
+    kpi('Renters cost-burdened', pct(f.rent_burden30, 0), `±${esc(f.rent_burden30_moe ?? '–')} pts · ${pct(f.rent_burden50, 0)} pay half or more`)];
   const ppi = has.bls && E.ppi.find(p => p.id === 'WPUIP231100');
   if (ppi) k.push(kpi('Residential input prices', sgn(ppi.since2020), `since Jan 2020 (U.S. PPI) · ${sgn(ppi.yoy)} in the past year`));
   const hc = has.hud && H.counties[HOME || firstCounty];
@@ -153,16 +153,16 @@ function spark(el, pts, p) {
   const d = pts.map((q, i) => (i ? 'L' : 'M') + X(q[0]).toFixed(1) + ',' + Y(q[1]).toFixed(1)).join('');
   const area = d + `L${X(x1)},${Y(lo)}L${X(x0)},${Y(lo)}Z`;
   const last = pts.at(-1);
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><path d="${area}" fill="var(--s1)" opacity=".1"/><line class="base" x1="0" x2="${W}" y1="${Y(100)}" y2="${Y(100)}" style="stroke:var(--ink-3);stroke-width:.75;opacity:.6"/><path d="${d}" fill="none" stroke="var(--s1)" stroke-width="1.75" stroke-linejoin="round"/><circle cx="${X(last[0])}" cy="${Y(last[1])}" r="3.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="1.5"/><text x="0" y="${H - 1}" style="font-size:9.5px">2016</text><text x="${W}" y="${H - 1}" text-anchor="end" style="font-size:9.5px">${p.last_date.slice(0, 4)}</text><rect width="${W}" height="${H}" fill="transparent"/></svg>`;
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}"><path d="${area}" fill="var(--s1)" opacity=".1"/><line class="base" x1="0" x2="${W}" y1="${Y(100)}" y2="${Y(100)}" style="stroke:var(--ink-3);stroke-width:.75;opacity:.6"/><path d="${d}" fill="none" stroke="var(--s1)" stroke-width="1.75" stroke-linejoin="round"/><circle cx="${X(last[0])}" cy="${Y(last[1])}" r="3.5" fill="var(--s1)" stroke="var(--surface)" stroke-width="1.5"/><text x="0" y="${H - 1}" style="font-size:9.5px">2016</text><text x="${W}" y="${H - 1}" text-anchor="end" style="font-size:9.5px">${esc(p.last_date.slice(0, 4))}</text><rect width="${W}" height="${H}" fill="transparent"/></svg>`;
   const svg = el.querySelector('svg');
   svg.addEventListener('mousemove', e => { const r = svg.getBoundingClientRect(), mx = (e.clientX - r.left) * W / r.width;
     const q = pts.reduce((a, b) => Math.abs(X(b[0]) - mx) < Math.abs(X(a[0]) - mx) ? b : a);
-    showTip(e, `<b>${esc(p.label)}</b><br>${dlab(q[0])}: ${f1.format(q[1])} (Jan 2020 = 100)<br><span style="opacity:.75">Peak ${p.peak_date}; ${sgn(p.from_peak)} from peak</span>`); });
+    showTip(e, `<b>${esc(p.label)}</b><br>${dlab(q[0])}: ${f1.format(q[1])} (Jan 2020 = 100)<br><span style="opacity:.75">Peak ${esc(p.peak_date)}; ${sgn(p.from_peak)} from peak</span>`); });
   svg.addEventListener('mouseleave', hideTip);
 }
 function columns(el, data, {fmt = n0, color, hlFn, tipFn}) {
   const M = Math.max(...data.map(d => d.v));
-  el.innerHTML = `<div class="cols">${data.map(d => `<div class="col" data-tip="${esc(tipFn(d))}"><div class="cv">${d.v && (!hlFn || hlFn(d) || d.v === M) ? fmt(d.v) : ''}</div><div class="bar" style="height:${d.v / M * 82}%;background:${hlFn && hlFn(d) ? color[0] : color[1]}"></div></div>`).join('')}</div><div class="colx">${data.map(d => `<div>${d.lab}</div>`).join('')}</div>`;
+  el.innerHTML = `<div class="cols">${data.map(d => `<div class="col" data-tip="${esc(tipFn(d))}"><div class="cv">${d.v && (!hlFn || hlFn(d) || d.v === M) ? fmt(d.v) : ''}</div><div class="bar" style="height:${d.v / M * 82}%;background:${hlFn && hlFn(d) ? color[0] : color[1]}"></div></div>`).join('')}</div><div class="colx">${data.map(d => `<div>${esc(d.lab)}</div>`).join('')}</div>`;
   bindTips(el);
 }
 
@@ -186,8 +186,8 @@ function drawTenure() {
   const lo = Math.max(0, Math.floor((Math.min(...vals) - 3) / 10) * 10), hi = Math.min(100, Math.ceil((Math.max(...vals) + 3) / 10) * 10);
   const ticks = []; for (let t = lo; t <= hi; t += 10) ticks.push(t);
   dumbbell($('#ch-tenure'), ORDER.map(id => ({label: G[id].name, hl: isHL(id), sep: isSep(id), val: pct(dm(id).renter_share, 0),
-    pts: [{v: dp(id).renter_share, ring: 'var(--ink-3)', tip: `<b>${esc(G[id].name)}</b><br>${D.acs.prior5 - 4}–${D.acs.prior5}: ${pct(dp(id).renter_share)} renters`},
-          {v: dm(id).renter_share, c: gcol(id) === 'var(--other)' ? 'var(--s1)' : gcol(id), tip: `<b>${esc(G[id].name)}</b><br>${D.acs.latest5 - 4}–${D.acs.latest5}: ${pct(dm(id).renter_share)} ± ${dm(id).renter_share_moe} pts<br>${n0(dm(id).renters)} renter households`}]})),
+    pts: [{v: dp(id).renter_share, ring: 'var(--ink-3)', tip: `<b>${esc(G[id].name)}</b><br>${esc(D.acs.prior5 - 4)}–${esc(D.acs.prior5)}: ${pct(dp(id).renter_share)} renters`},
+          {v: dm(id).renter_share, c: gcol(id) === 'var(--other)' ? 'var(--s1)' : gcol(id), tip: `<b>${esc(G[id].name)}</b><br>${esc(D.acs.latest5 - 4)}–${esc(D.acs.latest5)}: ${pct(dm(id).renter_share)} ± ${esc(dm(id).renter_share_moe)} pts<br>${n0(dm(id).renters)} renter households`}]})),
     {min: lo, max: hi, fmt: v => v + '%', ticks});
 }
 function drawPyr() {
@@ -252,11 +252,11 @@ function drawQwage() {
   if (!has.qcew) return;
   const A = E.qcew.areas, M = Math.max(...A.map(a => Math.max(a.latest.wage236 || 0, a.latest.wage_private || 0))) * 1.05;
   barRows($('#ch-qwage'), A.map(a => ({label: a.name, hl: a.id === (HOME || firstCounty), sep: a.id === STATE + '000', val: usd(a.latest.wage236),
-    segs: [{v: a.latest.wage236, c: 'var(--s2)', tip: `<b>${esc(a.name)}</b><br>Construction of buildings: ${usd(a.latest.wage236)}/wk (${sgn(a.wage236_chg)} since ${E.qcew.years[0]})<br>${n0(a.latest.emp236)} jobs, ${n0(a.latest.estabs236)} establishments`}]})), {max: M, fmt: usd});
+    segs: [{v: a.latest.wage236, c: 'var(--s2)', tip: `<b>${esc(a.name)}</b><br>Construction of buildings: ${usd(a.latest.wage236)}/wk (${sgn(a.wage236_chg)} since ${esc(E.qcew.years[0])})<br>${n0(a.latest.emp236)} jobs, ${n0(a.latest.estabs236)} establishments`}]})), {max: M, fmt: usd});
   const rows = $('#ch-qwage').querySelectorAll('.brow');
   A.forEach((a, i) => { const t = rows[i].querySelector('.track'); t.style.flexDirection = 'column'; t.style.height = '24px';
     const s0 = t.querySelector('.seg'); s0.style.height = '12px'; s0.style.borderRadius = '0 4px 4px 0';
-    t.insertAdjacentHTML('beforeend', `<div class="seg" style="height:8px;width:${(a.latest.wage_private || 0) / M * 100}%;background:var(--bench);border-radius:0 3px 3px 0" data-tip="<b>${esc(a.name)}</b><br>All private: ${usd(a.latest.wage_private)}/wk (${sgn(a.wage_private_chg)} since ${E.qcew.years[0]})"></div>`); });
+    t.insertAdjacentHTML('beforeend', `<div class="seg" style="height:8px;width:${(a.latest.wage_private || 0) / M * 100}%;background:var(--bench);border-radius:0 3px 3px 0" data-tip="<b>${esc(a.name)}</b><br>All private: ${usd(a.latest.wage_private)}/wk (${sgn(a.wage_private_chg)} since ${esc(E.qcew.years[0])})"></div>`); });
   bindTips($('#ch-qwage'));
 }
 function drawHwage() {
@@ -274,7 +274,7 @@ function drawOews() {
   const A = E.oews.areas;
   let h = `<thead><tr><th>Occupation</th>${A.map(a => `<th class="n">${esc(a.name)}</th>`).join('')}</tr></thead><tbody>`;
   E.oews.occs.forEach(o => {
-    h += `<tr${o.code === '47-0000' ? ' class="hl"' : ''}><td>${esc(o.label)} <span class="m">${o.code}</span></td>` + o.vals.map(v => v.a_median ? `<td class="n">${usd(v.a_median)} <span class="m">${sgn(v.chg)}</span><br><span class="m">${n0(v.emp)} jobs</span></td>` : `<td class="n dim">–</td>`).join('') + '</tr>';
+    h += `<tr${o.code === '47-0000' ? ' class="hl"' : ''}><td>${esc(o.label)} <span class="m">${esc(o.code)}</span></td>` + o.vals.map(v => v.a_median ? `<td class="n">${usd(v.a_median)} <span class="m">${sgn(v.chg)}</span><br><span class="m">${n0(v.emp)} jobs</span></td>` : `<td class="n dim">–</td>`).join('') + '</tr>';
   });
   $('#tb-oews').innerHTML = h + '</tbody>';
 }
@@ -282,9 +282,9 @@ function drawLabor() {
   if (!has.bls) return;
   const la = E.laus || {};
   let h = `<thead><tr><th>Area</th><th class="n">Construction jobs, latest (thousands)</th><th class="n">Change over year</th><th class="n">12-mo avg vs 2019</th><th>Unemployment for</th><th class="n">Unemployment, latest</th><th class="n">12-mo avg</th><th class="n">2019 avg</th></tr></thead><tbody>`;
-  const lausCell = id => { const l = la[id]; return l ? `<td>${esc(G[id].name)}</td><td class="n">${pct(l.last)} <span class="m">${l.last_date}</span></td><td class="n">${pct(l.avg12)}</td><td class="n">${pct(l.avg2019)}</td>` : '<td class="dim">–</td><td></td><td></td><td></td>'; };
+  const lausCell = id => { const l = la[id]; return l ? `<td>${esc(G[id].name)}</td><td class="n">${pct(l.last)} <span class="m">${esc(l.last_date)}</span></td><td class="n">${pct(l.avg12)}</td><td class="n">${pct(l.avg2019)}</td>` : '<td class="dim">–</td><td></td><td></td><td></td>'; };
   (E.ces || []).forEach(c => { const lid = c.counties ? c.counties.find(x => la[x]) : (c.name === 'United States' ? NATION : STATE);
-    h += `<tr${c.counties && c.counties.includes(HOME || firstCounty) ? ' class="hl"' : ''}><td>${esc(c.name)}</td><td class="n">${f1.format(c.last)} <span class="m">${c.last_date}</span></td><td class="n">${sgn(c.yoy)}</td><td class="n">${sgn(c.vs2019)}</td>${lausCell(lid)}</tr>`; });
+    h += `<tr${c.counties && c.counties.includes(HOME || firstCounty) ? ' class="hl"' : ''}><td>${esc(c.name)}</td><td class="n">${f1.format(c.last)} <span class="m">${esc(c.last_date)}</span></td><td class="n">${sgn(c.yoy)}</td><td class="n">${sgn(c.vs2019)}</td>${lausCell(lid)}</tr>`; });
   ORDER.filter(id => G[id].kind === 'place' && la[id]).forEach(id => h += `<tr><td>${esc(G[id].name)}</td><td class="dim n">–</td><td class="dim n">–</td><td class="dim n">–</td>${lausCell(id)}</tr>`);
   $('#tb-labor').innerHTML = h + '</tbody>';
   const cy = E.cpi || {};
@@ -292,7 +292,7 @@ function drawLabor() {
   if (cy.shelter_region && cy.shelter_us) bits.push(`shelter ${sgn(cy.shelter_region[1])} ${esc(cy.region)} vs ${sgn(cy.shelter_us[1])} U.S.`);
   if (cy.rent_region && cy.rent_us) bits.push(`rent of primary residence ${sgn(cy.rent_region[1])} ${esc(cy.region)} vs ${sgn(cy.rent_us[1])} U.S.`);
   if (cy.all_us) bits.push(`all items ${sgn(cy.all_us[1])} U.S.`);
-  if (bits.length) $('#cpi-note').innerHTML = `<b>Consumer prices</b>, CPI-U, change over the year to ${cy.all_us[0]}: ${bits.join('; ').replace(/\.$/, '')}.`;
+  if (bits.length) $('#cpi-note').innerHTML = `<b>Consumer prices</b>, CPI-U, change over the year to ${esc(cy.all_us[0])}: ${bits.join('; ').replace(/\.$/, '')}.`;
 }
 
 /* ---------- 3. Assisted housing ---------- */
@@ -306,8 +306,8 @@ function drawHud() {
   const M = Math.max(...ids.map(id => Math.max(tot(H.counties[id]), H.counties[id].per1000.lihtc || 0))) * 1.05;
   barRows($('#ch-hud'), ids.flatMap(id => { const c = H.counties[id]; return [
     {label: c.name, hl: id === HC, sep: id !== HC, val: f0.format(tot(c)),
-      segs: PROG.map(p => ({v: c.per1000[p[0]], c: p[2], tip: `<b>${esc(c.name)}</b><br>${p[1]}: ${n0(c[p[0]])} units (${f1.format(c.per1000[p[0]] || 0)} per 1,000 renters)${p[0] === 'hcv' ? `<br>Floor: ${c.hcv_tracts_reported} of ${c.tracts} tracts reported; local PHAs report ${n0(c.hcv_pha)} vouchers` : ''}`}))},
-    {label: 'LIHTC', lihtc: true, val: f0.format(c.per1000.lihtc || 0), segs: [{v: c.per1000.lihtc, c: 'var(--other)', tip: `<b>${esc(c.name)}</b><br>LIHTC: ${n0(c.lihtc)} low-income units in ${c.lihtc_projects} projects`}]}]; }), {max: M});
+      segs: PROG.map(p => ({v: c.per1000[p[0]], c: p[2], tip: `<b>${esc(c.name)}</b><br>${p[1]}: ${n0(c[p[0]])} units (${f1.format(c.per1000[p[0]] || 0)} per 1,000 renters)${p[0] === 'hcv' ? `<br>Floor: ${esc(c.hcv_tracts_reported)} of ${esc(c.tracts)} tracts reported; local PHAs report ${n0(c.hcv_pha)} vouchers` : ''}`}))},
+    {label: 'LIHTC', lihtc: true, val: f0.format(c.per1000.lihtc || 0), segs: [{v: c.per1000.lihtc, c: 'var(--other)', tip: `<b>${esc(c.name)}</b><br>LIHTC: ${n0(c.lihtc)} low-income units in ${esc(c.lihtc_projects)} projects`}]}]; }), {max: M});
   $('#ch-hud').querySelectorAll('.brow').forEach(r => { if (r.querySelector('.lab').textContent === 'LIHTC') { r.querySelector('.lab').style.paddingLeft = '14px'; r.querySelector('.lab').style.color = 'var(--ink-3)'; r.querySelector('.track').style.height = '10px'; } });
 }
 function drawExp() {
@@ -317,7 +317,7 @@ function drawExp() {
   if (!mf.length) { $('#ch-exp').innerHTML = '<p class="sub">No active HUD multifamily contracts recorded in this county.</p>'; return; }
   const y1 = Math.max(...mf.map(m => m.exp_year)); const data = [];
   for (let y = now; y <= y1; y++) { const ps = mf.filter(m => m.exp_year === y); data.push({y, v: ps.reduce((s, m) => s + (m.units || 0), 0), ps, lab: (y - now) % 2 === 0 ? "'" + String(y).slice(2) : ''}); }
-  columns($('#ch-exp'), data, {color: ['var(--s2)', 'var(--s1)'], hlFn: d => d.y <= now + 4, tipFn: d => `<b>${d.y}</b><br>${n0(d.v)} assisted units` + d.ps.map(p => `<br>${esc(p.name)} (${p.units})`).join('')});
+  columns($('#ch-exp'), data, {color: ['var(--s2)', 'var(--s1)'], hlFn: d => d.y <= now + 4, tipFn: d => `<b>${esc(d.y)}</b><br>${n0(d.v)} assisted units` + d.ps.map(p => `<br>${esc(p.name)} (${esc(p.units)})`).join('')});
   $('#ch-exp').insertAdjacentHTML('beforeend', `<div class="legend" style="margin-top:10px"><span><i style="background:var(--s2)"></i>Expires ${now}–${now + 4}</span><span><i style="background:var(--s1)"></i>Later</span></div>`);
 }
 function drawLihtc() {
@@ -326,7 +326,7 @@ function drawLihtc() {
   if (!li.length) { $('#ch-lihtc').innerHTML = '<p class="sub">No LIHTC properties recorded in this county.</p>'; return; }
   const y0 = Math.floor(Math.min(...li.map(l => l.yr)) / 5) * 5, y1 = Math.floor(new Date().getFullYear() / 5) * 5 - 5; const data = [];
   for (let y = y0; y <= Math.max(y1, y0); y += 5) { const ps = li.filter(l => l.yr >= y && l.yr < y + 5); data.push({y, v: ps.reduce((s, l) => s + (l.li || 0), 0), ps, lab: String(y)}); }
-  columns($('#ch-lihtc'), data, {color: ['var(--s3)', 'var(--s3)'], tipFn: d => `<b>${d.y}–${d.y + 4}</b><br>${n0(d.v)} low-income units` + d.ps.map(p => `<br>${esc(p.name)}, ${esc(p.city)} (${p.li ?? '?'})`).join('')});
+  columns($('#ch-lihtc'), data, {color: ['var(--s3)', 'var(--s3)'], tipFn: d => `<b>${esc(d.y)}–${esc(d.y + 4)}</b><br>${n0(d.v)} low-income units` + d.ps.map(p => `<br>${esc(p.name)}, ${esc(p.city)} (${esc(p.li ?? '?')})`).join('')});
 }
 function drawMap() {
   if (!has.map) return;
@@ -345,7 +345,7 @@ function drawMap() {
   el.querySelectorAll('circle.p').forEach(ci => { const p = pts[+ci.dataset.i];
     const t = p.k === 'mf' ? `<b>${esc(p.name)}</b><br>${esc(p.city)} · HUD multifamily<br>${n0(p.units)} assisted units · ${esc(p.group)}<br>${esc(p.program || '')}${p.exp ? ' · expires ' + esc(p.exp) : ''}`
       : p.k === 'ph' ? `<b>${esc(p.name)}</b><br>${esc(p.city)} · Public housing<br>${n0(p.units)} units · ${esc(p.pha)}`
-      : `<b>${esc(p.name)}</b><br>${esc(p.city)} · LIHTC${p.yr ? ', placed in service ' + p.yr : ''}<br>${n0(p.li)} low-income of ${n0(p.units)} units`;
+      : `<b>${esc(p.name)}</b><br>${esc(p.city)} · LIHTC${p.yr ? ', placed in service ' + esc(p.yr) : ''}<br>${n0(p.li)} low-income of ${n0(p.units)} units`;
     ci.addEventListener('mouseenter', e => showTip(e, t)); ci.addEventListener('mousemove', moveTip); ci.addEventListener('mouseleave', hideTip); });
 }
 function drawPha() {
@@ -366,7 +366,7 @@ function drawMf() {
 
 /* ---------- Compare table ---------- */
 function drawCompare() {
-  const moe = (d, v) => d.kind === 'place' && v != null ? ` <span class="m">±${typeof v === 'number' && v > 50 ? n0(v) : v}</span>` : '';
+  const moe = (d, v) => d.kind === 'place' && v != null ? ` <span class="m">±${typeof v === 'number' && v > 50 ? n0(v) : esc(v)}</span>` : '';
   const cols = [
     ['Population', d => n0(d.now.pop), d => sgn(chg(d.now.pop, d.prev.pop))],
     ['Households', d => n0(d.now.hh), d => sgn(chg(d.now.hh, d.prev.hh))],
@@ -395,7 +395,7 @@ function drawMethods() {
   $('#methods-body').innerHTML = `
   <div><h4>Sources</h4><ul>${src}</ul></div>
   <div><h4>Geography</h4>${esc(G[FOCUS].name)} is the focus${HOME && HOME !== FOCUS ? `, inside ${esc(G[HOME].name)}` : ''}. The comparison region is ${esc(ORDER.filter(id => !isHL(id) && id !== STATE && id !== NATION).map(id => G[id].name).join(', '))}. BLS metro series use metropolitan statistical areas, which can include counties outside this region. The Producer Price Index is national only.</div>
-  <div><h4>ACS estimates</h4>Snapshot figures use 5-year estimates so cities and counties are compared on the same basis; ${D.acs.latest5 - 4}–${D.acs.latest5} is compared with ${D.acs.prior5 - 4}–${D.acs.prior5}, which do not overlap. Margins of error are at 90% confidence; margins for derived shares use the Census Bureau's approximation for proportions. Cost burden excludes households for which it is not computed. The 1-year trend covers only places of 65,000 or more and has no 2020 release.</div>
+  <div><h4>ACS estimates</h4>Snapshot figures use 5-year estimates so cities and counties are compared on the same basis; ${esc(D.acs.latest5 - 4)}–${esc(D.acs.latest5)} is compared with ${esc(D.acs.prior5 - 4)}–${esc(D.acs.prior5)}, which do not overlap. Margins of error are at 90% confidence; margins for derived shares use the Census Bureau's approximation for proportions. Cost burden excludes households for which it is not computed. The 1-year trend covers only places of 65,000 or more and has no 2020 release.</div>
   <div><h4>Construction economy</h4>PPI indexes are rebased to January 2020 = 100. QCEW figures are private-ownership annual averages. The housing wage is the 2-bedroom Fair Market Rent × 12 ÷ 30% ÷ 2,080 hours, compared with the OEWS median hourly wage for the matching metro.</div>
   <div><h4>Assisted housing</h4>Project-based counts are assisted units in HUD's multifamily portfolio; 202/811 includes PRAC and 811 PRA properties and the rest are Section 8 contracts. Public housing units are ACC units by development. Voucher counts sum HUD's tract-level data, which suppresses tracts with fewer than 11 vouchers, so totals are minimums (PHA-reported vouchers appear in the tooltip). LIHTC duplicates (same project name and city) are merged; LIHTC is shown separately because tax-credit units often carry other assistance.</div>
   ${notes ? `<div><h4>Notes for this edition</h4><ul>${notes}</ul></div>` : ''}`;

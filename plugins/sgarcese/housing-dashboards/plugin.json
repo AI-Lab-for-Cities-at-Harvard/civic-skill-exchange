@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "sgarcese-housing-dashboards",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Housing dashboards, refreshes and briefs for any U.S. city or county from Census ACS, BLS and HUD open data: demand and tenure, construction costs and labor, and federally assisted housing, compared with the surrounding region, state and nation.",
   "author": {
     "name": "Santiago Garcés"
