@@ -1,0 +1,25 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "census": {
+      "type": "streamable-http",
+      "url": "https://census-mcp.responsive.city/mcp"
+    },
+    "bls": {
+      "type": "streamable-http",
+      "url": "https://bls-mcp.responsive.city/mcp"
+    },
+    "hud": {
+      "type": "streamable-http",
+      "url": "https://hud.responsive.city/mcp"
+    },
+    "hud-user": {
+      "type": "streamable-http",
+      "url": "https://hud-user.responsive.city/mcp"
+    },
+    "geo": {
+      "type": "streamable-http",
+      "url": "https://geo-mcp.responsive.city/mcp"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "sgarcese-housing-dashboards",
+  "version": "0.3.3",
+  "description": "Housing dashboards, refreshes and briefs for any U.S. city or county from Census ACS, BLS and HUD open data: demand and tenure, construction costs and labor, and federally assisted housing, compared with the surrounding region, state and nation.",
+  "author": {
+    "name": "Santiago Garcés"
+  },
+  "license": "MIT",
+  "keywords": [
+    "housing",
+    "civic data",
+    "ACS",
+    "BLS",
+    "HUD",
+    "LIHTC",
+    "dashboard",
+    "local government"
+  ],
+  "extensions": {
+    "io.github.ai-lab-for-cities-at-harvard": {
+      "civic.maintainer": "Santiago Garcés",
+      "civic.affiliation": "academic",
+      "civic.deployment": "personal",
+      "civic.use-when": "A U.S. city, county or state wants a housing needs snapshot, dashboard, refresh or council brief that compares local demand, construction costs and assisted housing with its region and the nation, from public Census, BLS and HUD data.",
+      "civic.avoid-when": "Outside the U.S. Not for parcel-level, permit, eviction or individual household decisions, and not a substitute for a formal housing needs assessment or Consolidated Plan without staff checking the figures."
+    }
+  }
+}
