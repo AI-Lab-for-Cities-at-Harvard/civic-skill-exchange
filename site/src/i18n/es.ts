@@ -577,6 +577,8 @@ export const strings: Strings = {
         "No hay un SKILL.md en la raíz del archivo comprimido. Una habilidad " +
         "es un directorio con SKILL.md en su nivel superior.",
       notAZip: "No se pudo leer este archivo como un archivo zip.",
+      clientFileLeftOut: (path: string) =>
+        `${path} — lo escribe el intercambio para cada aplicación, así que se omitió.`,
 
       pathEscape: (path: string) =>
         `${path} — la ruta se sale del directorio de la habilidad, así que se omitió.`,

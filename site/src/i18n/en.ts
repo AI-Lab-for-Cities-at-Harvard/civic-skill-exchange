@@ -648,6 +648,10 @@ export const en = {
         "No SKILL.md at the root of the archive. A skill is a directory with " +
         "SKILL.md at its top level.",
       notAZip: "This file could not be read as a zip archive.",
+      /** A plugin's client manifests are the registry's to write (ADR 0005):
+       *  dropped from the copy, named so nothing vanishes quietly. */
+      clientFileLeftOut: (path: string) =>
+        `${path} — written by the exchange for each app, so it was left out.`,
       /** Left out is not the same as wrong: these name what was skipped so
        *  nothing vanishes quietly, and they do not stop the hand-off. */
       pathEscape: (path: string) =>
