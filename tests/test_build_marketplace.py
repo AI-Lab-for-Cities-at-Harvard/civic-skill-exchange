@@ -616,7 +616,7 @@ def test_the_check_notices_an_altered_claude_manifest(make_skill):
 
 def test_the_sparse_install_command_covers_every_claude_manifest():
     """docs/SUBMITTING.md tells a Claude Code user to add the marketplace with
-    `--sparse .claude-plugin skills`, which clones only those two paths. A file
+    `--sparse .claude-plugin skills plugins`, which clones only those paths. A file
     Claude reads that fell outside both would be missing from the very checkout
     the client installs from.
 
