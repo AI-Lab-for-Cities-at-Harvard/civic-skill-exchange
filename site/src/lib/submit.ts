@@ -345,9 +345,8 @@ export function registryUploadUrl(
  *
  *  The head ref is `owner:repo:branch` rather than `owner:branch`, which is
  *  GitHub's form for a fork whose name differs from the base — the case that
- *  broke this before. `main` is the branch GitHub's upload page starts from; if
- *  the submitter took the "create a new branch" option, GitHub's compare page
- *  offers the branch picker anyway.
+ *  broke this before. The upload step tells a fork's submitter to commit
+ *  directly to the fork's `main` (#243), so `main` is the branch to compare.
  */
 export function pullRequestUrl(repo: string, fork: string): string | null {
   const ref = parseForkRef(fork);

@@ -503,7 +503,7 @@ export const strings: Strings = {
             "confirmar en `main`."
           : "*commit directly to the `main` branch*, es decir, confirmar " +
             "directamente en la rama `main`. Es su propia copia, así que nada " +
-            "se ve afectado hasta la solicitud del paso siguiente.") +
+            "se ve afectado hasta el pull request del paso siguiente.") +
         (reserved ? " Esto abre el registro en " : " Esto abre su copia en ") +
         `\`${namespacePath}\`, de modo que el resultado es \`${skillPath}\`.`,
       uploadCta: "Subir la carpeta",
