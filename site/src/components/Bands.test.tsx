@@ -2,9 +2,10 @@
  *  system's signature move, and until now used only on About. The upper band
  *  carries the standing Community notice from ruling 2. */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { TierBand, ContributeBand } from "./Bands";
+import { DEFAULT_LOCALE, setLocale } from "../i18n/strings";
 
 const MIXED = { total: 10, reviewed: 2, community: 8 };
 
@@ -12,6 +13,24 @@ describe("TierBand", () => {
   it("carries its own theme rather than inheriting the page's", () => {
     const { container } = render(<TierBand counts={MIXED} />);
     expect(container.querySelector("[data-theme]")).toBeInTheDocument();
+  });
+
+  /* #217: the owner's heading. It names what the band explains, the two
+     tiers, where the old one hedged about what a listing does and does not
+     mean. */
+  describe("is headed by what it explains", () => {
+    afterEach(async () => { await setLocale(DEFAULT_LOCALE); });
+
+    it("in English", () => {
+      render(<TierBand counts={MIXED} />);
+      expect(screen.getByRole("heading", { level: 2, name: "Two Tiers:" })).toBeInTheDocument();
+    });
+
+    it("in Spanish", async () => {
+      await setLocale("es");
+      render(<TierBand counts={MIXED} />);
+      expect(screen.getByRole("heading", { level: 2, name: "Dos niveles:" })).toBeInTheDocument();
+    });
   });
 
   it("explains both tiers", () => {
