@@ -15,6 +15,8 @@ import { findViolations, describeViolations } from "../test/axe";
 import { makeSkill } from "../test/fixtures";
 import { About } from "./About";
 import { Submit } from "./Submit";
+import { PluginSubmit } from "./PluginSubmit";
+import { strToU8 } from "fflate";
 import { SkillCard } from "./SkillCard";
 import { TierBand, ContributeBand } from "./Bands";
 import { DownloadBox } from "./DownloadBox";
@@ -69,6 +71,21 @@ describe.each(locales())("no axe violations — %s", (tag) => {
 
   it("the submission form", async () => {
     await expectClean(<Submit repo={REPO} skills={[]} mode="new" />);
+  });
+
+  it("the plugin form, with one skill complete and one with gaps", async () => {
+    const file = (path: string, text: string) => ({ path, kind: "file" as const, bytes: strToU8(text) });
+    const meta = "metadata:\n  civic.category: policy\n  civic.scope: municipal\n" +
+      "  civic.language: en\n  civic.data-sensitivity: none\n  civic.human-review: none\n";
+    await expectClean(
+      <PluginSubmit repo={REPO} directoryName="housing" left={[]} entries={[
+        file("plugin.json", JSON.stringify({ name: "housing", description: "d" })),
+        file("mcp.json", JSON.stringify({ mcpServers: {
+          census: { type: "streamable-http", url: "https://census.example.org/mcp" } } })),
+        file("skills/a/SKILL.md", `---\nname: a\ndescription: A skill.\nlicense: MIT\n${meta}---\n\nBody.\n`),
+        file("skills/b/SKILL.md", "---\nname: b\ndescription: B skill.\nlicense: MIT\n---\n\nBody.\n"),
+      ]} />,
+    );
   });
 
   it("the update mode", async () => {
