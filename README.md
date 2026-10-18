@@ -59,7 +59,7 @@ rather than org-wide, and do not sync to other surfaces.
 one command:
 
 ```
-/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .claude-plugin skills
+/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .claude-plugin skills plugins
 /plugin install {namespace}-{skill-name}@civic-skill-exchange
 ```
 
@@ -67,7 +67,7 @@ The plugin name carries the namespace, because two people may publish a skill of
 the same name. Each skill page shows its exact command.
 
 `--sparse` is worth typing. Adding a marketplace clones the whole repository, and
-you only need the manifest and `skills/` — about 60 KB rather than 400 KB. It
+you only need the marketplace and the listings — `skills/` and `plugins/`. It
 works without the flag; this just does not make you download the website source
 to install a skill.
 
