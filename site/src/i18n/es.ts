@@ -594,6 +594,7 @@ export const strings: Strings = {
       noFrontmatterToAmend:
         "Este archivo no empieza con un bloque ---, así que no hay nada que modificar.",
       invalidYaml: (reason: string) => `El bloque --- no es YAML válido: ${reason}`,
+      invalidPluginJson: (reason: string) => `plugin.json no es un JSON válido: ${reason}`,
     },
   },
 

@@ -668,6 +668,7 @@ export const en = {
       noFrontmatterToAmend:
         "This file does not start with a --- block, so there is nothing to amend.",
       invalidYaml: (reason: string) => `The --- block is not valid YAML: ${reason}`,
+      invalidPluginJson: (reason: string) => `plugin.json is not valid JSON: ${reason}`,
     },
   },
 
