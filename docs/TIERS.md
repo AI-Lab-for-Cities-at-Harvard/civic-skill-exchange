@@ -78,7 +78,7 @@ This is cheap to implement and it is the single highest-value mechanism in the d
 
 ## Promotion
 
-1. Anyone opens a `review-request` issue naming the skill. Authors may request review of their own work.
+1. Anyone opens a `review-request` issue naming the skill or plugin, and saying which it is. Authors may request review of their own work. A plugin is reviewed and attested as one thing (ADR 0005).
 2. A maintainer confirms the skill is in scope, has clean L0–L3 results, and has been listed in Community for at least 30 days. The waiting period is deliberate: it lets the weekly re-scan run several times and gives the ecosystem time to surface problems. **Skills in the reserved `civic-skills` namespace are exempt** ([ADR 0002](adr/0002-lab-is-authorship-not-a-tier.md) ruling 5) — the Lab may review its own work immediately. That gives up the re-scan passes: a signature added to the scanner after submission may not fire before the badge is granted. It is accepted for the one namespace the Lab controls and can re-scan on demand, and for no other.
 3. The Lab works the checklist in [REVIEW.md](REVIEW.md).
 4. The result is written up in the issue. A PR adds the attestation to `reviewed.yml` with the skill's current SHA.

@@ -55,3 +55,27 @@ def test_the_attestation_template_exists_and_points_at_the_write_up():
     text = template.read_text(encoding="utf-8")
     assert "review-request" in text or "review request" in text.lower()
     assert "notes" in text.lower()
+
+
+# Ruling 3 on #211: a plugin is reviewed and attested too (ADR 0005, decision
+# 5), so the request names which kind of listing it is about.
+
+
+def _review_request() -> dict:
+    return yaml.safe_load(
+        (ROOT / ".github" / "ISSUE_TEMPLATE" / "review-request.yml").read_text(encoding="utf-8"))
+
+
+def test_a_review_request_says_whether_it_is_a_skill_or_a_plugin():
+    fields = {f.get("id"): f for f in _review_request()["body"]}
+    kind = fields.get("kind")
+    assert kind and kind["type"] == "dropdown", "no skill-or-plugin choice"
+    assert kind["attributes"]["options"] == ["Skill", "Plugin"]
+    assert kind.get("validations", {}).get("required") is True
+
+
+def test_a_review_request_asks_for_a_listing_id_that_fits_both():
+    fields = {f.get("id"): f for f in _review_request()["body"]}
+    listing = fields.get("listing")
+    assert listing, "the id field is still skill-only"
+    assert "plugin" in listing["attributes"]["description"].lower()

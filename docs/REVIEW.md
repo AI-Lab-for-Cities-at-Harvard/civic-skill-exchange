@@ -52,7 +52,7 @@ These are executed by the agent, not read by the model. Reviewing the prose is n
 
 Plugin hooks, client settings and `.lsp.json` never reach you: L0 refuses them outright, for the reason in [SECURITY.md](SECURITY.md).
 
-A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is one review, not one per skill: every skill's `scripts/`, and its `mcp.json`. The scan's `mcp-endpoint` findings list each server and its host — that list is what item 4 asks you to justify. A `credential-access` flag in a plugin is an environment read that would have blocked a skill: check which variables, that the plugin documents each one, and that no value is logged, written to disk, or sent anywhere but the service it belongs to. The generated `.claude-plugin/plugin.json` and `.mcp.json` are derived from the author's files and checked byte for byte, so read the author's. Attest with `python scripts/attestation.py {namespace}/{name} --plugin`.
+A plugin adds its own checks to this one and the rest — see [Reviewing a plugin](#reviewing-a-plugin), after item 9.
 
 The standard is simple: if you would not run this on your own laptop, it does not enter the Reviewed tier. Length is not an excuse — if it is too long to read, it is too long to attest to.
 
@@ -100,6 +100,17 @@ The spec field is free text, not SPDX-constrained — machine-*present*, not mac
 Not a rejection — a quality bar. Hardcoded field names, form numbers, and internal URLs are what make a skill useless to the next city, which is the entire point of the registry. If it's tightly bound to one jurisdiction, ask the author to move the specifics into `references/` before you sign off.
 
 ---
+
+### Reviewing a plugin
+
+A plugin ([ADR 0005](adr/0005-plugins-are-a-second-listing-kind.md)) is reviewed as one thing, not once per skill, and a maintainer reviews every plugin before it merges (ruling 1 on #211). Work items 1–9 over every skill in it, then these four (ruling 2 on #211):
+
+- **Every server, justified.** The scan's `mcp-endpoint` findings list each MCP server in `mcp.json` and its host — that list is what item 4 asks you to justify against the plugin's stated purpose. A host the purpose does not need is a rejection.
+- **Every skill's `scripts/`, read.** Item 2 for each skill, not just the first. A `credential-access` flag is an environment read that would have blocked a skill (ADR 0005, decision 8): check which variables, that the plugin documents each one, and that no value is logged, written to disk, or sent anywhere but the service it belongs to.
+- **References stay inside the plugin.** Skills may use each other's files — `../build-housing-dashboard/scripts/…` — but nothing may reach outside the plugin directory: Codex installs a plugin by copying it, and anything outside is gone.
+- **The plugin-level fit covers the skills together.** `civic.use-when` and `civic.avoid-when` in `plugin.json` describe the whole plugin; check they are true of every skill in it, and that each skill's own category, scope and sensitivity are honest.
+
+The generated `.claude-plugin/plugin.json` and `.mcp.json` are derived from the author's files and checked byte for byte, so read the author's. One attestation covers the whole plugin, pinned to its directory (ruling 4 on #211): attest with `python scripts/attestation.py {namespace}/{name} --plugin`, and the review-request issue says which kind it is.
 
 ## Signing off
 

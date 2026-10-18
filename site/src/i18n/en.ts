@@ -810,7 +810,7 @@ export const en = {
   /** The full-bleed sections above and below the catalogue. */
   bands: {
     tiers: {
-      heading: "What a listing here does and does not mean",
+      heading: "Two Tiers:",
       communityTerm: "Community",
       community:
         "Well-formed, and nothing mechanical is wrong with it. Merged once it " +
@@ -1382,6 +1382,12 @@ export const en = {
       noServers: "No MCP servers",
     },
     detail: {
+      /** The skill page's caveat says "skill"; this is the plugin's (#230). */
+      fit: {
+        caveat:
+          "Written by whoever submitted the plugin, about their own work. " +
+          "Nobody has checked it against what the plugin actually does.",
+      },
       skills: {
         heading: "Skills in this plugin",
         caveat:
@@ -1406,11 +1412,15 @@ export const en = {
     },
     download: {
       heading: "Use this plugin",
+      /** A maintainer reviews every plugin before it merges (ruling 1 on
+       *  #211), so Community here means no Reviewed-tier attestation — not no
+       *  review, which is what the skill wording would say (#230). */
       community:
-        "**Nobody has reviewed this plugin.** It passed automated structural " +
-        "and signature checks, which can only ever reject — a pass is not a " +
-        "statement that it is safe. Read the source on GitHub before you " +
-        "install it, particularly every skill's `scripts/` and `mcp.json`.",
+        "**A maintainer reviewed this plugin before listing it.** It has not " +
+        "been attested to the Reviewed tier, and automated checks can only " +
+        "ever reject — a pass is not a statement that it is safe. Read the " +
+        "source on GitHub before you install it, particularly every skill's " +
+        "`scripts/` and `mcp.json`.",
       archive: (size: string) => `Download the plugin (${size})`,
       archiveNote: "A zip of this folder, every skill included.",
       commands: {

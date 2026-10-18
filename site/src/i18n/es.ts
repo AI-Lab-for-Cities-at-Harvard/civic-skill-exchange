@@ -702,7 +702,7 @@ export const strings: Strings = {
 
   bands: {
     tiers: {
-      heading: "Qué significa y qué no significa una publicación aquí",
+      heading: "Dos niveles:",
       communityTerm: "Comunidad",
       community:
         "Está bien formada y no tiene ningún defecto mecánico. Se integra una " +
@@ -1244,6 +1244,11 @@ export const strings: Strings = {
       noServers: "Sin servidores MCP",
     },
     detail: {
+      fit: {
+        caveat:
+          "Lo escribió quien envió el plugin, sobre su propio trabajo. Nadie " +
+          "lo ha contrastado con lo que el plugin hace realmente.",
+      },
       skills: {
         heading: "Habilidades de este plugin",
         caveat:
@@ -1270,10 +1275,11 @@ export const strings: Strings = {
     download: {
       heading: "Use este plugin",
       community:
-        "**Nadie ha revisado este plugin.** Pasó verificaciones automatizadas " +
-        "de estructura y de firmas, que solo pueden rechazar: que las apruebe " +
-        "no significa que sea seguro. Lea el código fuente en GitHub antes de " +
-        "instalarlo, sobre todo el `scripts/` de cada habilidad y `mcp.json`.",
+        "**Un mantenedor revisó este plugin antes de publicarlo.** No tiene " +
+        "una certificación del nivel Revisado, y las verificaciones " +
+        "automatizadas solo pueden rechazar: que las apruebe no significa que " +
+        "sea seguro. Lea el código fuente en GitHub antes de instalarlo, sobre " +
+        "todo el `scripts/` de cada habilidad y `mcp.json`.",
       archive: (size: string) => `Descargar el plugin (${size})`,
       archiveNote: "Un zip de esta carpeta, con todas sus habilidades.",
       commands: {
