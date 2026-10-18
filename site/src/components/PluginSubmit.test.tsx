@@ -13,6 +13,8 @@ import userEvent from "@testing-library/user-event";
 import { zipSync, strToU8, strFromU8 } from "fflate";
 import { PLUGIN_SCHEMA_ID, REGISTRY_EXTENSION } from "@civic-skill-exchange/validator";
 import { Submit } from "./Submit";
+import { setLocale } from "../i18n/strings";
+import { strings as es } from "../i18n/es";
 import { readSkillZip } from "../lib/zip";
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
@@ -264,5 +266,83 @@ describe("PluginSubmit — importing a plugin repository", () => {
     await user.click(screen.getByTestId("import"));
     expect(await screen.findByTestId("plugin-mode")).toBeInTheDocument();
     expect(screen.getByTestId("plugin-summary")).toHaveTextContent("housing-brief");
+  });
+});
+
+// --------------------------------------------------------------------------- //
+// From a walkthrough as a submitter who does not use git (#213).
+
+const MAINTAINED = JSON.stringify({
+  name: "housing-dashboards", description: "Housing dashboards, refreshes and briefs for any city.",
+  license: "MIT",
+  extensions: { [REGISTRY_EXTENSION]: { "civic.maintainer": "Santiago Garcés", "civic.affiliation": "academic" } },
+});
+
+describe("PluginSubmit — for someone who does not use git", () => {
+  it("refuses a username GitHub would not allow, and says what one looks like", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    await user.type(screen.getByLabelText(/GitHub username/i), "Maria Lopez");
+    expect(screen.getByTestId("bad-login")).toHaveTextContent("Maria Lopez");
+    expect(screen.getByTestId("download-folder")).toBeDisabled();
+  });
+
+  it("says why the download is not ready", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    expect(screen.getByTestId("download-why")).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/GitHub username/i), "maria-lopez");
+    expect(screen.queryByTestId("download-why")).not.toBeInTheDocument();
+  });
+
+  it("says which answers came from the file, maintainer first among them", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, PLUGIN({ "plugin.json": MAINTAINED }));
+    expect(screen.getByTestId("plugin-from-file")).toHaveTextContent(/who maintains it/i);
+  });
+
+  it("shows what a complete skill already says", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    const answers = within(screen.getByTestId("skill-housing-brief")).getByTestId("skill-answers");
+    expect(answers).toHaveTextContent("Policy");
+    expect(answers).toHaveTextContent("No personal data");
+  });
+
+  it("speaks of a plugin in the masculine in Spanish", async () => {
+    setLocale("es");
+    try {
+      const user = userEvent.setup();
+      await dropPlugin(user);
+      expect(screen.getByLabelText(es.submit.plugin.maintainerLabel)).toBeInTheDocument();
+      expect(es.submit.plugin.maintainerLabel).not.toMatch(/\bla\b/);
+    } finally {
+      setLocale("en");
+    }
+  });
+});
+
+describe("Submit — one source at a time", () => {
+  it("drops the import note when a file is dropped instead", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      const body = /\/git\/trees\//.test(url)
+        ? { sha: "c".repeat(40), truncated: false, tree: [{ path: "SKILL.md", type: "blob", size: 10 }] }
+        : { default_branch: "main" };
+      const bytes = strToU8(BARE);
+      return { status: 200, ok: true, json: async () => body, arrayBuffer: async () => bytes.buffer };
+    }));
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub repository/i), "a/b");
+    await user.click(screen.getByTestId("import"));
+    await screen.findByTestId("imported");
+    await user.upload(archiveInput(), PLUGIN());
+    await screen.findByTestId("plugin-mode");
+    expect(screen.queryByTestId("imported")).not.toBeInTheDocument();
+  });
+
+  it("counts files in Spanish without inventing a verb", () => {
+    expect(es.submit.intake.imported(6, "a/b", "abc1234")).toContain("Se leyeron 6 archivos");
+    expect(es.submit.intake.imported(1, "a/b", "abc1234")).toContain("Se leyó 1 archivo");
   });
 });

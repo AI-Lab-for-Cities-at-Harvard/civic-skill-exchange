@@ -350,6 +350,17 @@ describe("importFromRepo with a plugin", () => {
     expect(out.skipped.join("\n")).toContain(".codex-plugin/plugin.json");
   });
 
+  it("keeps a listed skill a skill, though the registry gave it a .claude-plugin/", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: tree(["SKILL.md", ".claude-plugin/plugin.json"]),
+      files: { ".claude-plugin/plugin.json": "{}" },
+    }));
+    const out = await importFromRepo("a/b");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    expect(out.clientPackage).toBe(false);
+    expect(out.skillMd).toBe(SKILL);
+  });
+
   it("still fails a folder that is neither a skill nor a plugin", async () => {
     vi.stubGlobal("fetch", github({ tree: tree(["README.md", "notes/x.md"]) }));
     const out = await importFromRepo("a/b");

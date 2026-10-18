@@ -184,6 +184,14 @@ describe("readSkillZip with a plugin", () => {
     expect(read.problems.join("\n")).toContain(".codex-plugin/plugin.json");
   });
 
+  it("keeps a listed skill a skill, though the registry gave it a .claude-plugin/", () => {
+    const read = readSkillZip(archive({
+      "s/SKILL.md": SKILL, "s/.claude-plugin/plugin.json": "{}",
+    }));
+    expect(read.clientPackage).toBe(false);
+    expect(read.skillMd).toBe(SKILL);
+  });
+
   it("recognises a Claude Code package, which has no plugin.json at its root", () => {
     const zip = archive({
       ".claude-plugin/plugin.json": "{}",
