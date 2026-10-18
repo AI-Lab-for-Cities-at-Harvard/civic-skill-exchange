@@ -17,9 +17,8 @@
  */
 
 import { unzipSync } from "fflate";
-import {
-  MAX_FILE_BYTES, MAX_SKILL_BYTES, PLUGIN_MANIFEST, isRepositoryFurniture, type Entry,
-} from "@civic-skill-exchange/validator";
+import type { Entry } from "@civic-skill-exchange/validator";
+import { MAX_FILE_BYTES, MAX_SKILL_BYTES, isRepositoryFurniture } from "@civic-skill-exchange/validator/structure-core";
 import { strings } from "../i18n/strings";
 
 export interface SkillArchive {
@@ -49,6 +48,12 @@ const unsafe = (path: string) =>
  *  folder and arrive as `._SKILL.md` files the checks refuse. */
 const isFinderJunk = (path: string) =>
   path.startsWith("__MACOSX/") || path.split("/").pop() === ".DS_Store";
+
+/** What marks a plugin: the validator's PLUGIN_MANIFEST, spelled out here
+ *  because importing it pulls the whole of plugin-core into the entry chunk,
+ *  and the plugin form that needs the rest loads separately (#213). zip.test.ts
+ *  holds the two equal. */
+export const PLUGIN_ROOT_MANIFEST = "plugin.json";
 
 /** What the registry writes into a plugin for each client (ADR 0005), and what
  *  Codex reads instead of plugin.json. A copy in the submitter's folder is
@@ -127,7 +132,7 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
   }
   entries.sort((a, b) => a.path.localeCompare(b.path));
 
-  const plugin = entries.some((e) => e.path === PLUGIN_MANIFEST);
+  const plugin = entries.some((e) => e.path === PLUGIN_ROOT_MANIFEST);
   const clientPackage = !plugin &&
     entries.some((e) => e.path === ".claude-plugin/plugin.json");
   const kept = plugin

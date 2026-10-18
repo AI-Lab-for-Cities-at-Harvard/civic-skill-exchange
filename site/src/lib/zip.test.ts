@@ -13,8 +13,8 @@
 
 import { describe, it, expect } from "vitest";
 import { zipSync, strToU8 } from "fflate";
-import { readSkillZip } from "./zip";
-import { MAX_FILE_BYTES } from "@civic-skill-exchange/validator";
+import { PLUGIN_ROOT_MANIFEST, readSkillZip } from "./zip";
+import { MAX_FILE_BYTES, PLUGIN_MANIFEST } from "@civic-skill-exchange/validator";
 
 const SKILL = `---
 name: permit-status-explainer
@@ -124,6 +124,10 @@ describe("readSkillZip refuses a decompression bomb before inflating it", () => 
 const MANIFEST = JSON.stringify({ name: "housing-dashboards", description: "x" });
 
 describe("readSkillZip with a plugin", () => {
+  it("looks for the validator's manifest file", () => {
+    expect(PLUGIN_ROOT_MANIFEST).toBe(PLUGIN_MANIFEST);
+  });
+
   const plugin = (root = "housing-dashboards/") => archive({
     [`${root}plugin.json`]: MANIFEST,
     [`${root}mcp.json`]: "{}",

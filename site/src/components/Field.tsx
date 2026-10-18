@@ -8,7 +8,7 @@ export type FieldNames = Strings["submit"]["form"]["fieldNames"];
 
 /** Findings are written for a reviewer reading a diff, and name the raw key.
  *  Swapped for the question the submitter actually answered. */
-export function readable(finding: Finding, names: FieldNames): string {
+function readable(finding: Finding, names: FieldNames): string {
   const name = names[finding.where as keyof FieldNames];
   return name ? finding.message.replaceAll(finding.where, name) : finding.message;
 }

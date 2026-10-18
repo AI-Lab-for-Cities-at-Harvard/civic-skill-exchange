@@ -14,14 +14,11 @@
  */
 
 import { parse } from "yaml";
-import {
-  PLUGIN_LAYOUT, PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG, PLUGIN_SCHEMA_ID,
-  PLUGIN_SKILLS_DIRECTORY, REGISTRY_EXTENSION,
-  checkFrontmatter, checkMcpConfig, checkPluginManifest, checkPluginSkills,
-  checkStructureCore, checkYamlSafety, expectedPluginName, pluginSkillNames,
-  quarantineExtensions, splitFrontmatter,
-  type Entry, type Finding, type Frontmatter,
-} from "@civic-skill-exchange/validator";
+import type { Entry, Finding, Frontmatter } from "@civic-skill-exchange/validator";
+import { PLUGIN_LAYOUT, PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG, PLUGIN_SCHEMA_ID, PLUGIN_SKILLS_DIRECTORY, REGISTRY_EXTENSION, checkMcpConfig, checkPluginManifest, checkPluginSkills, expectedPluginName, pluginSkillNames } from "@civic-skill-exchange/validator/plugin-core";
+import { checkFrontmatter, quarantineExtensions } from "@civic-skill-exchange/validator/rules";
+import { checkStructureCore, splitFrontmatter } from "@civic-skill-exchange/validator/structure-core";
+import { checkYamlSafety } from "@civic-skill-exchange/validator/yaml-safety";
 import { en } from "../i18n/en";
 import { strings } from "../i18n/strings";
 import { draftFromSkillMd } from "./parse";

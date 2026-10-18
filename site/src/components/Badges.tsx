@@ -1,4 +1,4 @@
-import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator";
+import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { useStrings } from "../i18n/strings";
 import { label } from "../lib/labels";
 import type { Skill } from "../lib/types";

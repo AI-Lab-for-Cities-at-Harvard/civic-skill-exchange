@@ -252,7 +252,9 @@ export const strings: Strings = {
         `de \`${repo}\` en \`${commit}\`.`,
 
       archiveLabel: "O suba la carpeta de la habilidad como .zip",
-      archiveHint: "Se descomprime en su navegador. No se envía a ninguna parte.",
+      archiveHint:
+        "También sirve la carpeta de un plugin. Se descomprime en su navegador. " +
+        "No se envía a ninguna parte.",
 
       pasteLabel: "O pegue su SKILL.md",
 
@@ -553,6 +555,62 @@ export const strings: Strings = {
         "¿No la encuentra? Aquí solo aparecen habilidades que ya están en este " +
         "catálogo. Si la suya todavía no está publicada, [envíela primero como " +
         "habilidad nueva](new).",
+    },
+
+    plugin: {
+      heading: "Sobre el plugin",
+      summary: (name: string, skills: number, servers: number) =>
+        `**${name}** es un plugin de ${skills} habilidad${skills === 1 ? "" : "es"}` +
+        (servers === 0
+          ? ", que no se conecta a ningún servidor MCP."
+          : `, que se conecta a ${servers} servidor${servers === 1 ? "" : "es"} MCP.`),
+      skillsLabel: "Sus habilidades",
+      serversLabel: "A qué se conecta",
+      remoteServer: (name: string, host: string) => `**${name}** — \`${host}\``,
+      localServer: (name: string, command: string) =>
+        `**${name}** — ejecuta \`${command}\` en el equipo donde se instala`,
+      reviewed:
+        "Un mantenedor revisa cada plugin antes de publicarlo. Sus servidores y " +
+        "scripts se ejecutan para quien lo instale, así que una persona los lee primero.",
+
+      nameLabel: "Nombre del plugin",
+      nameHint: (manifestName: string) =>
+        `Su carpeta en el intercambio. Dentro de plugin.json lo llamamos ` +
+        `\`${manifestName}\` por usted: es el nombre que instalan Claude Code y Codex.`,
+      descriptionHint:
+        "Lo que hace el plugin en conjunto. Lo muestran el catálogo, Claude Code y Codex.",
+      fitHint:
+        "Cuándo conviene el plugin en conjunto y cuándo no. Lo que conviene a " +
+        "cada habilidad se queda en su SKILL.md.",
+
+      skillsHeading: "Sus habilidades",
+      skillsLede:
+        "Cada habilidad guarda sus propias respuestas en su propio SKILL.md. " +
+        "Aquí solo se pregunta lo que el archivo deja sin responder.",
+      skillComplete: "Completa",
+      skillOpen: (n: number) => `${n} por responder`,
+      skillOther: "También señalado en el SKILL.md de esta habilidad:",
+      fileFindings: (file: string) => `Señalado en ${file}:`,
+
+      multiFileNote: (files: number) =>
+        `Su plugin tiene ${files} archivos. GitHub acepta una carpeta entera, ` +
+        "pero solo desde su propia página de carga, así que los últimos pasos " +
+        "ocurren allí, con la carpeta que le entrega esta página.",
+      folderBody:
+        "Sus archivos, sin cambios, con las respuestas de arriba escritas en " +
+        "`plugin.json` y en el `SKILL.md` de cada habilidad. Esta carpeta, y no " +
+        "la original, es la que debe subir: las respuestas solo existen en esta " +
+        "copia. Descomprímala primero.",
+      addedSummary: (file: string, lines: number) =>
+        `Lo que añadimos a ${file}: ${lines} línea${lines === 1 ? "" : "s"}`,
+
+      clientPackage:
+        "Parece un plugin de Claude Code: tiene `.claude-plugin/plugin.json` " +
+        "pero no hay un `plugin.json` en la raíz. El intercambio publica plugins " +
+        "con la estructura de Agent Plugins, que leen tanto Claude Code como " +
+        "Codex: un `plugin.json`, y un `mcp.json` si se conecta a algo, en la " +
+        "raíz de la carpeta. Añádalos y vuelva a soltar la carpeta. [La guía](docs) " +
+        "muestra qué va en cada uno.",
     },
 
     problems: {

@@ -19,11 +19,10 @@
  *  repo and commit are recorded as provenance so a reader can go and look.
  */
 
-import {
-  MAX_FILE_BYTES, PLUGIN_MANIFEST, isRepositoryFurniture, type Entry,
-} from "@civic-skill-exchange/validator";
+import type { Entry } from "@civic-skill-exchange/validator";
+import { MAX_FILE_BYTES, isRepositoryFurniture } from "@civic-skill-exchange/validator/structure-core";
 import { strings } from "../i18n/strings";
-import { CLIENT_FILES } from "./zip";
+import { CLIENT_FILES, PLUGIN_ROOT_MANIFEST } from "./zip";
 
 const API = "https://api.github.com";
 const RAW = "https://raw.githubusercontent.com";
@@ -215,7 +214,7 @@ export async function importFromRepo(
     entries.push({ path: node.path, kind: "file", bytes: new Uint8Array(size) });
   }
 
-  const plugin = entries.some((e) => e.path === PLUGIN_MANIFEST);
+  const plugin = entries.some((e) => e.path === PLUGIN_ROOT_MANIFEST);
   const clientPackage = !plugin &&
     entries.some((e) => e.path === ".claude-plugin/plugin.json");
   if (!plugin && !clientPackage && !entries.some((e) => e.path === "SKILL.md")) {

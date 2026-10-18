@@ -6,7 +6,8 @@
  */
 
 import { parse } from "yaml";
-import { splitFrontmatter, checkYamlSafety } from "@civic-skill-exchange/validator";
+import { splitFrontmatter } from "@civic-skill-exchange/validator/structure-core";
+import { checkYamlSafety } from "@civic-skill-exchange/validator/yaml-safety";
 import { EMPTY_DRAFT, type Draft } from "./submit";
 import { strings } from "../i18n/strings";
 

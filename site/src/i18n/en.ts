@@ -291,7 +291,8 @@ export const en = {
         `\`${commit}\`.`,
 
       archiveLabel: "Or upload the skill folder as a .zip",
-      archiveHint: "Unpacked in your browser. It is not sent anywhere.",
+      archiveHint:
+        "A plugin folder works too. Unpacked in your browser. It is not sent anywhere.",
 
       pasteLabel: "Or paste your SKILL.md",
 
@@ -619,6 +620,74 @@ export const en = {
       notFinding:
         "Not finding it? Only skills already in this catalog appear here. If " +
         "yours is not listed yet, [submit it as a new skill](new) first.",
+    },
+
+    /** A plugin dropped or imported instead of a skill (#213). The page switches
+     *  by itself on a root plugin.json; the plugin is asked about once and each
+     *  skill only where its SKILL.md is silent. */
+    plugin: {
+      heading: "About the plugin",
+      /** `name` is the plugin's folder name. */
+      summary: (name: string, skills: number, servers: number) =>
+        `**${name}** is a plugin of ${skills} skill${skills === 1 ? "" : "s"}` +
+        (servers === 0
+          ? ", connecting to no MCP servers."
+          : `, connecting to ${servers} MCP server${servers === 1 ? "" : "s"}.`),
+      skillsLabel: "Its skills",
+      serversLabel: "What it connects to",
+      /** A remote server is named with the host it talks to, which is what a
+       *  reviewer approves; a local one with the program it runs. */
+      remoteServer: (name: string, host: string) => `**${name}** — \`${host}\``,
+      localServer: (name: string, command: string) =>
+        `**${name}** — runs \`${command}\` on the computer it is installed on`,
+      reviewed:
+        "A maintainer reviews every plugin before it is listed. Its servers " +
+        "and scripts run for whoever installs it, so a person reads them first.",
+
+      nameLabel: "Plugin name",
+      /** `manifestName` is `{namespace}-{name}`, which the page writes. */
+      nameHint: (manifestName: string) =>
+        `Its folder in the exchange. We name it \`${manifestName}\` inside ` +
+        "plugin.json for you, which is the name Claude Code and Codex install.",
+      descriptionHint:
+        "What the plugin does as a whole. The catalogue, Claude Code and Codex " +
+        "all show this.",
+      fitHint:
+        "When the plugin as a whole fits, and when it does not. A skill's own " +
+        "fit stays in its SKILL.md.",
+
+      skillsHeading: "Its skills",
+      skillsLede:
+        "Each skill keeps its own answers in its own SKILL.md. Only what a file " +
+        "leaves unanswered is asked here.",
+      skillComplete: "Complete",
+      skillOpen: (n: number) => `${n} to answer`,
+      skillOther: "Also flagged in this skill\u2019s SKILL.md:",
+      /** `file` is plugin.json or mcp.json. */
+      fileFindings: (file: string) => `Flagged in ${file}:`,
+
+      multiFileNote: (files: number) =>
+        `Your plugin is ${files} files. GitHub takes a whole folder, but only ` +
+        "from its own upload page — so the last steps happen there, with the " +
+        "folder this page hands back.",
+      folderBody:
+        "Your files, unchanged, with the answers above written into " +
+        "`plugin.json` and each skill\u2019s `SKILL.md`. This folder — not your " +
+        "original — is what you upload: the answers exist only in this copy. " +
+        "Unzip it first.",
+      /** `file` is a path inside the plugin. */
+      addedSummary: (file: string, lines: number) =>
+        `What we added to ${file} — ${lines} line${lines === 1 ? "" : "s"}`,
+
+      /** A Claude Code package: `.claude-plugin/plugin.json` and no root
+       *  plugin.json. `docs` is the guide's plugin section. */
+      clientPackage:
+        "This looks like a Claude Code plugin: it has `.claude-plugin/plugin.json` " +
+        "but no `plugin.json` at the top. The exchange lists plugins in the " +
+        "Agent Plugins layout, which Claude Code and Codex both read — a " +
+        "`plugin.json`, and an `mcp.json` if it connects to anything, at the top " +
+        "of the folder. Add them and drop the folder again. [The guide](docs) " +
+        "shows what goes in each.",
     },
 
     /** What went wrong reading what somebody brought.

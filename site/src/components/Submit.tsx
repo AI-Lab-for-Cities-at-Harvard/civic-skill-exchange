@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  checkFrontmatter, checkStructureCore, RESERVED_NAMESPACES,
-  type Finding, type Entry,
-} from "@civic-skill-exchange/validator";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import type { Finding, Entry } from "@civic-skill-exchange/validator";
+import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
+import { checkStructureCore } from "@civic-skill-exchange/validator/structure-core";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   fitsInUrl, skillPath, slugify, type Draft,
@@ -29,6 +28,11 @@ import type { Skill } from "../lib/types";
  *  string to switch the path on; mailtoUrl and its tests are already in place.
  */
 export const SUBMISSIONS_EMAIL = "";
+
+/** The plugin form, loaded only when a plugin arrives (#213). The entry chunk
+ *  is held to a size budget, and most visitors never bring one. */
+const PluginSubmit = lazy(() =>
+  import("./PluginSubmit").then((m) => ({ default: m.PluginSubmit })));
 
 /** The canonical value list, which does not vary by locale — so it is read off
  *  the English table rather than the current one. */
@@ -62,6 +66,18 @@ export function Submit(
     { skillMd: string; entries: Entry[]; directoryName: string } | null
   >(null);
   const [notes, setNotes] = useState<string[]>([]);
+  // A folder with plugin.json at its root switches the page by itself (#213,
+  // ruling 1). Keyed by arrival, so a second plugin starts a fresh form.
+  const [plugin, setPlugin] = useState<
+    { entries: Entry[]; directoryName: string; left: string[]; key: number } | null
+  >(null);
+  const [clientPackage, setClientPackage] = useState(false);
+  const enterPlugin = (entries: Entry[], directoryName: string, left: string[]) => {
+    setArchive(null);
+    setSource(null);
+    setNotes([]);
+    setPlugin((prev) => ({ entries, directoryName, left, key: (prev?.key ?? 0) + 1 }));
+  };
   const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
   const [repoUrl, setRepoUrl] = useState("");
   const [importing, setImporting] = useState(false);
@@ -186,6 +202,8 @@ export function Submit(
   const onImport = async () => {
     setImporting(true);
     setImported(null);
+    setPlugin(null);
+    setClientPackage(false);
     const out = await importFromRepo(repoUrl);
     setImporting(false);
     if ("kind" in out) {
@@ -194,6 +212,15 @@ export function Submit(
       return;
     }
     setImported(out);
+    if (out.plugin) {
+      enterPlugin(out.entries, out.directoryName, out.skipped);
+      return;
+    }
+    if (out.clientPackage) {
+      setArchive(null);
+      setClientPackage(true);
+      return;
+    }
     setArchive({
       name: `${out.ref.owner}/${out.ref.repo}`,
       files: out.entries.length,
@@ -204,7 +231,7 @@ export function Submit(
       structural: checkStructureCore(out.entries),
     });
     setSource({
-      skillMd: out.skillMd, entries: out.entries, directoryName: out.ref.repo,
+      skillMd: out.skillMd, entries: out.entries, directoryName: out.directoryName,
     });
     // Fill from the file, then stamp on where this copy came from and the
     // commit it was taken at.
@@ -223,8 +250,19 @@ export function Submit(
 
   const onFile = async (file: File | undefined) => {
     if (!file) return;
+    setPlugin(null);
+    setClientPackage(false);
     try {
       const read = readSkillZip(new Uint8Array(await file.arrayBuffer()));
+      if (read.plugin) {
+        enterPlugin(read.entries, read.directoryName ?? "", read.problems);
+        return;
+      }
+      if (read.clientPackage) {
+        setArchive(null);
+        setClientPackage(true);
+        return;
+      }
       setArchive({
         name: file.name, files: read.entries.length,
         left: read.problems,
@@ -367,7 +405,7 @@ export function Submit(
 
           <Field id="archive" label={t.intake.archiveLabel} findings={[]} hint={t.intake.archiveHint}>
             <input
-              id="archive" type="file" accept=".zip,application/zip" className="input"
+              id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
               onChange={(e) => onFile(e.target.files?.[0])}
             />
           </Field>
@@ -376,7 +414,12 @@ export function Submit(
             <textarea
               id="paste" className="textarea" rows={5} value={pasted}
               placeholder={"---\nname: my-skill\n..."}
-              onChange={(e) => { setPasted(e.target.value); load(e.target.value); }}
+              onChange={(e) => {
+                setPasted(e.target.value);
+                setPlugin(null);
+                setClientPackage(false);
+                load(e.target.value);
+              }}
             />
           </Field>
 
@@ -413,7 +456,23 @@ export function Submit(
           {blocked && (
             <p className="submit__blocked" data-testid="blocked">{t.intake.blocked}</p>
           )}
+
+          {clientPackage && (
+            <p className="submit__blocked" data-testid="client-package">
+              {rich(t.plugin.clientPackage, {
+                docs: `https://github.com/${repo}/blob/main/docs/SUBMITTING.md#sharing-a-plugin`,
+              })}
+            </p>
+          )}
         </section>
+
+        {plugin ? (
+          <Suspense fallback={null}>
+            <PluginSubmit key={plugin.key} repo={repo} entries={plugin.entries}
+              directoryName={plugin.directoryName} left={plugin.left} />
+          </Suspense>
+        ) : (
+        <>
 
         <section className="prose__block">
           <h2 className="h2">{f.heading}</h2>
@@ -729,6 +788,8 @@ export function Submit(
   git push origin add-${draft.name || "your-skill"}`}</code></pre>
           </details>
         </section>
+        </>
+        )}
         </>
       )}
 
