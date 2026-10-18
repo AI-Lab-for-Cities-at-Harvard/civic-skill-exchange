@@ -248,7 +248,7 @@ export const en = {
    *  language rather than field names, and the hints say why a field is being
    *  asked for rather than what shape the answer takes. */
   submit: {
-    heading: "Share a skill",
+    heading: "Share a skill or plugin",
     lede: "Fill this in and we will put it in the right shape for you. It takes a few minutes.",
 
     /** Before the form, not after it. Every path this page offers ends on
@@ -271,7 +271,7 @@ export const en = {
     /** Upload and paste first, because most people arrive with a skill already
      *  written and should not retype it. */
     intake: {
-      heading: "Submit a new skill",
+      heading: "Submit a new skill or plugin",
       lede:
         "Already have one? Drop it here and the rest of this page fills itself " +
         "in. If your skill lives in its own repository, GitHub\u2019s **Code → " +
@@ -1177,7 +1177,7 @@ export const en = {
           "Automated checks run and report back in a comment. They can only " +
           "reject \u2014 a pass is not a statement that a skill is safe.",
       },
-      cta: "Share a skill",
+      cta: "Share a skill or plugin",
       guide: "The contributor guide",
     },
 

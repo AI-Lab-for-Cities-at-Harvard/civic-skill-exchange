@@ -160,6 +160,8 @@ describe("the page is titled for plugins as well as skills (#247)", () => {
 
   it("keeps update mode skills-only", () => {
     render(<Submit repo={REPO} skills={[]} mode="update" />);
-    expect(screen.queryByText(/skill or plugin/i)).not.toBeInTheDocument();
+    expect(en.submit.update.heading).toBe("Update a skill you already listed");
+    expect(screen.getByRole("heading", { level: 2, name: en.submit.update.heading }))
+      .toBeInTheDocument();
   });
 });
