@@ -115,3 +115,58 @@ describe("a link to a section", () => {
     }
   });
 });
+
+/** #260: the screenshots, on the guide-assets branch and loaded by URL (ruling
+ *  4a), each with alt text in the reader's language and a capture date. */
+describe("the screenshots", () => {
+  const figures = (container: HTMLElement, section: string) =>
+    [...container.querySelectorAll(`#${section} figure img`)] as HTMLImageElement[];
+
+  it("puts Claude's, ChatGPT's and Gemini's in their sections", () => {
+    const { container } = render(<Guide />);
+    expect(figures(container, "claude")).toHaveLength(3);
+    expect(figures(container, "chatgpt")).toHaveLength(2);
+    expect(figures(container, "gemini")).toHaveLength(2);
+  });
+
+  it("loads each from guide-assets, lazily, with its size so the page does not jump", () => {
+    const { container } = render(<Guide />);
+    for (const img of container.querySelectorAll("figure img")) {
+      expect(img.getAttribute("src")).toMatch(
+        /^https:\/\/raw\.githubusercontent\.com\/AI-Lab-for-Cities-at-Harvard\/civic-skill-exchange\/guide-assets\/guide\/using\/[a-z0-9-]+\.jpg$/);
+      expect(img).toHaveAttribute("loading", "lazy");
+      expect(Number(img.getAttribute("width"))).toBeGreaterThan(0);
+      expect(Number(img.getAttribute("height"))).toBeGreaterThan(0);
+    }
+  });
+
+  it("gives every screenshot alt text and a caption, in English and in Spanish", async () => {
+    for (const tag of ["en", "es"]) {
+      await setLocale(tag);
+      const { container, unmount } = render(<Guide />);
+      const figs = [...container.querySelectorAll("figure")];
+      expect(figs.length).toBeGreaterThan(0);
+      for (const f of figs) {
+        expect(f.querySelector("img")?.getAttribute("alt")?.trim(), tag).toBeTruthy();
+        expect(f.querySelector("figcaption")?.textContent?.trim(), tag).toBeTruthy();
+      }
+      unmount();
+    }
+  });
+
+  it("dates each section that has screenshots", () => {
+    const { container } = render(<Guide />);
+    for (const id of ["claude", "chatgpt", "gemini"]) {
+      // Formatted for the reader's locale, as every date on the site is.
+      const date = new Date("2026-10-18").toLocaleDateString("en", { dateStyle: "long", timeZone: "UTC" });
+      expect(container.querySelector(`#${id}`)?.textContent).toContain(`Captured on ${date}`);
+    }
+  });
+
+  it("gives Claude's menu path as it is: + Add, then Upload skill", () => {
+    const { container } = render(<Guide />);
+    expect(container.querySelector("#claude")?.textContent).toMatch(/\+ Add.*Upload skill/);
+    expect(container.querySelector("#gemini")?.textContent).toMatch(/More.*Customize/);
+    expect(container.querySelector("#gemini")?.textContent).toMatch(/Create.*Upload/);
+  });
+});

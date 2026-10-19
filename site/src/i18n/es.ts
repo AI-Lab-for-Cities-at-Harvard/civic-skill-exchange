@@ -890,6 +890,40 @@ export const strings: Strings = {
         new Date(iso).toLocaleDateString(locale(), { dateStyle: "long", timeZone: "UTC" })
       }. Si un producto se ve distinto ahora, confíe en el producto.`,
     contents: "En esta página",
+    captured: (iso: string) =>
+      `Capturas del ${
+        new Date(iso).toLocaleDateString(locale(), { dateStyle: "long", timeZone: "UTC" })
+      }, en inglés. Los datos personales están difuminados.`,
+    figures: {
+      claude01: {
+        alt: "La página Customize de Claude en la pestaña Skills. El botón + Add está arriba a la derecha.",
+        caption: "Customize y luego Skills.",
+      },
+      claude02: {
+        alt: "El menú + Add abierto, con Upload skill arriba.",
+        caption: "+ Add y luego Upload skill.",
+      },
+      claude04: {
+        alt: "La página Upload a skill con el .zip elegido, una vista previa del nombre y la descripción de la habilidad, y el botón Upload.",
+        caption: "La habilidad leída del .zip, lista para subir.",
+      },
+      chatgpt01: {
+        alt: "El panel Customize de ChatGPT en Skills, con el botón Add arriba a la derecha.",
+        caption: "Plugins y luego Skills.",
+      },
+      chatgpt02: {
+        alt: "El menú Add abierto, con Upload from your computer abajo.",
+        caption: "Add y luego Upload from your computer.",
+      },
+      gemini01: {
+        alt: "La barra lateral de Gemini con More abierto, mostrando Customize.",
+        caption: "More y luego Customize.",
+      },
+      gemini02: {
+        alt: "La página Customize de Gemini en la pestaña Skills, con el menú Create abierto y Upload abajo.",
+        caption: "Skills, luego Create y luego Upload.",
+      },
+    },
 
     install: {
       heading: "Instalar una habilidad",
@@ -903,8 +937,9 @@ export const strings: Strings = {
           steps: [
             "En la página de la habilidad, **descargue** el `.zip`.",
             "En Claude, abra **Customize** y luego **Skills**.",
-            "Haga clic en **+**, luego en **Create skill** y luego en " +
-              "**Upload a skill**, y elija el `.zip`.",
+            "Haga clic en **+ Add**, luego en **Upload skill**, y elija el " +
+              "`.zip`. Claude muestra el nombre y la descripción de la " +
+              "habilidad; haga clic en **Upload**.",
           ],
           notes: [
             "Si no aparece la opción de subir, active primero la ejecución de " +
@@ -934,9 +969,9 @@ export const strings: Strings = {
           heading: "En ChatGPT",
           steps: [
             "En la página de la habilidad, **descargue** el `.zip`.",
-            "En la barra lateral de ChatGPT, abra **Plugins** y luego la " +
-              "pestaña **Skills**.",
-            "Haga clic en **Create**, luego en **Upload from your computer**, " +
+            "En ChatGPT, abra **Plugins** desde la barra de la izquierda y " +
+              "luego **Skills**.",
+            "Haga clic en **Add**, luego en **Upload from your computer**, " +
               "y elija el `.zip`.",
           ],
           notes: [
@@ -953,9 +988,9 @@ export const strings: Strings = {
           steps: [
             "En la página de la habilidad, **descargue** el `.zip`.",
             "En **gemini.google.com**, o en la app de Gemini para Mac, abra " +
-              "**Customize** y luego **Skills**.",
-            "Haga clic en **Upload**, elija el `.zip` y luego **Create**. Si " +
-              "no acepta el `.zip`, descomprímalo y suba la carpeta.",
+              "**More**, luego **Customize** y luego la pestaña **Skills**.",
+            "Haga clic en **Create**, luego en **Upload**, y elija el `.zip`. " +
+              "Si no acepta el `.zip`, descomprímalo y suba la carpeta.",
           ],
           notes: [
             "Por ahora funciona con una cuenta personal de Google, para " +

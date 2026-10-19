@@ -69,3 +69,37 @@ export const GUIDE_SECTIONS: string[] = [
   "safety", "share", "glossary",
   ...GLOSSARY.map(glossaryAnchor),
 ];
+
+/** Where the screenshots live: the guide-assets branch, loaded by URL so they
+ *  stay out of `main`, out of every marketplace clone and out of the bundle
+ *  (#224, ruling 4a). Recapture there and the page picks them up. */
+export const SHOTS_URL =
+  `https://raw.githubusercontent.com/${REPO}/guide-assets/guide/using/`;
+
+/** When the screenshots were taken (#260), shown under each section that has
+ *  them. Moves with a recapture. */
+export const CAPTURED_ON = "2026-10-18";
+
+export type Shot =
+  | "claude01" | "claude02" | "claude04"
+  | "chatgpt01" | "chatgpt02"
+  | "gemini01" | "gemini02";
+
+/** Each section's screenshots, in the order of its steps. Every capture is the
+ *  same browser window, so one size serves them all. */
+export const SCREENSHOTS: Partial<Record<string, { id: Shot; file: string }[]>> = {
+  "claude": [
+    { id: "claude01", file: "claude-01-customize-skills.jpg" },
+    { id: "claude02", file: "claude-02-add-menu.jpg" },
+    { id: "claude04", file: "claude-04-ready-to-upload.jpg" },
+  ],
+  "chatgpt": [
+    { id: "chatgpt01", file: "chatgpt-01-skills.jpg" },
+    { id: "chatgpt02", file: "chatgpt-02-add-menu.jpg" },
+  ],
+  "gemini": [
+    { id: "gemini01", file: "gemini-01-more-customize.jpg" },
+    { id: "gemini02", file: "gemini-02-create-upload.jpg" },
+  ],
+};
+export const SHOT_SIZE = { width: 1153, height: 820 };

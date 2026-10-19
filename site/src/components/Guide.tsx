@@ -2,7 +2,8 @@ import { useEffect } from "react";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import {
-  CHECKED_ON, COMMANDS, GLOSSARY, GUIDE_SECTIONS, SECURITY, TASKS, glossaryAnchor,
+  CAPTURED_ON, CHECKED_ON, COMMANDS, GLOSSARY, GUIDE_SECTIONS, SCREENSHOTS, SECURITY,
+  SHOT_SIZE, SHOTS_URL, TASKS, glossaryAnchor,
 } from "../lib/guide";
 import { guideHref } from "../lib/route";
 
@@ -18,6 +19,8 @@ interface ProductText {
 function ProductSection(
   { anchor, text, commands }: { anchor: string; text: ProductText; commands?: string[] },
 ) {
+  const g = useStrings().guide;
+  const shots = SCREENSHOTS[anchor];
   return (
     <section id={anchor} className="guide__product">
       <h3 className="h3">{text.heading}</h3>
@@ -30,6 +33,18 @@ function ProductSection(
         <div className="download__cmd" key={c}><code>{c}</code></div>
       ))}
       {text.notes?.map((note) => <p key={note}>{rich(note, LINKS)}</p>)}
+      {shots && (
+        <div className="guide__shots">
+          {shots.map(({ id, file }) => (
+            <figure className="guide__shot" key={id}>
+              <img src={`${SHOTS_URL}${file}`} alt={g.figures[id].alt} loading="lazy"
+                width={SHOT_SIZE.width} height={SHOT_SIZE.height} />
+              <figcaption>{g.figures[id].caption}</figcaption>
+            </figure>
+          ))}
+          <p className="guide__captured">{g.captured(CAPTURED_ON)}</p>
+        </div>
+      )}
     </section>
   );
 }

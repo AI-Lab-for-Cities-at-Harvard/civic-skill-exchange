@@ -376,3 +376,15 @@ def test_the_readme_points_at_the_guide_and_drops_the_wrong_claims() -> None:
     for wrong in ("Settings &rarr; Features", "Settings → Features",
                   "per-person rather than org-wide", "do not sync to other surfaces"):
         assert wrong not in text, wrong
+
+
+# --------------------------------------------------------------------------- #
+# #260: the commit box is recaptured with "Commit directly to the main branch"
+# selected (#243), and goes back into SUBMITTING.md's upload step.
+
+def test_submitting_shows_the_recaptured_commit_box() -> None:
+    doc = _text("docs/SUBMITTING.md")
+    line = next((l for l in doc.splitlines() if "github-03-commit-box.png" in l), "")
+    assert line, "SUBMITTING.md does not show the commit box"
+    assert "directly to the main branch" in line.lower()
+    assert "new branch" not in line.lower()
