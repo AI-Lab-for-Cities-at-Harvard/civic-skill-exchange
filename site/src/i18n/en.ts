@@ -736,6 +736,18 @@ export const en = {
       convertedFindings:
         "Left out when we rearranged it. Nothing here stops the upload, but " +
         "read it: a server left out is one the plugin will not connect to.",
+      /** The box under the findings for a remote server left out because its
+       *  address was a `${VAR}` (#250). `server` is its name in `.mcp.json`. */
+      addressLabel: (server: string) => `Public address of ${server}`,
+      addressHint:
+        "This server's address came from a setting on your computer. Paste " +
+        "its public `https://` address.",
+      addressPlaceholder: "https://example.org/mcp",
+      /** `reason` is the validator's own message, which is in English. */
+      addressRefused: (reason: string) => `We could not use this address: ${reason}`,
+      /** `host` is the host the pasted address names. */
+      addressAdded: (server: string, host: string) =>
+        `**${server}** is back in \`mcp.json\`, connecting to \`${host}\`.`,
       /** Why each thing was left out of the converted files. `server` is a
        *  name in `.mcp.json`; `value` is the text it held. */
       conversion: {
@@ -761,8 +773,8 @@ export const en = {
         serverUrl: (server: string, url: string) =>
           `**${server}** connects to \`${url}\`, an address filled in from the ` +
           "settings on your computer. A reviewer has to see where a server " +
-          "connects, so it was left out of `mcp.json`. Add its `https` address " +
-          "there to list it.",
+          "connects, so it was left out of `mcp.json`. Paste its `https` " +
+          "address below to list it.",
         serverHeader: (server: string, header: string, value: string) =>
           `**${server}** sends the header \`${header}\` as \`${value}\`, filled in ` +
           "from the settings on your computer, so the header was left out. Never " +

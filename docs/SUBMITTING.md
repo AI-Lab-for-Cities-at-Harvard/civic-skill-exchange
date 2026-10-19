@@ -232,8 +232,18 @@ added:
   address or header is a `${VAR}` filled in from your computer, a `stdio`
   server that runs through `${CLAUDE_PLUGIN_ROOT}`, an `sse` server (which
   Codex does not load), and files outside `skills/` other than `README.md`.
-  A server left out is one the listed plugin will not connect to, so add its
-  `https` address to `mcp.json` in the folder the page hands back if you need it.
+  A server left out is one the listed plugin will not connect to.
+- For a remote server left out because its address is a `${VAR}`, the page
+  shows a box under that list: paste the server's public `https://` address
+  there. The page checks it as the validator checks a server's address — it
+  must be an absolute `https` URL (plain `http` only to `localhost`), with no
+  `${…}` in it — and refuses anything
+  else with the validator's own message, keeping the server out. An address it
+  accepts puts the server back into `mcp.json` as `streamable-http`, and it
+  shows under "What we added". Leave the box empty and the server stays out.
+  There is no box for an `sse` server or one that runs through
+  `${CLAUDE_PLUGIN_ROOT}`; to keep one of those, change the plugin itself and
+  bring it again, or edit `mcp.json` in the folder the page hands back.
 
 It leaves out `.claude-plugin/`, `.codex-plugin/` and `.mcp.json` from every
 plugin it reads, because the registry writes those.
