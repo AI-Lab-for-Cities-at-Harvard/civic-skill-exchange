@@ -64,6 +64,11 @@ describe.each(locales())("the whole page has no axe violations — %s", (tag) =>
     window.location.hash = "#/submit";
     await expectPageClean();
   });
+
+  it("the guide", async () => {
+    window.location.hash = "#/guide";
+    await expectPageClean();
+  });
 });
 
 /** The marker qualifies the site identity, so it belongs on every page — not
