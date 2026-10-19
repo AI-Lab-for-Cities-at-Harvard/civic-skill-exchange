@@ -553,6 +553,8 @@ export const en = {
         "you. We cannot guess it — you may rename the copy, or keep it under a " +
         "different account.",
       forkCta: "Fork the registry",
+      /** Each GitHub step links to the guide's word for it (#259). */
+      forkMore: "What is a fork?",
       forkLabel: "The address of your copy",
       forkPlaceholder: "github.com/you/civic-skill-exchange",
       forkHint: "Paste it from your browser's address bar, or type owner/name.",
@@ -578,6 +580,7 @@ export const en = {
         (reserved ? " This opens the registry at " : " This opens your copy at ") +
         `\`${namespacePath}\`, so the result is \`${skillPath}\`.`,
       uploadCta: "Upload the folder",
+      commitMore: "What is a commit?",
       uploadWaiting:
         "Paste the address of your copy above and this becomes a link. A " +
         "guessed one would send you to the wrong place.",
@@ -587,6 +590,7 @@ export const en = {
         "This button compares your copy with the registry and lets you open the " +
         "pull request. The checks run on it, and a maintainer takes it from there.",
       pullRequestCta: "Open the pull request",
+      pullRequestMore: "What happens to a pull request?",
 
       handoff: "Continue on GitHub",
       urlTooLong:
@@ -1416,6 +1420,10 @@ export const en = {
         "skills with the MCP servers they use \u2014 goes in the same way, and a " +
         "maintainer reviews every one. You will need a **GitHub account** " +
         "\u2014 it is free, and it is what records the skill as yours.",
+      /** For somebody who came to install rather than share (#259). */
+      installGuide:
+        "Here to install a listing rather than share one? [Using the " +
+        "Exchange](guide) has the steps for each tool.",
       byHand: "What it produces, and what you would build by hand:",
       steps: {
         namespaceTitle: "Put it in your own namespace",
@@ -1715,11 +1723,16 @@ export const en = {
     copy: "Copy",
     copied: "Copied",
 
+    /** Under the download: the guide's section for each product (#259). The
+     *  product names are names, the same in every language. */
+    stepByStep:
+      "Step by step: [Claude](claude) · [ChatGPT](chatgpt) · " +
+      "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "In Claude Code the two `/plugin` lines are all you need. Skills here " +
-      "follow the open [Agent Skills](spec) format, so they also work in " +
-      "ChatGPT, Codex, Gemini CLI, Copilot, Cursor and others — those take a " +
-      "skill at a time, so use the download above.",
+      "In Claude Code the two `/plugin` lines are all you need — [what these " +
+      "do](claudeCode). Skills here follow the open [Agent Skills](spec) " +
+      "format, so they also work in ChatGPT, Codex, Gemini, Copilot, Cursor " +
+      "and others — those take a skill at a time, so use the download above.",
     pathsNote:
       "Install paths differ across agent tools — `.claude/skills/`, " +
       "`.agents/skills/`, and others. Check your tool's docs for where it looks.",
@@ -1786,8 +1799,11 @@ export const en = {
       commands: {
         claudeMarketplace: "Claude Code: add the marketplace, once",
         claudeInstall: "Claude Code: install it",
-        codexMarketplace: "Codex: add the marketplace, then install it from the plugin list",
+        codexMarketplace: "Codex: add the marketplace, once",
+        codexInstall: "Codex: install it",
       },
+      /** The guide's section on adding the exchange (#259). */
+      stepByStep: "[Step by step](guide): adding the exchange to Claude Code or Codex.",
       formatNote:
         "Plugins here follow the open [Agent Plugins](spec) format. Tools " +
         "that take one skill at a time can use the skills inside the download.",

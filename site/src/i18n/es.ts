@@ -488,6 +488,7 @@ export const strings: Strings = {
         "podemos adivinarla: puede cambiarle el nombre a la copia o tenerla en " +
         "otra cuenta.",
       forkCta: "Hacer un fork del registro",
+      forkMore: "¿Qué es un fork?",
       forkLabel: "La dirección de su copia",
       forkPlaceholder: "github.com/usted/civic-skill-exchange",
       forkHint:
@@ -515,6 +516,7 @@ export const strings: Strings = {
         (reserved ? " Esto abre el registro en " : " Esto abre su copia en ") +
         `\`${namespacePath}\`, de modo que el resultado es \`${skillPath}\`.`,
       uploadCta: "Subir la carpeta",
+      commitMore: "¿Qué es un commit?",
       uploadWaiting:
         "Pegue arriba la dirección de su copia y esto se convierte en un " +
         "enlace. Una dirección adivinada lo llevaría al lugar equivocado.",
@@ -525,6 +527,7 @@ export const strings: Strings = {
         "request. Las verificaciones se ejecutan sobre él, y desde ahí sigue " +
         "un mantenedor.",
       pullRequestCta: "Abrir el pull request",
+      pullRequestMore: "¿Qué pasa con un pull request?",
 
       handoff: "Continuar en GitHub",
       urlTooLong:
@@ -1280,6 +1283,9 @@ export const strings: Strings = {
         "cada uno. Necesitará una **cuenta de " +
         "GitHub**: es gratuita y es lo que deja constancia de que la habilidad " +
         "es suya.",
+      installGuide:
+        "¿Vino a instalar una publicación en lugar de compartir una? [Cómo " +
+        "usar el intercambio](guide) tiene los pasos para cada herramienta.",
       byHand: "Lo que produce, y lo que usted armaría a mano:",
       steps: {
         namespaceTitle: "Póngala en su propio espacio de nombres",
@@ -1563,11 +1569,15 @@ export const strings: Strings = {
     copy: "Copiar",
     copied: "Copiado",
 
+    stepByStep:
+      "Paso a paso: [Claude](claude) · [ChatGPT](chatgpt) · " +
+      "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "En Claude Code, las dos líneas `/plugin` son todo lo que necesita. Las " +
-      "habilidades de aquí siguen el formato abierto [Agent Skills](spec), así " +
-      "que también funcionan en ChatGPT, Codex, Gemini CLI, Copilot, Cursor y " +
-      "otros; esos aceptan una habilidad a la vez, así que use la descarga de arriba.",
+      "En Claude Code, las dos líneas `/plugin` son todo lo que necesita: " +
+      "[qué hacen](claudeCode). Las habilidades de aquí siguen el formato " +
+      "abierto [Agent Skills](spec), así que también funcionan en ChatGPT, " +
+      "Codex, Gemini, Copilot, Cursor y otros; esos aceptan una habilidad a la " +
+      "vez, así que use la descarga de arriba.",
     pathsNote:
       "Las rutas de instalación cambian según la herramienta de agente: " +
       "`.claude/skills/`, `.agents/skills/` y otras. Consulte la documentación " +
@@ -1629,8 +1639,10 @@ export const strings: Strings = {
       commands: {
         claudeMarketplace: "Claude Code: agregue el marketplace, una sola vez",
         claudeInstall: "Claude Code: instálelo",
-        codexMarketplace: "Codex: agregue el marketplace y luego instálelo desde la lista de plugins",
+        codexMarketplace: "Codex: agregue el marketplace, una sola vez",
+        codexInstall: "Codex: instálelo",
       },
+      stepByStep: "[Paso a paso](guide): cómo agregar el intercambio a Claude Code o Codex.",
       formatNote:
         "Los plugins de este sitio siguen el formato abierto [Agent Plugins](spec). " +
         "Las herramientas que reciben una habilidad a la vez pueden usar las " +

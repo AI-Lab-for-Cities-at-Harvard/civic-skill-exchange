@@ -3,6 +3,7 @@ import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { History } from "./History";
 import { TierBadge, LabBadge, SensitivityBadge, DeploymentBadge } from "./Badges";
 import { rich } from "../i18n/rich";
+import { guideHref } from "../lib/route";
 import { useStrings } from "../i18n/strings";
 import { label } from "../lib/labels";
 import { bytes } from "../lib/format";
@@ -238,11 +239,13 @@ function PluginDownload({ detail }: { detail: Detail }) {
 
   const commands = [
     { id: "claude-marketplace", label: p.commands.claudeMarketplace,
-      value: `/plugin marketplace add ${REPO}` },
+      value: `/plugin marketplace add ${REPO} --sparse .claude-plugin skills plugins` },
     { id: "claude-install", label: p.commands.claudeInstall,
       value: `/plugin install ${detail.namespace}-${detail.name}@${MARKETPLACE}` },
     { id: "codex-marketplace", label: p.commands.codexMarketplace,
       value: `codex plugin marketplace add ${REPO}` },
+    { id: "codex-install", label: p.commands.codexInstall,
+      value: `codex plugin add ${detail.namespace}-${detail.name}@${MARKETPLACE}` },
   ];
 
   const copy = async (id: string, value: string) => {
@@ -295,6 +298,9 @@ function PluginDownload({ detail }: { detail: Detail }) {
         </div>
       ))}
 
+      <p className="download__note">
+        {rich(p.stepByStep, { guide: guideHref("marketplace") })}
+      </p>
       <p className="download__note">
         {rich(p.formatNote, { spec: "https://agent-plugins.org" })}
       </p>

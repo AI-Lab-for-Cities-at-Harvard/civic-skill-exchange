@@ -1,7 +1,7 @@
 import { DocLink } from "./DocLink";
 import { rich } from "../i18n/rich";
 import { useStrings, type Strings } from "../i18n/strings";
-import { aboutHref, skillHref } from "../lib/route";
+import { aboutHref, guideHref, skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
 
 const REPO = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
@@ -232,6 +232,7 @@ export function About(
       <section className="prose__block" id="submitting">
         <h2 className="h2">{a.submitting.heading}</h2>
         <p>{rich(a.submitting.lede, { submit: "#/submit" })}</p>
+        <p>{rich(a.submitting.installGuide, { guide: guideHref() })}</p>
         <p>{a.submitting.byHand}</p>
         <ol className="steps">
           <li>

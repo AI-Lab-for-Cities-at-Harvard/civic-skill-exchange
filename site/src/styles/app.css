@@ -939,3 +939,4 @@ a:hover { color: var(--c-spot); }
 .guide__glossary { margin: 0; display: grid; gap: var(--gap-4); max-width: 66ch; }
 .guide__glossary dt { font-weight: 700; margin-bottom: var(--gap-1); }
 .guide__glossary dd { margin: 0; line-height: 1.6; }
+.steps__more { margin: 0 0 var(--gap-3); font-size: var(--t-sm); }
