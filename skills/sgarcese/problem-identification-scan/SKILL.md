@@ -1,5 +1,5 @@
 ---
-name: jurisdiction-priority-scan
+name: problem-identification-scan
 description: Supports problem identification, the first phase of performance management. Runs a broad scan for potential issues a state or city agency might focus on, drawing on the jurisdiction's performance data through an OpenContext MCP connector, local media coverage, public testimony, and social media where a tool can reach it. Covers state labor and workforce, state health and human services, city 311, emergency dispatch (CAD), and city operations. Produces a ranked list of candidate problems for agency leaders and performance officers, each tagged by evidence source, shape (acute/chronic), horizon, degree of control, and dominant cost, with a verified/partial/unverified confidence flag, plus a second list of adjacent problems where the agency has leverage but no formal remit. Use when someone asks what a state or city agency should prioritize, where to target process improvement, what data or local coverage shows about emerging problems, or for a priority scan or focus areas.
 license: MIT
 compatibility: >
@@ -33,7 +33,7 @@ metadata:
   civic.deployment: none
 ---
 
-# Jurisdiction Priority Scan
+# Problem Identification Scan
 
 Produce a defensible, sourced list of candidate priority problems for one agency in one domain, classified so that a performance officer can decide where to point scarce analyst time.
 
@@ -175,7 +175,7 @@ Keep the problem statement to one line. Detail goes in Part 2. Order each list b
 ### Part 2 — The memo
 
 ```
-# [Jurisdiction] Priority Scan — [Domain]
+# [Jurisdiction] Problem Identification Scan — [Domain]
 [Date] · Prepared for [the office named in the context]
 
 ## Recommendation
