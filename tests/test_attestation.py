@@ -381,3 +381,29 @@ def test_a_plugin_needs_its_manifest_to_be_attested(tmp_path):
     (tmp_path / "p").mkdir()
     with pytest.raises(attestation.Unusable, match="no plugin.json"):
         attestation.check_clone(tmp_path, tmp_path / "p", plugin=True)
+
+
+# --------------------------------------------------------------------------- #
+# The optional `models:` field (#267): the models the reviewer ran the listing
+# with. Free text, so only its shape is guarded — a list of short names.
+
+
+def test_models_is_optional_on_an_attestation(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY))
+    assert "models" not in build_index.load_attestations()["ns/example"]
+
+
+def test_models_accepts_a_list_of_names(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch,
+                  dict(BASE_ENTRY, models=["Claude Opus 5.5", "ChatGPT 5.6-Terra"]))
+    assert build_index.load_attestations()["ns/example"]["models"] == [
+        "Claude Opus 5.5", "ChatGPT 5.6-Terra"]
+
+
+@pytest.mark.parametrize("bad", [
+    "Claude Opus 5.5", [], [""], ["   "], [42], ["x" * 61],
+])
+def test_models_rejects_anything_but_a_list_of_short_names(tmp_path, monkeypatch, bad):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, models=bad))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()

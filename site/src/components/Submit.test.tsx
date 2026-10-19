@@ -938,6 +938,14 @@ describe("Submit — the language it asks for", () => {
     expect(screen.getByTestId("yaml").textContent)
       .toContain('civic.languages-tested: "en, es"');
   });
+
+  it("asks, optionally, which AI models the author has tried it with (#267)", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/AI models/i), "Claude Sonnet 5, GPT-5");
+    expect(screen.getByTestId("yaml").textContent)
+      .toContain('civic.models-tested: "Claude Sonnet 5, GPT-5"');
+  });
 });
 
 describe("Submit — a username GitHub would not issue", () => {

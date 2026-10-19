@@ -387,6 +387,13 @@ describe("the declared language", () => {
     expect(f.metadata?.["civic.languages-tested"]).toBe("en, es");
   });
 
+  it("emits and omits the tested models the same way (#267)", () => {
+    expect(toFrontmatter(draft({ modelsTested: "Claude Sonnet 5" })).metadata?.["civic.models-tested"])
+      .toBe("Claude Sonnet 5");
+    expect(toFrontmatter(draft({ modelsTested: "" })).metadata?.["civic.models-tested"])
+      .toBeUndefined();
+  });
+
   it("omits the tested languages rather than emitting an empty claim", () => {
     const f = toFrontmatter(draft({ language: "en", languagesTested: "" }));
     expect(f.metadata?.["civic.languages-tested"]).toBeUndefined();

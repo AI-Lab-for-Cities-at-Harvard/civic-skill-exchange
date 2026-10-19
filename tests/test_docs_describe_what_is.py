@@ -388,3 +388,19 @@ def test_submitting_shows_the_recaptured_commit_box() -> None:
     assert line, "SUBMITTING.md does not show the commit box"
     assert "directly to the main branch" in line.lower()
     assert "new branch" not in line.lower()
+
+
+# --------------------------------------------------------------------------- #
+# #267: the docs that own the metadata and the review describe the two model
+# fields, and keep the claim apart from the verification.
+
+def test_the_metadata_docs_describe_civic_models_tested() -> None:
+    for doc in ("CONTRIBUTING.md", "docs/ARCHITECTURE.md",
+                ".github/ISSUE_TEMPLATE/submit-skill.yml"):
+        assert "civic.models-tested" in _text(doc), doc
+
+
+def test_the_review_guide_describes_the_models_field() -> None:
+    guide = _text("docs/REVIEW.md")
+    assert "models:" in guide
+    assert "civic.models-tested" in guide

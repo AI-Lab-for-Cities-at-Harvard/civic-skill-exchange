@@ -1,8 +1,11 @@
 import { describe, it, expect } from "vitest";
 import {
   PLACE_PATTERN, SCOPES, SCOPE_FIELD, SCOPE_SECONDARY,
-  LANGUAGE_FIELD, LANGUAGES_TESTED_FIELD,
+  LANGUAGE_FIELD, LANGUAGES_TESTED_FIELD, MODELS_TESTED_FIELD,
   checkAllowedTools,
+  checkModelsTested,
+  checkPluginMetadata,
+  parseModelsTested,
   checkFrontmatter,
   checkLanguage,
   checkLocalization,
@@ -801,5 +804,70 @@ describe("civic.languages-tested", () => {
     expect(parseLanguagesTested("en,es")).toEqual(["en", "es"]);
     expect(parseLanguagesTested("")).toEqual([]);
     expect(parseLanguagesTested(undefined)).toEqual([]);
+  });
+});
+
+
+/** #267: which AI models the author says they tried the listing with. Free
+ *  text, because model names change faster than any vocabulary could; the
+ *  shape is what is checked, as with civic.languages-tested. */
+describe("civic.models-tested", () => {
+  it("is optional", () => {
+    expect(checkModelsTested(meta())).toEqual([]);
+  });
+
+  it("accepts a comma-separated list of model names", () => {
+    expect(checkModelsTested(meta({
+      [MODELS_TESTED_FIELD]: "Claude Opus 5.5, Claude Sonnet 5, ChatGPT 5.6-Terra",
+    }))).toEqual([]);
+  });
+
+  it("accepts one name", () => {
+    expect(checkModelsTested(meta({ [MODELS_TESTED_FIELD]: "Claude Sonnet 5" }))).toEqual([]);
+  });
+
+  it.each([
+    "Claude Opus 5.5,, Claude Sonnet 5", "Claude Opus 5.5,", ",Claude Opus 5.5",
+    " Claude Opus 5.5", "Claude Opus 5.5 ", "Claude\nOpus",
+  ])("rejects %j", (value) => {
+    const findings = checkModelsTested(meta({ [MODELS_TESTED_FIELD]: value }));
+    expect(findings.map((f) => f.where)).toEqual([MODELS_TESTED_FIELD]);
+  });
+
+  it("rejects a name longer than 60 characters", () => {
+    const findings = checkModelsTested(meta({ [MODELS_TESTED_FIELD]: "x".repeat(61) }));
+    expect(findings.map((f) => f.where)).toEqual([MODELS_TESTED_FIELD]);
+  });
+
+  it("rejects more than twelve names", () => {
+    const thirteen = Array.from({ length: 13 }, (_, i) => `Model ${i}`).join(", ");
+    expect(checkModelsTested(meta({ [MODELS_TESTED_FIELD]: thirteen })))
+      .toHaveLength(1);
+    const twelve = Array.from({ length: 12 }, (_, i) => `Model ${i}`).join(", ");
+    expect(checkModelsTested(meta({ [MODELS_TESTED_FIELD]: twelve }))).toEqual([]);
+  });
+
+  it("reaches checkFrontmatter, not only its own function", () => {
+    const findings = checkFrontmatter(front({
+      metadata: meta({ [MODELS_TESTED_FIELD]: "Claude Opus 5.5," }),
+    }), ctx());
+    expect(findings.map((f) => f.where)).toContain(MODELS_TESTED_FIELD);
+  });
+
+  it("is a field a plugin may declare once, in plugin.json, with the same check", () => {
+    const plugin = {
+      "civic.maintainer": "Test Suite", "civic.affiliation": "individual",
+      "civic.deployment": "none",
+    };
+    expect(checkPluginMetadata({ ...plugin, [MODELS_TESTED_FIELD]: "Claude Sonnet 5" }))
+      .toEqual([]);
+    expect(checkPluginMetadata({ ...plugin, [MODELS_TESTED_FIELD]: "Claude Sonnet 5," })
+      .map((f) => f.where)).toEqual([MODELS_TESTED_FIELD]);
+  });
+
+  it("parses to the names a consumer publishes", () => {
+    expect(parseModelsTested("Claude Opus 5.5, Claude Sonnet 5"))
+      .toEqual(["Claude Opus 5.5", "Claude Sonnet 5"]);
+    expect(parseModelsTested(undefined)).toEqual([]);
   });
 });
