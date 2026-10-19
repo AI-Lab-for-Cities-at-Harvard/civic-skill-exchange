@@ -926,7 +926,11 @@ def _sparse_roots(doc: str) -> list[str]:
     line is Markdown or a string in the guide's source."""
     flag = "--sparse "
     line = next(l for l in doc.splitlines() if flag in l and "marketplace add" in l)
-    return [r.strip("`'\",") for r in line.split(flag, 1)[1].split() if r.strip("`'\",")]
+    # A command in source ends at its closing quote or backtick.
+    rest = line.split(flag, 1)[1]
+    for end in "`\"'":
+        rest = rest.split(end, 1)[0]
+    return rest.split()
 
 
 def _claude_reads(path: Path) -> bool:
