@@ -38,10 +38,10 @@
       "category": "Communications"
     },
     {
-      "name": "sgarcese-civic-analytics-workflow",
+      "name": "sgarcese-deep-analysis-for-issues",
       "source": {
         "source": "local",
-        "path": "./skills/sgarcese/civic-analytics-workflow"
+        "path": "./skills/sgarcese/deep-analysis-for-issues"
       },
       "policy": {
         "installation": "AVAILABLE",
