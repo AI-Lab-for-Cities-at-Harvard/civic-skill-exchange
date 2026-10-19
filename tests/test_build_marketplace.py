@@ -959,3 +959,21 @@ def test_the_sparse_install_explanation_quotes_no_fixed_size():
     root = build_marketplace.ROOT
     for doc in ("README.md", "docs/SUBMITTING.md"):
         assert "60 KB" not in (root / doc).read_text(encoding="utf-8"), doc
+
+
+# #259: the install boxes on skill and plugin pages give the same `--sparse`
+# command as the guide, and the plugin box gives Codex's install line too.
+INSTALL_BOXES = (Path("site") / "src" / "components" / "DownloadBox.tsx",
+                 Path("site") / "src" / "components" / "PluginDetail.tsx")
+
+
+@pytest.mark.parametrize("box", INSTALL_BOXES, ids=lambda p: p.name)
+def test_the_install_boxes_give_the_guides_sparse_install(box: Path):
+    root = build_marketplace.ROOT
+    assert _sparse_roots((root / box).read_text(encoding="utf-8")) == _sparse_roots(
+        (root / GUIDE).read_text(encoding="utf-8"))
+
+
+def test_the_plugin_box_gives_codexs_install_line():
+    text = (build_marketplace.ROOT / INSTALL_BOXES[1]).read_text(encoding="utf-8")
+    assert "codex plugin add ${detail.namespace}-${detail.name}@${MARKETPLACE}" in text

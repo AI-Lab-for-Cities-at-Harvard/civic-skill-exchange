@@ -192,3 +192,11 @@ describe("About — the section navigation", () => {
       .toMatch(/on this page/i);
   });
 });
+
+/** #259: somebody reading how to submit may have come to install instead. */
+describe("About — the way to the guide", () => {
+  it("points the submitting section at the guide", () => {
+    const { container } = render(<About skills={[]} />);
+    expect(container.querySelector('#submitting a[href="#/guide"]')).not.toBeNull();
+  });
+});
