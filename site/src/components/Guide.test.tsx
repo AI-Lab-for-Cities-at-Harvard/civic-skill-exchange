@@ -7,7 +7,8 @@
 
 import { afterEach, describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Guide, GUIDE_SECTIONS } from "./Guide";
+import { Guide } from "./Guide";
+import { GUIDE_SECTIONS } from "../lib/guide";
 import { DEFAULT_LOCALE, setLocale } from "../i18n/strings";
 
 afterEach(async () => { await setLocale(DEFAULT_LOCALE); });

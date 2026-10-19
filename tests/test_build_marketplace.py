@@ -616,7 +616,7 @@ def test_the_check_notices_an_altered_claude_manifest(make_skill):
 
 # The install steps live on the site's guide since #258, and docs/SUBMITTING.md
 # points there; the command a reader copies is the one in the guide's source.
-GUIDE = Path("site") / "src" / "components" / "Guide.tsx"
+GUIDE = Path("site") / "src" / "lib" / "guide.ts"
 
 
 def test_the_sparse_install_command_covers_every_claude_manifest():

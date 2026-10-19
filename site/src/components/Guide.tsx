@@ -1,71 +1,9 @@
 import { rich } from "../i18n/rich";
-import { useStrings, type Strings } from "../i18n/strings";
+import { useStrings } from "../i18n/strings";
+import {
+  CHECKED_ON, COMMANDS, GLOSSARY, GUIDE_SECTIONS, SECURITY, TASKS, glossaryAnchor,
+} from "../lib/guide";
 import { guideHref } from "../lib/route";
-
-const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
-const MARKETPLACE = "civic-skill-exchange";
-const SECURITY = `https://github.com/${REPO}/blob/main/docs/SECURITY.md`;
-
-/** When every step on this page was last checked against the product it
- *  describes. One record, so a recheck is a one-line change (#224, ruling 4d
- *  on its design note). */
-export const CHECKED_ON = "2026-10-18";
-
-type G = Strings["guide"];
-type Task = "install" | "marketplace";
-type Product = keyof G["install"]["products"] | keyof G["marketplace"]["products"];
-
-/** The tasks and, inside each, the products — by task rather than by product
- *  (#224, ruling 2). Ids only: they are route slugs and element ids, so they
- *  do not translate; the words come off the table keyed by them. */
-const TASKS: { id: Task; products: { id: Product; anchor: string }[] }[] = [
-  {
-    id: "install",
-    products: [
-      { id: "claude", anchor: "claude" },
-      { id: "claudeCode", anchor: "claude-code" },
-      { id: "chatgpt", anchor: "chatgpt" },
-      { id: "gemini", anchor: "gemini" },
-      { id: "codex", anchor: "codex" },
-    ],
-  },
-  {
-    id: "marketplace",
-    products: [
-      { id: "claudeCode", anchor: "marketplace-claude-code" },
-      { id: "codex", anchor: "marketplace-codex" },
-    ],
-  },
-];
-
-/** The GitHub words, in the order somebody meets them sharing a skill. */
-const GLOSSARY = ["fork", "branch", "commit", "pullRequest", "review"] as const;
-const glossaryAnchor = (word: string) =>
-  `glossary-${word.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`;
-
-/** Commands are what a reader types, so they are the same in every locale and
- *  live here rather than in the strings. */
-const COMMANDS: Partial<Record<`${Task}.${Product}`, string[]>> = {
-  "install.claudeCode": [
-    `/plugin marketplace add ${REPO} --sparse .claude-plugin skills plugins`,
-    `/plugin install {namespace}-{skill-name}@${MARKETPLACE}`,
-  ],
-  "marketplace.claudeCode": [
-    `/plugin marketplace add ${REPO} --sparse .claude-plugin skills plugins`,
-    `/plugin install {namespace}-{name}@${MARKETPLACE}`,
-  ],
-  "marketplace.codex": [
-    `codex plugin marketplace add ${REPO}`,
-    `codex plugin add {namespace}-{plugin-name}@${MARKETPLACE}`,
-  ],
-};
-
-/** Every element id a link may name, for the route and the tests. */
-export const GUIDE_SECTIONS: string[] = [
-  ...TASKS.flatMap((t) => [t.id, ...t.products.map((p) => p.anchor)]),
-  "safety", "share", "glossary",
-  ...GLOSSARY.map(glossaryAnchor),
-];
 
 /** Links a product's text may make to another section of this page. */
 const LINKS = { codex: guideHref("codex") };
