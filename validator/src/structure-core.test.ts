@@ -364,8 +364,9 @@ describe("plugin-level files a skill may not ship", () => {
     "references/settings.json",
     "assets/settings.json",
   ])("%s is documentation — nothing loads it, so it stays", (path) => {
-    // The same line the second-SKILL.md rule draws. A skill about writing
-    // skills ships examples, and in this registry's domain that is likely.
+    // A skill about writing skills ships examples, and in this registry's
+    // domain that is likely. Only a SKILL.md is refused there, because Codex
+    // loads one at any depth (ADR 0006).
     expect(checkStructureCore(withRoot(path))).toEqual([]);
   });
 });

@@ -172,7 +172,8 @@ export function deepSkillMessage(rel: string): string {
  *
  *  Keyed on the first path segment, because the plugin root is the skill
  *  directory: a copy under `references/` or `assets/` is documentation and no
- *  client loads it, the same line `isLoadableNestedSkill` already draws.
+ *  client loads it. (A SKILL.md is the exception, since Codex does load one
+ *  there: `isLoadableNestedSkill` refuses it wherever it sits.)
  *
  *  `.mcp.json` is deliberately absent. An MCP server can be genuinely useful to
  *  a skill, so the ruling on #151 keeps it and treats it as executed instead:
