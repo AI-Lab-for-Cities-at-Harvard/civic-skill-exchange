@@ -1295,3 +1295,59 @@ def test_the_attestation_sha_of_a_nested_listing_is_its_root_commits(tmp_path, m
     entry = build_index.build_entry(listing, {}, {})
     assert entry["sha"] == head == build_index.head_sha(listing)
     assert build_index.head_sha(inner) == first
+
+
+# --------------------------------------------------------------------------- #
+# A nested listing holds the author's files in skills/{name}/ and the generated
+# manifests, and nothing else. L0 refuses a stray file; the build does not rely
+# on that alone, because a stray .mcp.json or scripts/ at the listing root would
+# otherwise be built and published with no "executed" signal.
+
+
+@pytest.mark.parametrize("stray", [".mcp.json", "hooks/hooks.json", "scripts/run.py",
+                                   "README.md", "skills/other/SKILL.md",
+                                   ".claude-plugin/hooks.json"])
+def test_a_stray_file_in_a_nested_listing_fails_the_index_and_names_it(
+        make_skill, tmp_path, monkeypatch, stray):
+    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    generated_manifests(listing)
+    path = listing / stray
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}\n", encoding="utf-8")
+
+    with pytest.raises(build_index.StrayListingFile, match=stray.replace(".", r"\.")):
+        build_index.build_entry(listing, {}, {})
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
+    with pytest.raises(build_index.StrayListingFile):
+        build_index.main_with(tmp_path / "out")
+
+
+def test_the_generated_manifests_are_not_stray(make_skill):
+    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    generated_manifests(listing)
+    assert build_index.build_entry(listing, {}, {}) is not None
+
+
+def test_a_flat_listing_may_hold_what_it_always_could(make_skill):
+    listing = make_skill(files={".mcp.json": "{}\n", "scripts/run.py": "x\n"})
+    entry = build_index.build_entry(listing, {}, {})
+    assert entry["script_files"] == [".mcp.json", "scripts/run.py"]
+
+
+def test_the_archive_and_detail_never_include_a_path_that_resolves_outside(
+        make_skill, tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.md").write_text("s\n", encoding="utf-8")
+    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    inner = listing / "skills" / "example-skill"
+    (inner / "linked").symlink_to(outside, target_is_directory=True)
+    (inner / "file.md").symlink_to(outside / "secret.md")
+
+    entry = build_index.build_entry(listing, {}, {})
+    detail = build_index.build_detail(listing, entry)
+    assert [f["path"] for f in detail["files"]] == ["SKILL.md"]
+    out = tmp_path / "out"
+    build_index.write_outputs(listing, entry, out)
+    with zipfile.ZipFile(out / "skills" / "cityofx" / "example-skill.zip") as z:
+        assert z.namelist() == ["example-skill/SKILL.md"]

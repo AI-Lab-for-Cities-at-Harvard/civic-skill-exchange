@@ -1166,3 +1166,24 @@ def test_a_skill_with_unreadable_frontmatter_is_still_left_out_when_nested(make_
     nest(make_skill(name="broken", namespace="cityofx", raw="---\nnot: [valid"))
     assert [p["name"] for p in build_marketplace.build(root)["plugins"]] == [
         "cityofx-alpha"]
+
+
+@pytest.mark.parametrize("stray", [".mcp.json", "hooks/hooks.json", "scripts/run.py"])
+def test_a_stray_file_in_a_nested_listing_fails_every_marketplace_build(
+        make_skill, monkeypatch, capsys, stray):
+    listing = nest(make_skill(name="alpha", namespace="cityofx"))
+    root = listing.parents[2]
+    path = listing / stray
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("{}\n", encoding="utf-8")
+
+    for build in (build_marketplace.build, build_marketplace.build_codex,
+                  build_marketplace.generated):
+        with pytest.raises(build_marketplace.StrayListingFile,
+                           match=stray.split("/")[0].replace(".", r"\.")):
+            build(root)
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    for argv in ([], ["--check"], ["--check-in-skills"], ["--paths"]):
+        monkeypatch.setattr("sys.argv", ["build_marketplace.py", *argv])
+        assert build_marketplace.main() == 1, argv
+        assert stray.split("/")[0] in capsys.readouterr().err
