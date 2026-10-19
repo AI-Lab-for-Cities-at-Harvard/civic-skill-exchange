@@ -407,3 +407,86 @@ def test_models_rejects_anything_but_a_list_of_short_names(tmp_path, monkeypatch
     _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, models=bad))
     with pytest.raises(ValueError):
         build_index.load_attestations()
+
+
+# --------------------------------------------------------------------------- #
+# Nested single skills (ADR 0006, #274).
+#
+# A nested listing keeps its author's files in skills/{name}/. The attestation
+# still pins the listing directory, so the guards that protect it look at the
+# listing and only the SKILL.md check follows the skill inside.
+
+
+@pytest.fixture
+def nested_repo(tmp_path):
+    """A throwaway repository whose one skill is nested, committed."""
+    listing = tmp_path / "skills" / "cityofx" / "permit-status-explainer"
+    inner = listing / "skills" / "permit-status-explainer"
+    inner.mkdir(parents=True)
+    (inner / "SKILL.md").write_text("---\nname: permit-status-explainer\n---\n\nBody.\n",
+                                    encoding="utf-8")
+    for command in (["git", "init", "-q", "-b", "main"],
+                    ["git", "add", "-A"],
+                    ["git", "-c", "user.email=t@e.x", "-c", "user.name=T",
+                     "commit", "-q", "-m", "Add it"]):
+        subprocess.run(command, cwd=tmp_path, check=True)
+    return tmp_path
+
+
+def test_it_accepts_a_nested_listing(nested_repo):
+    listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
+    attestation.check_clone(nested_repo, listing)  # raises on failure
+
+
+def test_it_still_refuses_a_listing_with_no_skill_md_anywhere(nested_repo):
+    listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
+    (listing / "skills" / "permit-status-explainer" / "SKILL.md").unlink()
+    with pytest.raises(attestation.Unusable) as refused:
+        attestation.check_clone(nested_repo, listing)
+    assert "SKILL.md" in str(refused.value)
+
+
+def test_it_refuses_a_listing_with_a_skill_md_in_both_layouts(nested_repo):
+    listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
+    (listing / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
+    with pytest.raises(attestation.Unusable):
+        attestation.check_clone(nested_repo, listing)
+
+
+def test_the_sha_of_a_nested_listing_is_the_last_commit_to_touch_its_root(
+        nested_repo, monkeypatch):
+    """The listing root, not the inner directory: regenerating a manifest
+    beside the inner skill is a commit to the listing, and the build compares
+    against it."""
+    listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
+    monkeypatch.setattr(build_index, "ROOT", nested_repo)
+    first = subprocess.run(["git", "rev-parse", "HEAD"], cwd=nested_repo, check=True,
+                           capture_output=True, text=True).stdout.strip()
+
+    (listing / ".codex-plugin").mkdir()
+    (listing / ".codex-plugin" / "plugin.json").write_text("{}\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-A"], cwd=nested_repo, check=True)
+    subprocess.run(["git", "-c", "user.email=t@e.x", "-c", "user.name=T",
+                    "commit", "-q", "-m", "Regenerate"], cwd=nested_repo, check=True)
+    second = subprocess.run(["git", "rev-parse", "HEAD"], cwd=nested_repo, check=True,
+                            capture_output=True, text=True).stdout.strip()
+
+    assert attestation.skill_sha(listing) == second != first
+    assert attestation.skill_sha(listing) == build_index.head_sha(listing)
+
+
+def test_what_it_emits_for_a_nested_listing_promotes_it(nested_repo, monkeypatch):
+    listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
+    monkeypatch.setattr(build_index, "ROOT", nested_repo)
+    sha = attestation.skill_sha(listing)
+    entry = yaml.safe_load(attestation.render(SKILL_ID, sha, notes="x"))[0]
+    assert build_index.resolve_tier(SKILL_ID, sha, entry)["tier"] == "reviewed"
+
+
+def test_a_dirty_inner_file_blocks_a_nested_listing(nested_repo):
+    listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
+    (listing / "skills" / "permit-status-explainer" / "SKILL.md").write_text(
+        "---\nname: permit-status-explainer\n---\n\nEdited.\n", encoding="utf-8")
+    with pytest.raises(attestation.Unusable) as refused:
+        attestation.check_clone(nested_repo, listing)
+    assert "uncommitted" in str(refused.value).lower()
