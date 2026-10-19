@@ -28,7 +28,7 @@ from pathlib import Path
 
 import yaml
 
-from build_index import NoSkillMd, read_frontmatter, skill_dir_of
+from build_index import NoSkillMd, StrayListingFile, checked_skill_dir, read_frontmatter
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -144,7 +144,7 @@ def codex_plugin(listing: Path, labels: dict[str, str] | None = None) -> dict:
     Raises NoSkillMd when the listing's SKILL.md can't be found."""
     root = listing.parents[2]
     labels = category_labels(root) if labels is None else labels
-    skill_dir = skill_dir_of(listing)
+    skill_dir = checked_skill_dir(listing)
     front = read_frontmatter(skill_dir / "SKILL.md") or {}
     meta = front.get("metadata") or {}
     namespace, name = listing.parent.name, listing.name
@@ -178,7 +178,7 @@ def build_codex(root: Path = ROOT) -> dict:
     plugins = []
     entries = []
     for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
-        front = read_frontmatter(skill_dir_of(listing) / "SKILL.md")
+        front = read_frontmatter(checked_skill_dir(listing) / "SKILL.md")
         if not front:
             continue
         meta = front.get("metadata") or {}
@@ -229,7 +229,7 @@ def claude_plugin(listing: Path) -> dict:
     """The `.claude-plugin/plugin.json` for one single-skill listing, the same
     for a flat one and a nested one. Raises NoSkillMd when the listing's
     SKILL.md can't be found."""
-    front = read_frontmatter(skill_dir_of(listing) / "SKILL.md") or {}
+    front = read_frontmatter(checked_skill_dir(listing) / "SKILL.md") or {}
     meta = front.get("metadata") or {}
     namespace, name = listing.parent.name, listing.name
 
@@ -255,7 +255,7 @@ def build(root: Path = ROOT) -> dict:
     for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
         # A missing SKILL.md raises NoSkillMd: the listing would otherwise
         # vanish from both marketplaces and nothing would fail.
-        front = read_frontmatter(skill_dir_of(listing) / "SKILL.md")
+        front = read_frontmatter(checked_skill_dir(listing) / "SKILL.md")
         if not front:
             # Same posture as the index build: a skill whose frontmatter won't
             # parse is skipped rather than allowed to break the manifest. L0
@@ -465,7 +465,7 @@ def generated(root: Path) -> dict[Path, str]:
     }
     labels = category_labels(root)
     for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
-        if not read_frontmatter(skill_dir_of(listing) / "SKILL.md"):
+        if not read_frontmatter(checked_skill_dir(listing) / "SKILL.md"):
             continue
         # At the listing root in both layouts: a nested listing's inner
         # directory is the author's, and is what the archive is made from.
@@ -564,7 +564,7 @@ def main() -> int:
     if args.paths:
         try:
             paths = list(generated(ROOT))
-        except (DuplicatePluginName, NoSkillMd) as exc:
+        except (DuplicatePluginName, NoSkillMd, StrayListingFile) as exc:
             print(f"error {exc}", file=sys.stderr)
             return 1
         for path in paths:
@@ -589,7 +589,7 @@ def main() -> int:
                           file=sys.stderr)
                     return 1
             foreign = foreign_generated_files(ROOT, changed)
-        except (DuplicatePluginName, NoSkillMd) as exc:
+        except (DuplicatePluginName, NoSkillMd, StrayListingFile) as exc:
             print(f"error {exc}", file=sys.stderr)
             return 1
         if not foreign:
@@ -606,7 +606,7 @@ def main() -> int:
         try:
             stale = [p for p, c in generated(ROOT).items()
                      if not p.is_file() or p.read_text(encoding="utf-8") != c]
-        except (DuplicatePluginName, NoSkillMd) as exc:
+        except (DuplicatePluginName, NoSkillMd, StrayListingFile) as exc:
             print(f"error {exc}", file=sys.stderr)
             return 1
         if not stale:
@@ -620,7 +620,7 @@ def main() -> int:
     try:
         written = write_all(ROOT)
         count = len(build(ROOT)["plugins"])
-    except (DuplicatePluginName, NoSkillMd) as exc:
+    except (DuplicatePluginName, NoSkillMd, StrayListingFile) as exc:
         print(f"error {exc}", file=sys.stderr)
         return 1
     print(f"{len(written)} file{'' if len(written) == 1 else 's'} written — "

@@ -425,6 +425,13 @@ already in it. Claude Code's manifest never has the key, in either layout.
 A flat listing's manifests are byte-identical to what they were before nested
 listings were readable.
 
+**A nested listing holds the author's directory and the two generated manifests,
+and nothing else.** Both generators fail the build, naming the file, when
+anything else is in the listing, such as a root `.mcp.json`, `hooks/` or
+`scripts/`. L0 refuses those too; the build does not rely on that alone,
+because the index publishes only what is in `skills/{name}/`, and a stray file
+beside it would be built into the listing with no "executed" signal.
+
 **Claude's per-plugin manifest is metadata and nothing else.** Claude Code
 loads a root `SKILL.md` as a plugin's single skill exactly when the plugin has
 no `skills/` directory and no `skills` manifest field, so

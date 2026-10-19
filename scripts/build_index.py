@@ -261,6 +261,54 @@ def skill_dir_of(listing: Path) -> Path:
     raise NoSkillMd(f"{listing} has no SKILL.md, at its root or in skills/{listing.name}/.")
 
 
+class StrayListingFile(ValueError):
+    """A nested listing holds a file that is neither the author's (inside
+    skills/{name}/) nor one the registry generates."""
+
+
+#: What build_marketplace.py writes at a nested listing's root.
+LISTING_GENERATED = {".claude-plugin/plugin.json", ".codex-plugin/plugin.json"}
+
+
+def checked_skill_dir(listing: Path) -> Path:
+    """`skill_dir_of`, plus: a nested listing may hold nothing else.
+
+    Everything the index and the archive publish is read from the inner
+    directory, so a file beside it (a root `.mcp.json`, `hooks/`, `scripts/`)
+    would be built into the listing and published with no "executed" signal.
+    L0 refuses such files; the build does not rely on that alone. A flat
+    listing is the listing itself and is unchanged.
+    """
+    skill_dir = skill_dir_of(listing)
+    if skill_dir == listing:
+        return skill_dir
+    inner = listing / "skills" / listing.name
+    for path in sorted(listing.rglob("*")):
+        if path.is_dir() and not path.is_symlink():
+            continue
+        if path == inner or inner in path.parents:
+            continue
+        rel = path.relative_to(listing).as_posix()
+        if rel not in LISTING_GENERATED:
+            raise StrayListingFile(
+                f"{listing}: {rel} is in a nested listing but is neither in "
+                f"skills/{listing.name}/ nor a file the registry generates.")
+    return skill_dir
+
+
+def author_files(skill_dir: Path):
+    """Every regular file under the author's directory, in order. Symlinks are
+    dropped, and a path that resolves outside the directory is an error rather
+    than something to publish or zip."""
+    base = skill_dir.resolve()
+    for path in sorted(skill_dir.rglob("*")):
+        if not path.is_file() or path.is_symlink():
+            continue
+        if not path.resolve().is_relative_to(base):
+            raise StrayListingFile(f"{path} resolves outside {skill_dir}.")
+        yield path
+
+
 def build_provenance(meta: dict) -> dict:
     """Self-reported deployment context, published as such.
 
@@ -340,8 +388,7 @@ def executed_files(skill_dir: Path) -> list[str]:
     """Every file in the skill the agent runs, sorted, relative to its root."""
     return sorted(
         rel for rel in (
-            p.relative_to(skill_dir).as_posix()
-            for p in skill_dir.rglob("*") if p.is_file() and not p.is_symlink()
+            p.relative_to(skill_dir).as_posix() for p in author_files(skill_dir)
         ) if is_executed(rel)
     )
 
@@ -426,7 +473,7 @@ def build_entry(listing: Path, attestations: dict, scans: dict) -> dict | None:
     for that would publish an index with one skill fewer and a warning, which is
     how a listing used to drop out unseen; None is only for frontmatter that
     doesn't parse, which L0 fails in CI."""
-    skill_dir = skill_dir_of(listing)
+    skill_dir = checked_skill_dir(listing)
     front = read_frontmatter(skill_dir / "SKILL.md")
     if not front:
         return None
@@ -538,11 +585,9 @@ def build_detail(listing: Path, entry: dict) -> dict:
     leaves out the manifests the registry generates beside the inner directory,
     which the author did not write and which are not in the archive.
     """
-    skill_dir = skill_dir_of(listing)
+    skill_dir = checked_skill_dir(listing)
     files = []
-    for path in sorted(skill_dir.rglob("*")):
-        if not path.is_file() or path.is_symlink():
-            continue
+    for path in author_files(skill_dir):
         rel = path.relative_to(skill_dir).as_posix()
         files.append({
             "path": rel,
@@ -778,7 +823,7 @@ def write_outputs(skill_dir: Path, entry: dict, out: Path) -> dict:
     name = entry["name"]
     # Rooted at the author's directory, so a nested listing unzips to the same
     # {name}/SKILL.md a flat one does.
-    archive_root = skill_dir if is_plugin else skill_dir_of(skill_dir)
+    archive_root = skill_dir if is_plugin else checked_skill_dir(skill_dir)
     size = write_archive(archive_root, entry, detail["files"], directory / f"{name}.zip")
     detail["archive"] = {
         "path": f"data/{tree}/{entry['namespace']}/{name}.zip",
@@ -912,7 +957,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         return main_with(args.out, args.findings, args.drift_out)
-    except NoSkillMd as missing:
+    except (NoSkillMd, StrayListingFile) as missing:
         print(f"error {missing}", file=sys.stderr)
         return 1
 
