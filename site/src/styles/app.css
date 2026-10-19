@@ -940,3 +940,8 @@ a:hover { color: var(--c-spot); }
 .guide__glossary dt { font-weight: 700; margin-bottom: var(--gap-1); }
 .guide__glossary dd { margin: 0; line-height: 1.6; }
 .steps__more { margin: 0 0 var(--gap-3); font-size: var(--t-sm); }
+.guide__shots { display: grid; gap: var(--gap-4); margin-top: var(--gap-4); }
+.guide__shot { margin: 0; }
+.guide__shot img { display: block; width: 100%; max-width: 720px; height: auto; border: 1px solid var(--c-border-light); border-radius: 6px; }
+.guide__shot figcaption { margin-top: var(--gap-2); font-size: var(--t-sm); color: var(--c-text-light); }
+.guide__captured { font-size: var(--t-sm); color: var(--c-text-light); margin: 0; }

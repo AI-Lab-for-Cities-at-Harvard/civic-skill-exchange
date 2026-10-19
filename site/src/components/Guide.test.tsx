@@ -157,7 +157,9 @@ describe("the screenshots", () => {
   it("dates each section that has screenshots", () => {
     const { container } = render(<Guide />);
     for (const id of ["claude", "chatgpt", "gemini"]) {
-      expect(container.querySelector(`#${id}`)?.textContent).toContain("Captured on 18 October 2026");
+      // Formatted for the reader's locale, as every date on the site is.
+      const date = new Date("2026-10-18").toLocaleDateString("en", { dateStyle: "long", timeZone: "UTC" });
+      expect(container.querySelector(`#${id}`)?.textContent).toContain(`Captured on ${date}`);
     }
   });
 

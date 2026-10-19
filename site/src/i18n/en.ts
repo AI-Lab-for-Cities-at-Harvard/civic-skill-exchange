@@ -1045,6 +1045,43 @@ export const en = {
         new Date(iso).toLocaleDateString(locale(), { dateStyle: "long", timeZone: "UTC" })
       }. If a product looks different now, trust the product.`,
     contents: "On this page",
+    /** Under each section's screenshots (#260). `iso` is when they were taken. */
+    captured: (iso: string) =>
+      `Captured on ${
+        new Date(iso).toLocaleDateString(locale(), { dateStyle: "long", timeZone: "UTC" })
+      }, in English. Personal details are blurred.`,
+    /** Alt text says what to look for, not only what is pictured. The
+     *  products' own labels stay in English, as the screenshots show them. */
+    figures: {
+      claude01: {
+        alt: "Claude's Customize page on the Skills tab. The + Add button is at the top right.",
+        caption: "Customize, then Skills.",
+      },
+      claude02: {
+        alt: "The + Add menu open, with Upload skill at the top.",
+        caption: "+ Add, then Upload skill.",
+      },
+      claude04: {
+        alt: "The Upload a skill page with the .zip chosen, a preview of the skill's name and description, and the Upload button.",
+        caption: "The skill read from the .zip, ready to upload.",
+      },
+      chatgpt01: {
+        alt: "ChatGPT's Customize panel on Skills, with the Add button at the top right.",
+        caption: "Plugins, then Skills.",
+      },
+      chatgpt02: {
+        alt: "The Add menu open, with Upload from your computer at the bottom.",
+        caption: "Add, then Upload from your computer.",
+      },
+      gemini01: {
+        alt: "Gemini's sidebar with More open, showing Customize.",
+        caption: "More, then Customize.",
+      },
+      gemini02: {
+        alt: "Gemini's Customize page on the Skills tab, with the Create menu open and Upload at the bottom.",
+        caption: "Skills, then Create, then Upload.",
+      },
+    },
 
     install: {
       heading: "Install one skill",
@@ -1057,8 +1094,8 @@ export const en = {
           steps: [
             "On the skill's page, **download** the `.zip`.",
             "In Claude, open **Customize**, then **Skills**.",
-            "Click **+**, then **Create skill**, then **Upload a skill**, and " +
-              "pick the `.zip`.",
+            "Click **+ Add**, then **Upload skill**, and pick the `.zip`. " +
+              "Claude shows the skill's name and description; click **Upload**.",
           ],
           notes: [
             "If there is no upload option, turn on code execution first: " +
@@ -1087,8 +1124,8 @@ export const en = {
           heading: "In ChatGPT",
           steps: [
             "On the skill's page, **download** the `.zip`.",
-            "In ChatGPT's sidebar, open **Plugins**, then the **Skills** tab.",
-            "Click **Create**, then **Upload from your computer**, and pick " +
+            "In ChatGPT, open **Plugins** from the left-hand rail, then **Skills**.",
+            "Click **Add**, then **Upload from your computer**, and pick " +
               "the `.zip`.",
           ],
           notes: [
@@ -1103,8 +1140,8 @@ export const en = {
           steps: [
             "On the skill's page, **download** the `.zip`.",
             "At **gemini.google.com**, or in the Gemini app on a Mac, open " +
-              "**Customize**, then **Skills**.",
-            "Click **Upload**, pick the `.zip`, and then **Create**. If it " +
+              "**More**, then **Customize**, then the **Skills** tab.",
+            "Click **Create**, then **Upload**, and pick the `.zip`. If it " +
               "does not take the `.zip`, unzip it and upload the folder instead.",
           ],
           notes: [

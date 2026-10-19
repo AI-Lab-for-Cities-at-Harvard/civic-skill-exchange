@@ -115,6 +115,8 @@ already in it. Commit, and GitHub offers the pull request. You are done.
    It is your own copy, so nothing is affected until the pull request in the
    next step.
 
+   ![The commit box at the foot of the upload page, with Commit directly to the main branch selected. Leave it that way: the fork is your own copy.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-03-commit-box.png)
+
 4. **Open the pull request.** The button on the page compares your fork's `main`
    with the registry and lets you open it.
 
