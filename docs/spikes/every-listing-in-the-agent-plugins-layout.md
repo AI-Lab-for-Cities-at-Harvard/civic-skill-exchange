@@ -1,7 +1,7 @@
 # Every listing in the Agent Plugins layout
 
 **Issue:** [#241](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/241), from rulings 1–2 on [#207](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/207)
-**Status:** analysis complete, awaiting rulings. Facts gathered 2026-10-19 against Codex CLI 0.163.0, Claude Code 2.1.302, and the exchange at `063acf6`.
+**Status:** ruled 2026-10-19, all seven as recommended; see [ADR 0006](../adr/0006-every-listing-in-the-agent-plugins-layout.md). Facts gathered 2026-10-19 against Codex CLI 0.163.0, Claude Code 2.1.302, and the exchange at `063acf6`.
 
 ## The question
 
@@ -203,3 +203,15 @@ Steps 1 to 3 can be built in parallel worktrees, but they merge one at a time, i
 5. **Servers (F):** a single skill with an MCP server is a plugin (option 1)? Recommended yes.
 6. **Submission hand-off (G):** hand back the flat folder and upload it into `skills/{ns}/{name}/skills/` if GitHub accepts a new target directory; otherwise hand back a wrapped folder? Recommended yes.
 7. **Order (H):** three tooling PRs that accept both layouts, then one move PR that retires flat and fixes the docs, then the re-pin? Recommended yes.
+
+## Rulings (owner, 2026-10-19)
+
+All seven are accepted as recommended, recorded on #241 and encoded in [ADR 0006](../adr/0006-every-listing-in-the-agent-plugins-layout.md):
+
+1. **Reviews:** after the move, each review is re-pinned to the post-move commit. Only `sha:` changes, with a dated YAML comment above the entry. A Community window of about an hour is accepted.
+2. **Manifests and metadata:** the two generated manifests stay, minus `"skills": "./"`. There's no root `plugin.json` for a single skill, and civic metadata stays in `SKILL.md`.
+3. **The zip:** it's rooted at the author's directory, without the generated manifests.
+4. **Deep `SKILL.md` files:** any `SKILL.md` below `skills/{name}/SKILL.md` is refused, in single skills and plugins, reversing #78's exemption. The message suggests `SKILL.example.md`.
+5. **Servers:** a single skill with an MCP server is a plugin.
+6. **Submission hand-off:** the page hands back the flat folder, uploaded into `skills/{ns}/{name}/skills/`, if GitHub's upload page accepts a target directory that doesn't exist yet. Otherwise it hands back a wrapped folder.
+7. **Order:** three tooling PRs that accept both layouts, then one move PR that retires flat and fixes the docs, then the re-pin.

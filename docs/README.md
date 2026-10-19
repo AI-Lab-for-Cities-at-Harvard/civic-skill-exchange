@@ -32,6 +32,7 @@ superseded by a later one.
 | [0003](adr/0003-no-backend-until-the-experience-requires-one.md) | No backend — a preference tested against the experience, with the conditions that would overturn it named in advance |
 | [0004](adr/0004-language-is-metadata-and-verification-not-translation.md) | Language is metadata and verification, not translation — a listing declares its language, the ledger records what a reviewer verified, and the site ships in Spanish |
 | [0005](adr/0005-plugins-are-a-second-listing-kind.md) | Plugins are a second listing kind — several skills and their MCP servers under `plugins/`, in the Agent Plugins layout, installable from both marketplaces |
+| [0006](adr/0006-every-listing-in-the-agent-plugins-layout.md) | Every listing in the Agent Plugins layout — a single skill's files move to `skills/{ns}/{name}/skills/{name}/`, so Codex and Claude Code both load it; built in M9 |
 
 ## Spikes
 
@@ -46,7 +47,7 @@ the spike stays as the reasoning behind it.
 | | |
 |---|---|
 | [the-using-the-exchange-page.md](spikes/the-using-the-exchange-page.md) | What goes on the "Using the Exchange" page, how other pages link to it, and which screenshots it needs: the design pass before the build — [#224](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/224), ruled; the rulings are recorded at the end |
-| [every-listing-in-the-agent-plugins-layout.md](spikes/every-listing-in-the-agent-plugins-layout.md) | How every single-skill listing moves to the Agent Plugins layout: the move, the reviews, the published zip and links, the validator, the submission page, and the order of work — [#241](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/241), awaiting rulings |
+| [every-listing-in-the-agent-plugins-layout.md](spikes/every-listing-in-the-agent-plugins-layout.md) | How every single-skill listing moves to the Agent Plugins layout: the move, the reviews, the published zip and links, the validator, the submission page, and the order of work — [#241](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/241), ruled; see [ADR 0006](adr/0006-every-listing-in-the-agent-plugins-layout.md) |
 | [single-skill-listings-in-codex.md](spikes/single-skill-listings-in-codex.md) | Codex installs every single-skill listing and loads none of them — what should the exchange publish? Also returns #183's deferred question with evidence — [#207](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/207), ruled: option 1, every listing in the Agent Plugins layout, built as M9 |
 | [plugins-as-the-unit-of-distribution.md](spikes/plugins-as-the-unit-of-distribution.md) | Should the exchange publish plugins rather than skill directories, now that Agent Plugins 1.0 exists and Codex has adopted it? — [#183](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/183), awaiting rulings |
 | [the-exchange-in-more-than-one-language.md](spikes/the-exchange-in-more-than-one-language.md) | What changes when the exchange speaks more than one language? — [#143](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/143), ruled on seven of eight; see [ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md) |
