@@ -5,6 +5,7 @@ import { describe, it, expect } from "vitest";
 import { checkFrontmatter } from "@civic-skill-exchange/validator/rules";
 import {
   checkStructureCore, checkPathSafety, ALLOWED_SUFFIXES, MAX_FILES_PER_SKILL,
+  nestedSkillLayout,
 } from "@civic-skill-exchange/validator";
 
 const CATEGORIES = ["finance"];
@@ -75,5 +76,37 @@ describe("the structural rules are importable from the site", () => {
     expect(checkPathSafety([
       { path: "../escape.md", kind: "file", bytes: new Uint8Array() },
     ])[0]?.message).toMatch(/escapes the skill directory/);
+  });
+});
+
+/** ADR 0006: CI checks a nested listing's inner directory, and the submission
+ *  page checks the flat folder an author brings, with the same rules. The page
+ *  calls checkStructureCore with its default layout, so this holds that default
+ *  to what the nested layout applies inside `skills/{name}/`. */
+describe("the submission page's flat folder gets the inner-directory rules", () => {
+  const file = (path: string) =>
+    ({ path, kind: "file" as const, bytes: new TextEncoder().encode("x\n") });
+  const folder = [
+    file("SKILL.md"), file("hooks/hooks.json"), file("references/SKILL.md"),
+    file("references/notes.md"), file("settings.json"),
+  ];
+
+  it("refuses a deep SKILL.md and suggests SKILL.example.md", () => {
+    const findings = checkStructureCore([file("SKILL.md"), file("references/SKILL.md")]);
+    expect(findings.map((f) => f.where)).toEqual(["references/SKILL.md"]);
+    expect(findings[0]?.message).toContain("SKILL.example.md");
+  });
+
+  it("finds what CI finds in the same files one level down", () => {
+    const inner = "skills/example-skill";
+    const nested = [
+      { path: "skills", kind: "dir" as const },
+      { path: inner, kind: "dir" as const },
+      ...folder.map((e) => ({ ...e, path: `${inner}/${e.path}` })),
+    ];
+    const flat = checkStructureCore(folder).map((f) => f.where);
+    const ci = checkStructureCore(nested, nestedSkillLayout("example-skill")).map((f) => f.where);
+    expect(flat.length).toBeGreaterThan(0);
+    expect(ci).toEqual(flat.map((where) => `${inner}/${where}`));
   });
 });

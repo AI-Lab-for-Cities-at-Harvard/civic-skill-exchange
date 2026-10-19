@@ -153,12 +153,15 @@ describe("validatePlugin", () => {
     expect(messages(validate().findings)).toMatch(/not where a plugin's skills live/);
   });
 
-  it("refuses a skill nested a level too deep, but not an example under references/", () => {
+  it("refuses a SKILL.md below a skill's own, under references/ too (ADR 0006)", () => {
     write("skills/housing-brief/extra/SKILL.md", frontmatter("extra"));
     write("skills/housing-brief/references/SKILL.md", "an example");
+    write("skills/housing-brief/references/SKILL.example.md", "an example");
     const found = messages(validate().findings);
     expect(found).toMatch(/skills\/housing-brief\/extra\/SKILL\.md is not where/);
-    expect(found).not.toMatch(/references\/SKILL\.md/);
+    expect(found).toMatch(/skills\/housing-brief\/references\/SKILL\.md is not where/);
+    expect(found).toContain("SKILL.example.md");
+    expect(found).not.toMatch(/references\/SKILL\.example\.md:/);
   });
 
   it.each([
@@ -377,8 +380,14 @@ describe("plugins in the changed-path checks", () => {
   it("treats a plugin's skill as correctly placed", () => {
     expect(checkChangedLayout([
       "plugins/testuser/housing-dashboards/skills/housing-brief/SKILL.md",
-      "plugins/testuser/housing-dashboards/skills/housing-brief/references/SKILL.md",
+      "plugins/testuser/housing-dashboards/skills/housing-brief/references/SKILL.example.md",
     ])).toEqual([]);
+  });
+
+  it("refuses a SKILL.md below a plugin's skill, under references/ too", () => {
+    expect(checkChangedLayout([
+      "plugins/testuser/housing-dashboards/skills/housing-brief/references/SKILL.md",
+    ])).toHaveLength(1);
   });
 
   it("still reports a SKILL.md at a plugin's root", () => {
