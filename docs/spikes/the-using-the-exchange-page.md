@@ -142,3 +142,20 @@ The owner accepted all six recommendations:
    - (B) the links into the page and the install-box command changes (rulings 3 and 4);
    - (C) the screenshots, captured with the owner.
 6. **The captures use `civic-skills/plain-language-notice-rewriter`.** Removing it afterwards is the owner's choice.
+
+## Verification for the page's text (2026-10-18, #258)
+
+Each product's steps on the page were checked on 2026-10-18 against the sources below. The CLIs were checked against the installed versions, using throwaway home directories, without signing in to anything. Where a source and this list disagree later, the product wins, and the page's `CHECKED_ON` moves.
+
+| Product | What was checked | Source |
+|---|---|---|
+| Claude apps | Upload path **Customize → Skills → + → Create skill → Upload a skill**. Code execution required. Every plan, Free included. Team and Enterprise owners can provision skills for everyone. Skills sync one way into Claude Code (same account, v2.1.273+) and Cowork. | [support.claude.com, Using skills in Claude](https://support.claude.com/en/articles/12512180-using-skills-in-claude); [code.claude.com/docs/en/skills](https://code.claude.com/docs/en/skills) |
+| Claude Code 2.1.302 | `/plugin marketplace add … --sparse .claude-plugin skills plugins` and `/plugin install {name}@civic-skill-exchange`, both run against this repository | `claude plugin marketplace add --help`; [code.claude.com/docs/en/discover-plugins](https://code.claude.com/docs/en/discover-plugins) |
+| ChatGPT | **Plugins → Skills → Create → Upload from your computer**. Business, Enterprise, Healthcare and Edu only. Uploads scanned (Needs Review / Blocked). Admins can import a marketplace. | [help.openai.com, Skills in ChatGPT](https://help.openai.com/en/articles/20001066-skills-in-chatgpt); [help.openai.com, Plugins in ChatGPT](https://help.openai.com/en/articles/20001256-plugins-in-chatgpt) |
+| Gemini app | **Customize → Skills → Upload**, as a `SKILL.md`, a folder or a `.zip`. Personal Google accounts, 18+, Keep Activity on. Web and Mac only. | [support.google.com/gemini/answer/17094296](https://support.google.com/gemini/answer/17094296) |
+| Gemini CLI, Antigravity | Both read `.agents/skills/` in a workspace | [geminicli.com/docs/cli/skills](https://geminicli.com/docs/cli/skills/); [antigravity.google/docs/skills](https://antigravity.google/docs/skills) |
+| Codex 0.163.0 | `codex plugin marketplace add` and `codex plugin add`, both run against this repository. Single skills in `.agents/skills/` or `~/.agents/skills/`. The #207 layout gap reproduced. | `codex plugin marketplace add --help`; [learn.chatgpt.com/docs/build-skills](https://learn.chatgpt.com/docs/build-skills.md) |
+
+**Not verified, so the page doesn't claim it:**
+- whether ChatGPT and the Gemini app accept a `.zip` that wraps the skill in one top-level folder. The page says to upload the unzipped folder if the zip is refused, and #260's captures settle it;
+- whether Claude Code reads `~/.agents/skills/`. SUBMITTING.md had claimed it does; the page doesn't.
