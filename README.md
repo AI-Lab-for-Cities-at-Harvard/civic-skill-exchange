@@ -79,12 +79,13 @@ How to submit one is in [docs/SUBMITTING.md](docs/SUBMITTING.md).
 **In Codex**, which has its own marketplace — for **plugins**, for now:
 
 ```
-codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
+codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .agents --sparse skills --sparse plugins
 codex plugin add {namespace}-{plugin-name}@civic-skill-exchange
 ```
 
 The plugin names are the same as Claude's, on purpose, so the command reads the
-same in both tools.
+same in both tools. `--sparse` does the same job as Claude's — only the
+marketplace and the listings are downloaded — but Codex takes one path per flag.
 
 A **single skill** installs from Codex's marketplace but does not load yet: Codex
 looks for skills one folder deeper than a single-skill listing keeps them

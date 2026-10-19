@@ -243,7 +243,7 @@ function PluginDownload({ detail }: { detail: Detail }) {
     { id: "claude-install", label: p.commands.claudeInstall,
       value: `/plugin install ${detail.namespace}-${detail.name}@${MARKETPLACE}` },
     { id: "codex-marketplace", label: p.commands.codexMarketplace,
-      value: `codex plugin marketplace add ${REPO}` },
+      value: `codex plugin marketplace add ${REPO} --sparse .agents --sparse skills --sparse plugins` },
     { id: "codex-install", label: p.commands.codexInstall,
       value: `codex plugin add ${detail.namespace}-${detail.name}@${MARKETPLACE}` },
   ];

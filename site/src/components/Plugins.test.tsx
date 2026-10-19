@@ -159,7 +159,8 @@ describe("the plugin page", () => {
     expect(await screen.findByText(
       "/plugin install ns-housing-dashboards@civic-skill-exchange")).toBeInTheDocument();
     expect(screen.getByText(
-      "codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange"))
+      "codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange " +
+      "--sparse .agents --sparse skills --sparse plugins"))
       .toBeInTheDocument();
   });
 
