@@ -126,7 +126,8 @@ describe("the submission page's flat folder gets the inner-directory rules", () 
     expect(ci).toEqual(page.map((f) => ({
       where: `${inner}/${f.where}`,
       // The deep-SKILL.md message names the path it is about; the rest don't.
-      message: f.message.split(f.where).join(`${inner}/${f.where}`),
+      message: f.where.endsWith("SKILL.md")
+        ? f.message.split(f.where).join(`${inner}/${f.where}`) : f.message,
     })));
   });
 });

@@ -18,7 +18,7 @@
 
 import { unzipSync } from "fflate";
 import type { Entry } from "@civic-skill-exchange/validator";
-import { MAX_FILE_BYTES, MAX_SKILL_BYTES, isRepositoryFurniture } from "@civic-skill-exchange/validator/structure-core";
+import { GENERATED_SKILL_MANIFESTS, MAX_FILE_BYTES, MAX_SKILL_BYTES, isRepositoryFurniture } from "@civic-skill-exchange/validator/structure-core";
 import { strings } from "../i18n/strings";
 
 export interface SkillArchive {
@@ -59,6 +59,16 @@ export const PLUGIN_ROOT_MANIFEST = "plugin.json";
  *  Codex reads instead of plugin.json. A copy in the submitter's folder is
  *  theirs, not the generator's, and #231's check would refuse it. */
 export const CLIENT_FILES = /^(?:\.claude-plugin\/|\.codex-plugin\/|\.mcp\.json$)/;
+
+/** One of the two manifests the registry generates at a single skill's
+ *  listing root, in a skill's folder. A published zip carries them, and
+ *  dropping it back is the round trip; but the folder lands in skills/{name}/
+ *  of a nested listing (ADR 0006), where CI refuses a copy. They are the
+ *  registry's to write, so they are left out and named, as a plugin's are.
+ *  Anything else under those directories stays, for L0 to refuse. A Claude
+ *  Code package keeps its own, which the plugin form rearranges (#246). */
+export const isGeneratedSkillManifest = (path: string, clientPackage: boolean) =>
+  !clientPackage && (GENERATED_SKILL_MANIFESTS as readonly string[]).includes(path);
 
 /** A single root directory, if every entry shares one. The published archive
  *  has one; a zip made by selecting the files inside a folder does not. */
@@ -138,13 +148,13 @@ export function readSkillZip(bytes: Uint8Array): SkillArchive {
   const clientPackage = !plugin &&
     !entries.some((e) => e.path === "SKILL.md") &&
     entries.some((e) => e.path === ".claude-plugin/plugin.json");
-  const kept = plugin
-    ? entries.filter((e) => {
-      if (!CLIENT_FILES.test(e.path)) return true;
-      problems.push(say.clientFileLeftOut(e.path));
-      return false;
-    })
-    : entries;
+  const kept = entries.filter((e) => {
+    if (plugin ? !CLIENT_FILES.test(e.path) : !isGeneratedSkillManifest(e.path, clientPackage)) {
+      return true;
+    }
+    problems.push(say.clientFileLeftOut(e.path));
+    return false;
+  });
 
   const skill = kept.find((e) => e.path === "SKILL.md");
   const skillMd = skill && skill.kind === "file"

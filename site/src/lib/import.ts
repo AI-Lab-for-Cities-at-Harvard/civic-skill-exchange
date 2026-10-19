@@ -22,7 +22,7 @@
 import type { Entry } from "@civic-skill-exchange/validator";
 import { MAX_FILE_BYTES, isRepositoryFurniture } from "@civic-skill-exchange/validator/structure-core";
 import { strings } from "../i18n/strings";
-import { CLIENT_FILES, PLUGIN_ROOT_MANIFEST } from "./zip";
+import { CLIENT_FILES, PLUGIN_ROOT_MANIFEST, isGeneratedSkillManifest } from "./zip";
 
 const API = "https://api.github.com";
 const RAW = "https://raw.githubusercontent.com";
@@ -224,14 +224,15 @@ export async function importFromRepo(
   if (!plugin && !clientPackage && !entries.some((e) => e.path === "SKILL.md")) {
     return { kind: "no-skill-md" };
   }
-  // A plugin's client manifests are the registry's to write, as in a zip.
-  const kept = plugin
-    ? entries.filter((e) => {
-      if (!CLIENT_FILES.test(e.path)) return true;
-      skipped.push(strings().submit.problems.clientFileLeftOut(e.path));
-      return false;
-    })
-    : entries;
+  // A plugin's client manifests, and a skill's generated ones, are the
+  // registry's to write, as in a zip.
+  const kept = entries.filter((e) => {
+    if (plugin ? !CLIENT_FILES.test(e.path) : !isGeneratedSkillManifest(e.path, clientPackage)) {
+      return true;
+    }
+    skipped.push(strings().submit.problems.clientFileLeftOut(e.path));
+    return false;
+  });
 
   // Every file, at the commit the tree came from. One that cannot be fetched
   // fails the import: a folder with a file missing is not the skill.

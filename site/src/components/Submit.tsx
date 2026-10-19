@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import type { Finding, Entry } from "@civic-skill-exchange/validator";
 import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
-import { checkStructureCore } from "@civic-skill-exchange/validator/structure-core";
+import { checkStructureCore, innerSkillLayout } from "@civic-skill-exchange/validator/structure-core";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   fitsInUrl, skillPath, slugify, type Draft,
@@ -38,6 +38,13 @@ const PluginSubmit = lazy(() =>
 /** The canonical value list, which does not vary by locale — so it is read off
  *  the English table rather than the current one. */
 const CATEGORIES = Object.keys(en.vocabulary.category);
+
+/** The folder an author brings lands in `skills/{name}/` of a nested listing
+ *  (ADR 0006), so it gets the rules CI applies there, not a flat listing's.
+ *  The name only appears in messages; a folder with none reads as a
+ *  placeholder rather than an empty path. */
+const folderLayout = (directoryName: string | undefined) =>
+  innerSkillLayout(directoryName || "{skill-name}");
 
 const OFFERED_LANGUAGES = new Set(
   en.submit.form.languageChoices.map(([value]) => value),
@@ -229,7 +236,7 @@ export function Submit(
       // files are named so nothing vanishes quietly, but only real structural
       // findings stop the hand-off.
       left: out.skipped,
-      structural: checkStructureCore(out.entries),
+      structural: checkStructureCore(out.entries, folderLayout(out.directoryName)),
     });
     setSource({
       skillMd: out.skillMd, entries: out.entries, directoryName: out.directoryName,
@@ -262,7 +269,7 @@ export function Submit(
       setArchive({
         name: file.name, files: read.entries.length,
         left: read.problems,
-        structural: checkStructureCore(read.entries),
+        structural: checkStructureCore(read.entries, folderLayout(read.directoryName)),
       });
       if (read.skillMd) {
         load(read.skillMd, [], {

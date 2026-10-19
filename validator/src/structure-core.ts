@@ -308,12 +308,29 @@ function rejectedInNestedSkill(inner: string, name: string): string | null {
   return SKILL_LAYOUT.rejected(inner, "file");
 }
 
+/** The rules for what goes in a nested skill's `skills/{name}/`, with paths
+ *  relative to it (ADR 0006). nestedSkillLayout applies them inside a listing,
+ *  and the submission page applies them to the flat folder an author brings,
+ *  which is what lands there — so the page refuses what CI will.
+ *
+ *  SKILL_LAYOUT stays as it is for a flat listing on disk, which keeps #151's
+ *  `.mcp.json` and its generated manifests at its root until the move retires
+ *  the flat layout. */
+export function innerSkillLayout(name: string): StructureLayout {
+  return {
+    rejected: (rel) => rejectedInNestedSkill(rel, name),
+    misplacedSkill: (rel) => SKILL_LAYOUT.misplacedSkill(rel),
+    noun: "skill",
+  };
+}
+
 /** A nested single skill's rules (ADR 0006): `skills/{ns}/{name}/` holds the
  *  generated `.codex-plugin/` and `.claude-plugin/` and `skills/{name}/`, and
  *  nothing else; `skills/{name}/` gets the flat skill's rules. The caps are
  *  checkStructureCore's, over every entry, so they cover the whole listing. */
 export function nestedSkillLayout(name: string): StructureLayout {
   const inner = `${NESTED_SKILLS_DIRECTORY}/${name}`;
+  const innerRules = innerSkillLayout(name);
   const generatedDirs = GENERATED_SKILL_MANIFESTS.map((m) => m.split("/")[0]!);
 
   const rejected = (rel: string, kind: Entry["kind"]): string | null => {
@@ -335,7 +352,7 @@ export function nestedSkillLayout(name: string): StructureLayout {
           `listing: ${inner}/. Move what is in ${rel} there, or, if this listing ` +
           `has several skills, submit it as a plugin under plugins/.`;
       }
-      return parts.length === 2 ? null : rejectedInNestedSkill(parts.slice(2).join("/"), name);
+      return parts.length === 2 ? null : innerRules.rejected(parts.slice(2).join("/"), kind);
     }
     if (rel === ".mcp.json" || rel === "mcp.json") {
       return `a single skill's listing root holds only generated files, and a ` +
@@ -349,7 +366,8 @@ export function nestedSkillLayout(name: string): StructureLayout {
 
   const misplacedSkill = (rel: string): string | null => {
     if (!rel.startsWith(`${inner}/`)) return null;  // refused by `rejected`
-    return SKILL_LAYOUT.misplacedSkill(rel.slice(inner.length + 1)) === null
+    // Asked of the inner rules, but reported against the listing's own path.
+    return innerRules.misplacedSkill(rel.slice(inner.length + 1)) === null
       ? null : deepSkillMessage(rel);
   };
 
