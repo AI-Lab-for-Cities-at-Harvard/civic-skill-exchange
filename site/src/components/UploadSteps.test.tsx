@@ -62,3 +62,31 @@ describe("UploadSteps — the fork's main is the branch", () => {
     expect(screen.queryByTestId("step-pr")).not.toBeInTheDocument();
   });
 });
+
+/** #259: each GitHub step links to the guide's word for it, for somebody who
+ *  has not met the word before (#213 walkthrough, ruling a). */
+describe("UploadSteps — the GitHub words", () => {
+  it("links the fork, the commit and the pull request to the glossary", () => {
+    steps();
+    expect(screen.getByRole("link", { name: /what is a fork/i }))
+      .toHaveAttribute("href", "#/guide/glossary-fork");
+    expect(screen.getByRole("link", { name: /what is a commit/i }))
+      .toHaveAttribute("href", "#/guide/glossary-commit");
+    expect(screen.getByRole("link", { name: /what happens to a pull request/i }))
+      .toHaveAttribute("href", "#/guide/glossary-pull-request");
+  });
+
+  it("links them in Spanish too", async () => {
+    await setLocale("es");
+    steps();
+    expect(screen.getByRole("link", { name: /qué es un fork/i }))
+      .toHaveAttribute("href", "#/guide/glossary-fork");
+  });
+
+  it("still explains a commit when there is no fork step", () => {
+    steps(true);
+    expect(screen.queryByRole("link", { name: /what is a fork/i })).toBeNull();
+    expect(screen.getByRole("link", { name: /what is a commit/i }))
+      .toHaveAttribute("href", "#/guide/glossary-commit");
+  });
+});

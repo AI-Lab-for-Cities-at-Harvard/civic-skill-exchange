@@ -3,6 +3,7 @@ import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { bytes } from "../lib/format";
+import { guideHref } from "../lib/route";
 import type { SkillDetail } from "../lib/types";
 
 /** The disclaimer sits here, not in a footer, because this is the moment
@@ -33,7 +34,8 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
     {
       id: "marketplace",
       label: s.download.commands.marketplace,
-      value: `/plugin marketplace add ${repo}`,
+      // The same --sparse as the guide and README (#259).
+      value: `/plugin marketplace add ${repo} --sparse .claude-plugin skills plugins`,
     },
     {
       id: "install",
@@ -94,6 +96,14 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
         </p>
       )}
 
+      {/* The step-by-step for each product is the guide's (#259). */}
+      <p className="download__note" data-testid="guide-steps">
+        {rich(s.download.stepByStep, {
+          claude: guideHref("claude"), chatgpt: guideHref("chatgpt"),
+          gemini: guideHref("gemini"), codex: guideHref("codex"),
+        })}
+      </p>
+
       {commands.map((c) => (
         <div className="download__cmd" key={c.id}>
           <span className="download__cmd-label">{c.label}</span>
@@ -105,7 +115,9 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
       ))}
 
       <p className="download__note">
-        {rich(s.download.formatNote, { spec: "https://agentskills.io" })}
+        {rich(s.download.formatNote, {
+          spec: "https://agentskills.io", claudeCode: guideHref("claude-code"),
+        })}
       </p>
 
       <p className="download__note">{rich(s.download.pathsNote)}</p>

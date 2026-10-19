@@ -3,7 +3,7 @@
  *  tier disclaimer from #4 still sits beside it. */
 
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { DownloadBox } from "./DownloadBox";
 import { makeSkill } from "../test/fixtures";
 import type { SkillDetail } from "../lib/types";
@@ -132,5 +132,33 @@ describe("DownloadBox — installing as a plugin", () => {
     render(<DownloadBox skill={detail({ namespace: "cityofx", name: "permit-status" })} />);
     const labels = screen.getAllByText(/Just this skill|The whole registry|Add the marketplace|Install it/);
     expect(labels[0]).toHaveTextContent(/Add the marketplace/);
+  });
+});
+
+/** #259: the box links into the guide for the step-by-step version, and gives
+ *  the same Claude Code command the guide and README do. */
+describe("DownloadBox — the way into the guide", () => {
+  it("links each product to its section of the guide", () => {
+    render(<DownloadBox skill={detail()} />);
+    const steps = screen.getByTestId("guide-steps");
+    for (const [name, href] of [
+      ["Claude", "#/guide/claude"], ["ChatGPT", "#/guide/chatgpt"],
+      ["Gemini", "#/guide/gemini"], ["Codex", "#/guide/codex"],
+    ]) {
+      expect(within(steps).getByRole("link", { name })).toHaveAttribute("href", href);
+    }
+  });
+
+  it("explains the Claude Code commands in the guide", () => {
+    render(<DownloadBox skill={detail()} />);
+    expect(screen.getByRole("link", { name: /what these do/i }))
+      .toHaveAttribute("href", "#/guide/claude-code");
+  });
+
+  it("adds the marketplace with --sparse, as the guide does", () => {
+    render(<DownloadBox skill={detail()} />);
+    expect(screen.getByText(
+      "/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange " +
+      "--sparse .claude-plugin skills plugins")).toBeInTheDocument();
   });
 });

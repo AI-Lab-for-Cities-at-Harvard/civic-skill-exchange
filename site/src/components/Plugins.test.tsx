@@ -129,6 +129,23 @@ describe("the plugin page", () => {
     expect(facts).toHaveTextContent("English · Spanish (Latin America)");
   });
 
+  it("links to the guide's marketplace section (#259)", async () => {
+    serve({ "plugins/ns/housing-dashboards.json": detail() });
+    render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+    expect(await screen.findByRole("link", { name: /step by step/i }))
+      .toHaveAttribute("href", "#/guide/marketplace");
+  });
+
+  it("gives Claude Code's --sparse command and Codex's install line (#259)", async () => {
+    serve({ "plugins/ns/housing-dashboards.json": detail() });
+    render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+    expect(await screen.findByText(
+      "/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange " +
+      "--sparse .claude-plugin skills plugins")).toBeInTheDocument();
+    expect(screen.getByText("codex plugin add ns-housing-dashboards@civic-skill-exchange"))
+      .toBeInTheDocument();
+  });
+
   it("says so when the plugin connects to no server", async () => {
     serve({ "plugins/ns/housing-dashboards.json": detail({ mcp_servers: [] }) });
     render(<PluginDetail namespace="ns" name="housing-dashboards" />);
