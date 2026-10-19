@@ -104,6 +104,30 @@ attestations:
     Look here first if it goes wrong: the skill writes another skill's
     localized copy, so the failure to watch for is a value it proposed from a
     catalogue and wrote without the confirmation step in references/asking.md.
+ # Re-pinned 2026-10-19 after the rename from sgarcese/civic-analytics-workflow (#278):
+ # every file renamed at 100% similarity except SKILL.md, whose name: and description
+ # changed (it now opens "This is the original civic analytics workflow."), and the
+ # first-line comment in context.template.yml. The review text below is unchanged.
+ - skill: "sgarcese/deep-analysis-for-issues"
+   sha: "150a0fafa49bf64a6525ecf12b40d3de8516dfcf"
+   reviewers: ["AI Lab for Cities at Harvard"]
+   reviewed: 2026-10-18
+   expires: 2027-10-18
+   languages: ["en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
+   notes: >
+    Written by Santi Garces and reviewed by hand by the same person for the
+    Lab, so nobody outside the author has read it. Run by the reviewer in
+    English.
+
+    Instructions and templates only: no scripts and no allowed-tools grant.
+    No host is written into the skill; it queries the open-data portals and MCP
+    servers the operator names in context.yml, for their own jurisdiction and
+    its peers. It is a set of linked guides (problem framing, analysis,
+    benchmarking, performance management, communication) routed from SKILL.md.
+    License MIT.
+
+    Look here first if it goes wrong: the sub-guides are separate files, so a
     change to one that contradicts SKILL.md's routing is the drift to check.
  - skill: "sgarcese/planificador-de-arbolado"
    sha: "70829eae016422d41415ef4e18cd9f7ba3d2f081"
