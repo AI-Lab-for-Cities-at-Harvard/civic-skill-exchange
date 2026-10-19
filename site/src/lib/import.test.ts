@@ -380,6 +380,25 @@ describe("importFromRepo with a plugin", () => {
     expect(out.skillMd).toBe(SKILL);
   });
 
+  /* ADR 0006: the folder lands in skills/{name}/, where CI refuses manifest
+     copies. The two the registry generates are its own to write, so they are
+     left out and named, as a plugin's are. */
+  it("leaves out a listed skill's generated manifests, and names them", async () => {
+    vi.stubGlobal("fetch", github({
+      tree: tree(["SKILL.md", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json",
+        ".claude-plugin/marketplace.json"]),
+      files: { "SKILL.md": SKILL, ".claude-plugin/plugin.json": "{}",
+        ".codex-plugin/plugin.json": "{}", ".claude-plugin/marketplace.json": "{}" },
+    }));
+    const out = await importFromRepo("a/b");
+    if ("kind" in out) throw new Error(`expected success, got ${out.kind}`);
+    // Anything else under .claude-plugin/ stays, for L0 to refuse.
+    expect(out.entries.map((e) => e.path).sort())
+      .toEqual([".claude-plugin/marketplace.json", "SKILL.md"]);
+    expect(out.skipped.join("\n")).toContain(".claude-plugin/plugin.json");
+    expect(out.skipped.join("\n")).toContain(".codex-plugin/plugin.json");
+  });
+
   it("fetches a Claude Code export whole, client files and all, for the form to rearrange", async () => {
     vi.stubGlobal("fetch", github({
       tree: tree([".claude-plugin/plugin.json", ".mcp.json", "skills/brief/SKILL.md"]),

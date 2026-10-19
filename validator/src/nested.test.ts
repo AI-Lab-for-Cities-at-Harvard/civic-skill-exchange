@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { checkChangedLayout } from "./layout";
 import {
-  checkStructureCore, isNestedSkillListing, nestedSkillLayout, skillLayoutFor,
+  checkStructureCore, innerSkillLayout, isNestedSkillListing, nestedSkillLayout, skillLayoutFor,
   MAX_FILES_PER_SKILL, SKILL_LAYOUT, type Entry,
 } from "./structure-core";
 import { checkStructure } from "./structure";
@@ -163,6 +163,32 @@ describe("a nested listing's inner directory", () => {
       (_, i) => file(`${INNER}/references/${String(i).padStart(3, "0")}.md`));
     expect(check(...fill(MAX_FILES_PER_SKILL - 3))).toEqual([]);
     expect(messages(check(...fill(MAX_FILES_PER_SKILL - 2)))).toMatch(/file cap/);
+  });
+});
+
+/** The submission page validates the folder an author brings with the rules
+ *  CI applies once it sits in skills/{name}/. One layout holds them, and the
+ *  nested layout delegates to it, so there is one copy of the rule. */
+describe("innerSkillLayout, the inner directory's rules on their own", () => {
+  const inner = (...extra: Entry[]) =>
+    checkStructureCore([file("SKILL.md"), ...extra], innerSkillLayout(NAME));
+
+  it.each([".mcp.json", "mcp.json", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json"])(
+    "refuses %s, which a flat listing on disk still allows", (path) => {
+      expect(inner(file(path, "{}\n")).map((f) => f.where)).toEqual([path]);
+      expect(checkStructureCore([file("SKILL.md"), file(path, "{}\n")])).toEqual([]);
+    });
+
+  it.each(["hooks/hooks.json", "settings.json", ".lsp.json", "references/SKILL.md"])(
+    "refuses %s, as the flat rules do", (path) => {
+      expect(inner(file(path, "{}\n")).map((f) => f.where)).toEqual([path]);
+    });
+
+  it("gives the same message the nested layout gives inside skills/{name}/", () => {
+    for (const path of [".mcp.json", "mcp.json", ".codex-plugin/plugin.json", "settings.json"]) {
+      expect(check(file(`${INNER}/${path}`, "{}\n"))[0]?.message)
+        .toBe(inner(file(path, "{}\n"))[0]?.message);
+    }
   });
 });
 

@@ -149,8 +149,10 @@ def test_the_command_line_fails_loudly_on_a_listing_with_no_skill_md(make_skill,
         [sys.executable, str(ROOT / "scripts" / "scan.py"), str(listing), "--out", str(out)],
         capture_output=True, text=True, check=False)
     assert run.returncode == 2, run.stdout + run.stderr
-    assert "example-skill" in run.stderr
-    assert "SKILL.md" in run.stderr
+    # check.ts (validator/src/scan-run.ts) reads this line to tell a listing
+    # with no SKILL.md from an interpreter that couldn't run the scan.
+    assert run.stderr.startswith("scan.py: cannot scan testuser/example-skill: ")
+    assert "no SKILL.md" in run.stderr
     assert not out.exists()
 
 

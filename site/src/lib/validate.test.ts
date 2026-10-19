@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { checkFrontmatter } from "@civic-skill-exchange/validator/rules";
 import {
   checkStructureCore, checkPathSafety, ALLOWED_SUFFIXES, MAX_FILES_PER_SKILL,
-  nestedSkillLayout,
+  nestedSkillLayout, innerSkillLayout, SKILL_LAYOUT,
 } from "@civic-skill-exchange/validator";
 
 const CATEGORIES = ["finance"];
@@ -80,33 +80,53 @@ describe("the structural rules are importable from the site", () => {
 });
 
 /** ADR 0006: CI checks a nested listing's inner directory, and the submission
- *  page checks the flat folder an author brings, with the same rules. The page
- *  calls checkStructureCore with its default layout, so this holds that default
- *  to what the nested layout applies inside `skills/{name}/`. */
+ *  page checks the flat folder an author brings, which is what lands there.
+ *  Both run innerSkillLayout, so the page refuses exactly what CI refuses
+ *  inside skills/{name}/, a server config and a manifest copy included. A flat
+ *  listing on disk keeps SKILL_LAYOUT, and #151's .mcp.json allowance, until
+ *  the move retires it. */
 describe("the submission page's flat folder gets the inner-directory rules", () => {
   const file = (path: string) =>
     ({ path, kind: "file" as const, bytes: new TextEncoder().encode("x\n") });
   const folder = [
-    file("SKILL.md"), file("hooks/hooks.json"), file("references/SKILL.md"),
-    file("references/notes.md"), file("settings.json"),
+    file(".claude-plugin/plugin.json"), file(".mcp.json"),
+    file("SKILL.md"), file("hooks/hooks.json"), file("mcp.json"),
+    file("references/SKILL.md"), file("references/notes.md"), file("settings.json"),
   ];
+  const NAME = "example-skill";
 
   it("refuses a deep SKILL.md and suggests SKILL.example.md", () => {
-    const findings = checkStructureCore([file("SKILL.md"), file("references/SKILL.md")]);
+    const findings = checkStructureCore(
+      [file("SKILL.md"), file("references/SKILL.md")], innerSkillLayout(NAME));
     expect(findings.map((f) => f.where)).toEqual(["references/SKILL.md"]);
     expect(findings[0]?.message).toContain("SKILL.example.md");
   });
 
-  it("finds what CI finds in the same files one level down", () => {
-    const inner = "skills/example-skill";
+  it.each([".mcp.json", "mcp.json", ".claude-plugin/plugin.json"])(
+    "refuses %s, which a flat listing on disk still allows", (path) => {
+      const entries = [file("SKILL.md"), file(path)];
+      expect(checkStructureCore(entries, innerSkillLayout(NAME)).map((f) => f.where))
+        .toEqual([path]);
+      expect(checkStructureCore(entries, SKILL_LAYOUT)).toEqual([]);
+    });
+
+  it("finds what CI finds in the same files one level down, in the same words", () => {
+    const inner = `skills/${NAME}`;
     const nested = [
       { path: "skills", kind: "dir" as const },
       { path: inner, kind: "dir" as const },
       ...folder.map((e) => ({ ...e, path: `${inner}/${e.path}` })),
     ];
-    const flat = checkStructureCore(folder).map((f) => f.where);
-    const ci = checkStructureCore(nested, nestedSkillLayout("example-skill")).map((f) => f.where);
-    expect(flat.length).toBeGreaterThan(0);
-    expect(ci).toEqual(flat.map((where) => `${inner}/${where}`));
+    const page = checkStructureCore(folder, innerSkillLayout(NAME));
+    const ci = checkStructureCore(nested, nestedSkillLayout(NAME));
+    expect(page.map((f) => f.where)).toEqual([
+      ".claude-plugin/plugin.json", ".mcp.json", "hooks/hooks.json", "mcp.json",
+      "references/SKILL.md", "settings.json",
+    ]);
+    expect(ci).toEqual(page.map((f) => ({
+      where: `${inner}/${f.where}`,
+      // The deep-SKILL.md message names the path it is about; the rest don't.
+      message: f.message.split(f.where).join(`${inner}/${f.where}`),
+    })));
   });
 });

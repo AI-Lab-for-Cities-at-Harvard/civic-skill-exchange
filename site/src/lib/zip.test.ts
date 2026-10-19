@@ -192,6 +192,19 @@ describe("readSkillZip with a plugin", () => {
     expect(read.skillMd).toBe(SKILL);
   });
 
+  // ADR 0006: CI refuses a manifest copy inside skills/{name}/, so a
+  // published zip dropped back loses the two the registry generates, named.
+  it("leaves out a listed skill's generated manifests, and names them", () => {
+    const read = readSkillZip(archive({
+      "s/SKILL.md": SKILL, "s/.claude-plugin/plugin.json": "{}",
+      "s/.codex-plugin/plugin.json": "{}", "s/.mcp.json": "{}",
+    }));
+    // .mcp.json is the author's, so it stays for L0 to refuse.
+    expect(read.entries.map((e) => e.path).sort()).toEqual([".mcp.json", "SKILL.md"]);
+    expect(read.problems.join("\n")).toContain(".claude-plugin/plugin.json");
+    expect(read.problems.join("\n")).toContain(".codex-plugin/plugin.json");
+  });
+
   it("recognises a Claude Code package, which has no plugin.json at its root", () => {
     const zip = archive({
       ".claude-plugin/plugin.json": "{}",
