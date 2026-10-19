@@ -7,8 +7,8 @@
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import {
-  forkUrl, forkUploadUrl, namespacePath, parseForkRef, pullRequestUrl,
-  registryUploadUrl, skillPath, type ListingTree,
+  forkUrl, forkUploadUrl, landingPath, parseForkRef, pullRequestUrl,
+  registryUploadUrl, uploadPath, type ListingTree,
 } from "../lib/submit";
 import { guideHref } from "../lib/route";
 import { Field } from "./Field";
@@ -98,7 +98,7 @@ export function UploadSteps(
         <h3 className="steps__title">{t.send.uploadTitle}</h3>
         <p className="steps__body" data-testid="upload-step-body">
           {rich(t.send.uploadBody(
-            folderName, reserved, namespacePath(draft, tree), skillPath(draft, tree),
+            folderName, reserved, uploadPath(draft, tree), landingPath(draft, tree),
           ))}
         </p>
         <GlossaryLink word="commit" text={t.send.commitMore} />

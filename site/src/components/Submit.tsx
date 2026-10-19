@@ -4,7 +4,7 @@ import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/val
 import { checkStructureCore, innerSkillLayout } from "@civic-skill-exchange/validator/structure-core";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
-  fitsInUrl, skillPath, slugify, type Draft,
+  fitsInUrl, skillPath, skillDirPath, slugify, type Draft,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
@@ -828,7 +828,7 @@ export function Submit(
             <pre className="submit__yaml"><code>{
 `  civic.use-when: "When this skill earns its place."
   civic.avoid-when: "When it does not."`}</code></pre>
-            <a className="btn btn--strong" href={editUrl(repo, listed.path)}>
+            <a className="btn btn--strong" href={editUrl(repo, listed.skill_path ?? listed.path)}>
               {t.update.editCta(listed.id)}
             </a>
           </div>
