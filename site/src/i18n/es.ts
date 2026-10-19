@@ -649,6 +649,14 @@ export const strings: Strings = {
       convertedFindings:
         "Lo que se omitió al reorganizarlo. Nada de esto impide la carga, pero " +
         "léalo: un servidor omitido es uno al que el plugin no se conectará.",
+      addressLabel: (server: string) => `Dirección pública de ${server}`,
+      addressHint:
+        "La dirección de este servidor venía de la configuración de su equipo. " +
+        "Pegue su dirección pública `https://`.",
+      addressPlaceholder: "https://ejemplo.org/mcp",
+      addressRefused: (reason: string) => `No pudimos usar esta dirección: ${reason}`,
+      addressAdded: (server: string, host: string) =>
+        `**${server}** vuelve a estar en \`mcp.json\` y se conecta a \`${host}\`.`,
       conversion: {
         field: (field: string) =>
           `\`${field}\` es un ajuste de Claude Code que Agent Plugins no contempla. ` +
@@ -672,7 +680,7 @@ export const strings: Strings = {
         serverUrl: (server: string, url: string) =>
           `**${server}** se conecta a \`${url}\`, una dirección que se completa con ` +
           "la configuración de su equipo. Quien revisa tiene que ver adónde se " +
-          "conecta un servidor, así que se omitió de `mcp.json`. Añada allí su " +
+          "conecta un servidor, así que se omitió de `mcp.json`. Pegue abajo su " +
           "dirección `https` para publicarlo.",
         serverHeader: (server: string, header: string, value: string) =>
           `**${server}** envía el encabezado \`${header}\` como \`${value}\`, que ` +

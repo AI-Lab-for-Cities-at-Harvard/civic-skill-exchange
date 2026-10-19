@@ -88,6 +88,21 @@ describe.each(locales())("no axe violations — %s", (tag) => {
     );
   });
 
+  it("a converted Claude Code plugin, asking for a server's address (#250)", async () => {
+    const file = (path: string, text: string) => ({ path, kind: "file" as const, bytes: strToU8(text) });
+    const { container } = render(
+      <PluginSubmit repo={REPO} directoryName="housing" left={[]} claudeCode entries={[
+        file(".claude-plugin/plugin.json", JSON.stringify({ name: "housing", description: "d" })),
+        file(".mcp.json", JSON.stringify({ mcpServers: {
+          census: { type: "http", url: "${CENSUS_URL}" } } })),
+        file("skills/b/SKILL.md", "---\nname: b\ndescription: B skill.\nlicense: MIT\n---\n\nBody.\n"),
+      ]} />,
+    );
+    expect(container.querySelector("[data-testid='server-address-census'] input")).not.toBeNull();
+    const violations = await findViolations(container);
+    expect(violations, describeViolations(violations)).toEqual([]);
+  });
+
   it("the update mode", async () => {
     await expectClean(
       <Submit repo={REPO} skills={[makeSkill()]} mode="update" add="ns/example-skill" />,

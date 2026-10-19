@@ -12,8 +12,10 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { zipSync, strToU8, strFromU8 } from "fflate";
 import { PLUGIN_SCHEMA_ID, REGISTRY_EXTENSION } from "@civic-skill-exchange/validator";
+import { MCP_SCHEMA_ID, checkMcpConfig } from "@civic-skill-exchange/validator/plugin-core";
 import { Submit } from "./Submit";
 import { setLocale } from "../i18n/strings";
+import { en } from "../i18n/en";
 import { strings as es } from "../i18n/es";
 import { readSkillZip } from "../lib/zip";
 
@@ -228,6 +230,109 @@ describe("PluginSubmit — a Claude Code export", () => {
       expect(screen.getByTestId("converted")).toHaveTextContent("Claude Code");
       expect(screen.getByTestId("conversion-findings"))
         .toHaveTextContent(es.submit.plugin.convertedFindings);
+    } finally {
+      setLocale("en");
+    }
+  });
+});
+
+// --------------------------------------------------------------------------- //
+// Pasting the address of a server left out for a placeholder (#250).
+
+describe("PluginSubmit — pasting a server's address", () => {
+  const address = () => screen.getByLabelText(en.submit.plugin.addressLabel("hud"));
+  const added = () => screen.queryByTestId("added-mcp.json")?.textContent ?? "";
+
+  /** What the validator says about this address as a server's url. */
+  const validator = (url: string) => checkMcpConfig(JSON.stringify({
+    $schema: MCP_SCHEMA_ID, mcpServers: { hud: { type: "streamable-http", url } },
+  })).find((f) => f.where === "mcp.json#hud.url")!.message;
+
+  it("asks for it, empty, with the hint, and changes nothing until it is filled in", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT());
+    expect(address()).toHaveValue("");
+    expect(screen.getByTestId("server-address-hud"))
+      .toHaveTextContent(en.submit.plugin.addressHint.replace(/[*`]/g, ""));
+    expect(en.submit.plugin.addressHint).toMatch(/setting on your computer.*https:\/\//s);
+    expect(screen.getByTestId("conversion-findings")).toHaveTextContent(".mcp.json#hud.url");
+    expect(added()).not.toContain("hud");
+  });
+
+  it("puts a valid https address into mcp.json, and shows it in what we added", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT());
+    await user.type(address(), "https://hud.responsive.city/mcp");
+    expect(added()).toContain('"hud"');
+    expect(added()).toContain("https://hud.responsive.city/mcp");
+    expect(screen.getByTestId("plugin-summary")).toHaveTextContent("hud.responsive.city");
+    expect(screen.getByTestId("conversion-findings")).not.toHaveTextContent(".mcp.json#hud.url");
+    expect(screen.getByTestId("server-address-hud")).toHaveTextContent(
+      en.submit.plugin.addressAdded("hud", "hud.responsive.city").replace(/[*`]/g, ""));
+    // Still there, answered, rather than gone from under the cursor.
+    expect(address()).toHaveValue("https://hud.responsive.city/mcp");
+  });
+
+  it("refuses an http address with the validator's message, and keeps the server out", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT());
+    await user.type(address(), "http://hud.responsive.city/mcp");
+    expect(screen.getByTestId("server-address-hud"))
+      .toHaveTextContent(validator("http://hud.responsive.city/mcp"));
+    expect(added()).not.toContain("hud.responsive.city");
+    expect(screen.getByTestId("conversion-findings")).toHaveTextContent(".mcp.json#hud.url");
+  });
+
+  it("refuses a placeholder too", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT());
+    await user.click(address());
+    await user.paste("${HUD_URL}");
+    expect(screen.getByTestId("server-address-hud")).toHaveTextContent(validator("${HUD_URL}"));
+    expect(added()).not.toContain('"hud"');
+  });
+
+  it("hands back the server in mcp.json", async () => {
+    const user = userEvent.setup();
+    let blob: Blob | undefined;
+    vi.spyOn(URL, "createObjectURL").mockImplementation((b) => { blob = b as Blob; return "blob:x"; });
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    await dropPlugin(user, EXPORT());
+    await user.type(address(), "https://hud.responsive.city/mcp");
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await user.click(screen.getByTestId("download-folder"));
+    const read = readSkillZip(new Uint8Array(await blob!.arrayBuffer()));
+    const mcp = read.entries.find((x) => x.path === "mcp.json");
+    expect(JSON.parse(mcp?.kind === "file" ? strFromU8(mcp.bytes) : "{}").mcpServers.hud).toEqual({
+      type: "streamable-http", url: "https://hud.responsive.city/mcp",
+    });
+  });
+
+  it("asks nothing of an sse server or one run through ${CLAUDE_PLUGIN_ROOT}", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user, EXPORT({
+      ".mcp.json": JSON.stringify({ mcpServers: {
+        legacy: { type: "sse", url: "${LEGACY_URL}" },
+        local: { command: "${CLAUDE_PLUGIN_ROOT}/run.sh" },
+      } }),
+    }));
+    expect(screen.getByTestId("conversion-findings")).toHaveTextContent(".mcp.json#legacy.type");
+    expect(screen.queryByTestId("server-address-legacy")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("server-address-local")).not.toBeInTheDocument();
+  });
+
+  it("asks in Spanish too", async () => {
+    setLocale("es");
+    try {
+      const user = userEvent.setup();
+      await dropPlugin(user, EXPORT());
+      const field = screen.getByLabelText(es.submit.plugin.addressLabel("hud"));
+      expect(screen.getByTestId("server-address-hud"))
+        .toHaveTextContent(es.submit.plugin.addressHint.replace(/[*`]/g, ""));
+      await user.type(field, "http://hud.responsive.city/mcp");
+      expect(screen.getByTestId("server-address-hud")).toHaveTextContent(
+        es.submit.plugin.addressRefused(validator("http://hud.responsive.city/mcp")));
     } finally {
       setLocale("en");
     }
