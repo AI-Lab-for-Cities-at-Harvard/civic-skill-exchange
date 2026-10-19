@@ -244,13 +244,19 @@ scanner accept it in either of two places:
 A listing is read as nested when it has a `skills/` directory and no root
 `SKILL.md` (`isNestedSkillListing` in `validator/src/structure-core.ts`;
 `skill_dir_of` in `scripts/build_index.py` for the Python side). The inner
-directory gets exactly the flat skill's rules (`SKILL_LAYOUT`), plus a refusal
-of `.mcp.json`, `mcp.json` and either manifest directory, as a plugin's skill
-refuses them. The caps apply to the whole listing, generated manifests
-included. Its `SKILL.md` is still a single skill's, read with `inPlugin: false`,
-so its civic metadata stays in its own frontmatter. The submission page
-validates the flat folder an author brings with the same `SKILL_LAYOUT`, so it
-and CI run the same rules on the same files.
+directory gets `innerSkillLayout`: the flat skill's rules (`SKILL_LAYOUT`),
+plus a refusal of `.mcp.json`, `mcp.json` and either manifest directory, as a
+plugin's skill refuses them. The caps apply to the whole listing, generated
+manifests included. Its `SKILL.md` is still a single skill's, read with
+`inPlugin: false`, so its civic metadata stays in its own frontmatter.
+
+The submission page validates the flat folder an author brings with
+`innerSkillLayout` too, since that folder is what lands in `skills/{name}/`, so
+it and CI run the same rules on the same files. Its readers (`lib/zip.ts`,
+`lib/import.ts`) first leave out the two generated manifests, by name, so a
+published zip dropped back on the page still round-trips. A flat listing on
+disk keeps `SKILL_LAYOUT`, and with it #151's `.mcp.json`, until the move
+retires that layout.
 
 One skill per directory is load-bearing rather than conventional.
 `scripts/build_marketplace.py` emits one plugin per listing, so a listing with a

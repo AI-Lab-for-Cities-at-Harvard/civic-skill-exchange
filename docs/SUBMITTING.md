@@ -56,6 +56,13 @@ A plugin goes in the same way; see [Sharing a plugin](#sharing-a-plugin).
 The archive is unpacked **in your browser**. It is not sent anywhere. The page
 reads what is already in your `SKILL.md` and fills itself in.
 
+It checks the folder with the same rules CI applies to a skill's own
+directory. A skill with an MCP server is a plugin, so a `.mcp.json` or
+`mcp.json` in a skill folder stops the hand-off; bring it as a plugin instead.
+The two manifests the exchange generates, `.claude-plugin/plugin.json` and
+`.codex-plugin/plugin.json`, are left out and named, so a zip downloaded from
+the exchange can be dropped back on the page.
+
 ![The submission page: a notice that a GitHub account is needed, then three ways to give it a skill — a repository address, a zip upload, or a pasted SKILL.md.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-01-submission-page.png)
 
 ### Step 2 — Answer only what it could not find

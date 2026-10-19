@@ -38,8 +38,14 @@ Rules the automation enforces:
 - No `hooks/`, `.claude-plugin/`, `settings.json`, `settings.local.json`, or
   `.lsp.json` — the skill directory is a plugin root a client installs
   directly, and these are refused outright rather than merely reviewed.
-  `.mcp.json` is the one exception: it stays, and is treated as executed code
-  like anything under `scripts/`. See [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
+  `.mcp.json` is the one exception for a skill already listed with its
+  `SKILL.md` at the top of its directory: it stays, and is treated as
+  executed code like anything under `scripts/`. The submission page checks a
+  skill folder with the rules for the inner `skills/{skill-name}/` directory
+  that every single skill moves into
+  ([ADR 0006](docs/adr/0006-every-listing-in-the-agent-plugins-layout.md)),
+  where no client reads a server config, so the page refuses `.mcp.json` and
+  `mcp.json`: a skill with an MCP server is a plugin. See [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
 - Two files inside your directory are **not yours to write**:
   `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json`. The registry
   generates both from your frontmatter after your pull request merges, in
