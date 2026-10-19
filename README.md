@@ -1,6 +1,6 @@
 # Guide images
 
-Screenshots for [`docs/SUBMITTING.md`](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/blob/main/docs/SUBMITTING.md), on an orphan branch with no history in common with `main`.
+Screenshots for [`docs/SUBMITTING.md`](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/blob/main/docs/SUBMITTING.md) and the site's [Using the Exchange](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/guide) page (`guide/using/`), on an orphan branch with no history in common with `main`.
 
 ## Why they are here and not on `main`
 
@@ -20,6 +20,13 @@ these with an image content type, so Markdown renders them inline.
 **1 September 2026.** The `site-*` images come from a Playwright script driving
 the real submission page. The `github-*` images need an authenticated session
 with write access and are captured by hand.
+
+**18 October 2026: `guide/using/` and a recaptured `github-03-commit-box.png`**
+(#260). Claude, ChatGPT and Gemini screenshots for the guide, taken in the
+owner's signed-in browser. Chat history, projects, the account's own skills
+and plugins, names and avatars were masked before capture. Nothing was uploaded
+to any account. `github-03` now shows *Commit directly to the main branch*,
+which is what the submission page asks for since #243.
 
 **They will go stale.** GitHub redesigns, and a screenshot of an interface that
 no longer exists is worse than none — it makes a confused submitter doubt they
