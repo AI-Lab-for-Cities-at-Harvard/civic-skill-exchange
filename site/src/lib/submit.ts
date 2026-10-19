@@ -31,6 +31,8 @@ export interface Draft {
   language: string;
   /** Optional, comma-separated tags. The author's claim, verified by nothing. */
   languagesTested: string;
+  /** Optional, comma-separated model names. The author's claim (#267). */
+  modelsTested: string;
   dataSensitivity: string;
   humanReview: string;
   useWhen: string;
@@ -50,7 +52,7 @@ export const EMPTY_DRAFT: Draft = {
   author: "", name: "", description: "", license: "MIT", compatibility: "",
   tools: "", category: "", categorySecondary: "", version: "",
   scope: "", scopeSecondary: "", jurisdiction: "", localization: "",
-  language: "", languagesTested: "",
+  language: "", languagesTested: "", modelsTested: "",
   dataSensitivity: "none", humanReview: "none", useWhen: "", avoidWhen: "",
   maintainer: "", affiliation: "", deployment: "none",
   deployedAt: "", deployedIn: "", deployedSince: "",
@@ -86,6 +88,7 @@ export function toFields(draft: Draft): Record<string, string> {
     "civic.localization": trim(draft.localization),
     "civic.language": trim(draft.language),
     "civic.languages-tested": trim(draft.languagesTested),
+    "civic.models-tested": trim(draft.modelsTested),
     "civic.data-sensitivity": trim(draft.dataSensitivity),
     "civic.human-review": trim(draft.humanReview),
     "civic.use-when": trim(draft.useWhen),

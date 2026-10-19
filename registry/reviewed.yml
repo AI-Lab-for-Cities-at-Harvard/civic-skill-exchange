@@ -40,6 +40,7 @@ attestations:
    reviewed: 2026-09-12
    expires: 2027-09-12
    languages: ["en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
    notes: >
     Lab-authored, in the reserved civic-skills namespace  item 7 was judged
     on the Lab's own work, which is where that costs most.
@@ -78,8 +79,119 @@ attestations:
    reviewed: 2026-09-12
    expires: 2027-09-12
    languages: ["en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
    notes: >
     Lab-authored, in the reserved civic-skills namespace. 1. The description is accurate.
     2. There are no scripts in the skill. 3. Allowed tool list necessary to read skill. 
     4. NA, 5. NA, 6. No the skill is not deceitful, 7. The tool is appropriate. 8. License is appropriate
     9. Yes, the tool is general
+ - skill: "civic-skills/localize-skill"
+   sha: "df5281504c45f435f11e3040fab7a490e41536af"
+   reviewers: ["AI Lab for Cities at Harvard"]
+   reviewed: 2026-10-18
+   expires: 2027-10-18
+   languages: ["en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
+   notes: >
+    Lab-authored, in the reserved civic-skills namespace. Reviewed by hand by
+    Santi Garces for the Lab, who also ran it in English.
+
+    No scripts. allowed-tools is Read, Write, Grep, Glob and WebFetch; the one
+    network tool is for proposing values from a public open-data catalogue,
+    which the skill confirms with the operator before anything is written.
+    No credentials, and nothing written to an external service. License CC0-1.0.
+
+    Look here first if it goes wrong: the skill writes another skill's
+    localized copy, so the failure to watch for is a value it proposed from a
+    catalogue and wrote without the confirmation step in references/asking.md.
+ - skill: "sgarcese/civic-analytics-workflow"
+   sha: "df5281504c45f435f11e3040fab7a490e41536af"
+   reviewers: ["AI Lab for Cities at Harvard"]
+   reviewed: 2026-10-18
+   expires: 2027-10-18
+   languages: ["en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
+   notes: >
+    Written by Santi Garces and reviewed by hand by the same person for the
+    Lab, so nobody outside the author has read it. Run by the reviewer in
+    English.
+
+    Instructions and templates only: no scripts and no allowed-tools grant.
+    No host is written into the skill; it queries the open-data portals and MCP
+    servers the operator names in context.yml, for their own jurisdiction and
+    its peers. It is a set of linked guides (problem framing, analysis,
+    benchmarking, performance management, communication) routed from SKILL.md.
+    License MIT.
+
+    Look here first if it goes wrong: the sub-guides are separate files, so a
+    change to one that contradicts SKILL.md's routing is the drift to check.
+ - skill: "sgarcese/planificador-de-arbolado"
+   sha: "70829eae016422d41415ef4e18cd9f7ba3d2f081"
+   reviewers: ["AI Lab for Cities at Harvard"]
+   reviewed: 2026-10-18
+   expires: 2027-10-18
+   languages: ["es-419", "en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
+   notes: >
+    Written by Santi Garces and reviewed by hand by the same person for the
+    Lab, so nobody outside the author has read it. Run by the reviewer in
+    Spanish and in English.
+
+    Written in Latin American Spanish (es-419). A single SKILL.md and no
+    shipped scripts: network access only to the city's open-data portal
+    through an OpenContext connector, sources outside the portal only with the
+    user's permission. No credentials beyond the connector's. License MIT.
+
+    Look here first if it goes wrong: the planting ranking is computed by a
+    short standard-library Python script the skill has the model write at run
+    time, so check what that script computes, not just its output. Without a
+    tree census on the portal the skill limits itself to the data inventory,
+    as its avoid-when says.
+ - plugin: "sgarcese/housing-dashboards"
+   sha: "2337f4302a9f96b140b2ac3c7c4972465cbd69ef"
+   reviewers: ["AI Lab for Cities at Harvard"]
+   reviewed: 2026-10-18
+   expires: 2027-10-18
+   languages: ["en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5", "ChatGPT 5.6-Terra"]
+   notes: >
+    Written by Santi Garces and reviewed by hand by the same person for the
+    Lab, so nobody outside the author has read it. Reviewed as one plugin
+    (docs/REVIEW.md, "Reviewing a plugin"), version 0.3.4, and every skill in
+    it run by the reviewer in English.
+
+    Five remote MCP servers, all on responsive.city: census-mcp, bls-mcp, hud,
+    hud-user and geo-mcp, each matching the plugin's public Census, BLS and HUD
+    data purpose. The build-housing-dashboard scripts also call api.census.gov,
+    api.bls.gov and HUD's public ArcGIS services directly. They read
+    CENSUS_API_KEY, BLS_API_KEY, BLS_CONTACT_EMAIL and BLS_USER_AGENT from the
+    environment, and send each only to its own service. Skills reference each
+    other only inside the plugin. License MIT.
+
+    Look here first if it goes wrong: the five responsive.city hosts. They are
+    the author's own servers, so a change in what they return, or who runs
+    them, is the thing to re-check before re-attesting.
+ - skill: "sgarcese/problem-identification-scan"
+   sha: "f7d2e81df25de57a289d7acc3bd473b3a2be88a0"
+   reviewers: ["AI Lab for Cities at Harvard"]
+   reviewed: 2026-10-19
+   expires: 2027-10-19
+   languages: ["en"]
+   models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
+   notes: >
+    Written by Santi Garces and reviewed by hand by the same person for the
+    Lab, so nobody outside the author has read it. Reviewed under its new name
+    (it was the jurisdictional priority scan before #266), and run by the
+    reviewer in English.
+
+    No scripts ship with it. It reads the jurisdiction's open data portal
+    through an OpenContext MCP connector, and uses a web search and fetch tool
+    for local media and public testimony; a social media tool is optional and
+    the skill says so when it has none. It holds no credentials of its own.
+    The five domain packs under references/domains assume US federal programs
+    and standards. License MIT.
+
+    Look here first if it goes wrong: the row limits in references/backends.md.
+    Every OpenContext backend caps the rows it returns, and a count taken from
+    truncated rows is silently wrong, so check that the scan aggregates on the
+    server or states the limit.

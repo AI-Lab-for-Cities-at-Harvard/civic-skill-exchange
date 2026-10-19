@@ -138,6 +138,18 @@ export const LANGUAGE_PATTERN = `^${LANGUAGE_TAG}$`;
 export const LANGUAGES_TESTED_PATTERN =
   `^${LANGUAGE_TAG}(?:\\s*,\\s*${LANGUAGE_TAG})*$`;
 
+/** Which AI models the author says they tried the listing with (#267). Free
+ *  text, because model names change faster than any vocabulary could be kept
+ *  current; the shape is what is checked. One delimited string, for the same
+ *  reason as civic.languages-tested: `metadata` values are strings. Each name
+ *  is 1–60 characters, starts and ends with something other than a space or a
+ *  comma, and holds no line break; at most twelve names. The reviewer's
+ *  verified list is `models:` on the attestation, never this field. */
+export const MODELS_TESTED_FIELD = "civic.models-tested";
+const MODEL_NAME = "[^,\\s](?:[^,\\n\\r]{0,58}[^,\\s])?";
+export const MODELS_TESTED_PATTERN = `^${MODEL_NAME}(?: *, *${MODEL_NAME}){0,11}$`;
+const MODELS_TESTED_RE = new RegExp(MODELS_TESTED_PATTERN);
+
 const LANGUAGE_RE = new RegExp(LANGUAGE_PATTERN);
 const LANGUAGES_TESTED_RE = new RegExp(LANGUAGES_TESTED_PATTERN);
 
@@ -227,7 +239,7 @@ export const PLUGIN_REQUIRED_METADATA = [
 export const PLUGIN_METADATA = [
   ...PLUGIN_REQUIRED_METADATA,
   "civic.deployed-at", "civic.deployed-in", "civic.deployed-since",
-  "civic.use-when", "civic.avoid-when",
+  "civic.use-when", "civic.avoid-when", MODELS_TESTED_FIELD,
 ] as const;
 
 const finding = (where: string, message: string): Finding => ({ where, message });
@@ -322,6 +334,26 @@ export function checkLocalization(meta: Record<string, unknown>): Finding[] {
 export function parseLanguagesTested(value: unknown): string[] {
   if (typeof value !== "string") return [];
   return value.split(",").map((t) => t.trim()).filter((t) => t.length > 0);
+}
+
+/** The names in a `civic.models-tested` value, in the order written. Only
+ *  meaningful for a value that passed the shape check. */
+export function parseModelsTested(value: unknown): string[] {
+  if (typeof value !== "string") return [];
+  return value.split(",").map((t) => t.trim()).filter((t) => t.length > 0);
+}
+
+/** The author's own list of models (#267). Shape only: nothing here checks
+ *  that the skill works with any of them. */
+export function checkModelsTested(meta: Record<string, unknown>): Finding[] {
+  const value = meta[MODELS_TESTED_FIELD];
+  if (value === undefined) return [];
+  if (typeof value === "string" && MODELS_TESTED_RE.test(value)) return [];
+  return [finding(MODELS_TESTED_FIELD,
+    `${MODELS_TESTED_FIELD} is a comma-separated list of model names, as the ` +
+    `author would write them: 'Claude Sonnet 5, GPT-5'. Up to twelve names of ` +
+    `at most 60 characters each, with no empty entry, no trailing comma and ` +
+    `no line break.`)];
 }
 
 /** What language the listing is written in, and what the author says they
@@ -425,6 +457,7 @@ export function checkPluginMetadata(meta: Record<string, unknown>): Finding[] {
   findings.push(...checkEnum(meta, "civic.deployment", DEPLOYMENTS));
   findings.push(...checkProvenance(meta));
   findings.push(...checkFit(meta));
+  findings.push(...checkModelsTested(meta));
   return findings;
 }
 
@@ -686,6 +719,7 @@ export function checkFrontmatter(frontmatter: Frontmatter, context: RuleContext)
   findings.push(...checkScope(metadata));
   findings.push(...checkLocalization(metadata));
   findings.push(...checkLanguage(metadata));
+  findings.push(...checkModelsTested(metadata));
   findings.push(...checkFit(metadata));
   findings.push(...checkSource(metadata));
   findings.push(...checkVersion(metadata));

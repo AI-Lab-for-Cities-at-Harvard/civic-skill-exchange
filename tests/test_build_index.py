@@ -1044,3 +1044,57 @@ def test_a_plugin_publishes_its_own_provenance_and_fit(make_plugin):
     }
     assert entry["use_when"] == "A city wants its housing picture in one place."
     assert entry["avoid_when"] is None
+
+
+# --------------------------------------------------------------------------- #
+# #267: which AI models a listing was tried with — the author's claim
+# (`civic.models-tested`) and the reviewer's verified list (`models:` on the
+# attestation), kept apart the way the two language fields are.
+
+
+def test_a_current_attestation_carries_the_models_it_verified():
+    result = build_index.resolve_tier(
+        "ns/example", SHA, attestation(models=["Claude Opus 5.5", "Claude Sonnet 5"]))
+    assert result["tier"] == "reviewed"
+    assert result["verified_models"] == ["Claude Opus 5.5", "Claude Sonnet 5"]
+
+
+def test_a_stale_or_expired_attestation_yields_no_verified_models():
+    stale = build_index.resolve_tier(
+        "ns/example", OTHER_SHA, attestation(sha=SHA, models=["Claude Sonnet 5"]))
+    expired = build_index.resolve_tier(
+        "ns/example", SHA, attestation(expires=PAST, models=["Claude Sonnet 5"]))
+    assert stale["verified_models"] is None
+    assert expired["verified_models"] is None
+    assert build_index.resolve_tier("ns/example", SHA, None)["verified_models"] is None
+
+
+def test_no_models_field_on_a_current_attestation_is_null():
+    assert build_index.resolve_tier("ns/example", SHA, attestation())["verified_models"] is None
+
+
+def test_the_models_an_author_tried_are_published_as_a_list(make_skill):
+    skill = _with_meta(
+        make_skill, **{"civic.models-tested": "Claude Opus 5.5, Claude Sonnet 5"})
+    entry = build_index.build_entry(skill, {}, {})
+    assert entry["models_tested"] == ["Claude Opus 5.5", "Claude Sonnet 5"]
+    assert build_index.build_detail(skill, entry)["models_tested"] == [
+        "Claude Opus 5.5", "Claude Sonnet 5"]
+
+
+def test_models_tested_is_null_when_the_author_claimed_nothing(make_skill):
+    entry = build_index.build_entry(make_skill(), {}, {})
+    assert entry["models_tested"] is None
+    assert entry["verified_models"] is None
+
+
+def test_a_plugin_publishes_the_models_its_author_tried(make_plugin):
+    from build_index import REGISTRY_EXTENSION
+    plugin = make_plugin(manifest={"extensions": {REGISTRY_EXTENSION: {
+        "civic.maintainer": "Plugin Maintainer", "civic.affiliation": "government",
+        "civic.deployment": "none",
+        "civic.models-tested": "Claude Sonnet 5, ChatGPT 5.6-Terra",
+    }}})
+    entry = build_index.build_plugin_entry(plugin, {}, {})
+    assert entry["models_tested"] == ["Claude Sonnet 5", "ChatGPT 5.6-Terra"]
+    assert entry["verified_models"] is None

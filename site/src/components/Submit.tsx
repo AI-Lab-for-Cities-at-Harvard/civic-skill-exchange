@@ -645,6 +645,14 @@ export function Submit(
                 placeholder={t.optional.languagesTestedPlaceholder} />
             </Field>
 
+            <Field id="civic.models-tested"
+              label={t.optional.modelsTestedLabel} findings={findings} hint={t.optional.modelsTestedHint}>
+              <input id="civic.models-tested" className="input"
+                value={draft.modelsTested}
+                onChange={onInput("modelsTested")}
+                placeholder={t.optional.modelsTestedPlaceholder} />
+            </Field>
+
             <Field id="allowed-tools" label={t.optional.toolsLabel} findings={findings} hint={t.optional.toolsHint}>
               <input id="allowed-tools" className="input" value={draft.tools}
                 onChange={onInput("tools")} placeholder={t.optional.toolsPlaceholder} />

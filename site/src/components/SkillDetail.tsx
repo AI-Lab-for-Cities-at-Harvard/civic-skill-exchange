@@ -4,6 +4,7 @@ import { History } from "./History";
 import { categoriesOf, scopesOf } from "../lib/filter";
 import { TierBadge, LabBadge, LocalizationBadge, DeploymentBadge } from "./Badges";
 import { rich } from "../i18n/rich";
+import { ModelFacts } from "./ModelFacts";
 import { useStrings } from "../i18n/strings";
 import { label } from "../lib/labels";
 import { addFieldsHref } from "../lib/route";
@@ -225,6 +226,9 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                   </dd>
                 </div>
               )}
+              <ModelFacts modelsTested={detail.models_tested}
+                verifiedModels={detail.verified_models} tier={detail.tier}
+                reviewers={reviewers} />
               <div>
                 <dt>{d.facts.sensitivity}</dt>
                 <dd>{label(s.vocabulary.sensitivity, detail.data_sensitivity)}</dd>

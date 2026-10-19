@@ -184,7 +184,21 @@ def test_the_guide_gives_a_browser_route_too():
 # CI failing on it would make automatic demotion impossible to ship.
 
 
-REQUIRED_KEYS = {"skill", "sha", "reviewers", "reviewed", "expires", "notes"}
+REQUIRED_KEYS = {"sha", "reviewers", "reviewed", "expires", "notes"}
+
+
+def _listing(entry: dict) -> tuple[str, str, str]:
+    """(tree, id, the file every listing of that kind has). A plugin is
+    attested with `plugin:` and pinned to its directory under plugins/
+    (ADR 0005, ruling 4 on #211); everything else is a skill."""
+    if "plugin" in entry:
+        return "plugins", str(entry["plugin"]), "plugin.json"
+    return "skills", str(entry["skill"]), "SKILL.md"
+
+
+def _id(entry: dict) -> str:
+    tree, listing, _ = _listing(entry)
+    return f"{tree}/{listing}"
 
 
 def _ledger() -> list[dict]:
@@ -208,20 +222,22 @@ def test_a_malformed_ledger_says_what_is_wrong(tmp_path, monkeypatch):
     assert "reviewed.yml" in str(raised.value)
 
 
-@pytest.mark.parametrize("entry", _ledger(), ids=lambda e: e["skill"])
+@pytest.mark.parametrize("entry", _ledger(), ids=_id)
 def test_every_attestation_has_the_documented_shape(entry: dict):
     assert REQUIRED_KEYS <= set(entry), REQUIRED_KEYS - set(entry)
+    assert ("skill" in entry) != ("plugin" in entry), "exactly one of skill: or plugin:"
     assert isinstance(entry["reviewers"], list) and entry["reviewers"]
-    assert str(entry["skill"]).count("/") == 1, "skill is {namespace}/{name}"
+    assert _listing(entry)[1].count("/") == 1, "the listing is {namespace}/{name}"
 
 
-@pytest.mark.parametrize("entry", _ledger(), ids=lambda e: e["skill"])
-def test_every_attestation_names_a_skill_that_is_still_here(entry: dict):
-    """An attestation outliving its skill is a badge with nothing under it."""
-    assert (ROOT / "skills" / entry["skill"] / "SKILL.md").is_file()
+@pytest.mark.parametrize("entry", _ledger(), ids=_id)
+def test_every_attestation_names_a_listing_that_is_still_here(entry: dict):
+    """An attestation outliving its listing is a badge with nothing under it."""
+    tree, listing, marker = _listing(entry)
+    assert (ROOT / tree / listing / marker).is_file()
 
 
-@pytest.mark.parametrize("entry", _ledger(), ids=lambda e: e["skill"])
+@pytest.mark.parametrize("entry", _ledger(), ids=_id)
 def test_every_attestation_pins_a_commit_that_touched_that_skill(entry: dict):
     """Catches a typo, and catches a SHA copied from somewhere else. It cannot
     catch an older commit of the same skill, and must not try: that is
@@ -229,12 +245,13 @@ def test_every_attestation_pins_a_commit_that_touched_that_skill(entry: dict):
     sha = str(entry["sha"])
     assert len(sha) == 40 and all(c in "0123456789abcdef" for c in sha), sha
 
+    tree, listing, _ = _listing(entry)
     touched = subprocess.run(
-        ["git", "log", "--format=%H", "--", f"skills/{entry['skill']}"],
+        ["git", "log", "--format=%H", "--", f"{tree}/{listing}"],
         cwd=ROOT, capture_output=True, text=True, check=True,
     ).stdout.split()
     assert sha in touched, (
-        f"{sha[:12]} is not a commit that ever touched skills/{entry['skill']}. "
+        f"{sha[:12]} is not a commit that ever touched {tree}/{listing}. "
         f"The one to attest to is {touched[0][:12]}.")
 
 
@@ -364,3 +381,29 @@ def test_a_plugin_needs_its_manifest_to_be_attested(tmp_path):
     (tmp_path / "p").mkdir()
     with pytest.raises(attestation.Unusable, match="no plugin.json"):
         attestation.check_clone(tmp_path, tmp_path / "p", plugin=True)
+
+
+# --------------------------------------------------------------------------- #
+# The optional `models:` field (#267): the models the reviewer ran the listing
+# with. Free text, so only its shape is guarded — a list of short names.
+
+
+def test_models_is_optional_on_an_attestation(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY))
+    assert "models" not in build_index.load_attestations()["ns/example"]
+
+
+def test_models_accepts_a_list_of_names(tmp_path, monkeypatch):
+    _write_ledger(tmp_path, monkeypatch,
+                  dict(BASE_ENTRY, models=["Claude Opus 5.5", "ChatGPT 5.6-Terra"]))
+    assert build_index.load_attestations()["ns/example"]["models"] == [
+        "Claude Opus 5.5", "ChatGPT 5.6-Terra"]
+
+
+@pytest.mark.parametrize("bad", [
+    "Claude Opus 5.5", [], [""], ["   "], [42], ["x" * 61],
+])
+def test_models_rejects_anything_but_a_list_of_short_names(tmp_path, monkeypatch, bad):
+    _write_ledger(tmp_path, monkeypatch, dict(BASE_ENTRY, models=bad))
+    with pytest.raises(ValueError):
+        build_index.load_attestations()

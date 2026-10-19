@@ -162,7 +162,7 @@ export function PluginSubmit(
   const manifestFindings = check.manifest.map((x) => plain(x, names));
   const fieldIds = new Set<string>([
     "description", "license", "version", "maintainer", "affiliation", "deployment",
-    "deployedAt", "deployedIn", "deployedSince", "useWhen", "avoidWhen",
+    "deployedAt", "deployedIn", "deployedSince", "useWhen", "avoidWhen", "modelsTested",
   ].map((k) => pluginFieldId(k as keyof PluginDraft)));
   const otherManifest = manifestFindings.filter((x) => !fieldIds.has(x.where));
   const blocked = check.structural.length > 0;
@@ -408,6 +408,12 @@ export function PluginSubmit(
             findings={manifestFindings} hint={t.optional.avoidWhenHint}>
             <textarea id={id("avoidWhen")} className="textarea" rows={2}
               value={draft.avoidWhen} onChange={onInput("avoidWhen")} />
+          </Field>
+          <Field id={id("modelsTested")} label={t.optional.modelsTestedLabel}
+            findings={manifestFindings} hint={t.optional.modelsTestedHint}>
+            <input id={id("modelsTested")} className="input" value={draft.modelsTested}
+              onChange={onInput("modelsTested")}
+              placeholder={t.optional.modelsTestedPlaceholder} />
           </Field>
           <Field id={id("deployedAt")} label={t.optional.deployedAtLabel}
             findings={manifestFindings}>

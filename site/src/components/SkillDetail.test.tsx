@@ -178,3 +178,41 @@ describe("the detail page says which languages a reviewer verified", () => {
     expect(violations, describeViolations(violations)).toEqual([]);
   });
 });
+
+
+/** #267: which AI models the listing was tried with. The author's claim and
+ *  the reviewer's verified list, kept apart as the two language fields are. */
+describe("the detail page says which models a listing was tested with", () => {
+  const reviewed = (over: Partial<Detail> = {}): Detail => detail({
+    tier: "reviewed", reason: "attestation matches current content",
+    reviewed: { date: "2026-10-18", expires: "2027-10-18",
+      reviewers: ["AI Lab for Cities at Harvard"], notes: "" },
+    ...over,
+  });
+
+  it("words the author's models as their own claim", async () => {
+    served(detail({ models_tested: ["Claude Opus 5.5", "Claude Sonnet 5"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const claim = await screen.findByTestId("models-tested");
+    expect(claim).toHaveTextContent("Author reports testing with");
+    expect(claim).toHaveTextContent("Claude Opus 5.5, Claude Sonnet 5");
+    expect(claim).toHaveTextContent(/self-reported/i);
+  });
+
+  it("shows the reviewer's models separately, naming who ran them", async () => {
+    served(reviewed({ verified_models: ["Claude Opus 5.5"], models_tested: ["Claude Sonnet 5"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    const verified = await screen.findByTestId("verified-models");
+    expect(verified).not.toBe(screen.getByTestId("models-tested"));
+    expect(verified).toHaveTextContent("Claude Opus 5.5");
+    expect(verified).toHaveTextContent("AI Lab for Cities at Harvard");
+  });
+
+  it("says nothing about models when neither list is there, or the listing is Community", async () => {
+    served(detail({ tier: "community", models_tested: null, verified_models: ["Claude Sonnet 5"] }));
+    render(<SkillDetail namespace="ns" name="example-skill" />);
+    await screen.findByRole("region", { name: /at a glance/i });
+    expect(screen.queryByTestId("models-tested")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("verified-models")).not.toBeInTheDocument();
+  });
+});

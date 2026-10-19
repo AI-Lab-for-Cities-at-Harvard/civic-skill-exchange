@@ -94,6 +94,7 @@ metadata:
   civic.jurisdiction: "US-MA / Boston"
   civic.language: en                     # required, one BCP 47 tag
   civic.languages-tested: "en, es"       # optional, comma-separated, a claim
+  civic.models-tested: "Claude Sonnet 5, GPT-5"  # optional, comma-separated, a claim
   civic.data-sensitivity: none
   civic.human-review: advisory-only
   civic.use-when: >                      # optional, ≤500, plain text
@@ -144,6 +145,16 @@ losing an entry. **Nothing verifies the claim.** The reviewer's verified list is
 registry already draws between `civic.deployment` and the ledger. The detail
 page renders the two on different footings and labels the frontmatter one as
 the author's report. See [ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md).
+
+`civic.models-tested` follows the same split for AI models (#267): the
+author's own comma-separated list of the models they tried the listing with,
+as free text — model names change faster than a vocabulary could — up to
+twelve names of at most 60 characters. A plugin declares it once, in its
+`plugin.json` extension block. The reviewer's verified list is `models:` on
+the attestation. The index publishes them as `models_tested` and
+`verified_models`, the second only while the listing is Reviewed, exactly as
+`verified_languages` is, and the "At a glance" box shows each with whose claim
+it is.
 
 A delimited string rather than the two-explicit-fields trick
 `civic.category-secondary` uses: `metadata` values are strings per the Agent
@@ -494,6 +505,7 @@ An index entry, with every field the build actually emits:
   "localization": "localized",
   "language": "en",
   "languages_tested": ["en", "es"],
+  "models_tested": ["Claude Sonnet 5", "GPT-5"],
   "data_sensitivity": "none",
   "human_review": "advisory-only",
   "use_when": "A resident asks why their permit is stuck and the status codes...",
@@ -513,6 +525,7 @@ An index entry, with every field the build actually emits:
   "reviewed": { "date": "2026-09-14", "expires": "2027-09-14",
                 "reviewers": ["AI Lab for Cities at Harvard"], "notes": "Read-only." },
   "verified_languages": ["en", "es"],
+  "verified_models": ["Claude Opus 5.5"],
   "sha": "a3f19c8d4b2e7f60a1c9d8e3b5f7204c6a8e1d92",
   "has_scripts": false,
   "script_files": [],

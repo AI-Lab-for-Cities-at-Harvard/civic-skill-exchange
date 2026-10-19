@@ -64,6 +64,10 @@ export interface Skill {
    *  from `languages_tested`, which is the author's self-reported claim — the
    *  two are never merged. ADR 0004. */
   verified_languages: string[] | null;
+  /** The AI models the author says they tried it with (#267) — a claim — and
+   *  the ones the reviewer ran it with, present only while it is Reviewed. */
+  models_tested?: string[] | null;
+  verified_models?: string[] | null;
   sha: string | null;
   /** The author's own claim about their version. See #77. */
   version: string | null;
@@ -153,6 +157,10 @@ export interface Plugin {
   reviewed?: { date: string; expires: string; reviewers: string[]; notes: string };
   drift?: boolean;
   verified_languages: string[] | null;
+  /** The AI models the author says they tried it with (#267) — a claim — and
+   *  the ones the reviewer ran it with, present only while it is Reviewed. */
+  models_tested?: string[] | null;
+  verified_models?: string[] | null;
   sha: string | null;
   history: Skill["history"];
   has_scripts: boolean;

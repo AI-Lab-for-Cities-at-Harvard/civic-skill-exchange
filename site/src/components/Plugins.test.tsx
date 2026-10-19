@@ -146,6 +146,20 @@ describe("the plugin page", () => {
       .toBeInTheDocument();
   });
 
+  it("says which models the author and the reviewer tried it with (#267)", async () => {
+    serve({ "plugins/ns/housing-dashboards.json": detail({
+      tier: "reviewed", reason: "attestation matches current content",
+      reviewed: { date: "2026-10-18", expires: "2027-10-18",
+        reviewers: ["AI Lab for Cities at Harvard"], notes: "" },
+      models_tested: ["Claude Sonnet 5"],
+      verified_models: ["Claude Opus 5.5", "ChatGPT 5.6-Terra"],
+    }) });
+    render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+    expect(await screen.findByTestId("models-tested")).toHaveTextContent("Claude Sonnet 5");
+    expect(screen.getByTestId("verified-models"))
+      .toHaveTextContent("Claude Opus 5.5, ChatGPT 5.6-Terra");
+  });
+
   it("says so when the plugin connects to no server", async () => {
     serve({ "plugins/ns/housing-dashboards.json": detail({ mcp_servers: [] }) });
     render(<PluginDetail namespace="ns" name="housing-dashboards" />);
