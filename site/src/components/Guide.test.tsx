@@ -5,7 +5,7 @@
  *  and the submission page can send a reader to exactly the step they need.
  */
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Guide } from "./Guide";
 import { GUIDE_SECTIONS } from "../lib/guide";
@@ -85,5 +85,33 @@ describe("the guide page", () => {
   it("links the share section to the submission page", () => {
     const { container } = render(<Guide />);
     expect(container.querySelector('#share a[href="#/submit"]')).not.toBeNull();
+  });
+});
+
+/** The page is its own chunk, so it arrives after App's scroll has already
+ *  looked for the section and missed. It scrolls to the section itself. */
+describe("a link to a section", () => {
+  it("scrolls to that section once the page is there", () => {
+    const scrolled: Element[] = [];
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn(function (this: Element) { scrolled.push(this); });
+    try {
+      render(<Guide section="gemini" />);
+      expect(scrolled.map((e) => e.id)).toContain("gemini");
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
+  });
+
+  it("does not scroll for a section the page does not have", () => {
+    const spy = vi.fn();
+    const original = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = spy;
+    try {
+      render(<Guide section="nowhere" />);
+      expect(spy).not.toHaveBeenCalled();
+    } finally {
+      Element.prototype.scrollIntoView = original;
+    }
   });
 });
