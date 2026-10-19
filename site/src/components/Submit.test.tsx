@@ -872,10 +872,11 @@ describe("Submit — one directory is one skill", () => {
     // `blocked` is the heading; the findings themselves are listed above it.
     expect(await screen.findByTestId("blocked")).toBeInTheDocument();
     expect(screen.getByTestId("archive-result"))
-      .toHaveTextContent(/one directory is one skill/i);
+      .toHaveTextContent(/SKILL\.example\.md/);
   });
 
-  it("accepts a template under references/, which is documentation", async () => {
+  // ADR 0006 reversed #78: Codex loads a SKILL.md under references/ too.
+  it("blocks a template SKILL.md under references/, which Codex would load", async () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await user.upload(
@@ -883,6 +884,19 @@ describe("Submit — one directory is one skill", () => {
       file("skill.zip", {
         "permit-status-explainer/SKILL.md": SKILL_MD,
         "permit-status-explainer/references/SKILL.md": SKILL_MD,
+      }),
+    );
+    expect(await screen.findByTestId("blocked")).toBeInTheDocument();
+  });
+
+  it("accepts a template renamed SKILL.example.md", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(
+      screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", {
+        "permit-status-explainer/SKILL.md": SKILL_MD,
+        "permit-status-explainer/references/SKILL.example.md": SKILL_MD,
       }),
     );
     await screen.findByTestId("archive-result");
