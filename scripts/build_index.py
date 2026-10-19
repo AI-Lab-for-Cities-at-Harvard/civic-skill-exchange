@@ -245,6 +245,11 @@ def skill_dir_of(listing: Path) -> Path:
     reader can't drop the listing without saying so.
     """
     nested = listing / "skills" / listing.name
+    # The index reads and archives what this returns before L0's symlink rule
+    # runs, so a link on the way to SKILL.md must not lead outside the listing.
+    for path in (listing / "skills", nested, nested / "SKILL.md", listing / "SKILL.md"):
+        if path.is_symlink():
+            raise NoSkillMd(f"{path} is a symlink; a skill's own files must be in the listing.")
     has_nested = (nested / "SKILL.md").is_file()
     has_flat = (listing / "SKILL.md").is_file()
     if has_nested and has_flat:
