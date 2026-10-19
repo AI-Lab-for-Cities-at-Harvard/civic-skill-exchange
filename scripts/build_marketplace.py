@@ -464,15 +464,17 @@ def generated(root: Path) -> dict[Path, str]:
         root / CODEX_MANIFEST: render(build_codex(root)),
     }
     labels = category_labels(root)
-    for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
-        if not read_frontmatter(checked_skill_dir(listing) / "SKILL.md"):
+    # `skill_dir` (the listing) and these two output paths are read by the
+    # validator's discover.test.ts to learn what the generator writes.
+    for skill_dir in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
+        if not read_frontmatter(checked_skill_dir(skill_dir) / "SKILL.md"):
             continue
         # At the listing root in both layouts: a nested listing's inner
         # directory is the author's, and is what the archive is made from.
-        out[listing / ".codex-plugin" / "plugin.json"] = render(
-            codex_plugin(listing, labels))
-        out[listing / ".claude-plugin" / "plugin.json"] = render(
-            claude_plugin(listing))
+        out[skill_dir / ".codex-plugin" / "plugin.json"] = render(
+            codex_plugin(skill_dir, labels))
+        out[skill_dir / ".claude-plugin" / "plugin.json"] = render(
+            claude_plugin(skill_dir))
     for plugin_dir in plugin_dirs(root):
         out[plugin_dir / ".claude-plugin" / "plugin.json"] = render(
             claude_plugin_for_plugin(plugin_dir))
