@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import {
@@ -40,6 +41,13 @@ export function Guide({ section }: { section?: string }) {
   const s = useStrings();
   const g = s.guide;
   const current = section && GUIDE_SECTIONS.includes(section) ? section : null;
+
+  // App scrolls to a section too, but this page is its own chunk and arrives
+  // after App has looked and missed — so a link from a listing's install box
+  // would land at the top. The page scrolls once it is there.
+  useEffect(() => {
+    if (current) document.getElementById(current)?.scrollIntoView({ block: "start" });
+  }, [current]);
 
   return (
     <article className="prose">
