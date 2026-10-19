@@ -4,7 +4,8 @@ Status: analysis, ends in decision questions. Issues:
 [#70](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/70)
 (the defect and the manual path),
 [#71](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/71)
-(sign-in), which is blocked on questions 2 and 3 below.
+(sign-in), closed as not planned on 2026-10-19; its design, questions 2 and 3
+below, stays here for a future issue (ADR 0003, decision 4).
 
 ## What is wrong now
 
