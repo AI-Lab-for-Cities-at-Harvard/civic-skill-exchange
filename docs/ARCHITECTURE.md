@@ -405,6 +405,26 @@ plugin, and each entry in the manifest names its own `source` — so the
 `{namespace}/` directory between `skills/` and the skill is invisible to the
 client while staying where the ownership check needs it.
 
+**The generators read both layouts of a single-skill listing**
+([the layout spike](spikes/every-listing-in-the-agent-plugins-layout.md), while the
+move to the second is under way). *Flat* has `SKILL.md` at the listing root.
+*Nested* has the author's files in `skills/{name}/` inside the listing, with
+only the generated manifests beside it, which is the layout a plugin's skills
+already have. `build_index.skill_dir_of` finds the directory that holds the
+skill's own `SKILL.md`, and every reader goes through it: a listing it can't
+find a `SKILL.md` for raises `NoSkillMd` and fails the build, rather than being
+dropped from both marketplaces and the index. A listing whose frontmatter
+doesn't parse is still skipped, because L0 fails that in CI.
+
+The marketplace entries are the same for both: `source` is the listing
+directory, `./skills/{namespace}/{name}`, and the plugin name is unchanged. The
+two manifests differ in one key. A **flat** Codex manifest carries
+`"skills": "./"`; a **nested** one has no `skills` key, because Codex's default
+is the `skills/` directory under the plugin root and the nested layout is
+already in it. Claude Code's manifest never has the key, in either layout.
+A flat listing's manifests are byte-identical to what they were before nested
+listings were readable.
+
 **Claude's per-plugin manifest is metadata and nothing else.** Claude Code
 loads a root `SKILL.md` as a plugin's single skill exactly when the plugin has
 no `skills/` directory and no `skills` manifest field, so
@@ -516,6 +536,15 @@ symlinks, which that traversal drops. It is deterministic: fixed timestamps and
 sorted entries, so an unchanged skill produces byte-identical output rather than
 churning the Pages artifact on every build.
 
+**The archive is rooted at the author's directory**, `{name}/SKILL.md`,
+`{name}/references/…`, in either layout. For a nested listing that is
+`skills/{name}/` inside the listing, so the zip has the same shape as a flat
+listing's and carries neither generated manifest: unzipped into a skills
+directory, or uploaded to a tool that wants a skill folder, it is a plain skill.
+The detail payload's `files` are the author's files relative to `skill_path`
+(below) for the same reason. For a flat listing that is the listing itself, so
+its generated manifests are listed and zipped as they always were.
+
 The tier is **derived, never stored on the skill**. A skill is Reviewed if and only if `reviewed.yml` contains an unexpired attestation whose `sha` matches the skill directory's current commit. Everything else is Community. This is what makes the attestation meaningful — see [TIERS.md](TIERS.md).
 
 An index entry, with every field the build actually emits:
@@ -564,6 +593,7 @@ An index entry, with every field the build actually emits:
   "script_files": [],
   "scan": { "last_run": "2026-09-20", "blocking": 0, "flags": 0, "signatures": [] },
   "path": "skills/cityofx/permit-status-explainer",
+  "skill_path": "skills/cityofx/permit-status-explainer",
   "download": "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/tree/main/skills/cityofx/permit-status-explainer",
   "history": {
     "first_seen": "2026-03-14T09:22:41+00:00",
@@ -573,6 +603,20 @@ An index entry, with every field the build actually emits:
   }
 }
 ```
+
+`path` is the listing directory: the `tree/` link in `download`, the directory
+an attestation pins, and the marketplace `source`. `skill_path` is where
+`SKILL.md` and the rest of the author's files are. It equals `path` for a flat
+listing and is `skills/{namespace}/{name}/skills/{name}` for a nested one, so a
+`degit`, `cp -r` or edit link built from it reaches the author's files in either
+layout. The SHA is the last commit to touch `path`, the listing root, not
+`skill_path`: a change to a generated manifest beside the inner directory is a
+change to the listing and drops a review.
+
+`script_files` and the detail payload's `executed` flags are relative to
+`skill_path`, and follow `scripts/` there (a path relative to the listing is
+executed under `skills/*/scripts/`, the rule a plugin applies), so
+`has_scripts` is the same for a skill whichever layout it is in.
 
 `version` is the author's claim and `history` is derived from git — the
 distinction matters, so the site renders the first as self-reported and states
