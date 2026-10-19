@@ -45,6 +45,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
+| [the-using-the-exchange-page.md](spikes/the-using-the-exchange-page.md) | What goes on the "Using the Exchange" page, how other pages link to it, and which screenshots it needs: the design pass before the build — [#224](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/224), ruled; the rulings are recorded at the end |
 | [single-skill-listings-in-codex.md](spikes/single-skill-listings-in-codex.md) | Codex installs every single-skill listing and loads none of them — what should the exchange publish? Also returns #183's deferred question with evidence — [#207](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/207), awaiting rulings |
 | [plugins-as-the-unit-of-distribution.md](spikes/plugins-as-the-unit-of-distribution.md) | Should the exchange publish plugins rather than skill directories, now that Agent Plugins 1.0 exists and Codex has adopted it? — [#183](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/183), awaiting rulings |
 | [the-exchange-in-more-than-one-language.md](spikes/the-exchange-in-more-than-one-language.md) | What changes when the exchange speaks more than one language? — [#143](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/143), ruled on seven of eight; see [ADR 0004](adr/0004-language-is-metadata-and-verification-not-translation.md) |
