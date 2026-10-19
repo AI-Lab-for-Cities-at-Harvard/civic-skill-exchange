@@ -43,7 +43,7 @@ jobs:
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git fetch --no-tags origin "$BASE_REF"
           # Deletions are in this list, and --no-renames keeps both sides of a
           # move in it: --name-only prints a detected rename as its destination
           # alone, so the namespace a skill was moved *out of* was invisible to
