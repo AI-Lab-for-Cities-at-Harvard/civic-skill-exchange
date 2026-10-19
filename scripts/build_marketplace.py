@@ -28,7 +28,7 @@ from pathlib import Path
 
 import yaml
 
-from build_index import read_frontmatter
+from build_index import NoSkillMd, read_frontmatter, skill_dir_of
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -138,13 +138,16 @@ def short(description: str, limit: int = 120) -> str:
     return f"{clipped}…" if clipped else description[:limit]
 
 
-def codex_plugin(skill_dir: Path, labels: dict[str, str] | None = None) -> dict:
-    """The `.codex-plugin/plugin.json` for one skill."""
-    root = skill_dir.parents[2]
+def codex_plugin(listing: Path, labels: dict[str, str] | None = None) -> dict:
+    """The `.codex-plugin/plugin.json` for one single-skill listing.
+
+    Raises NoSkillMd when the listing's SKILL.md can't be found."""
+    root = listing.parents[2]
     labels = category_labels(root) if labels is None else labels
+    skill_dir = skill_dir_of(listing)
     front = read_frontmatter(skill_dir / "SKILL.md") or {}
     meta = front.get("metadata") or {}
-    namespace, name = skill_dir.parent.name, skill_dir.name
+    namespace, name = listing.parent.name, listing.name
     label = labels.get(str(meta.get("civic.category")), FALLBACK_CATEGORY)
     description = (front.get("description") or "").strip()
 
@@ -157,8 +160,10 @@ def codex_plugin(skill_dir: Path, labels: dict[str, str] | None = None) -> dict:
         **({"version": str(meta["version"])} if meta.get("version") else {}),
         "author": {"name": str(meta.get("civic.maintainer") or namespace)},
         "license": str(front.get("license") or ""),
-        # SKILL.md sits at the top of a skill directory, not under skills/.
-        "skills": "./",
+        # A flat listing has SKILL.md at its root, so Codex is told to look
+        # there. A nested one has it in skills/{name}/, which is where Codex
+        # looks without being told, and `"skills": "./"` would point it away.
+        **({"skills": "./"} if skill_dir == listing else {}),
         "interface": {
             "displayName": name.replace("-", " ").title(),
             "shortDescription": short(description),
@@ -172,12 +177,12 @@ def build_codex(root: Path = ROOT) -> dict:
     labels = category_labels(root)
     plugins = []
     entries = []
-    for skill_dir in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
-        front = read_frontmatter(skill_dir / "SKILL.md")
+    for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
+        front = read_frontmatter(skill_dir_of(listing) / "SKILL.md")
         if not front:
             continue
         meta = front.get("metadata") or {}
-        namespace, name = skill_dir.parent.name, skill_dir.name
+        namespace, name = listing.parent.name, listing.name
         entries.append((namespace, name))
         plugins.append({
             "name": plugin_name(namespace, name),
@@ -220,11 +225,13 @@ def build_codex(root: Path = ROOT) -> dict:
 # skill.
 
 
-def claude_plugin(skill_dir: Path) -> dict:
-    """The `.claude-plugin/plugin.json` for one skill."""
-    front = read_frontmatter(skill_dir / "SKILL.md") or {}
+def claude_plugin(listing: Path) -> dict:
+    """The `.claude-plugin/plugin.json` for one single-skill listing, the same
+    for a flat one and a nested one. Raises NoSkillMd when the listing's
+    SKILL.md can't be found."""
+    front = read_frontmatter(skill_dir_of(listing) / "SKILL.md") or {}
     meta = front.get("metadata") or {}
-    namespace, name = skill_dir.parent.name, skill_dir.name
+    namespace, name = listing.parent.name, listing.name
 
     manifest = {
         # The marketplace entry's plugin name, so the plugin a client installs
@@ -245,13 +252,16 @@ def claude_plugin(skill_dir: Path) -> dict:
 def build(root: Path = ROOT) -> dict:
     plugins = []
     entries = []
-    for skill_dir in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
-        front = read_frontmatter(skill_dir / "SKILL.md")
+    for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
+        # A missing SKILL.md raises NoSkillMd: the listing would otherwise
+        # vanish from both marketplaces and nothing would fail.
+        front = read_frontmatter(skill_dir_of(listing) / "SKILL.md")
         if not front:
-            # Same posture as the index build: an unreadable skill is skipped
-            # rather than allowed to break the manifest. L0 fails it in CI.
+            # Same posture as the index build: a skill whose frontmatter won't
+            # parse is skipped rather than allowed to break the manifest. L0
+            # fails it in CI.
             continue
-        namespace, name = skill_dir.parent.name, skill_dir.name
+        namespace, name = listing.parent.name, listing.name
         entries.append((namespace, name))
         plugins.append({
             "name": plugin_name(namespace, name),
@@ -454,13 +464,15 @@ def generated(root: Path) -> dict[Path, str]:
         root / CODEX_MANIFEST: render(build_codex(root)),
     }
     labels = category_labels(root)
-    for skill_dir in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
-        if not read_frontmatter(skill_dir / "SKILL.md"):
+    for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
+        if not read_frontmatter(skill_dir_of(listing) / "SKILL.md"):
             continue
-        out[skill_dir / ".codex-plugin" / "plugin.json"] = render(
-            codex_plugin(skill_dir, labels))
-        out[skill_dir / ".claude-plugin" / "plugin.json"] = render(
-            claude_plugin(skill_dir))
+        # At the listing root in both layouts: a nested listing's inner
+        # directory is the author's, and is what the archive is made from.
+        out[listing / ".codex-plugin" / "plugin.json"] = render(
+            codex_plugin(listing, labels))
+        out[listing / ".claude-plugin" / "plugin.json"] = render(
+            claude_plugin(listing))
     for plugin_dir in plugin_dirs(root):
         out[plugin_dir / ".claude-plugin" / "plugin.json"] = render(
             claude_plugin_for_plugin(plugin_dir))
@@ -552,7 +564,7 @@ def main() -> int:
     if args.paths:
         try:
             paths = list(generated(ROOT))
-        except DuplicatePluginName as exc:
+        except (DuplicatePluginName, NoSkillMd) as exc:
             print(f"error {exc}", file=sys.stderr)
             return 1
         for path in paths:
@@ -577,7 +589,7 @@ def main() -> int:
                           file=sys.stderr)
                     return 1
             foreign = foreign_generated_files(ROOT, changed)
-        except DuplicatePluginName as exc:
+        except (DuplicatePluginName, NoSkillMd) as exc:
             print(f"error {exc}", file=sys.stderr)
             return 1
         if not foreign:
@@ -594,7 +606,7 @@ def main() -> int:
         try:
             stale = [p for p, c in generated(ROOT).items()
                      if not p.is_file() or p.read_text(encoding="utf-8") != c]
-        except DuplicatePluginName as exc:
+        except (DuplicatePluginName, NoSkillMd) as exc:
             print(f"error {exc}", file=sys.stderr)
             return 1
         if not stale:
@@ -608,7 +620,7 @@ def main() -> int:
     try:
         written = write_all(ROOT)
         count = len(build(ROOT)["plugins"])
-    except DuplicatePluginName as exc:
+    except (DuplicatePluginName, NoSkillMd) as exc:
         print(f"error {exc}", file=sys.stderr)
         return 1
     print(f"{len(written)} file{'' if len(written) == 1 else 's'} written — "
