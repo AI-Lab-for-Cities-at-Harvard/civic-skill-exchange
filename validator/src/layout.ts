@@ -11,28 +11,31 @@
  *  which is the point.
  */
 
-import { DOC_DIRECTORIES } from "./structure-core";
+import { deepSkillMessage } from "./structure-core";
 import type { Finding } from "./types";
 
 const finding = (where: string, message: string): Finding => ({ where, message });
 
-/** `skills/{namespace}/{name}/SKILL.md`, and nothing else at the top level of a
- *  skill. Two path segments under `skills/`, no more and no fewer.
+/** Where a skill's own SKILL.md may be, and nowhere else:
  *
- *  Or a plugin's skill, `plugins/{namespace}/{name}/skills/{skill}/SKILL.md`,
- *  which is where the Agent Plugins layout puts them (ADR 0005). */
-const CORRECT = /^(?:skills\/[^/]+\/[^/]+|plugins\/[^/]+\/[^/]+\/skills\/[^/]+)\/SKILL\.md$/;
+ *  - a flat single skill, `skills/{namespace}/{name}/SKILL.md`, until the move
+ *    retires that layout;
+ *  - a nested single skill, `skills/{namespace}/{name}/skills/{name}/SKILL.md`,
+ *    whose inner directory carries the listing's own name (ADR 0006);
+ *  - a plugin's skill, `plugins/{namespace}/{name}/skills/{skill}/SKILL.md`,
+ *    which is where the Agent Plugins layout puts them (ADR 0005).
+ *
+ *  There is no exemption for `references/` or `assets/` any more. #78 had one
+ *  for examples, and ADR 0006 (decision 4) reversed it: Codex loads any
+ *  SKILL.md under a plugin's `skills/`, however deep. */
+const CORRECT =
+  /^(?:skills\/[^/]+\/([^/]+)(?:\/skills\/\1)?|plugins\/[^/]+\/[^/]+\/skills\/[^/]+)\/SKILL\.md$/;
 
-/** A SKILL.md that is documentation rather than a skill.
- *
- *  A skill about writing skills legitimately ships an example or a template, and
- *  this registry's own domain makes that likely rather than hypothetical — see
- *  #78. `references/` and `assets/` are where the Agent Skills specification puts
- *  documentation and templates, and no client loads a skill from either.
- */
-const EXEMPT = new RegExp(
-  `^(?:skills/[^/]+/[^/]+|plugins/[^/]+/[^/]+/skills/[^/]+)/` +
-  `(${DOC_DIRECTORIES.join("|")})/.*SKILL\\.md$`);
+/** A nested single skill whose inner directory is named something else. */
+const MISNAMED_NESTED = /^(skills\/[^/]+\/([^/]+))\/skills\/[^/]+\/SKILL\.md$/;
+
+/** A SKILL.md inside a listing, below where its skill's own lives. */
+const INSIDE_LISTING = /^(?:skills|plugins)\/[^/]+\/[^/]+\/.+\/SKILL\.md$/;
 
 const isSkillFile = (path: string) =>
   path === "SKILL.md" || path.endsWith("/SKILL.md");
@@ -50,14 +53,30 @@ export function checkChangedLayout(paths: string[]): Finding[] {
   for (const path of paths) {
     const clean = path.trim();
     if (!clean || !isSkillFile(clean)) continue;
-    if (CORRECT.test(clean) || EXEMPT.test(clean)) continue;
+    if (CORRECT.test(clean)) continue;
+
+    const misnamed = MISNAMED_NESTED.exec(clean);
+    if (misnamed) {
+      const [, listing, name] = misnamed;
+      findings.push(finding(clean,
+        `a nested skill's directory is named after its listing, so this one ` +
+        `belongs at ${listing}/skills/${name}/SKILL.md. Rename the inner ` +
+        `directory, or, if the listing has several skills, submit it as a ` +
+        `plugin under plugins/.`));
+      continue;
+    }
+    if (INSIDE_LISTING.test(clean)) {
+      findings.push(finding(clean, deepSkillMessage(clean)));
+      continue;
+    }
 
     const suggestion = clean.includes("/")
       ? clean.slice(0, clean.lastIndexOf("/"))
       : "your-skill";
     findings.push(finding(clean,
-      `a skill must live at skills/{your-github-username}/{skill-name}/SKILL.md, ` +
-      `or inside a plugin at plugins/{your-github-username}/{plugin-name}/` +
+      `a skill must live at skills/{your-github-username}/{skill-name}/SKILL.md ` +
+      `(or one level down, at skills/{your-github-username}/{skill-name}/` +
+      `skills/{skill-name}/SKILL.md), or inside a plugin at plugins/{your-github-username}/{plugin-name}/` +
       `skills/{skill-name}/SKILL.md. This one is at ${clean}, so nothing in the ` +
       `registry reads it. Move ${suggestion} into skills/{your-github-username}/.`));
   }

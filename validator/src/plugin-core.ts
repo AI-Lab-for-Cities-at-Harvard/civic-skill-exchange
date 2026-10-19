@@ -32,7 +32,7 @@
 
 import type { Finding } from "./types";
 import { checkPluginMetadata } from "./rules";
-import { DOC_DIRECTORIES, isLoadableNestedSkill, rejectedPluginPath, type Entry,
+import { EXAMPLE_SKILL_FILE, rejectedPluginPath, type Entry,
   type StructureLayout } from "./structure-core";
 
 const finding = (where: string, message: string): Finding => ({ where, message });
@@ -135,18 +135,17 @@ function rejectedInPlugin(rel: string, kind: Entry["kind"]): string | null {
   return null;
 }
 
+/** Every SKILL.md but `skills/{skill}/SKILL.md` is refused, under a skill's
+ *  `references/` and `assets/` too: Codex loads any SKILL.md below `skills/`,
+ *  so #78's exemption for examples there no longer holds (ADR 0006). */
 function misplacedInPlugin(rel: string): string | null {
   const parts = rel.split("/");
   if (parts.length === 3 && parts[0] === PLUGIN_SKILLS_DIRECTORY) return null;
-  if (parts[0] === PLUGIN_SKILLS_DIRECTORY && parts.length > 3 &&
-      !isLoadableNestedSkill(parts.slice(2).join("/"))) {
-    return null;  // an example under references/ or assets/
-  }
   return `${rel} is not where a plugin's skills live. Clients load ` +
-    `${PLUGIN_SKILLS_DIRECTORY}/{skill}/SKILL.md, one level deep and no ` +
-    `deeper, so this one would either be missed or loaded as something the ` +
-    `catalogue does not list. Examples belong under a skill's ` +
-    `${DOC_DIRECTORIES.join("/ or ")}/.`;
+    `${PLUGIN_SKILLS_DIRECTORY}/{skill}/SKILL.md, and Codex also loads any ` +
+    `SKILL.md below ${PLUGIN_SKILLS_DIRECTORY}/, however deep, so this one ` +
+    `would either be missed or loaded as a skill the catalogue does not list. ` +
+    `If it is an example or a template, rename it ${EXAMPLE_SKILL_FILE}.`;
 }
 
 export const PLUGIN_LAYOUT: StructureLayout = {
