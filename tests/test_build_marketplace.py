@@ -1023,3 +1023,146 @@ def test_the_codex_sparse_paths_cover_every_file_codex_reads(make_skill, make_pl
         rel = path.relative_to(root).as_posix()
         assert any(rel == r or rel.startswith(f"{r}/") for r in roots), (
             f"{rel} is generated for Codex but outside the --sparse paths {roots}")
+
+
+# --------------------------------------------------------------------------- #
+# Nested single skills (ADR 0006, #274).
+#
+# A listing is flat, SKILL.md at its root, or nested, with the author's files in
+# skills/{name}/ and only generated files beside them. Both are read through
+# build_index.skill_dir_of, so a listing whose SKILL.md can't be found fails
+# the build rather than dropping out of both marketplaces.
+
+
+def nest(listing):
+    """Move everything an author wrote into skills/{name}/."""
+    import shutil
+
+    inner = listing / "skills" / listing.name
+    inner.mkdir(parents=True)
+    for child in sorted(listing.iterdir()):
+        if child.name != "skills":
+            shutil.move(str(child), str(inner / child.name))
+    return listing
+
+
+def test_a_nested_listing_is_in_both_marketplaces(make_skill):
+    listing = nest(make_skill(name="alpha", namespace="cityofx"))
+    root = listing.parents[2]
+    claude = build_marketplace.build(root)["plugins"]
+    codex = build_marketplace.build_codex(root)["plugins"]
+    assert [p["name"] for p in claude] == [p["name"] for p in codex] == ["cityofx-alpha"]
+    assert claude[0]["source"] == "./skills/cityofx/alpha"
+    assert claude[0]["description"].startswith("An example skill")
+    assert codex[0]["source"] == {"source": "local", "path": "./skills/cityofx/alpha"}
+    assert codex[0]["category"] == "Finance"
+
+
+def test_a_nested_codex_manifest_has_no_skills_key(make_skill):
+    """Codex's default is skills/ under the plugin root, which is where the
+    nested layout already is."""
+    listing = nest(make_skill(name="alpha", namespace="cityofx"))
+    manifest = build_marketplace.codex_plugin(listing)
+    assert "skills" not in manifest
+    assert manifest["name"] == "cityofx-alpha"
+    assert manifest["description"].startswith("An example skill")
+    assert manifest["interface"]["category"] == "Finance"
+
+
+def test_a_flat_codex_manifest_is_unchanged(make_skill):
+    """Byte for byte what it was before nested listings were readable: any
+    change here is a commit to every listing, and every review drops."""
+    listing = make_skill(name="alpha", namespace="cityofx")
+    assert build_marketplace.render(build_marketplace.codex_plugin(listing)) == (
+        '{\n'
+        '  "name": "cityofx-alpha",\n'
+        '  "description": "An example skill used in the test suite, long enough to '
+        'clear the minimum description length the schema requires.",\n'
+        '  "author": {\n'
+        '    "name": "Test Suite"\n'
+        '  },\n'
+        '  "license": "MIT",\n'
+        '  "skills": "./",\n'
+        '  "interface": {\n'
+        '    "displayName": "Alpha",\n'
+        '    "shortDescription": "An example skill used in the test suite, long '
+        'enough to clear the minimum description length the schema requires",\n'
+        '    "category": "Finance"\n'
+        '  }\n'
+        '}\n')
+
+
+def test_the_two_layouts_differ_in_the_codex_manifest_by_the_skills_key_only(make_skill):
+    flat = build_marketplace.codex_plugin(make_skill(name="alpha", namespace="cityofx"))
+    nested = build_marketplace.codex_plugin(
+        nest(make_skill(name="alpha", namespace="cityofy")))
+    flat = {k: v for k, v in flat.items() if k != "skills"}
+    nested = dict(nested, name="cityofx-alpha")
+    assert flat == nested
+
+
+def test_the_claude_manifest_is_the_same_in_both_layouts(make_skill):
+    flat = build_marketplace.claude_plugin(make_skill(name="alpha", namespace="cityofx"))
+    nested = build_marketplace.claude_plugin(
+        nest(make_skill(name="alpha", namespace="cityofy")))
+    assert flat == dict(nested, name="cityofx-alpha")
+    assert "skills" not in nested
+
+
+def test_a_nested_listings_generated_files_are_written_at_its_root(make_skill):
+    listing = nest(make_skill(name="alpha", namespace="cityofx"))
+    root = listing.parents[2]
+    owned = build_marketplace.generated(root)
+    assert listing / ".codex-plugin" / "plugin.json" in owned
+    assert listing / ".claude-plugin" / "plugin.json" in owned
+    assert listing / "skills" / "alpha" / ".codex-plugin" / "plugin.json" not in owned
+    codex = json.loads(owned[listing / ".codex-plugin" / "plugin.json"])
+    assert "skills" not in codex
+
+
+def test_a_nested_listing_passes_the_foreign_file_check_once_written(make_skill):
+    listing = nest(make_skill(name="alpha", namespace="cityofx"))
+    root = listing.parents[2]
+    build_marketplace.write_all(root)
+    assert build_marketplace.foreign_generated_files(root) == []
+    assert build_marketplace.all_current(root)
+
+
+def test_a_listing_with_no_skill_md_fails_the_marketplace_build(make_skill):
+    """Not dropped from both marketplaces with nothing said."""
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    broken = make_skill(name="broken", namespace="cityofx")
+    (broken / "SKILL.md").unlink()
+    with pytest.raises(build_marketplace.NoSkillMd, match="broken"):
+        build_marketplace.build(root)
+    with pytest.raises(build_marketplace.NoSkillMd, match="broken"):
+        build_marketplace.build_codex(root)
+    with pytest.raises(build_marketplace.NoSkillMd, match="broken"):
+        build_marketplace.generated(root)
+
+
+def test_a_nested_listing_with_no_inner_skill_md_fails_too(make_skill):
+    listing = nest(make_skill(name="alpha", namespace="cityofx"))
+    (listing / "skills" / "alpha" / "SKILL.md").unlink()
+    with pytest.raises(build_marketplace.NoSkillMd):
+        build_marketplace.build(listing.parents[2])
+
+
+def test_main_exits_non_zero_and_names_the_listing_when_a_skill_md_is_missing(
+        make_skill, monkeypatch, capsys):
+    broken = make_skill(name="broken", namespace="cityofx")
+    (broken / "SKILL.md").unlink()
+    root = broken.parents[2]
+    monkeypatch.setattr(build_marketplace, "ROOT", root)
+    for argv in ([], ["--check"], ["--check-in-skills"], ["--paths"]):
+        monkeypatch.setattr("sys.argv", ["build_marketplace.py", *argv])
+        assert build_marketplace.main() == 1, argv
+        assert "broken" in capsys.readouterr().err
+    assert not (root / ".claude-plugin").exists()
+
+
+def test_a_skill_with_unreadable_frontmatter_is_still_left_out_when_nested(make_skill):
+    root = make_skill(name="alpha", namespace="cityofx").parents[2]
+    nest(make_skill(name="broken", namespace="cityofx", raw="---\nnot: [valid"))
+    assert [p["name"] for p in build_marketplace.build(root)["plugins"]] == [
+        "cityofx-alpha"]
