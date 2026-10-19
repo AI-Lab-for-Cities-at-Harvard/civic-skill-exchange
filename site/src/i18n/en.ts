@@ -344,6 +344,7 @@ export const en = {
         "civic.localization": "how portable it is",
         "civic.language": "the language it is written in",
         "civic.languages-tested": "the languages you have tried it in",
+        "civic.models-tested": "the AI models you have tried it with",
         "civic.data-sensitivity": "the data it touches",
         "civic.human-review": "its effect on people",
         "civic.use-when": "when it is useful",
@@ -489,6 +490,12 @@ export const en = {
       avoidWhenHint:
         "The one only you can answer. A skill honest about its limits gets " +
         "adopted faster.",
+      /** #267: free text, so the hint carries the shape. */
+      modelsTestedLabel: "Which AI models have you tried it with?",
+      modelsTestedPlaceholder: "Claude Sonnet 5, GPT-5",
+      modelsTestedHint:
+        "Optional, and your own claim. Comma-separated, as you would name them. " +
+        "It helps a reader pick a model it is known to work with.",
       languagesTestedLabel: "What languages have you tried it in?",
       languagesTestedPlaceholder: "en, es",
       languagesTestedHint:
@@ -1406,6 +1413,10 @@ export const en = {
         "are about to open, and so the catalogue can be browsed by it. " +
         "Required, because an omitted tag could not be told apart from an " +
         "unanswered one.",
+      modelsTested:
+        "Optional, and the author\u2019s own claim about which AI models they " +
+        "have tried the listing with, as free text. **Nothing checks it.** The " +
+        "reviewer\u2019s list is `models:` on the attestation, shown apart from it.",
       languagesTested:
         "Optional, and the author\u2019s own claim about which languages they " +
         "have exercised the skill in. **Nothing checks it.** The verified list " +
@@ -1680,6 +1691,11 @@ export const en = {
        *  the attestation in registry/reviewed.yml, and a reader who cannot tell
        *  the two apart will over-trust the claim. ADR 0004. */
       language: "Written in",
+      modelsTested: "Author reports testing with",
+      modelsTestedNote: "Self-reported. Nobody has checked it with these models.",
+      verifiedModels: "Run in review with",
+      verifiedModelsNote: (reviewers: string) =>
+        `Run by ${reviewers} against this exact commit.`,
       languagesTested: "Author reports testing in",
       languagesTestedNote:
         "Self-reported. Nobody has run it in these languages on our behalf.",

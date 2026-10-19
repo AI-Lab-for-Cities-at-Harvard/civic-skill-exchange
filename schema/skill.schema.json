@@ -311,6 +311,13 @@
           "$comment": "A delimited string rather than two explicit fields, which is how civic.category-secondary handles the spec's string-only metadata values: a cap of two would be an arbitrary ceiling on a claim that has none. Must include civic.language; enforced by validator/src/rules.ts, which JSON Schema cannot express against another property's value.",
           "description": "Optional. The languages the author says they have exercised the skill in, as comma-separated BCP 47 tags: 'en, es'. Self-reported and verified by nothing \u2014 the reviewer's verified list is 'languages:' on the attestation in registry/reviewed.yml, and the site renders the two separately. Must include civic.language, since a skill written in a language has been tried in it."
         },
+        "civic.models-tested": {
+          "type": "string",
+          "pattern": "^[^,\\s](?:[^,\\n\\r]{0,58}[^,\\s])?(?: *, *[^,\\s](?:[^,\\n\\r]{0,58}[^,\\s])?){0,11}$",
+          "maxLength": 800,
+          "$comment": "Free text, as a delimited string for the same reason as civic.languages-tested: metadata values are strings. Up to twelve names of at most 60 characters. Enforced by validator/src/rules.ts, which carries the same pattern (#267).",
+          "description": "Optional. The AI models the author says they have tried the listing with, as comma-separated names: 'Claude Opus 5.5, Claude Sonnet 5'. Self-reported and verified by nothing; the reviewer's verified list is 'models:' on the attestation in registry/reviewed.yml, and the site renders the two separately."
+        },
         "civic.source-repo": {
           "type": "string",
           "pattern": "^[A-Za-z0-9][\\w.-]*/[\\w.-]+$",

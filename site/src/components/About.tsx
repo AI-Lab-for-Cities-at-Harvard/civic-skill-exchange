@@ -177,6 +177,8 @@ export function About(
           <dd>{rich(a.metadata.language)}</dd>
           <dt><code>civic.languages-tested</code></dt>
           <dd>{rich(a.metadata.languagesTested)}</dd>
+          <dt><code>civic.models-tested</code></dt>
+          <dd>{rich(a.metadata.modelsTested)}</dd>
         </dl>
         <div className="vocab-grid">
           <Vocabulary field="civic.category" map={s.vocabulary.category} />

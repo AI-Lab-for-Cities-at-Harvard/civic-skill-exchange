@@ -131,6 +131,17 @@ body:
         lives on the attestation.
       placeholder: en, es
 
+  - type: input
+    id: models-tested
+    attributes:
+      label: Which AI models have you tried it with?
+      description: >
+        Optional, and your own claim. Comma-separated model names, as you would
+        write them, which becomes `civic.models-tested`. It helps a reader pick
+        a model the skill is known to work with. A reviewer's verified list is
+        separate and lives on the attestation.
+      placeholder: Claude Sonnet 5, GPT-5
+
   - type: dropdown
     id: sensitivity
     attributes:

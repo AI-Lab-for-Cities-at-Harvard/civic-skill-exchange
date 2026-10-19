@@ -152,6 +152,30 @@ def _validate_languages(entry: dict, path: Path) -> None:
                 f"{tag!r}, which is not a BCP 47 tag.")
 
 
+MODEL_NAME_MAX = 60
+
+
+def _validate_models(entry: dict, path: Path) -> None:
+    """The optional `models:` field on an attestation (#267): the AI models the
+    reviewer ran the listing with. Free text, so only the shape is guarded —
+    a non-empty list of names, none blank and none over 60 characters. A bare
+    string and an empty list are rejected for the same reason as on
+    `languages:`: each says "some model" without naming one."""
+    if "models" not in entry:
+        return
+    models = entry["models"]
+    listing = entry.get("skill") or entry.get("plugin", "?")
+    if not isinstance(models, list) or not models:
+        raise ValueError(
+            f"{path.relative_to(ROOT)}: {listing}'s `models` must be a non-empty "
+            f"list of model names, not {models!r}.")
+    for name in models:
+        if not isinstance(name, str) or not name.strip() or len(name) > MODEL_NAME_MAX:
+            raise ValueError(
+                f"{path.relative_to(ROOT)}: {listing}'s `models` contains {name!r}; "
+                f"each is a model's name, 1 to {MODEL_NAME_MAX} characters.")
+
+
 def load_attestations() -> dict[str, dict]:
     """The review ledger, keyed by skill id.
 
@@ -180,6 +204,7 @@ def load_attestations() -> dict[str, dict]:
     out: dict[str, dict] = {}
     for entry in entries:
         _validate_languages(entry, path)
+        _validate_models(entry, path)
         # A plugin's attestation names it with `plugin:` rather than `skill:`
         # (ADR 0005), and is keyed apart so neither kind can pick up the
         # other's: an attestation is to one listing, not to a namespace/name.
@@ -257,6 +282,17 @@ def languages_tested_of(meta: dict) -> list[str] | None:
     return [tag.strip() for tag in raw.split(",") if tag.strip()]
 
 
+def models_tested_of(meta: dict) -> list[str] | None:
+    """The author's claim about which AI models they tried the listing with
+    (#267), split from its comma-separated string the way the tested languages
+    are. None rather than `[]` when the author claimed nothing. Nothing verifies
+    it — the reviewer's verified list is `models:` on the attestation."""
+    raw = meta.get("civic.models-tested")
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    return [name.strip() for name in raw.split(",") if name.strip()]
+
+
 def is_executed(rel: str) -> bool:
     """Does the agent run this file rather than read it?
 
@@ -289,7 +325,8 @@ def normalize_tools(value) -> list[str]:
 def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> dict:
     """Derive tier, and say plainly why — the reason is published in the index.
 
-    `verified_languages` rides along on exactly the same condition as
+    `verified_languages`, and `verified_models` with it (#267), ride along on
+    exactly the same condition as
     `tier: reviewed` — a stale, expired, or unresolvable attestation yields
     null, never the languages it once verified. Fabricating a verification
     that no longer holds would be worse than publishing nothing (#146,
@@ -297,14 +334,14 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
     """
     if not attestation:
         return {"tier": "community", "reason": "no review attestation",
-                 "verified_languages": None}
+                 "verified_languages": None, "verified_models": None}
 
     expires = attestation.get("expires")
     if isinstance(expires, str):
         expires = date.fromisoformat(expires)
     if expires and expires < date.today():
         return {"tier": "community", "reason": f"attestation expired {expires.isoformat()}",
-                 "verified_languages": None}
+                 "verified_languages": None, "verified_models": None}
 
     # Fail closed. If we cannot resolve the skill's current commit we cannot confirm
     # the attestation still applies, and an unverifiable Reviewed badge is worse
@@ -315,6 +352,7 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
             "reason": "cannot resolve the skill's current commit, so the attestation "
                       "cannot be verified",
             "verified_languages": None,
+            "verified_models": None,
         }
 
     if attestation.get("sha") != sha:
@@ -324,12 +362,14 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
                       f"{str(attestation.get('sha'))[:12]}, current is {sha[:12]}",
             "drift": True,
             "verified_languages": None,
+            "verified_models": None,
         }
 
     return {
         "tier": "reviewed",
         "reason": "attestation matches current content",
         "verified_languages": attestation.get("languages"),
+        "verified_models": attestation.get("models"),
         "reviewed": {
             "date": str(attestation.get("reviewed")),
             "expires": str(attestation.get("expires")),
@@ -385,6 +425,9 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         # and the site renders it as one. Both keys are always present.
         "language": meta.get("civic.language"),
         "languages_tested": languages_tested_of(meta),
+        # The models the author says they tried it with (#267). A claim, like
+        # the line above; the reviewer's list rides on the tier below.
+        "models_tested": models_tested_of(meta),
         "data_sensitivity": meta.get("civic.data-sensitivity"),
         "human_review": meta.get("civic.human-review"),
         # Plain text, never rendered as markdown. The detail page stopped
@@ -587,6 +630,7 @@ def build_plugin_entry(plugin_dir: Path, attestations: dict, scans: dict) -> dic
         # The plugin's own, declared once in plugin.json — never a skill's.
         "use_when": civic.get("civic.use-when"),
         "avoid_when": civic.get("civic.avoid-when"),
+        "models_tested": models_tested_of(civic),
         "provenance": build_provenance(civic),
         "categories": categories,
         "languages": sorted({s["language"] for s in skills if s["language"]}),
