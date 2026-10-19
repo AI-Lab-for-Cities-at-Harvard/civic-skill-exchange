@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseRoute, skillHref, addFieldsHref, submitHref, aboutHref} from "./route";
+import { parseRoute, skillHref, addFieldsHref, submitHref, aboutHref, guideHref } from "./route";
 
 describe("parseRoute", () => {
   it("defaults to browse", () => {
@@ -127,5 +127,30 @@ describe("aboutHref", () => {
   it("links the page, or a section of it", () => {
     expect(aboutHref()).toBe("#/about");
     expect(aboutHref("metadata")).toBe("#/about/metadata");
+  });
+});
+
+/** #258: the "Using the Exchange" page, at #/guide, with its sections as path
+ *  segments for the same reason the About page's are. */
+describe("parseRoute — the guide", () => {
+  it("recognises the guide", () => {
+    expect(parseRoute("#/guide")).toEqual({ page: "guide" });
+    expect(parseRoute("#guide")).toEqual({ page: "guide" });
+  });
+
+  it("carries a section", () => {
+    expect(parseRoute("#/guide/claude")).toEqual({ page: "guide", section: "claude" });
+    expect(parseRoute("#/guide/glossary-fork"))
+      .toEqual({ page: "guide", section: "glossary-fork" });
+  });
+
+  it("drops a section that is not a plain slug", () => {
+    expect(parseRoute("#/guide/../etc")).toEqual({ page: "guide" });
+    expect(parseRoute("#/guide/<script>")).toEqual({ page: "guide" });
+  });
+
+  it("builds links to it", () => {
+    expect(guideHref()).toBe("#/guide");
+    expect(guideHref("codex")).toBe("#/guide/codex");
   });
 });

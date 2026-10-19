@@ -282,7 +282,9 @@ def test_review_md_says_what_earns_a_language_entry() -> None:
 # and loads nothing, so until every listing is a plugin (M9) the docs offer the
 # Codex marketplace for plugins only, and the download for a single skill.
 
-CODEX_DOCS = ("README.md", "docs/SUBMITTING.md")
+# SUBMITTING.md points at the site's guide for installing since #258, so the
+# Codex lines are README's; the guide's own tests cover the page.
+CODEX_DOCS = ("README.md",)
 
 
 def test_no_doc_offers_codex_plugin_add_for_a_single_skill() -> None:
@@ -340,3 +342,37 @@ def test_submitting_md_says_the_page_converts_a_claude_code_export() -> None:
     for claim in ("converts", "`.claude-plugin/plugin.json`", "`.mcp.json`",
                   "`streamable-http`", "`sse`", "`${CLAUDE_PLUGIN_ROOT}`"):
         assert claim in section, claim
+
+
+# --------------------------------------------------------------------------- #
+# #258 (ruling 5 on #224): the "Using the Exchange" page is the source for
+# installing, so SUBMITTING.md Part 1 points there instead of repeating it, and
+# README stops repeating the claims the check on 2026-10-18 found were wrong.
+
+GUIDE_URL = "https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/guide"
+
+
+def _part_one() -> str:
+    doc = _text("docs/SUBMITTING.md")
+    start = doc.index("## Part 1")
+    return doc[start:doc.index("## Part 2", start)]
+
+
+def test_submitting_part_one_points_at_the_guide() -> None:
+    part = _part_one()
+    assert GUIDE_URL in part
+    for step in ("/plugin marketplace add", "codex plugin", "Settings", "Customize"):
+        assert step not in part, f"SUBMITTING.md Part 1 still repeats the guide: {step}"
+
+
+def test_submitting_part_one_keeps_the_warning_before_running_anything() -> None:
+    part = _part_one()
+    assert "allowed-tools" in part and "SECURITY.md" in part
+
+
+def test_the_readme_points_at_the_guide_and_drops_the_wrong_claims() -> None:
+    text = " ".join(_text("README.md").split())
+    assert GUIDE_URL in text
+    for wrong in ("Settings &rarr; Features", "Settings → Features",
+                  "per-person rather than org-wide", "do not sync to other surfaces"):
+        assert wrong not in text, wrong

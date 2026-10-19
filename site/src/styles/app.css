@@ -928,3 +928,14 @@ a:hover { color: var(--c-spot); }
    semicolons holding it together. */
 .plain-list { margin: 0 0 var(--gap-4); padding-left: var(--gap-5); max-width: 66ch; }
 .plain-list li { margin-bottom: var(--gap-3); line-height: 1.65; }
+
+/* The guide (#258): a product under each task, the steps numbered, the
+   glossary set as term and meaning. */
+.guide__checked { font-size: var(--t-sm); color: var(--c-text-light); }
+.guide__product { margin-top: var(--gap-5); }
+.guide__product .h3 { margin: 0 0 var(--gap-3); }
+.guide__steps { margin: 0 0 var(--gap-4); padding-left: 1.4rem; display: grid; gap: var(--gap-2); max-width: 66ch; line-height: 1.6; }
+.guide__steps li::marker { color: var(--c-spot); font-weight: 700; }
+.guide__glossary { margin: 0; display: grid; gap: var(--gap-4); max-width: 66ch; }
+.guide__glossary dt { font-weight: 700; margin-bottom: var(--gap-1); }
+.guide__glossary dd { margin: 0; line-height: 1.6; }

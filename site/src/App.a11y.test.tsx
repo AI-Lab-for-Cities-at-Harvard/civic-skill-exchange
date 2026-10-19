@@ -40,10 +40,11 @@ afterEach(async () => {
 /** Waits for the index fetch to land, since the topper's counts and the whole
  *  catalogue only render after it. Keyed on the footer's test id rather than on
  *  its words: the words are what a locale changes. */
-async function expectPageClean() {
+async function expectPageClean(ready?: () => Element | null) {
   const host = document.body.appendChild(document.createElement("div"));
   const { container } = render(<App />, { container: host });
   await waitFor(() => expect(screen.getByTestId("footer-meta")).toBeInTheDocument());
+  if (ready) await waitFor(() => expect(ready()).not.toBeNull());
   const violations = await findViolations(container);
   expect(violations, describeViolations(violations)).toEqual([]);
 }
@@ -63,6 +64,12 @@ describe.each(locales())("the whole page has no axe violations — %s", (tag) =>
   it("the submission page", async () => {
     window.location.hash = "#/submit";
     await expectPageClean();
+  });
+
+  it("the guide", async () => {
+    window.location.hash = "#/guide";
+    // Its own chunk: wait for the page itself, not just the chrome.
+    await expectPageClean(() => document.getElementById("glossary"));
   });
 });
 

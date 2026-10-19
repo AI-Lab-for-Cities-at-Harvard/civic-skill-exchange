@@ -614,8 +614,13 @@ def test_the_check_notices_an_altered_claude_manifest(make_skill):
     assert not build_marketplace.all_current(root)
 
 
+# The install steps live on the site's guide since #258, and docs/SUBMITTING.md
+# points there; the command a reader copies is the one in the guide's source.
+GUIDE = Path("site") / "src" / "lib" / "guide.ts"
+
+
 def test_the_sparse_install_command_covers_every_claude_manifest():
-    """docs/SUBMITTING.md tells a Claude Code user to add the marketplace with
+    """The guide tells a Claude Code user to add the marketplace with
     `--sparse .claude-plugin skills plugins`, which clones only those paths. A file
     Claude reads that fell outside both would be missing from the very checkout
     the client installs from.
@@ -625,10 +630,7 @@ def test_the_sparse_install_command_covers_every_claude_manifest():
     by a second copy of the generator's list. The Codex marketplace is
     deliberately outside those roots — a Claude user has no use for it."""
     root = build_marketplace.ROOT
-    doc = (root / "docs" / "SUBMITTING.md").read_text(encoding="utf-8")
-    flag = "--sparse "
-    line = next(l for l in doc.splitlines() if flag in l and "marketplace add" in l)
-    roots = line.split(flag, 1)[1].split()
+    roots = _sparse_roots((root / GUIDE).read_text(encoding="utf-8"))
     assert ".claude-plugin" in roots
     claude_outputs = [p for p in build_marketplace.generated(root)
                       if ".claude-plugin" in p.parts]
@@ -637,7 +639,7 @@ def test_the_sparse_install_command_covers_every_claude_manifest():
         rel = path.relative_to(root).as_posix()
         assert any(rel == r or rel.startswith(f"{r}/") for r in roots), (
             f"{rel} is generated for Claude but outside the --sparse roots "
-            f"{roots} that docs/SUBMITTING.md tells a user to clone.")
+            f"{roots} that the guide tells a user to clone.")
 
 
 # --------------------------------------------------------------------------- #
@@ -920,9 +922,11 @@ def test_every_path_the_generator_writes_into_a_plugin_is_declared(make_plugin):
 
 
 def _sparse_roots(doc: str) -> list[str]:
+    """The paths after `--sparse` on the first marketplace-add line, whether the
+    line is Markdown or a string in the guide's source."""
     flag = "--sparse "
     line = next(l for l in doc.splitlines() if flag in l and "marketplace add" in l)
-    return line.split(flag, 1)[1].split()
+    return [r.strip("`'\",") for r in line.split(flag, 1)[1].split() if r.strip("`'\",")]
 
 
 def _claude_reads(path: Path) -> bool:
@@ -934,8 +938,7 @@ def _claude_reads(path: Path) -> bool:
 def test_the_sparse_install_covers_a_plugin(make_skill, make_plugin):
     root = make_skill().parents[2]
     make_plugin()
-    roots = _sparse_roots(
-        (build_marketplace.ROOT / "docs" / "SUBMITTING.md").read_text(encoding="utf-8"))
+    roots = _sparse_roots((build_marketplace.ROOT / GUIDE).read_text(encoding="utf-8"))
     claude = [p for p in build_marketplace.generated(root) if _claude_reads(p)]
     assert any(p.name == ".mcp.json" for p in claude), "the fixture plugin has servers"
     for path in claude:
@@ -947,7 +950,7 @@ def test_the_sparse_install_covers_a_plugin(make_skill, make_plugin):
 def test_the_readme_gives_the_same_sparse_install():
     root = build_marketplace.ROOT
     assert _sparse_roots((root / "README.md").read_text(encoding="utf-8")) == _sparse_roots(
-        (root / "docs" / "SUBMITTING.md").read_text(encoding="utf-8"))
+        (root / GUIDE).read_text(encoding="utf-8"))
 
 
 def test_the_sparse_install_explanation_quotes_no_fixed_size():
