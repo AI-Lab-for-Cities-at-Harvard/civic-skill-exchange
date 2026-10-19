@@ -112,8 +112,10 @@ already in it. Commit, and GitHub offers the pull request. You are done.
    ![GitHub's Create a new fork dialog. Leave the Repository name field exactly as it is — GitHub invites you to change it, and a renamed fork is one the page cannot find.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-01-fork-dialog.png)
 
 3. **Drag the whole folder in.** The page opens the upload page at
-   `skills/{your-username}/`, and GitHub keeps the name of the folder you drop —
-   which is how it lands at `skills/{your-username}/{skill-name}/`. **Do not open
+   `skills/{your-username}/{skill-name}/skills/`, and GitHub keeps the name of the
+   folder you drop — which is how it lands at
+   `skills/{your-username}/{skill-name}/skills/{skill-name}/`. GitHub creates the
+   directory the first time you commit, so it is fine that it doesn't exist yet. **Do not open
    the folder and drag its contents**, and do not rename it.
 
    ![GitHub's upload page in your fork. Check the breadcrumb reads skills / your-username before you drop anything, and note that Commit directly to the main branch is selected by default.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-02-upload-page.png)
@@ -152,7 +154,7 @@ What is checked, and what is deliberately not, is in
 
 | What you see | What it means |
 |---|---|
-| *a skill must live at `skills/{username}/{skill-name}/SKILL.md`* | The files landed in the wrong place. Usually the folder was opened and its contents dragged, or the folder was dragged into a directory that already named it. Move the directory and push again. |
+| *a skill must live at `skills/{username}/{skill-name}/SKILL.md`* | The files landed in the wrong place. The page's upload lands your folder at `skills/{username}/{skill-name}/skills/{skill-name}/SKILL.md`; anywhere else is a mistake. Usually the folder was opened and its contents dragged, or the folder was dragged into a directory that already named it. Move the directory and push again. |
 | *`SKILL.md` is missing* | Same cause, seen from the other side: the directory the registry looked in has no `SKILL.md` at its top level. |
 | *`civic.deployed-at` is required* | You said a team or an organization uses this. Name it, or change the answer to `personal` or `none` — personal use asks for nothing further. |
 | A field you never filled in | The page reports findings without blocking, on purpose. You can send a submission with them outstanding, and fix them on the pull request. |
@@ -184,7 +186,7 @@ recapture.
 ```bash
 git clone https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange.git
 cd civic-skill-exchange
-mkdir -p skills/{your-github-username}/{skill-name}
+mkdir -p skills/{your-github-username}/{skill-name}/skills/{skill-name}
 # write SKILL.md, plus scripts/ and references/ if you need them
 npx tsx validator/src/cli.ts skills/{your-github-username}/{skill-name}
 git checkout -b add-{skill-name}
