@@ -791,7 +791,7 @@ export function Submit(
             <summary className="disclosure__summary">{t.send.commandLine}</summary>
             <pre className="submit__yaml"><code>{
   `git clone https://github.com/${repo}.git
-  mkdir -p ${skillPath(draft)}
+  mkdir -p ${skillDirPath(draft)}
   git checkout -b add-${draft.name || "your-skill"}
   git commit -am "Add ${skillPath(draft)}"
   git push origin add-${draft.name || "your-skill"}`}</code></pre>
