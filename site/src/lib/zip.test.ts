@@ -46,6 +46,17 @@ describe("readSkillZip", () => {
     ]);
   });
 
+  // ADR 0006 decision 3: the published zip stays rooted at the author's own
+  // directory whether the listing is flat or nested, so dropping it back on the
+  // page is a skill, not a plugin and not a malformed archive.
+  it("reads a published zip, rooted at {name}/SKILL.md, as a skill", () => {
+    const read = readSkillZip(PUBLISHED());
+    expect(read.directoryName).toBe("permit-status-explainer");
+    expect(read.skillMd).toContain("name: permit-status-explainer");
+    expect(read.problems).toEqual([]);
+    expect(read.entries.some((e) => e.path === PLUGIN_ROOT_MANIFEST)).toBe(false);
+  });
+
   it("reports the directory name, which is what the name check compares against", () => {
     expect(readSkillZip(PUBLISHED()).directoryName).toBe("permit-status-explainer");
   });

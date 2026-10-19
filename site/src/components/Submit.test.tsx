@@ -62,6 +62,23 @@ describe("Submit — the frontmatter it builds", () => {
     expect(screen.getByTestId("handoff"))
       .toHaveAttribute("href", expect.stringContaining("skills%2Fcityofx%2F"));
   });
+
+  it("writes a one-file skill to the nested path", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    const href = screen.getByTestId("handoff").getAttribute("href") ?? "";
+    expect(new URL(href).searchParams.get("filename")).toBe(
+      "skills/cityofx/permit-status-explainer/skills/permit-status-explainer/SKILL.md");
+  });
+
+  it("recites the nested directory in the command-line recipe", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    expect(document.body.textContent).toContain(
+      "mkdir -p skills/cityofx/permit-status-explainer/skills/permit-status-explainer");
+  });
 });
 
 describe("Submit — findings report, and do not block", () => {
@@ -150,6 +167,19 @@ describe("Submit — flow 2", () => {
     expect(screen.getByTestId("edit-handoff").querySelector("a"))
       .toHaveAttribute("href",
         `https://github.com/${REPO}/edit/main/skills/cityofx/permit-status-explainer/SKILL.md`);
+  });
+
+  it("edits {skill_path}/SKILL.md when the index gives one", () => {
+    const nested = makeSkill({
+      id: "cityofx/permit-status-explainer", namespace: "cityofx",
+      name: "permit-status-explainer", path: "skills/cityofx/permit-status-explainer",
+      skill_path: "skills/cityofx/permit-status-explainer/skills/permit-status-explainer",
+    });
+    render(<Submit repo={REPO} skills={[nested]} mode="update"
+        add="cityofx/permit-status-explainer" />);
+    expect(screen.getByTestId("edit-handoff").querySelector("a"))
+      .toHaveAttribute("href",
+        `https://github.com/${REPO}/edit/main/skills/cityofx/permit-status-explainer/skills/permit-status-explainer/SKILL.md`);
   });
 
   it("gives the lines to paste, because GitHub prefills new files only", () => {
@@ -821,8 +851,17 @@ describe("Submit — the fork is asked for", () => {
       "github.com/sgarcese-hbs/my-registry-copy");
     expect(screen.getByTestId("step-upload")).toHaveAttribute(
       "href",
-      "https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx",
+      "https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx/permit-status-explainer/skills",
     );
+  });
+
+  it("tells the submitter where the dropped folder lands, nested", async () => {
+    const user = userEvent.setup();
+    await multiFileFlow(user);
+    const body = screen.getByTestId("upload-step-body").textContent ?? "";
+    expect(body).toContain("`skills/cityofx/permit-status-explainer/skills`".replaceAll("`", ""));
+    expect(body).toContain(
+      "skills/cityofx/permit-status-explainer/skills/permit-status-explainer");
   });
 
   it("says so rather than silently offering nothing when the address is not a repository", async () => {
@@ -839,7 +878,7 @@ describe("Submit — the fork is asked for", () => {
     expect(screen.queryByTestId("step-fork")).not.toBeInTheDocument();
     expect(screen.getByTestId("step-upload")).toHaveAttribute(
       "href",
-      `https://github.com/${REPO}/upload/main/skills/civic-skills`,
+      `https://github.com/${REPO}/upload/main/skills/civic-skills/permit-status-explainer/skills`,
     );
   });
 });
