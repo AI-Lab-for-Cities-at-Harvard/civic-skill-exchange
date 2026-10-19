@@ -57,3 +57,28 @@ def test_both_layouts_at_once_raises(tmp_path):
     (inner / "SKILL.md").write_text("---\nname: example\n---\n")
     with pytest.raises(NoSkillMd, match="both"):
         skill_dir_of(root)
+
+
+@pytest.mark.parametrize("linked", ["skills", "skills/example", "skills/example/SKILL.md"])
+def test_a_symlink_on_the_way_to_the_inner_skill_md_raises(tmp_path, linked):
+    """The index reads, and archives, whatever skill_dir_of returns, before L0's
+    symlink rule has had its say. A linked path must not reach outside the listing."""
+    outside = tmp_path / "outside" / "skills" / "example"
+    outside.mkdir(parents=True)
+    (outside / "SKILL.md").write_text("---\nname: example\n---\n")
+    root = listing(tmp_path)
+    target = tmp_path / "outside" / linked
+    link = root / linked
+    link.parent.mkdir(parents=True, exist_ok=True)
+    link.symlink_to(target)
+    with pytest.raises(NoSkillMd, match="symlink"):
+        skill_dir_of(root)
+
+
+def test_a_symlinked_flat_skill_md_raises(tmp_path):
+    outside = tmp_path / "outside.md"
+    outside.write_text("---\nname: example\n---\n")
+    root = listing(tmp_path)
+    (root / "SKILL.md").symlink_to(outside)
+    with pytest.raises(NoSkillMd, match="symlink"):
+        skill_dir_of(root)
