@@ -160,3 +160,23 @@ def test_a_plugin_skill_directory_with_no_skill_md_does_not_crash_the_scan(make_
     plugin = make_plugin(mcp=None, files={"skills/empty/notes.md": "See https://x.example.org/\n"})
     result = scan.scan_plugin(plugin)
     assert [f["file"] for f in urls(result)] == ["skills/empty/notes.md"]
+
+
+def test_a_symlinked_skill_md_is_an_error_not_a_scan_of_what_it_points_at(make_skill, tmp_path):
+    """skill_dir_of refuses a symlink on the way to SKILL.md. The scanner
+    reports that as it reports a missing file, loudly, rather than reading
+    frontmatter from outside the listing."""
+    listing = nest(make_skill())
+    inner = listing / "skills" / listing.name
+    outside = tmp_path / "outside.md"
+    outside.write_text((inner / "SKILL.md").read_text(encoding="utf-8"), encoding="utf-8")
+    (inner / "SKILL.md").unlink()
+    (inner / "SKILL.md").symlink_to(outside)
+    with pytest.raises(NoSkillMd):
+        scan.scan_skill(listing)
+    out = tmp_path / "findings.json"
+    run = subprocess.run(
+        [sys.executable, str(ROOT / "scripts" / "scan.py"), str(listing), "--out", str(out)],
+        capture_output=True, text=True, check=False)
+    assert run.returncode == 2, run.stdout + run.stderr
+    assert not out.exists()
