@@ -358,6 +358,87 @@ describe("convertClaudeCode — what it must catch, not convert silently", () =>
   });
 });
 
+describe("convertClaudeCode — an address pasted for a server left out (#250)", () => {
+  const SERVERS = {
+    census: { type: "http", url: "${HOUSING_CENSUS_MCP_URL}", headers: { Accept: "application/json" } },
+    geo: { type: "http", url: "https://geo.example/mcp" },
+    legacy: { type: "sse", url: "${LEGACY_URL}" },
+    local: { command: "node", args: ["${CLAUDE_PLUGIN_ROOT}/server.js"] },
+  };
+  const files = [
+    file(".claude-plugin/plugin.json", EXPORT_MANIFEST),
+    file(".mcp.json", JSON.stringify({ mcpServers: SERVERS })),
+    file("skills/housing-brief/SKILL.md", SKILL),
+  ];
+  const convert = (addresses?: Record<string, string>) => convertClaudeCode(files, addresses);
+
+  /** What the validator says about this address as a server's url. */
+  const validator = (url: string) => checkMcpConfig(JSON.stringify({
+    $schema: MCP_SCHEMA_ID, mcpServers: { census: { type: "streamable-http", url } },
+  })).find((f) => f.where === "mcp.json#census.url")?.message;
+
+  it("asks only for a remote server left out because its address is a placeholder", () => {
+    expect(convert().addressable).toEqual(["census"]);
+    expect(convert().refused).toEqual({});
+  });
+
+  it("puts the server back as streamable-http with a valid https address", () => {
+    const out = convert({ census: "https://census.example.org/mcp" });
+    expect(servers(out.mcp).census).toEqual({
+      type: "streamable-http", url: "https://census.example.org/mcp",
+      headers: { Accept: "application/json" },
+    });
+    expect(where(out)).not.toContain(".mcp.json#census.url");
+    expect(text(out.entries, "mcp.json")).toBe(out.mcp);
+    expect(checkMcpConfig(out.mcp!)).toEqual([]);
+    expect(out.refused).toEqual({});
+    // Still asked, so the field does not vanish once it is answered.
+    expect(out.addressable).toEqual(["census"]);
+  });
+
+  it("reads the address without the spaces a paste brings along", () => {
+    const out = convert({ census: "  https://census.example.org/mcp\n" });
+    expect(servers(out.mcp).census!.url).toBe("https://census.example.org/mcp");
+  });
+
+  it("refuses http, a placeholder or a non-URL with the validator's message, and leaves the server out", () => {
+    for (const address of [
+      "http://census.example.org/mcp", "${CENSUS_URL}", "census.example.org/mcp",
+      "ftp://census.example.org/mcp",
+    ]) {
+      const out = convert({ census: address });
+      expect(validator(address), address).toBeDefined();
+      expect(out.refused, address).toEqual({ census: validator(address) });
+      expect(servers(out.mcp), address).not.toHaveProperty("census");
+      expect(where(out), address).toContain(".mcp.json#census.url");
+    }
+  });
+
+  it("leaves everything as it was when the field is empty", () => {
+    expect(convert({ census: "" })).toEqual(convert());
+    expect(convert({ census: "   " })).toEqual(convert());
+    expect(convert({})).toEqual(convert());
+  });
+
+  it("takes no address for an sse server, a local one, or one already carried across", () => {
+    const out = convert({
+      legacy: "https://legacy.example/mcp", local: "https://local.example/mcp",
+      geo: "https://elsewhere.example/mcp",
+    });
+    expect(servers(out.mcp)).not.toHaveProperty("legacy");
+    expect(servers(out.mcp)).not.toHaveProperty("local");
+    expect(servers(out.mcp).geo!.url).toBe("https://geo.example/mcp");
+    expect(out.refused).toEqual({});
+  });
+
+  it("asks for a placeholder server declared inside .claude-plugin/plugin.json too", () => {
+    const out = withManifest({
+      name: "h", mcpServers: { geo: { type: "http", url: "${GEO_URL}" } },
+    });
+    expect(out.addressable).toEqual(["geo"]);
+  });
+});
+
 describe("convertClaudeCode — the housing-dashboards export", () => {
   it("comes out a plugin with no structural finding and a clean mcp.json", () => {
     const out = convertClaudeCode(exported());

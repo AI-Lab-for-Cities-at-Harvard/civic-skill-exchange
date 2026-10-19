@@ -18,7 +18,7 @@ import { en } from "../i18n/en";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { checkGitHubUser, type UserCheck } from "../lib/github";
-import { convertClaudeCode } from "../lib/convert";
+import { convertClaudeCode, type Addresses } from "../lib/convert";
 import { buildFolderZip } from "../lib/folder";
 import { addedFrontmatterLines } from "../lib/patch";
 import {
@@ -98,8 +98,13 @@ export function PluginSubmit(
   const f = t.form;
   const p = t.plugin;
 
-  const conversion = useMemo(() => (claudeCode ? convertClaudeCode(entries) : null),
-    [claudeCode, entries]);
+  // Addresses pasted for servers the conversion left out, by server name. The
+  // conversion runs again with them rather than the page patching mcp.json
+  // itself, so a pasted address meets the same rules as one in the file (#250).
+  const [addresses, setAddresses] = useState<Addresses>({});
+  const conversion = useMemo(
+    () => (claudeCode ? convertClaudeCode(entries, addresses) : null),
+    [claudeCode, entries, addresses]);
   const source = useMemo(() => readPluginSource(conversion?.entries ?? entries, directoryName),
     [conversion, entries, directoryName]);
   const leftOut = conversion ? [...left, ...conversion.leftOut] : left;
@@ -299,6 +304,26 @@ export function PluginSubmit(
                 </ul>
               </div>
             )}
+            {conversion.addressable.map((name) => {
+              const boxId = `server-address-${name}:url`;
+              const typed = addresses[name] ?? "";
+              const refused = conversion.refused[name];
+              return (
+                <div key={name} data-testid={`server-address-${name}`}>
+                  <Field id={boxId} label={p.addressLabel(name)} hint={rich(p.addressHint)}
+                    findings={refused ? [{ where: boxId, message: p.addressRefused(refused) }] : []}>
+                    <input id={boxId} className="input" type="url" value={typed}
+                      placeholder={p.addressPlaceholder} autoComplete="off" spellCheck={false}
+                      onChange={(e) => setAddresses((a) => ({ ...a, [name]: e.target.value }))} />
+                    {typed.trim() !== "" && !refused && (
+                      <p className="submit__ok">
+                        {rich(p.addressAdded(name, new URL(typed.trim()).host))}
+                      </p>
+                    )}
+                  </Field>
+                </div>
+              );
+            })}
           </>
         )}
         <p>{rich(p.summary(folderName, source.skills.length, servers.length))}</p>

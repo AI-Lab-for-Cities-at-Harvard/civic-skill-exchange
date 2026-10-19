@@ -14,13 +14,19 @@
  *  setting with no Agent Plugins equivalent, a file outside `skills/`. The
  *  plugin form's own checks then run on the result as on any plugin.
  *
+ *  A remote server left out for a `${VAR}` address can be put back: the page
+ *  asks for its public address and passes what was pasted in, by server name,
+ *  and the conversion runs again with it (#250). The address is held to the
+ *  validator's own rule for a server's URL, so what the page accepts is what
+ *  the registry would.
+ *
  *  Pure, and imported only by the plugin form, so it loads with that chunk.
  */
 
 import type { Entry, Finding } from "@civic-skill-exchange/validator";
 import {
   MCP_SCHEMA_ID, MCP_TRANSPORTS, PLUGIN_FIELDS, PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG,
-  PLUGIN_SCHEMA_ID, PLUGIN_SKILLS_DIRECTORY, checkMcpConfig,
+  PLUGIN_SCHEMA_ID, PLUGIN_SKILLS_DIRECTORY, checkMcpConfig, rejectedMcpUrl,
 } from "@civic-skill-exchange/validator/plugin-core";
 import { strings } from "../i18n/strings";
 import { CLIENT_FILES } from "./zip";
@@ -54,7 +60,17 @@ export interface Conversion {
   /** Everything not carried across, each with why, in the submitter's terms.
    *  `where` is the Claude Code file and field it was in. */
   findings: Finding[];
+  /** The remote servers whose address was a `${VAR}`, in the order the files
+   *  list them: the ones the page asks an address for. A server stays here
+   *  once its address is accepted, so the field does not vanish when answered. */
+  addressable: string[];
+  /** Each pasted address the validator refused, by server name, with its
+   *  message. The server stays left out. */
+  refused: Record<string, string>;
 }
+
+/** Addresses pasted in for servers left out, by server name. */
+export type Addresses = Record<string, string>;
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
@@ -147,9 +163,17 @@ function transportOf(server: Record<string, unknown>): unknown {
   return type;
 }
 
+/** What converting the servers reads and records besides findings: the
+ *  addresses pasted in, and which servers asked for one (#250). */
+interface Asked {
+  addresses: Addresses;
+  addressable: string[];
+  refused: Record<string, string>;
+}
+
 /** One server, converted, or null when it is left out. */
 function convertServer(
-  name: string, server: unknown, findings: Finding[],
+  name: string, server: unknown, findings: Finding[], asked: Asked,
 ): Record<string, unknown> | null {
   const say = strings().submit.plugin.conversion;
   const at = (field: string) => `${CLAUDE_MCP_CONFIG}#${name}.${field}`;
@@ -172,10 +196,22 @@ function convertServer(
   const transport = type as (typeof MCP_TRANSPORTS)[number];
 
   // Where the server is, or what it runs. A variable here leaves nothing to
-  // list, so the whole server stays out.
+  // list, so the whole server stays out — unless it is a remote server and
+  // the address pasted in for it passes the validator's rule for a URL.
+  let carried = server;
   for (const field of transport === "stdio" ? ["command", "args", "cwd"] : ["url"]) {
     const variable = variableIn(server[field]);
     if (!variable) continue;
+    if (transport === "streamable-http") {
+      asked.addressable.push(name);
+      const address = asked.addresses[name]?.trim() ?? "";
+      const refused = address === "" ? null : rejectedMcpUrl(address);
+      if (address !== "" && refused === null) {
+        carried = { ...server, [field]: address };
+        break;
+      }
+      if (refused !== null) asked.refused[name] = refused;
+    }
     findings.push({
       where: at(field),
       message: transport === "streamable-http"
@@ -188,7 +224,7 @@ function convertServer(
   }
 
   const out: Record<string, unknown> = { type: transport };
-  for (const [key, v] of Object.entries(server)) {
+  for (const [key, v] of Object.entries(carried)) {
     if (key === "type") {
       continue;
     } else if (!CARRIED_SERVER_FIELDS[transport].includes(key)) {
@@ -219,7 +255,7 @@ function convertServer(
 }
 
 function convertMcp(
-  entries: Entry[], inline: Record<string, unknown> | null, findings: Finding[],
+  entries: Entry[], inline: Record<string, unknown> | null, findings: Finding[], asked: Asked,
 ): string | null {
   const text = read(entries, CLAUDE_MCP_CONFIG);
   const value = text === null ? undefined : parse(text, CLAUDE_MCP_CONFIG, findings);
@@ -233,7 +269,7 @@ function convertMcp(
 
   const servers: Record<string, unknown> = {};
   for (const [name, server] of Object.entries(all)) {
-    const converted = convertServer(name, server, findings);
+    const converted = convertServer(name, server, findings, asked);
     if (converted) servers[name] = converted;
   }
   if (Object.keys(servers).length === 0) return null;
@@ -243,15 +279,19 @@ function convertMcp(
 // --------------------------------------------------------------------------- //
 // The folder
 
-export function convertClaudeCode(entries: Entry[]): Conversion {
+/** `addresses` are what the page asked for and was given: an address for a
+ *  remote server whose own was a `${VAR}`. Empty, it converts as it always
+ *  has. */
+export function convertClaudeCode(entries: Entry[], addresses: Addresses = {}): Conversion {
   const say = strings().submit;
   const findings: Finding[] = [];
   const leftOut: string[] = [];
+  const asked: Asked = { addresses, addressable: [], refused: {} };
 
   const { manifest, servers } = convertManifest(entries, findings);
   // A root mcp.json the author already wrote is theirs, and wins.
   const hasMcp = entries.some((e) => e.path === PLUGIN_MCP_CONFIG);
-  const mcp = hasMcp ? null : convertMcp(entries, servers, findings);
+  const mcp = hasMcp ? null : convertMcp(entries, servers, findings, asked);
 
   const kept: Entry[] = [];
   const outside = new Set<string>();
@@ -284,5 +324,7 @@ export function convertClaudeCode(entries: Entry[]): Conversion {
     mcp,
     leftOut,
     findings,
+    addressable: asked.addressable,
+    refused: asked.refused,
   };
 }
