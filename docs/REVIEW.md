@@ -172,6 +172,7 @@ Comment on the review-request issue with that write-up, the SHA you reviewed and
   reviewed: 2026-09-14
   expires: 2027-09-14
   # languages: ["en", "es"]   # optional — BCP 47 tags you verified
+  # models: ["Claude Opus 5.5", "Claude Sonnet 5"]   # optional — models you ran it with
   notes: "Read-only. No network egress. No PII handling."
 ```
 
@@ -180,6 +181,12 @@ it is written in, and no other" — nothing more was checked. When you fill it
 in, it is a verified list a reader can act on, in a way `civic.languages-tested`
 never can be: that field is the author's own claim, checked by nobody. What
 earns an entry is the section below.
+
+**`models` is optional too** (#267): the AI models you ran the listing with
+while reviewing it, as their names — free text, each up to 60 characters. It is
+the verified counterpart of the author's `civic.models-tested`, published only
+while the attestation holds, and the listing's page names you beside it. List a
+model only if you ran the listing with it.
 
 **The SHA is the attestation.** You are signing off on one exact commit, not on a skill name and not on a person. If the content changes, your attestation stops applying automatically and the skill drops back to Community. That is the mechanism working — you do not need to monitor anything.
 

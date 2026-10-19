@@ -16,7 +16,7 @@ import {
   DEPLOYMENTS, HUMAN_REVIEW, ORGANIZATIONAL_DETAILS, PLACE_PATTERN,
   SCOPES, SCOPE_FIELD, SCOPE_SECONDARY,
   FIT_MAX_LENGTH, LANGUAGE_FIELD, LANGUAGE_PATTERN, LANGUAGES_TESTED_FIELD,
-  LANGUAGES_TESTED_PATTERN, LOCALIZATIONS, ORGANIZATIONAL_DEPLOYMENTS,
+  LANGUAGES_TESTED_PATTERN, LOCALIZATIONS, MODELS_TESTED_FIELD, MODELS_TESTED_PATTERN, ORGANIZATIONAL_DEPLOYMENTS,
   REQUIRED_METADATA, SECONDARY_CATEGORY, SENSITIVITIES,
   VERSION_FIELD, VERSION_PATTERN, SPEC_FIELDS,
 } from "./rules";
@@ -242,6 +242,12 @@ describe("the language fields", () => {
 
   it("carries the tag pattern rules.ts enforces rather than describing it", () => {
     expect(metaProps[LANGUAGE_FIELD]?.pattern).toBe(LANGUAGE_PATTERN);
+  });
+
+  it("leaves civic.models-tested optional and pattern-checked (#267)", () => {
+    expect(metaProps[MODELS_TESTED_FIELD]).toBeDefined();
+    expect(schema.properties.metadata.required).not.toContain(MODELS_TESTED_FIELD);
+    expect(metaProps[MODELS_TESTED_FIELD]?.pattern).toBe(MODELS_TESTED_PATTERN);
   });
 
   it("leaves civic.languages-tested optional and pattern-checked", () => {

@@ -5,6 +5,7 @@ import { TierBadge, LabBadge, SensitivityBadge, DeploymentBadge } from "./Badges
 import { rich } from "../i18n/rich";
 import { guideHref } from "../lib/route";
 import { useStrings } from "../i18n/strings";
+import { ModelFacts } from "./ModelFacts";
 import { label } from "../lib/labels";
 import { bytes } from "../lib/format";
 import type { PluginDetail as Detail } from "../lib/types";
@@ -184,6 +185,11 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
                 <dd>{detail.languages.map((l) => label(s.vocabulary.language, l)).join(" · ")
                   || s.vocabulary.missing}</dd>
               </div>
+              <ModelFacts modelsTested={detail.models_tested}
+                verifiedModels={detail.verified_models} tier={detail.tier}
+                reviewers={detail.reviewed?.reviewers.length
+                  ? s.badges.tier.reviewers(detail.reviewed.reviewers)
+                  : d.facts.someReviewer} />
               <div>
                 <dt>{p.facts.sensitivity}</dt>
                 <dd>{label(s.vocabulary.sensitivity, detail.data_sensitivity)}</dd>

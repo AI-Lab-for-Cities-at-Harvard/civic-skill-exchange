@@ -290,6 +290,7 @@ export const strings: Strings = {
         "civic.localization": "qué tan portátil es",
         "civic.language": "el idioma en que está escrita",
         "civic.languages-tested": "los idiomas en que la ha probado",
+        "civic.models-tested": "los modelos de IA con que la ha probado",
         "civic.data-sensitivity": "los datos que maneja",
         "civic.human-review": "su efecto sobre las personas",
         "civic.use-when": "cuándo es útil",
@@ -429,6 +430,11 @@ export const strings: Strings = {
       avoidWhenHint:
         "La única que solo usted puede responder. Una habilidad honesta sobre " +
         "sus límites se adopta más rápido.",
+      modelsTestedLabel: "¿Con qué modelos de IA la ha probado?",
+      modelsTestedPlaceholder: "Claude Sonnet 5, GPT-5",
+      modelsTestedHint:
+        "Opcional, y es su propia afirmación. Separados por comas, como usted " +
+        "los nombraría. Ayuda a elegir un modelo con el que se sabe que funciona.",
       languagesTestedLabel: "¿En qué idiomas la ha probado?",
       languagesTestedPlaceholder: "en, es",
       languagesTestedHint:
@@ -1265,6 +1271,10 @@ export const strings: Strings = {
         "para que usted sepa qué va a abrir, y para que el catálogo se pueda " +
         "explorar por idioma. Es obligatorio, porque una etiqueta omitida no " +
         "se podría distinguir de una sin responder.",
+      modelsTested:
+        "Opcional, y es la afirmación del propio autor sobre con qué modelos de " +
+        "IA ha probado la publicación, en texto libre. **Nada lo verifica.** La " +
+        "lista del revisor es `models:` en la certificación, y se muestra aparte.",
       languagesTested:
         "Opcional, y es la afirmación del propio autor sobre en qué idiomas ha " +
         "ejercitado la habilidad. **Nada lo verifica.** La lista verificada es " +
@@ -1538,6 +1548,11 @@ export const strings: Strings = {
       localization: "Portabilidad",
 
       language: "Escrita en",
+      modelsTested: "El autor dice haberla probado con",
+      modelsTestedNote: "Lo declara el autor. Nadie la ha probado con estos modelos.",
+      verifiedModels: "Ejecutada en la revisión con",
+      verifiedModelsNote: (reviewers: string) =>
+        `Ejecutada por ${reviewers} sobre este commit exacto.`,
       languagesTested: "El autor dice haberla probado en",
       languagesTestedNote:
         "Lo declara el autor. Nadie la ha ejecutado en estos idiomas por nuestra cuenta.",

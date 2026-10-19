@@ -73,6 +73,11 @@ describe("About — the civic metadata", () => {
     expect(section).toMatch(/civic\.languages-tested/);
   });
 
+  it("explains the tested-models field (#267)", () => {
+    render(<About skills={[]} />);
+    expect(document.getElementById("metadata")!.textContent).toMatch(/civic\.models-tested/);
+  });
+
   it("says the tested languages are a claim and points at where verification lives", () => {
     render(<About skills={[]} />);
     const section = document.getElementById("metadata")!.textContent!;

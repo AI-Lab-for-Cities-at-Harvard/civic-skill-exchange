@@ -82,12 +82,14 @@ export interface PluginDraft {
   deployedSince: string;
   useWhen: string;
   avoidWhen: string;
+  modelsTested: string;
 }
 
 export const EMPTY_PLUGIN_DRAFT: PluginDraft = {
   author: "", name: "", description: "", license: "", version: "",
   maintainer: "", affiliation: "", deployment: "",
   deployedAt: "", deployedIn: "", deployedSince: "", useWhen: "", avoidWhen: "",
+  modelsTested: "",
 };
 
 /** The registry fields a plugin declares once, in plugin.json, by the draft key
@@ -102,6 +104,7 @@ export const EXTENSION_FIELDS = {
   deployedSince: "civic.deployed-since",
   useWhen: "civic.use-when",
   avoidWhen: "civic.avoid-when",
+  modelsTested: "civic.models-tested",
 } as const satisfies Partial<Record<keyof PluginDraft, string>>;
 
 /** The manifest's own fields the form asks for. */

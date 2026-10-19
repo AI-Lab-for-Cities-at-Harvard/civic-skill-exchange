@@ -94,6 +94,18 @@ describe("readPluginSource", () => {
 });
 
 describe("pluginDraftFromManifest", () => {
+  it("reads and writes the models the author tried it with (#267)", () => {
+    const manifest = JSON.stringify({
+      name: "sgarcese-housing-dashboards", description: "d",
+      extensions: { [REGISTRY_EXTENSION]: {
+        "civic.maintainer": "S", "civic.affiliation": "academic", "civic.deployment": "none",
+        "civic.models-tested": "Claude Sonnet 5",
+      } },
+    });
+    expect(pluginDraftFromManifest(manifest, "housing-dashboards", "sgarcese").draft.modelsTested)
+      .toBe("Claude Sonnet 5");
+  });
+
   it("fills the plugin block from plugin.json and its extension", () => {
     const manifest = JSON.stringify({
       name: "sgarcese-housing-dashboards", description: "d", license: "MIT", version: "1.0",

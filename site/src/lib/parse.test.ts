@@ -42,6 +42,11 @@ describe("draftFromSkillMd", () => {
     expect(draftFromSkillMd(two).draft.categorySecondary).toBe("data-analysis");
   });
 
+  it("reads the tested models, so amending the file keeps them (#267)", () => {
+    const md = "---\nname: a\nmetadata:\n  civic.models-tested: Claude Sonnet 5, GPT-5\n---\nBody.\n";
+    expect(draftFromSkillMd(md).draft.modelsTested).toBe("Claude Sonnet 5, GPT-5");
+  });
+
   it("says so when there is no --- block", () => {
     expect(draftFromSkillMd("# Just a heading").problems[0]).toMatch(/---/);
   });
