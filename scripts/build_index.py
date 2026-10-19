@@ -329,7 +329,11 @@ def is_executed(rel: str) -> bool:
     executed, and the detail page and the index derive their lists from this one
     predicate so they cannot come to disagree about what a listing does.
     """
-    return rel.startswith("scripts/") or rel == MCP_CONFIG
+    parts = rel.split("/")
+    # `skills/*/scripts/` is the same rule a plugin applies (below), for a path
+    # taken relative to a listing rather than to the skill inside it.
+    in_listed_skill = len(parts) > 3 and parts[0] == "skills" and parts[2] == "scripts"
+    return rel.startswith("scripts/") or in_listed_skill or rel == MCP_CONFIG
 
 
 def executed_files(skill_dir: Path) -> list[str]:
@@ -407,19 +411,33 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
     }
 
 
-def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None:
-    skill_md = skill_dir / "SKILL.md"
-    if not skill_md.is_file():
-        return None
-    front = read_frontmatter(skill_md)
+def skill_path_of(listing: Path) -> str:
+    """Where the author's files are, relative to the repository: `path` for a
+    flat listing, `skills/{ns}/{name}/skills/{name}` for a nested one."""
+    inner = skill_dir_of(listing)
+    return f"skills/{listing.parent.name}/{listing.name}" + (
+        "" if inner == listing else f"/skills/{listing.name}")
+
+
+def build_entry(listing: Path, attestations: dict, scans: dict) -> dict | None:
+    """One single-skill listing's index entry.
+
+    Raises NoSkillMd when the listing's SKILL.md can't be found. Returning None
+    for that would publish an index with one skill fewer and a warning, which is
+    how a listing used to drop out unseen; None is only for frontmatter that
+    doesn't parse, which L0 fails in CI."""
+    skill_dir = skill_dir_of(listing)
+    front = read_frontmatter(skill_dir / "SKILL.md")
     if not front:
         return None
 
-    namespace = skill_dir.parent.name
-    name = skill_dir.name
+    namespace = listing.parent.name
+    name = listing.name
     skill_id = f"{namespace}/{name}"
     meta = front.get("metadata") or {}
-    sha = head_sha(skill_dir)
+    # The listing, not the inner directory: the attestation pins the last
+    # commit to touch anything the listing holds, generated manifests included.
+    sha = head_sha(listing)
     runs = executed_files(skill_dir)
 
     entry = {
@@ -473,7 +491,7 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         # — and a listing stays valid when its upstream is deleted or renamed.
         "source": source_of(meta),
         "sha": sha,
-        "history": history(skill_dir),
+        "history": history(listing),
         # What the agent runs: scripts/, and the MCP servers .mcp.json declares
         # (#151). Both keys are derived from one list, so a listing whose only
         # executed file is an MCP config is not published as one that runs
@@ -481,6 +499,9 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
         "has_scripts": bool(runs),
         "script_files": runs,
         "path": f"skills/{namespace}/{name}",
+        # Where SKILL.md and the rest of the author's files are: the listing
+        # itself while a flat one exists, skills/{name}/ inside it when nested.
+        "skill_path": skill_path_of(listing),
         "download": f"{REPO_URL}/tree/main/skills/{namespace}/{name}",
     }
 
@@ -503,7 +524,7 @@ def build_entry(skill_dir: Path, attestations: dict, scans: dict) -> dict | None
     return entry
 
 
-def build_detail(skill_dir: Path, entry: dict) -> dict:
+def build_detail(listing: Path, entry: dict) -> dict:
     """The per-skill payload the landing page reads.
 
     Structure only — the file tree with sizes, and which files the agent
@@ -512,7 +533,12 @@ def build_detail(skill_dir: Path, entry: dict) -> dict:
     XSS surface, and the page does not need it to describe a skill. Anyone
     reading the actual code should read it on GitHub, where they get the real
     thing rather than our rendering of it.
+
+    Files are the author's, relative to `skill_path`. For a nested listing that
+    leaves out the manifests the registry generates beside the inner directory,
+    which the author did not write and which are not in the archive.
     """
+    skill_dir = skill_dir_of(listing)
     files = []
     for path in sorted(skill_dir.rglob("*")):
         if not path.is_file() or path.is_symlink():
@@ -708,6 +734,8 @@ ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
 
 def write_archive(skill_dir: Path, entry: dict, files: list[dict], target: Path) -> int:
+    # `skill_dir` is the directory the file paths are relative to: the author's
+    # own, which for a nested listing is skills/{name}/ rather than the listing.
     """Write the downloadable archive and return its size in bytes.
 
     This exists for the person with a browser and nothing else — no git, no
@@ -744,10 +772,14 @@ def write_outputs(skill_dir: Path, entry: dict, out: Path) -> dict:
     directory = out / tree / entry["namespace"]
     directory.mkdir(parents=True, exist_ok=True)
 
-    detail = (build_plugin_detail(skill_dir, entry) if entry.get("kind") == "plugin"
+    is_plugin = entry.get("kind") == "plugin"
+    detail = (build_plugin_detail(skill_dir, entry) if is_plugin
               else build_detail(skill_dir, entry))
     name = entry["name"]
-    size = write_archive(skill_dir, entry, detail["files"], directory / f"{name}.zip")
+    # Rooted at the author's directory, so a nested listing unzips to the same
+    # {name}/SKILL.md a flat one does.
+    archive_root = skill_dir if is_plugin else skill_dir_of(skill_dir)
+    size = write_archive(archive_root, entry, detail["files"], directory / f"{name}.zip")
     detail["archive"] = {
         "path": f"data/{tree}/{entry['namespace']}/{name}.zip",
         "size": size,
@@ -792,6 +824,7 @@ def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = 
 
     entries = []
     for skill_dir in sorted(p for p in SKILLS_DIR.glob("*/*") if p.is_dir()):
+        # NoSkillMd is not caught: a listing with no SKILL.md fails the build.
         entry = build_entry(skill_dir, attestations, scans)
         if entry:
             entries.append(entry)
@@ -877,7 +910,11 @@ def main() -> int:
              "build failure.",
     )
     args = parser.parse_args()
-    return main_with(args.out, args.findings, args.drift_out)
+    try:
+        return main_with(args.out, args.findings, args.drift_out)
+    except NoSkillMd as missing:
+        print(f"error {missing}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
