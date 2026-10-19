@@ -16,7 +16,8 @@ Usage:
     scan.py skills/octocat/permit-status-explainer
     scan.py plugins/octocat/housing-dashboards
 
-Exit code 1 if any L2 signature matched, 0 otherwise.
+Exit code 1 if any L2 signature matched, 2 if a listing's SKILL.md can't be
+found, 0 otherwise.
 """
 
 from __future__ import annotations
@@ -28,7 +29,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from build_index import read_frontmatter
+from build_index import NoSkillMd, read_frontmatter, skill_dir_of
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = ROOT / "skills"
@@ -271,17 +272,31 @@ def has_wildcard_bash_grant(value: object) -> bool:
     return any(_WILDCARD_BASH_ENTRY.match(entry) for entry in allowed_tools_entries(value))
 
 
+def _skill_md(skill_dir: Path) -> Path:
+    """`skill_dir/SKILL.md`, or NoSkillMd.
+
+    Not finding the file used to read as "no value", which for allowed-tools
+    meant "no wildcard grant": the parsed check (#152) went quiet for any
+    listing whose SKILL.md wasn't where the scanner looked (ADR 0006).
+    """
+    skill_md = skill_dir / "SKILL.md"
+    if not skill_md.is_file():
+        raise NoSkillMd(f"{skill_dir} has no SKILL.md.")
+    return skill_md
+
+
 def allowed_tools_of(skill_dir: Path) -> object:
     """The parsed `allowed-tools` frontmatter value, or None when it is absent
-    or the frontmatter cannot be read.
+    or the frontmatter cannot be read. NoSkillMd when there is no SKILL.md.
+
+    `skill_dir` is the skill's own directory: for a single skill,
+    `build_index.skill_dir_of(listing)`, not the listing.
 
     Shares build_index's parser rather than adding a second one, the same way
     localization_of does — the field has to mean the same thing here as it
     does to the index and to the schema.
     """
-    skill_md = skill_dir / "SKILL.md"
-    if not skill_md.is_file():
-        return None
+    skill_md = _skill_md(skill_dir)
     try:
         front = read_frontmatter(skill_md)
     except Exception:
@@ -294,14 +309,13 @@ def allowed_tools_of(skill_dir: Path) -> object:
 
 
 def localization_of(skill_dir: Path) -> str | None:
-    """`civic.localization`, or None when it cannot be read.
+    """`civic.localization`, or None when it is absent or cannot be read.
+    NoSkillMd when there is no SKILL.md, as for allowed_tools_of.
 
     Shares build_index's parser rather than adding a second one — the field has
     to mean the same thing to the scanner as it does to the index.
     """
-    skill_md = skill_dir / "SKILL.md"
-    if not skill_md.is_file():
-        return None
+    skill_md = _skill_md(skill_dir)
     try:
         front = read_frontmatter(skill_md)
     except Exception:
@@ -625,6 +639,11 @@ def scan_plugin(plugin_dir: Path) -> dict:
     """
     blocking: list[dict] = []
     flags: list[dict] = []
+    # A skills/{x}/ with no SKILL.md is no skill: no client loads it, and L0's
+    # checkPluginSkills refuses it. Its files are still scanned below, with the
+    # undisposed default rather than a disposition nobody declared.
+    skill_dirs = sorted(p for p in (plugin_dir / "skills").glob("*")
+                        if p.is_dir() and (p / "SKILL.md").is_file())
 
     for path in sorted(plugin_dir.rglob("*")):
         if not path.is_file() or path.is_symlink():
@@ -644,9 +663,9 @@ def scan_plugin(plugin_dir: Path) -> dict:
         parts = rel.split("/")
         skill_dir = plugin_dir / "skills" / parts[1] if parts[0] == "skills" and len(parts) > 2 else None
         flags.extend(apply_localization(
-            file_flags, localization_of(skill_dir) if skill_dir else None))
+            file_flags, localization_of(skill_dir) if skill_dir in skill_dirs else None))
 
-    for skill_dir in sorted(p for p in (plugin_dir / "skills").glob("*") if p.is_dir()):
+    for skill_dir in skill_dirs:
         rel = f"skills/{skill_dir.name}/SKILL.md"
         caught = any(f["signature"] == "wildcard-bash-grant" and f["file"] == rel
                      for f in blocking)
@@ -663,11 +682,20 @@ def scan_plugin(plugin_dir: Path) -> dict:
     return {"blocking": blocking, "flags": apply_instruction_suppression_language(flags)}
 
 
-def scan_skill(skill_dir: Path) -> dict:
+def scan_skill(listing_dir: Path) -> dict:
+    """L2 and L3 for one single-skill listing, flat or nested (ADR 0006).
+
+    Every file in the listing is scanned, and paths are reported relative to
+    it. The frontmatter checks read the skill's own SKILL.md, found by
+    build_index.skill_dir_of, which raises NoSkillMd rather than letting the
+    listing scan clean with those checks switched off.
+    """
+    skill_dir = skill_dir_of(listing_dir)
+    skill_md_rel = (skill_dir / "SKILL.md").relative_to(listing_dir).as_posix()
     blocking: list[dict] = []
     flags: list[dict] = []
 
-    for path in sorted(skill_dir.rglob("*")):
+    for path in sorted(listing_dir.rglob("*")):
         if not path.is_file() or path.is_symlink():
             continue
         if path.suffix.lower() not in SCANNABLE_SUFFIXES:
@@ -677,7 +705,7 @@ def scan_skill(skill_dir: Path) -> dict:
         except UnicodeDecodeError:
             continue
 
-        rel = str(path.relative_to(skill_dir))
+        rel = path.relative_to(listing_dir).as_posix()
         blocking.extend(scan_text(text, HARD, rel))
         flags.extend(scan_text(text, SOFT, rel))
 
@@ -687,20 +715,22 @@ def scan_skill(skill_dir: Path) -> dict:
     # the wildcard too (#152). Guarded so a grant the raw signature already
     # caught is not reported twice under the same name.
     already_caught = any(f["signature"] == "wildcard-bash-grant" for f in blocking)
-    if not already_caught and has_wildcard_bash_grant(allowed_tools_of(skill_dir)):
+    tools = allowed_tools_of(skill_dir)
+    if not already_caught and has_wildcard_bash_grant(tools):
         blocking.append(
             {
                 "signature": "wildcard-bash-grant",
-                "file": "SKILL.md",
+                "file": skill_md_rel,
                 "line": 1,
-                "excerpt": str(allowed_tools_of(skill_dir))[:160],
+                "excerpt": str(tools)[:160],
                 "explanation": WILDCARD_BASH_EXPLANATION,
             }
         )
 
     # The MCP servers this skill launches on install (#151), read as commands
-    # rather than as the text the loop above already scanned.
-    blocking.extend(scan_mcp(skill_dir))
+    # rather than as the text the loop above already scanned. At the listing
+    # root, because that is the plugin root a client reads.
+    blocking.extend(scan_mcp(listing_dir))
 
     return {
         "blocking": blocking,
@@ -750,7 +780,14 @@ def main() -> int:
         # Plugins share the skills' id space: build_marketplace.py refuses a
         # namespace/name that exists in both trees, so the id stays unique.
         skill_id = f"{skill_dir.parent.name}/{skill_dir.name}"
-        result = scan_plugin(skill_dir) if is_plugin(skill_dir) else scan_skill(skill_dir)
+        try:
+            result = scan_plugin(skill_dir) if is_plugin(skill_dir) else scan_skill(skill_dir)
+        except NoSkillMd as err:
+            # Not a clean result and not a finding: the scan of this listing
+            # didn't happen. No findings file is written, so nothing downstream
+            # renders a report over a layer that never ran.
+            print(f"scan.py: cannot scan {skill_id}: {err}", file=sys.stderr)
+            return 2
         results[skill_id] = result
         total_blocking += len(result["blocking"])
         total_flags += len(result["flags"])
