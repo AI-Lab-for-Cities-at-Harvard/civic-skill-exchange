@@ -1040,7 +1040,8 @@ export const strings: Strings = {
           heading: "En Codex",
           notes: [
             "Agregue el intercambio y luego instale un plugin por su nombre. " +
-              "La página de cada plugin muestra su línea exacta.",
+              "La página de cada plugin muestra su línea exacta. Como en Claude " +
+              "Code, `--sparse` descarga solo las publicaciones.",
             "Por ahora esto es para **plugins**. Una habilidad suelta se " +
               "instala pero todavía no se carga, así que use [la " +
               "descarga](codex).",

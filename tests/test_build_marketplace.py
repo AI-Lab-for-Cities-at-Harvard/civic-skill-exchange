@@ -981,3 +981,45 @@ def test_the_install_boxes_give_the_guides_sparse_install(box: Path):
 def test_the_plugin_box_gives_codexs_install_line():
     text = (build_marketplace.ROOT / INSTALL_BOXES[1]).read_text(encoding="utf-8")
     assert "codex plugin add ${detail.namespace}-${detail.name}@${MARKETPLACE}" in text
+
+
+# --------------------------------------------------------------------------- #
+# #264: Codex takes one path per `--sparse`, repeated. The Codex marketplace
+# command in README, the guide and the plugin box gives the same paths, and
+# they cover every generated file Codex reads, as the Claude check does above.
+
+CODEX_COMMAND_SOURCES = (Path("README.md"), GUIDE, INSTALL_BOXES[1])
+
+
+def _codex_sparse_roots(doc: str) -> list[str]:
+    line = next(l for l in doc.splitlines() if "codex plugin marketplace add" in l)
+    rest = line.split("codex plugin marketplace add", 1)[1]
+    for end in "`\"'":
+        rest = rest.split(end, 1)[0]
+    words = rest.split()
+    return [words[i + 1] for i, w in enumerate(words[:-1]) if w == "--sparse"]
+
+
+def _codex_reads(path: Path) -> bool:
+    return ".agents" in path.parts or ".codex-plugin" in path.parts
+
+
+@pytest.mark.parametrize("source", CODEX_COMMAND_SOURCES, ids=lambda p: p.name)
+def test_every_codex_command_gives_the_same_sparse_paths(source: Path):
+    root = build_marketplace.ROOT
+    roots = _codex_sparse_roots((root / source).read_text(encoding="utf-8"))
+    assert roots, f"{source} gives Codex's marketplace command without --sparse"
+    assert roots == _codex_sparse_roots((root / GUIDE).read_text(encoding="utf-8"))
+
+
+def test_the_codex_sparse_paths_cover_every_file_codex_reads(make_skill, make_plugin):
+    root = make_skill().parents[2]
+    make_plugin()
+    roots = _codex_sparse_roots(
+        (build_marketplace.ROOT / GUIDE).read_text(encoding="utf-8"))
+    codex = [p for p in build_marketplace.generated(root) if _codex_reads(p)]
+    assert any(".agents" in p.parts for p in codex), "the marketplace itself"
+    for path in codex:
+        rel = path.relative_to(root).as_posix()
+        assert any(rel == r or rel.startswith(f"{r}/") for r in roots), (
+            f"{rel} is generated for Codex but outside the --sparse paths {roots}")

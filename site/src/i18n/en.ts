@@ -1188,7 +1188,8 @@ export const en = {
           heading: "In Codex",
           notes: [
             "Add the exchange, then install a plugin by name. Each plugin's " +
-              "page shows its exact line.",
+              "page shows its exact line. As in Claude Code, `--sparse` " +
+              "downloads only the listings.",
             "For now this is for **plugins**. A single skill installs but does " +
               "not load yet, so use [the download](codex) instead.",
           ],
