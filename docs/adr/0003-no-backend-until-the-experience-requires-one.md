@@ -1,6 +1,6 @@
 # ADR 0003 — No backend, until the experience requires one
 
-**Status:** accepted, 2026-09-01
+**Status:** accepted, 2026-09-01; decision 4 amended 2026-10-19
 **Analysis:** [spikes/submitting-a-multi-file-skill.md](../spikes/submitting-a-multi-file-skill.md)
 **Rulings:** [#71](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/71)
 
@@ -54,6 +54,11 @@ not a fix for one that does not. It is the first thing to build if condition (a)
 or (b) below is met, and the spike already carries the verified design — PKCE and
 `state`, an org-owned OAuth App, fork polling, inline tree content — so meeting a
 condition starts a build rather than a study.
+
+*Amended 2026-10-19:* the owner closed #71 as not planned. It was an initial
+exploration, and an open issue kept only as documentation confused more than it
+recorded. The design stays in the spike. If condition (a) or (b) is met, a new
+issue starts the sign-in build from it.
 
 **5. If a backend is built, it is AWS.** API Gateway, Lambda, Parameter Store,
 CDK, deployed from Actions by OIDC so no long-lived credential sits in GitHub.
@@ -122,6 +127,6 @@ address unauthenticated, shared by everyone behind one NAT. The username check
 and the repository import spend them. Today this degrades quietly; if it starts
 degrading loudly, a proxy is a backend.
 
-Condition (a) or (b) starts #71. Condition (c) or (d) starts #48's service half.
+Condition (a) or (b) starts the sign-in build (a new issue; see decision 4). Condition (c) or (d) starts #48's service half.
 Condition (e) starts neither on its own — it argues for spending fewer requests
 first.
