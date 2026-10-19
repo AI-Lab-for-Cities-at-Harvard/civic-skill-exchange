@@ -24,6 +24,12 @@ type Theme = "light" | "dark";
 const PluginDetail = lazy(() =>
   import("./components/PluginDetail").then((m) => ({ default: m.PluginDetail })));
 
+/** Its own chunk too (#258): the guide is long, and a reader browsing the
+ *  catalogue should not pay for its markup. Its words are in the strings table
+ *  with every other page's. */
+const Guide = lazy(() =>
+  import("./components/Guide").then((m) => ({ default: m.Guide })));
+
 const GITHUB = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
 function initialTheme(): Theme {
@@ -122,16 +128,16 @@ export default function App() {
   // Absent from an index built before plugins existed (ADR 0005).
   const plugins = index?.plugins ?? [];
 
-  // #/about/<section> rather than a fragment, because hash routing has only one
-  // `#`. The scroll happens here rather than in About so it re-runs when the
-  // route changes without remounting the page.
-  const aboutSection = route.page === "about" ? route.section : undefined;
+  // #/about/<section> and #/guide/<section> rather than a fragment, because
+  // hash routing has only one `#`. The scroll happens here rather than in the
+  // page so it re-runs when the route changes without remounting the page.
+  const section = route.page === "about" || route.page === "guide" ? route.section : undefined;
   useEffect(() => {
-    if (!aboutSection) return;
+    if (!section) return;
     // The section may not exist yet on the first render after a route change.
-    const target = document.getElementById(aboutSection);
+    const target = document.getElementById(section);
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [aboutSection, index]);
+  }, [section, index]);
   const results = useMemo(() => applyFilters(skills, filters), [skills, filters]);
   const active = Object.entries(filters).some(([k, v]) => (k === "q" ? v !== "" : v !== null));
 
@@ -155,11 +161,17 @@ export default function App() {
               <a href="#/" aria-current={route.page === "browse" ? "page" : undefined}>
                 {s.chrome.nav.browse}
               </a>
-              <a href="#/about" aria-current={route.page === "about" ? "page" : undefined}>
-                {s.chrome.nav.about}
+              {/* Browse · Guide · Submit · About: the guide second, because
+                  it is where somebody who has found a listing goes next
+                  (#224, ruling 1 on its design note). */}
+              <a href="#/guide" aria-current={route.page === "guide" ? "page" : undefined}>
+                {s.chrome.nav.guide}
               </a>
               <a href="#/submit" aria-current={route.page === "submit" ? "page" : undefined}>
                 {s.chrome.nav.submit}
+              </a>
+              <a href="#/about" aria-current={route.page === "about" ? "page" : undefined}>
+                {s.chrome.nav.about}
               </a>
               <a href={GITHUB}>{s.chrome.nav.github}</a>
               {/* Beside the theme toggle: both are settings for how the page
@@ -206,7 +218,13 @@ export default function App() {
         </div>
       </header>
 
-      {route.page === "about" ? (
+      {route.page === "guide" ? (
+        <main id="results" className="page">
+          <Suspense fallback={<p className="notice">{s.errors.loading}</p>}>
+            <Guide section={route.section} />
+          </Suspense>
+        </main>
+      ) : route.page === "about" ? (
         <main id="results" className="page">
           <About skills={skills} section={route.section} />
         </main>

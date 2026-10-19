@@ -183,6 +183,7 @@ export const en = {
     nav: {
       label: "Main",
       browse: "Browse",
+      guide: "Guide",
       about: "About",
       submit: "Submit",
       github: "GitHub",
@@ -1020,6 +1021,208 @@ export const en = {
    *  prose and it changes with the project. Every change here is two changes.
    *
    *  Ordered as the page is, so a translator can work down the screen. */
+  /** "Using the Exchange" (#224, #258): how to get a listing into the tool
+   *  somebody uses, and the words they meet sharing one of their own.
+   *
+   *  Organised by task, with the products inside each (ruling 2). Every step
+   *  was checked against the product on the date `checked` is given; a
+   *  product's interface labels stay as the product shows them, in English,
+   *  because that is what the screenshots show (ruling 4c). */
+  guide: {
+    heading: "Using the Exchange",
+    lede:
+      "Every listing here follows an open standard — a skill is a folder with " +
+      "a `SKILL.md` that Claude, ChatGPT, Codex, Gemini and others all read, " +
+      "and a plugin is several skills with the data connections they use. " +
+      "So one listing works in many tools. What differs is how you get it in.",
+    /** `iso` is the date every step was last checked. */
+    checked: (iso: string) =>
+      `Each step was checked against the product on ${
+        new Date(iso).toLocaleDateString(locale(), { dateStyle: "long", timeZone: "UTC" })
+      }. If a product looks different now, trust the product.`,
+    contents: "On this page",
+
+    install: {
+      heading: "Install one skill",
+      lede:
+        "Every skill page has a **download** button that gives you the skill " +
+        "as a `.zip`, which is what most tools ask for. Find the tool you use:",
+      products: {
+        claude: {
+          heading: "In Claude (claude.ai, the desktop app and Cowork)",
+          steps: [
+            "On the skill's page, **download** the `.zip`.",
+            "In Claude, open **Customize**, then **Skills**.",
+            "Click **+**, then **Create skill**, then **Upload a skill**, and " +
+              "pick the `.zip`.",
+          ],
+          notes: [
+            "If there is no upload option, turn on code execution first: " +
+              "**Settings → Capabilities**. On a Team or Enterprise plan only an " +
+              "owner can turn it on, and an owner can also add a skill for " +
+              "everyone in the organization at once.",
+            "Skills work on every Claude plan, Free included. One you upload " +
+              "also appears in Claude Code when you sign in to it with the same " +
+              "account.",
+          ],
+        },
+        claudeCode: {
+          heading: "In Claude Code",
+          steps: [
+            "Add the exchange once, with the first command below.",
+            "Install any skill by name with the second. Every skill page shows " +
+              "its exact install line, ready to copy.",
+          ],
+          notes: [
+            "`--sparse` downloads the listings and leaves out the website and " +
+              "tools that live alongside them. It works without it; it is just " +
+              "smaller.",
+          ],
+        },
+        chatgpt: {
+          heading: "In ChatGPT",
+          steps: [
+            "On the skill's page, **download** the `.zip`.",
+            "In ChatGPT's sidebar, open **Plugins**, then the **Skills** tab.",
+            "Click **Create**, then **Upload from your computer**, and pick " +
+              "the `.zip`.",
+          ],
+          notes: [
+            "Skills are on ChatGPT **Business, Enterprise, Healthcare and " +
+              "Edu** plans, as your workspace allows — not on Free, Plus or Pro.",
+            "ChatGPT checks every upload. Most are ready at once; some are " +
+              "marked **Needs Review**, and a risky one is **Blocked**.",
+          ],
+        },
+        gemini: {
+          heading: "In Gemini",
+          steps: [
+            "On the skill's page, **download** the `.zip`.",
+            "At **gemini.google.com**, or in the Gemini app on a Mac, open " +
+              "**Customize**, then **Skills**.",
+            "Click **Upload**, pick the `.zip`, and then **Create**. If it " +
+              "does not take the `.zip`, unzip it and upload the folder instead.",
+          ],
+          notes: [
+            "For now this works with a personal Google account, for people " +
+              "over 18 with **Keep Activity** on — not yet with a work or " +
+              "school account — and not in the phone app.",
+          ],
+        },
+        codex: {
+          heading: "In Codex and other tools",
+          steps: [
+            "On the skill's page, **download** the `.zip` and unzip it.",
+            "Put the folder in `.agents/skills/` in your project, or in " +
+              "`~/.agents/skills/` to have it everywhere.",
+          ],
+          notes: [
+            "Codex's own marketplace installs **plugins** from the exchange, " +
+              "but not single skills yet — that is coming. Until then the " +
+              "download is the way in.",
+            "Other tools: check where yours looks for skills. `.agents/skills/` " +
+              "in your project also works for Gemini CLI and Antigravity, and " +
+              "Claude Code reads `.claude/skills/`.",
+          ],
+        },
+      },
+    },
+
+    marketplace: {
+      heading: "Add the whole exchange",
+      lede:
+        "Claude Code and Codex can add the exchange as a **marketplace**: " +
+        "every listing, installable by name, with updates coming to you. It is " +
+        "also the way in for a **plugin**. On ChatGPT Business and Enterprise, " +
+        "a workspace admin can add a marketplace for everyone; ask yours.",
+      products: {
+        claudeCode: {
+          heading: "In Claude Code",
+          notes: [
+            "Add the exchange, then install any skill or plugin by name. Each " +
+              "listing's page shows its exact install line.",
+          ],
+        },
+        codex: {
+          heading: "In Codex",
+          notes: [
+            "Add the exchange, then install a plugin by name. Each plugin's " +
+              "page shows its exact line.",
+            "For now this is for **plugins**. A single skill installs but does " +
+              "not load yet, so use [the download](codex) instead.",
+          ],
+        },
+      },
+    },
+
+    safety: {
+      heading: "Before you run anything",
+      body: [
+        "Read the `SKILL.md`, and anything under `scripts/`. Check " +
+          "`allowed-tools`: it lets an assistant use those tools **without " +
+          "asking you first**.",
+        "That is true of every skill from anywhere, not only this exchange. " +
+          "Our automated checks can only reject; a skill passing them is not a " +
+          "promise that it is safe. A **Reviewed** listing has also been read " +
+          "by a person. [How we check](security).",
+      ],
+    },
+
+    share: {
+      heading: "Share your own",
+      body:
+        "The submission page reads your skill or plugin, asks only for what it " +
+        "could not find, and walks you through putting it on GitHub. You will " +
+        "need a free GitHub account. The words below are the ones you will meet.",
+      cta: "Share a skill or plugin",
+    },
+
+    glossary: {
+      heading: "Words you'll meet on GitHub",
+      lede:
+        "Sharing a listing happens on GitHub, which has its own vocabulary. " +
+        "These are the five words, and why each step exists.",
+      words: {
+        fork: {
+          term: "Fork",
+          meaning:
+            "A fork is your own copy of the exchange on GitHub. Changes you " +
+            "make there don't affect anyone else until you ask for them to be " +
+            "added, which is the pull request. You make one with one button, " +
+            "once.",
+        },
+        branch: {
+          term: "Branch",
+          meaning:
+            "A line of changes inside a copy. Your fork's main line is called " +
+            "`main`, and because the fork is yours, the page has you put your " +
+            "skill straight onto it.",
+        },
+        commit: {
+          term: "Commit",
+          meaning:
+            "Saving a change, with a short note of what it was. Uploading your " +
+            "folder ends with **Commit changes** — that is the save.",
+        },
+        pullRequest: {
+          term: "Pull request",
+          meaning:
+            "Asking for your change to be added to the exchange. It shows " +
+            "exactly what you are adding, and it is where the checks and the " +
+            "maintainers reply.",
+        },
+        review: {
+          term: "Review",
+          meaning:
+            "Automated checks run on every pull request and report back in a " +
+            "comment, and a person approves it before it is added. A " +
+            "maintainer reads every plugin in full. **Reviewed** on a listing " +
+            "means more: the Lab has read that exact version and signed it off.",
+        },
+      },
+    },
+  },
+
   about: {
     toc: {
       label: "On this page",

@@ -3,6 +3,7 @@ export type SubmitMode = "new" | "update";
 export type Route =
   | { page: "browse" }
   | { page: "about"; section?: string }
+  | { page: "guide"; section?: string }
   | { page: "submit"; mode: SubmitMode; add?: string }
   | { page: "skill"; namespace: string; name: string }
   | { page: "plugin"; namespace: string; name: string };
@@ -12,13 +13,13 @@ export type Route =
  *  rather than carried. */
 const SKILL_ID = /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/;
 
-/** A section of the About page. Reaches `getElementById`, so it is a plain slug
- *  or it is dropped — the same posture as SKILL_ID above. */
+/** A section of the About page or the guide. Reaches `getElementById`, so it is
+ *  a plain slug or it is dropped — the same posture as SKILL_ID above. */
 const SECTION = /^[a-z0-9-]+$/;
 
 /** Hash routing rather than a router library or path routing.
  *  GitHub Pages has no SPA fallback, so /about would 404 on a hard refresh.
- *  Five pages does not justify a dependency. */
+ *  Six pages does not justify a dependency. */
 export function parseRoute(hash: string): Route {
   const [rawPath, rawQuery = ""] = hash.replace(/^#\/?/, "").split("?");
   const parts = (rawPath ?? "").split("/").filter(Boolean).map(decodeURIComponent);
@@ -31,6 +32,13 @@ export function parseRoute(hash: string): Route {
     return section && SECTION.test(section)
       ? { page: "about", section }
       : { page: "about" };
+  }
+  if (parts[0] === "guide") {
+    // The same scheme as the About page's sections, for the same reason (#258).
+    const section = parts[1];
+    return section && SECTION.test(section)
+      ? { page: "guide", section }
+      : { page: "guide" };
   }
   if (parts[0] === "submit") {
     const query = new URLSearchParams(rawQuery);
@@ -67,6 +75,11 @@ export function addFieldsHref(namespace: string, name: string): string {
 
 export function aboutHref(section?: string): string {
   return section ? `#/about/${section}` : "#/about";
+}
+
+/** The "Using the Exchange" page (#224), or one of its sections. */
+export function guideHref(section?: string): string {
+  return section ? `#/guide/${section}` : "#/guide";
 }
 
 export function submitHref(mode: SubmitMode): string {

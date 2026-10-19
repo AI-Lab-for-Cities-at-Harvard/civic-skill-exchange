@@ -161,6 +161,7 @@ export const strings: Strings = {
     nav: {
       label: "Principal",
       browse: "Explorar",
+      guide: "Guía",
       about: "Acerca de",
       submit: "Subir",
       github: "GitHub",
@@ -870,6 +871,213 @@ export const strings: Strings = {
         "Eso significa que pasaron las verificaciones automatizadas, no que " +
         "alguien haya leído el código. Las verificaciones automatizadas solo " +
         "pueden rechazar. Lea una habilidad y sus scripts antes de ejecutarla.",
+    },
+  },
+
+  guide: {
+    heading: "Cómo usar el intercambio",
+    lede:
+      "Cada publicación sigue un estándar abierto: una habilidad es una " +
+      "carpeta con un `SKILL.md` que leen Claude, ChatGPT, Codex, Gemini y " +
+      "otros, y un plugin reúne varias habilidades con las conexiones de datos " +
+      "que usan. Así, una misma publicación sirve en muchas herramientas. Lo " +
+      "que cambia es cómo se instala.",
+    checked: (iso: string) =>
+      `Cada paso se comprobó en el producto el ${
+        new Date(iso).toLocaleDateString(locale(), { dateStyle: "long", timeZone: "UTC" })
+      }. Si un producto se ve distinto ahora, confíe en el producto.`,
+    contents: "En esta página",
+
+    install: {
+      heading: "Instalar una habilidad",
+      lede:
+        "La página de cada habilidad tiene un botón de **descarga** que le da " +
+        "la habilidad como `.zip`, que es lo que piden la mayoría de las " +
+        "herramientas. Busque la que usa:",
+      products: {
+        claude: {
+          heading: "En Claude (claude.ai, la app de escritorio y Cowork)",
+          steps: [
+            "En la página de la habilidad, **descargue** el `.zip`.",
+            "En Claude, abra **Customize** y luego **Skills**.",
+            "Haga clic en **+**, luego en **Create skill** y luego en " +
+              "**Upload a skill**, y elija el `.zip`.",
+          ],
+          notes: [
+            "Si no aparece la opción de subir, active primero la ejecución de " +
+              "código: **Settings → Capabilities**. En un plan Team o " +
+              "Enterprise solo un propietario puede activarla, y un " +
+              "propietario también puede agregar una habilidad para toda la " +
+              "organización de una vez.",
+            "Las habilidades funcionan en todos los planes de Claude, incluido " +
+              "el gratuito. La que suba también aparece en Claude Code cuando " +
+              "inicia sesión allí con la misma cuenta.",
+          ],
+        },
+        claudeCode: {
+          heading: "En Claude Code",
+          steps: [
+            "Agregue el intercambio una vez, con el primer comando de abajo.",
+            "Instale cualquier habilidad por su nombre con el segundo. La " +
+              "página de cada habilidad muestra su línea exacta, lista para copiar.",
+          ],
+          notes: [
+            "`--sparse` descarga las publicaciones y deja fuera el sitio web y " +
+              "las herramientas que las acompañan. Funciona sin él; solo es " +
+              "más liviano.",
+          ],
+        },
+        chatgpt: {
+          heading: "En ChatGPT",
+          steps: [
+            "En la página de la habilidad, **descargue** el `.zip`.",
+            "En la barra lateral de ChatGPT, abra **Plugins** y luego la " +
+              "pestaña **Skills**.",
+            "Haga clic en **Create**, luego en **Upload from your computer**, " +
+              "y elija el `.zip`.",
+          ],
+          notes: [
+            "Las habilidades están en los planes **Business, Enterprise, " +
+              "Healthcare y Edu** de ChatGPT, según lo permita su espacio de " +
+              "trabajo; no en Free, Plus ni Pro.",
+            "ChatGPT revisa cada archivo que se sube. La mayoría queda lista " +
+              "enseguida; algunas se marcan como **Needs Review**, y una " +
+              "riesgosa queda **Blocked**.",
+          ],
+        },
+        gemini: {
+          heading: "En Gemini",
+          steps: [
+            "En la página de la habilidad, **descargue** el `.zip`.",
+            "En **gemini.google.com**, o en la app de Gemini para Mac, abra " +
+              "**Customize** y luego **Skills**.",
+            "Haga clic en **Upload**, elija el `.zip` y luego **Create**. Si " +
+              "no acepta el `.zip`, descomprímalo y suba la carpeta.",
+          ],
+          notes: [
+            "Por ahora funciona con una cuenta personal de Google, para " +
+              "mayores de 18 años con **Keep Activity** activado; todavía no " +
+              "con cuentas de trabajo o de estudios, ni en la app del teléfono.",
+          ],
+        },
+        codex: {
+          heading: "En Codex y otras herramientas",
+          steps: [
+            "En la página de la habilidad, **descargue** el `.zip` y " +
+              "descomprímalo.",
+            "Ponga la carpeta en `.agents/skills/` dentro de su proyecto, o en " +
+              "`~/.agents/skills/` para tenerla en todas partes.",
+          ],
+          notes: [
+            "El marketplace de Codex instala **plugins** del intercambio, pero " +
+              "todavía no habilidades sueltas; eso viene en camino. Mientras " +
+              "tanto, la descarga es el camino.",
+            "Otras herramientas: revise dónde busca habilidades la suya. " +
+              "`.agents/skills/` en su proyecto también sirve para Gemini CLI y " +
+              "Antigravity, y Claude Code lee `.claude/skills/`.",
+          ],
+        },
+      },
+    },
+
+    marketplace: {
+      heading: "Agregar todo el intercambio",
+      lede:
+        "Claude Code y Codex pueden agregar el intercambio como **marketplace**: " +
+        "todas las publicaciones, instalables por su nombre, con las " +
+        "actualizaciones llegándole solas. También es el camino para un " +
+        "**plugin**. En ChatGPT Business y Enterprise, un administrador del " +
+        "espacio de trabajo puede agregar un marketplace para todos; " +
+        "pregúntele al suyo.",
+      products: {
+        claudeCode: {
+          heading: "En Claude Code",
+          notes: [
+            "Agregue el intercambio y luego instale cualquier habilidad o " +
+              "plugin por su nombre. La página de cada publicación muestra su " +
+              "línea exacta.",
+          ],
+        },
+        codex: {
+          heading: "En Codex",
+          notes: [
+            "Agregue el intercambio y luego instale un plugin por su nombre. " +
+              "La página de cada plugin muestra su línea exacta.",
+            "Por ahora esto es para **plugins**. Una habilidad suelta se " +
+              "instala pero todavía no se carga, así que use [la " +
+              "descarga](codex).",
+          ],
+        },
+      },
+    },
+
+    safety: {
+      heading: "Antes de ejecutar nada",
+      body: [
+        "Lea el `SKILL.md` y todo lo que haya en `scripts/`. Revise " +
+          "`allowed-tools`: permite que un asistente use esas herramientas " +
+          "**sin pedirle permiso antes**.",
+        "Esto vale para toda habilidad de cualquier origen, no solo de este " +
+          "intercambio. Nuestras verificaciones automáticas solo pueden " +
+          "rechazar; que una habilidad las pase no garantiza que sea segura. " +
+          "Una publicación **Revisada** además la leyó una persona. [Cómo " +
+          "verificamos](security).",
+      ],
+    },
+
+    share: {
+      heading: "Comparta la suya",
+      body:
+        "La página para subir lee su habilidad o plugin, pregunta solo lo que " +
+        "no pudo encontrar y le guía para ponerlo en GitHub. Necesitará una " +
+        "cuenta gratuita de GitHub. Las palabras de abajo son las que va a " +
+        "encontrar.",
+      cta: "Comparta una habilidad o plugin",
+    },
+
+    glossary: {
+      heading: "Palabras que verá en GitHub",
+      lede:
+        "Compartir una publicación ocurre en GitHub, que tiene su propio " +
+        "vocabulario. Estas son las cinco palabras, y por qué existe cada paso.",
+      words: {
+        fork: {
+          term: "Fork",
+          meaning:
+            "Un fork es su propia copia del intercambio en GitHub. Los cambios " +
+            "que haga allí no afectan a nadie más hasta que pida que se " +
+            "agreguen, que es el pull request. Se hace con un botón, una vez.",
+        },
+        branch: {
+          term: "Branch (rama)",
+          meaning:
+            "Una línea de cambios dentro de una copia. La línea principal de " +
+            "su fork se llama `main` y, como el fork es suyo, la página le " +
+            "pide poner su habilidad directamente ahí.",
+        },
+        commit: {
+          term: "Commit",
+          meaning:
+            "Guardar un cambio, con una nota breve de lo que fue. Subir su " +
+            "carpeta termina con **Commit changes**: ese es el guardado.",
+        },
+        pullRequest: {
+          term: "Pull request",
+          meaning:
+            "Pedir que su cambio se agregue al intercambio. Muestra " +
+            "exactamente lo que agrega, y es donde responden las " +
+            "verificaciones y los mantenedores.",
+        },
+        review: {
+          term: "Revisión",
+          meaning:
+            "Las verificaciones automáticas corren en cada pull request y " +
+            "responden en un comentario, y una persona lo aprueba antes de " +
+            "agregarlo. Un mantenedor lee cada plugin completo. **Revisada** " +
+            "en una publicación significa más: el Lab leyó esa versión exacta " +
+            "y la aprobó.",
+        },
+      },
     },
   },
 

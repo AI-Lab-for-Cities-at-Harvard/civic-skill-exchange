@@ -46,7 +46,10 @@ function shape(node: unknown, path: string[] = []): string[] {
  *  an array of two-string arrays; nothing else in the table has that shape. */
 function choiceValues(node: unknown, path: string[] = []): string[] {
   if (Array.isArray(node)) {
-    if (node.length === 2 && node.every((v) => typeof v === "string")) {
+    // A choice is a [value, label] pair inside a list of them. A two-item list
+    // of prose straight under a key — the guide's steps, say — is not one.
+    const inList = /^\d+$/.test(path[path.length - 1] ?? "");
+    if (inList && node.length === 2 && node.every((v) => typeof v === "string")) {
       return [`${path.join(".")} -> ${node[0]}`];
     }
     return node.flatMap((item, i) => choiceValues(item, [...path, String(i)]));

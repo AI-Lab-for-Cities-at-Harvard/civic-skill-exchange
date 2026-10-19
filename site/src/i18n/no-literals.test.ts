@@ -44,6 +44,7 @@ const FILES = [
   "components/DownloadBox.tsx",
   "components/Facets.tsx",
   "components/Field.tsx",
+  "components/Guide.tsx",
   "components/History.tsx",
   "components/PluginCard.tsx",
   "components/PluginDetail.tsx",

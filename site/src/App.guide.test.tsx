@@ -2,7 +2,7 @@
  *  (ruling 1 on the design note for #224) — and its route. */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import App from "./App";
 import { DEFAULT_LOCALE, setLocale } from "./i18n/strings";
 import { makeIndex, makeSkill } from "./test/fixtures";
@@ -18,6 +18,7 @@ beforeEach(() => {
 
 afterEach(async () => {
   vi.unstubAllGlobals();
+  localStorage.clear();
   window.location.hash = "";
   await setLocale(DEFAULT_LOCALE);
 });
@@ -36,17 +37,19 @@ describe("the Guide header item", () => {
   });
 
   it("reads Guía in Spanish", async () => {
-    await setLocale("es");
+    // App opens on the saved choice, so the choice is saved rather than set.
+    localStorage.setItem("locale", "es");
     render(<App />);
     await screen.findByTestId("footer-meta");
-    expect(links()[1]?.[0]).toBe("Guía");
+    await waitFor(() => expect(links()[1]?.[0]).toBe("Guía"));
   });
 
   it("opens the guide and marks itself current", async () => {
     window.location.hash = "#/guide";
     render(<App />);
     await screen.findByTestId("footer-meta");
-    expect(screen.getByRole("heading", { level: 2, name: "Using the Exchange" }))
+    // The page is its own chunk, so it arrives after the chrome.
+    expect(await screen.findByRole("heading", { level: 2, name: "Using the Exchange" }))
       .toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Guide" })).toHaveAttribute("aria-current", "page");
   });
