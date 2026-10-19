@@ -1,7 +1,7 @@
 # The "Using the Exchange" page
 
 **Issue:** [#224](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/224)
-**Status:** design pass, awaiting the owner's review. It encodes the rulings of 2026-10-17 and 2026-10-18 (questions 1–6 on #224) and turns them into a page outline, links and a screenshot list. Six questions remain, listed at the end. Written against the exchange at `1dcb359`.
+**Status:** design pass, ruled by the owner on 2026-10-18 (see the end). It encodes the rulings of 2026-10-17 and 2026-10-18 (questions 1–6 on #224) and turns them into a page outline, links and a screenshot list. Six questions remain, listed at the end. Written against the exchange at `1dcb359`.
 
 ## What is ruled
 
@@ -128,3 +128,17 @@ Every capture records the date, the product's visible version or plan where it s
    Gemini's section ships in (A) only once it's verified. If verification is slow, (A) ships without it and (C) adds it.
 6. **Which skill for the capture uploads.** The claude.ai and ChatGPT screenshots need a real upload into the owner's account.
    *Recommendation:* `civic-skills/plain-language-notice-rewriter`, the exchange's own Reviewed listing. Removing it afterwards is the owner's choice.
+
+## Rulings (owner, 2026-10-18)
+
+The owner accepted all six recommendations:
+
+1. **The header label** is "Guide" (Spanish: "Guía"). The page heading is "Using the Exchange" (Spanish: "Cómo usar el intercambio"). The order is Browse · Guide · Submit · About · GitHub.
+2. **The route** is `#/guide`, with sections at `#/guide/{section}`.
+3. **`--sparse .claude-plugin skills plugins`** is added to the Claude Code marketplace command in the install boxes.
+4. **The plugin page's install box** gains `codex plugin add {ns}-{name}@civic-skill-exchange`.
+5. **#224 becomes an epic** with three sub-issues, built in order:
+   - (A) the page, route and header, with SUBMITTING.md Part 1 reduced to a pointer;
+   - (B) the links into the page and the install-box command changes (rulings 3 and 4);
+   - (C) the screenshots, captured with the owner.
+6. **The captures use `civic-skills/plain-language-notice-rewriter`.** Removing it afterwards is the owner's choice.
