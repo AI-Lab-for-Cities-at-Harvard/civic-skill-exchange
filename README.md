@@ -50,10 +50,13 @@ Skills are plain directories. Take one however you like:
 skill folder. Upload it wherever your agent tool takes skills. No git, no Node,
 no account.
 
-**In Claude itself.** claude.ai and Cowork take a skill as a `.zip` uploaded
-under Settings &rarr; Features, which is what the download link on every skill
-page gives you. Needs a paid plan with code execution; skills are per-person
-rather than org-wide, and do not sync to other surfaces.
+**Step by step, for each tool.** The site's
+[Using the Exchange](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/guide)
+page walks through Claude, Claude Code, ChatGPT, Gemini and Codex, each step
+checked against the product on the date it shows.
+
+**In Claude itself.** claude.ai, the desktop app and Cowork take the `.zip` from
+a skill's page, uploaded under Customize &rarr; Skills, with code execution on.
 
 **In Claude Code, as a plugin marketplace.** The registry is one, so a skill is
 one command:
@@ -71,8 +74,7 @@ you only need the marketplace and the listings — `skills/` and `plugins/`. It
 works without the flag; this just does not make you download the website source
 to install a skill.
 
-Fuller instructions for both Claude and ChatGPT, and how to submit one, are in
-[docs/SUBMITTING.md](docs/SUBMITTING.md).
+How to submit one is in [docs/SUBMITTING.md](docs/SUBMITTING.md).
 
 **In Codex**, which has its own marketplace — for **plugins**, for now:
 
@@ -93,7 +95,7 @@ skill's page and unzip it into `.agents/skills/` in your project, or
 
 **In other agent tools.** Skills here follow the open
 [Agent Skills](https://agentskills.io) format, so they work anywhere that has
-adopted it — ChatGPT, Gemini CLI, Copilot, Cursor and others. Those install a
+adopted it — ChatGPT, Gemini, Copilot, Cursor and others. Those install a
 skill at a time rather than a repository: use the download link on the skill's
 page, which is a zip of the skill folder rooted at a single directory, which is
 the shape they expect.

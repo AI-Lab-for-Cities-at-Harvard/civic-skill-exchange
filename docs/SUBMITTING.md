@@ -3,92 +3,24 @@
 Two halves. **Part 1** is getting a skill out of the registry and into your
 agent. **Part 2** is putting one in.
 
-Neither needs you to be a developer. Part 1 needs no account at all.
+Neither needs you to be a developer.
 
 
 ---
 
 ## Part 1 — Installing a skill
 
-### In Claude itself — claude.ai and Cowork
+**The steps now live on the site:
+[Using the Exchange](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/guide).**
+It covers installing one skill in Claude, Claude Code, ChatGPT, Gemini and Codex,
+adding the whole exchange as a marketplace in Claude Code and Codex, and the
+words you meet on GitHub. Each step there was checked against the product, and
+the page says when.
 
-This is the one most people will use, and it does not involve a terminal.
-
-**Settings → Features → upload the skill as a `.zip`.** The download link on any
-skill page gives you exactly that file, rooted at a single directory, which is
-the shape the upload expects.
-
-Three things worth knowing before you rely on it:
-
-- It needs a **Pro, Max, Team or Enterprise plan with code execution enabled**.
-- **Skills are per-person, not per-organization.** claude.ai has no central
-  management for custom skills, so everybody who wants one uploads it
-  themselves. A city cannot push a skill to its whole team this way.
-- **Nothing syncs between surfaces.** A skill uploaded to claude.ai is not
-  available in Claude Code or through the API, and the reverse. Upload it
-  wherever you want to use it.
-
-### In Claude Code
-
-The registry is a plugin marketplace, so it is two commands:
-
-```
-/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .claude-plugin skills plugins
-/plugin install {namespace}-{skill-name}@civic-skill-exchange
-```
-
-Every skill page on the site shows its exact second line, ready to copy.
-
-**Why `--sparse`.** Adding a marketplace **clones the whole repository** into
-`~/.claude/plugins/marketplaces/`, and this one carries a website, a validator, a
-test suite and documentation you have no use for. `--sparse .claude-plugin skills plugins`
-takes the marketplace and the listings — every skill and every plugin — and
-leaves the rest. It works fine without the flag; the flag just stops you
-downloading the site source in order to install a skill. Keep all three paths:
-leave out `plugins` and a plugin shows up in the marketplace but cannot install.
-
-The plugin name carries the namespace — `civic-skills-plain-language-notice-rewriter`
-rather than `plain-language-notice-rewriter` — because two people may publish a
-skill of the same name and plugin names have to be unique. It is unconditional, so
-an install command you wrote down keeps working when a stranger publishes the same
-name.
-
-### In ChatGPT, Codex, and everything else
-
-Skills here follow the open [Agent Skills](https://agentskills.io) standard — the
-same `SKILL.md` format Claude, ChatGPT, Codex, Gemini CLI, Copilot, Cursor and
-others read. So a skill from this registry works in all of them. **What differs
-is how you get it there.**
-
-**Codex has its own marketplace, and this registry publishes one.** For now,
-use it for **plugins**:
-
-```
-codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange
-codex plugin add {namespace}-{plugin-name}@civic-skill-exchange
-```
-
-The plugin names match the Claude ones on purpose, so the command reads the same
-in both tools.
-
-A **single skill** installs from Codex's marketplace but does not load yet:
-Codex looks for skills one folder deeper than a single-skill listing keeps them
-([#207](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/207)).
-Until every listing takes the plugin layout, use the download below — the
-**Codex** line says where to put it.
-
-**For everything else, the download link on the skill's page.**
-It is a `.zip` of the skill folder rooted at a single directory, which is exactly
-the shape an upload expects.
-
-- **ChatGPT** — Skills, then upload the zip. ChatGPT scans what you upload and
-  may mark it for review before it will install.
-- **Codex** — `$skill-installer`, or drop the unzipped folder into
-  `.agents/skills/` in your project, `$REPO_ROOT/.agents/skills/`, or
-  `~/.agents/skills/`. That last path is shared with Claude Code and Copilot CLI,
-  so one copy serves all three.
-- **Anything else** — check where your tool looks. `.claude/skills/` and
-  `.agents/skills/` are the two common answers.
+It is on the site rather than here so that there is one copy, in English and
+Spanish, that cannot drift from a second one
+([#224](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/224)).
+Every skill and plugin page also shows its own exact install lines.
 
 ### Before you run anything from here
 
