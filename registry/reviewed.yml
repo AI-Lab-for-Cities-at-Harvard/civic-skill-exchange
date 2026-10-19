@@ -107,12 +107,13 @@ attestations:
  # Re-pinned 2026-10-19 after the rename from sgarcese/civic-analytics-workflow (#278):
  # every file renamed at 100% similarity except SKILL.md, whose name: and description
  # changed (it now opens "This is the original civic analytics workflow."), and the
- # first-line comment in context.template.yml. The review text below is unchanged.
+ # first-line comment in context.template.yml. The owner reviewed the changed SKILL.md
+ # on 2026-10-19, so reviewed: and expires: move to that date. The notes are unchanged.
  - skill: "sgarcese/deep-analysis-for-issues"
    sha: "150a0fafa49bf64a6525ecf12b40d3de8516dfcf"
    reviewers: ["AI Lab for Cities at Harvard"]
-   reviewed: 2026-10-18
-   expires: 2027-10-18
+   reviewed: 2026-10-19
+   expires: 2027-10-19
    languages: ["en"]
    models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5"]
    notes: >
