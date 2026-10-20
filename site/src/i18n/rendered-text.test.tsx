@@ -100,11 +100,13 @@ function surface(root: HTMLElement) {
 }
 
 /** The whole page, once the index has landed — the topper's counts, the bands
- *  and the footer only exist after it. */
+ *  and the footer only exist after it — and once a page loaded on demand
+ *  (#314) has replaced its loading notice. */
 async function page(hash: string) {
   window.location.hash = hash;
   const { container } = render(<App />);
   await waitFor(() => expect(screen.getByText(/Catalog generated/)).toBeInTheDocument());
+  await waitFor(() => expect(screen.queryByText(/^Loading/)).toBeNull());
   return surface(container);
 }
 
