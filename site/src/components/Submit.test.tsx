@@ -119,7 +119,7 @@ describe("Submit — findings report, and do not block", () => {
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await fill(user);
     // No description, no category, no contact — plenty is wrong.
-    expect(screen.getByTestId("findings-note")).toBeInTheDocument();
+    expect(screen.getByTestId("status")).toBeInTheDocument();
     expect(screen.getByTestId("handoff")).toHaveAttribute("href");
     expect(screen.getByTestId("handoff")).toHaveAttribute("aria-disabled", "false");
   });
@@ -128,7 +128,7 @@ describe("Submit — findings report, and do not block", () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await fill(user);
-    expect(screen.getByTestId("findings-note").textContent)
+    expect(screen.getByTestId("status").textContent)
       .toMatch(/checks that count run after/i);
   });
 });
