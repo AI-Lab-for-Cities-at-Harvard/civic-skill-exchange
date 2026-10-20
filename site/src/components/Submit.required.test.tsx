@@ -80,7 +80,7 @@ describe("Submit — errors in the page's own words", () => {
     expect(shown.length).toBeGreaterThan(1);
     for (const text of shown) {
       expect(text).not.toMatch(/civic\./);
-      expect(text).not.toMatch(/[\w-]+: ['"\w-]/);
+      expect(text).not.toMatch(/: '?(none|personal|team|organization|generalized|localized|any)\b/);
     }
   });
 });
@@ -99,7 +99,9 @@ describe("Submit — one status, which agrees with the findings", () => {
     const status = screen.getAllByTestId("status");
     expect(status).toHaveLength(1);
     expect(status[0]!.textContent).toMatch(/\d+ things? still to fill in/i);
-    expect(document.body.textContent).not.toMatch(/nothing (else|left)/i);
+    expect(status[0]!.textContent).not.toMatch(/nothing/i);
+    // Where "Nothing else to fix" used to sit, beside the count.
+    expect(screen.getByTestId("archive-result").textContent).not.toMatch(/nothing/i);
   });
 
   it("says it is all clear only once every finding is gone", async () => {

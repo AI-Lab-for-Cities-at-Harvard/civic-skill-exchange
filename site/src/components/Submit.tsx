@@ -425,6 +425,23 @@ export function Submit(
     return fitsInUrl(link) ? link : null;
   }, [draft, yaml]);
 
+  // Asked where the claim is made. A team or an organization named as the user
+  // owes the exchange the organization's name, and a required question inside a
+  // closed "optional" section is one nobody can find (#295, S-3). For anyone
+  // else it stays optional, in the section that says so.
+  const owesOrganization =
+    draft.deployment === "team" || draft.deployment === "organization";
+  const deployedAt = (
+    <Field
+      id="civic.deployed-at" label={t.optional.deployedAtLabel}
+      findings={findings}
+      hint={draft.deployment === "personal" ? t.optional.deployedAtHint : undefined}
+    >
+      <input id="civic.deployed-at" className="input" value={draft.deployedAt}
+        onChange={onInput("deployedAt")} />
+    </Field>
+  );
+
   return (
     <article className="prose submit">
       <section className="prose__block">
@@ -556,9 +573,7 @@ export function Submit(
                   {archive.left.map((m) => <li key={m}>{m}</li>)}
                 </ul>
               )}
-              {archive.structural.length === 0 ? (
-                <p className="submit__ok">{t.intake.nothingElse}</p>
-              ) : (
+              {archive.structural.length > 0 && (
                 <ul className="submit__findings">
                   {archive.structural.map((finding) => (
                     <li key={`${finding.where}${finding.message}`}>
@@ -737,6 +752,8 @@ export function Submit(
                 : f.deploymentHintPersonal
             } />
 
+          {owesOrganization && deployedAt}
+
           <Field id="civic.maintainer" label={f.maintainerLabel} findings={findings} hint={f.maintainerHint}>
             <input id="civic.maintainer" className="input" value={draft.maintainer}
               onChange={onInput("maintainer")} />
@@ -785,16 +802,7 @@ export function Submit(
                 onChange={onInput("tools")} placeholder={t.optional.toolsPlaceholder} />
             </Field>
 
-            <Field
-              id="civic.deployed-at" label={t.optional.deployedAtLabel}
-              findings={findings}
-              hint={draft.deployment === "personal"
-                ? t.optional.deployedAtHint
-                : undefined}
-            >
-              <input id="civic.deployed-at" className="input" value={draft.deployedAt}
-                onChange={onInput("deployedAt")} />
-            </Field>
+            {!owesOrganization && deployedAt}
 
             <Field id="civic.deployed-in" label={t.optional.deployedInLabel}
               findings={findings} hint={t.optional.deployedInHint}>
@@ -829,11 +837,14 @@ export function Submit(
             </details>
           )}
 
-          {findings.length > 0 && (
-            <p className="submit__note" data-testid="findings-note">
-              {t.send.findingsNote(findings.length)}
-            </p>
-          )}
+          {/* One line, whichever of three is true. It was a count here and
+              "Nothing else to fix" up in the archive result at once (S-9). */}
+          <p className={blocked || findings.length > 0 ? "submit__note" : "submit__ok"}
+            data-testid="status">
+            {blocked ? t.send.statusBlocked
+              : findings.length > 0 ? t.send.findingsNote(findings.length)
+              : t.send.allClear}
+          </p>
 
           {multiFile ? (
             /* Four steps, because a folder cannot be put in a link. Each one is

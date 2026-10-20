@@ -262,7 +262,6 @@ export const strings: Strings = {
 
       archiveResult: (name: string, files: number) =>
         `**${name}** — ${files} archivo${files === 1 ? "" : "s"}.`,
-      nothingElse: "No hay nada más que corregir.",
       blocked: "Corrija esto antes de continuar. No se puede corregir más abajo.",
     },
 
@@ -300,6 +299,60 @@ export const strings: Strings = {
         "civic.deployed-at": "la organización",
         "civic.deployed-in": "dónde opera",
         "civic.deployed-since": "desde cuándo",
+      },
+
+      plain: {
+        required: (name: string) => `Falta responder: ${name}`,
+        organizationNeeded:
+          "Indique la organización. Decir que un equipo o una organización la " +
+          "usa es una afirmación sobre ellos, y una organización sin nombre es " +
+          "una afirmación que nadie puede comprobar.",
+        neverUsedHasOrganization:
+          "Dijo que aún no la ha usado en trabajo real, así que no hay " +
+          "organización que nombrar. Borre esto, o cambie esa respuesta.",
+        notOffered: (name: string) =>
+          `Esa no es una de las opciones para ${name}. Elija una de la lista.`,
+        generalizedHasPlace:
+          "Dijo que es portable, sin un lugar incorporado, así que no puede " +
+          "nombrar un lugar. Borre el lugar, o cambie esa respuesta.",
+        notAPlace:
+          "Eso no es un lugar que se pueda leer. Use un código de país, y si " +
+          "quiere un estado o provincia y una ciudad: US-VT, US-MA / Boston, " +
+          "CA-ON / Toronto.",
+        anyHasPlace:
+          "Dijo que funciona en todos los niveles de gobierno, así que no está " +
+          "ligada a un lugar. Indique el nivel al que sirve, o borre el lugar.",
+        secondaryRepeats:
+          "El segundo nivel repite el primero. Bórrelo, o elija el otro nivel " +
+          "al que sirve la habilidad.",
+        anyAlone:
+          "«Todos los niveles» no se puede combinar con un nivel " +
+          "concreto. Deje uno u otro.",
+        categoryRepeats:
+          "La segunda categoría repite la primera. Bórrela, o elija otra distinta.",
+        testedLeavesOut:
+          "Los idiomas en que la ha probado deben incluir aquel en que está " +
+          "escrita. Añádalo, o corrija esa respuesta.",
+        testedShape:
+          "Escriba los idiomas como códigos cortos separados por comas, como " +
+          "\u00aben, es\u00bb, sin elementos vacíos ni coma al final.",
+        languageTag:
+          "Use el código corto del idioma, no su nombre: en, es, pt-BR.",
+        bashWildcard:
+          "Esto permite cualquier comando de consola, y el intercambio lo " +
+          "rechaza automáticamente. Nombre en cambio los comandos concretos " +
+          "que necesita.",
+        sourceRepo: "Escriba el repositorio como propietario/nombre, no como dirección web.",
+        sourceCommit:
+          "Use el código completo de 40 caracteres de la confirmación del " +
+          "repositorio de origen.",
+        pluginLevel: (name: string) =>
+          `${name} se responde una sola vez, para todo el plugin. ` +
+          "Quítelo de la habilidad.",
+        notForPlugin: (name: string) =>
+          `${name} no se responde aquí. Cada habilidad responde sus propias ` +
+          "preguntas en su propio SKILL.md.",
+        thisAnswer: "esta respuesta",
       },
 
       choose: "Elija…",
@@ -494,6 +547,13 @@ export const strings: Strings = {
         `completar, marcada${n === 1 ? "" : "s"} arriba. Puede enviarla de ` +
         "todos modos: las verificaciones que cuentan se ejecutan después, y " +
         "entonces podrá corregir.",
+
+      allClear:
+        "No queda nada por completar. Las verificaciones que cuentan se " +
+        "ejecutan después de enviarla, y entonces podrá corregir.",
+      statusBlocked:
+        "Algo en sus archivos debe cambiar antes de poder enviarla. Está " +
+        "marcado arriba.",
 
       multiFileNote: (files: number) =>
         `Su habilidad tiene ${files} archivos. GitHub acepta una carpeta ` +
@@ -1418,7 +1478,7 @@ export const strings: Strings = {
         "resto que quedó.",
       language:
         "El idioma en que está escrito el `SKILL.md`, como una sola etiqueta " +
-        "BCP 47: `en`, `es`, `pt-BR`. No limita quién puede usar la habilidad: " +
+        "BCP 47: en, es, pt-BR. No limita quién puede usar la habilidad: " +
         "un modelo lee una habilidad en inglés y la sigue en español. Sirve " +
         "para que usted sepa qué va a abrir, y para que el catálogo se pueda " +
         "explorar por idioma. Es obligatorio, porque una etiqueta omitida no " +

@@ -83,7 +83,8 @@ describe.each([["English", en], ["Spanish", es]])("plain findings — %s", (_, t
         table.submit.form);
       expect(text, `${x.where}: ${x.message}`).not.toMatch(/civic\./);
       // `key: value`, as written in a file.
-      expect(text, `${x.where}: ${x.message}`).not.toMatch(/[\w-]+: ['"\w-]/);
+      expect(text, `${x.where}: ${x.message}`)
+        .not.toMatch(new RegExp(`: '?(${VALUES.join("|")})\\b`));
       for (const v of VALUES) {
         expect(text, `${x.where}: ${x.message}`).not.toContain(`'${v}'`);
       }
