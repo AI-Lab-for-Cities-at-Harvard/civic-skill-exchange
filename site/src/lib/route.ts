@@ -1,7 +1,7 @@
 export type SubmitMode = "new" | "update";
 
 export type Route =
-  | { page: "browse" }
+  | { page: "browse"; query?: string }
   | { page: "about"; section?: string }
   | { page: "guide"; section?: string }
   | { page: "submit"; mode: SubmitMode; add?: string }
