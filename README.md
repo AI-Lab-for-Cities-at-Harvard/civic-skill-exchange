@@ -92,9 +92,11 @@ the listings are downloaded — but Codex takes one path per flag.
 Every listing is a plugin in the Agent Plugins layout, which both tools read
 ([ADR 0006](docs/adr/0006-every-listing-in-the-agent-plugins-layout.md)): a
 skill's own folder is `skills/{namespace}/{skill-name}/skills/{skill-name}/`,
-beside the manifests the registry generates. If you installed a skill before it
-moved there, `codex plugin marketplace upgrade` picks up the new layout, and in
-Claude Code `claude plugin update` does; the
+beside the manifests the registry generates. To refresh the catalogue at any time and pick up new and updated listings, run
+`codex plugin marketplace upgrade` in Codex or `claude plugin marketplace update`
+in Claude Code. If you installed a skill before it moved there, the Codex
+refresh picks up the new layout, and in Claude Code `claude plugin update` does;
+the
 [guide](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/guide/marketplace)
 has both.
 
