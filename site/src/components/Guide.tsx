@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { rich } from "../i18n/rich";
+import { Cluster, Stack } from "./Layout";
 import { useStrings } from "../i18n/strings";
 import {
   CAPTURED_ON, CHECKED_ON, COMMANDS, GLOSSARY, GUIDE_SECTIONS, SCREENSHOTS, SECURITY,
@@ -21,31 +22,34 @@ function ProductSection(
 ) {
   const g = useStrings().guide;
   const shots = SCREENSHOTS[anchor];
+  // The heading sits 12px over its parts, which are 16px apart.
   return (
-    <section id={anchor} className="guide__product">
+    <Stack as="section" gap="3" id={anchor} className="guide__product">
       <h3 className="h3">{text.heading}</h3>
-      {text.steps && (
-        <ol className="guide__steps">
-          {text.steps.map((step) => <li key={step}>{rich(step, LINKS)}</li>)}
-        </ol>
-      )}
-      {commands?.map((c) => (
-        <div className="download__cmd" key={c}><code>{c}</code></div>
-      ))}
-      {text.notes?.map((note) => <p key={note}>{rich(note, LINKS)}</p>)}
-      {shots && (
-        <div className="guide__shots">
-          {shots.map(({ id, file }) => (
-            <figure className="guide__shot" key={id}>
-              <img src={`${SHOTS_URL}${file}`} alt={g.figures[id].alt} loading="lazy"
-                width={SHOT_SIZE.width} height={SHOT_SIZE.height} />
-              <figcaption>{g.figures[id].caption}</figcaption>
-            </figure>
-          ))}
-          <p className="guide__captured">{g.captured(CAPTURED_ON)}</p>
-        </div>
-      )}
-    </section>
+      <Stack gap="4">
+        {text.steps && (
+          <Stack as="ol" gap="2" className="guide__steps">
+            {text.steps.map((step) => <li key={step}>{rich(step, LINKS)}</li>)}
+          </Stack>
+        )}
+        {commands?.map((c) => (
+          <Stack gap="2" className="download__cmd" key={c}><code>{c}</code></Stack>
+        ))}
+        {text.notes?.map((note) => <p key={note}>{rich(note, LINKS)}</p>)}
+        {shots && (
+          <Stack gap="4" className="guide__shots">
+            {shots.map(({ id, file }) => (
+              <Stack as="figure" gap="2" className="guide__shot" key={id}>
+                <img src={`${SHOTS_URL}${file}`} alt={g.figures[id].alt} loading="lazy"
+                  width={SHOT_SIZE.width} height={SHOT_SIZE.height} />
+                <figcaption>{g.figures[id].caption}</figcaption>
+              </Stack>
+            ))}
+            <p className="guide__captured">{g.captured(CAPTURED_ON)}</p>
+          </Stack>
+        )}
+      </Stack>
+    </Stack>
   );
 }
 
@@ -86,9 +90,11 @@ export function Guide({ section }: { section?: string }) {
       </nav>
 
       {TASKS.map((task) => (
-        <section className="prose__block" id={task.id} key={task.id}>
-          <h2 className="h2">{g[task.id].heading}</h2>
-          <p>{rich(g[task.id].lede)}</p>
+        <Stack as="section" gap="6" className="prose__block" id={task.id} key={task.id}>
+          <Stack as="header" gap="4">
+            <h2 className="h2">{g[task.id].heading}</h2>
+            <p>{rich(g[task.id].lede)}</p>
+          </Stack>
           {task.products.map(({ id, anchor }) => {
             const text = (g[task.id].products as Record<string, ProductText>)[id];
             return text ? (
@@ -96,7 +102,7 @@ export function Guide({ section }: { section?: string }) {
                 commands={COMMANDS[`${task.id}.${id}`]} />
             ) : null;
           })}
-        </section>
+        </Stack>
       ))}
 
       <section className="prose__block" id="safety">
@@ -107,22 +113,22 @@ export function Guide({ section }: { section?: string }) {
       <section className="prose__block" id="share">
         <h2 className="h2">{g.share.heading}</h2>
         <p>{rich(g.share.body)}</p>
-        <p className="cta-row">
+        <Cluster as="p" gap="3" align="stretch" className="cta-row">
           <a className="btn btn--strong" href="#/submit">{g.share.cta}</a>
-        </p>
+        </Cluster>
       </section>
 
       <section className="prose__block" id="glossary">
         <h2 className="h2">{g.glossary.heading}</h2>
         <p>{rich(g.glossary.lede)}</p>
-        <dl className="guide__glossary">
+        <Stack as="dl" gap="4" className="guide__glossary">
           {GLOSSARY.map((word) => (
-            <div id={glossaryAnchor(word)} key={word}>
+            <Stack gap="1" id={glossaryAnchor(word)} key={word}>
               <dt>{g.glossary.words[word].term}</dt>
               <dd>{rich(g.glossary.words[word].meaning)}</dd>
-            </div>
+            </Stack>
           ))}
-        </dl>
+        </Stack>
       </section>
     </article>
   );

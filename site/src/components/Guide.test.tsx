@@ -51,7 +51,7 @@ describe("the guide page", () => {
 
   it("puts each task under an h2 and each product under an h3", () => {
     const { container } = render(<Guide />);
-    expect(container.querySelector("#install > h2")).not.toBeNull();
+    expect(container.querySelector("#install > header > h2")).not.toBeNull();
     expect(container.querySelector("#claude > h3")).not.toBeNull();
     expect(container.querySelector("#marketplace-codex > h3")).not.toBeNull();
   });

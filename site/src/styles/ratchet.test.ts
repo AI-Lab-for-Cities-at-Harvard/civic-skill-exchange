@@ -25,7 +25,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** The recorded counts. Lower them with a migration; never raise them. */
-const RECORDED = { spacingRules: 127, physicalSides: 10 };
+const RECORDED = { spacingRules: 119, physicalSides: 6 };
 
 const APP = readFileSync(join(__dirname, "app.css"), "utf8");
 

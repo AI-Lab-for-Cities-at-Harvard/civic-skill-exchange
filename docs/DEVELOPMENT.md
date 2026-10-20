@@ -557,6 +557,21 @@ mode switch, the repository row and the update-mode hand-off are
 `Cluster`s and `Stack`s. `.field`, `.submit__findings` and `.cta-row` are
 shared with the plugin form, the guide and About, and wait for their pages.
 
+**The guide (#321)** is the third page. A task is a `Stack` (32px, the
+subsection space) of its heading and lede, then its products; a product is a
+heading over a `Stack` of its steps, commands, notes and figures, so the
+heading's 12px and the parts' 16px are both kept. The steps, a command (the
+same `Stack` as the install box's), the figures and the glossary are Stacks,
+and the call to action is a `Cluster`. No third primitive was needed. A Stack also clears the 40px side
+margin a browser gives a `<figure>`, as it clears a `<dd>`'s indent (the first
+attempt left the screenshots 80px narrower at 375px; the browser measurement
+caught it). The
+rules they replaced are gone, including `.download__cmd`'s `display`, `gap` and
+`margin` (`DownloadBox` already laid itself out with a Stack), and
+`.guide__product`'s top margin in the rhythm block, which a Stack's gap now
+supplies. `.toc__link--current` is in logical properties; `.toc`, `.cta-row`
+and `.prose` stay for About.
+
 ### Testing the front end
 
 Logic lives in `src/lib/` as pure functions so it can be unit-tested without a

@@ -11,6 +11,8 @@
 /* A <dd> is indented by the browser; in a Stack (a row of a description list)
  * its value starts where its term does. */
 .l-stack > dd { margin-inline-start: 0; }
+/* Likewise a <figure>, which the browser sets 40px in from both sides. */
+.l-stack > figure { margin-inline: 0; }
 
 .l-cluster { display: flex; flex-wrap: wrap; }
 .l-cluster > * { margin: 0; }
