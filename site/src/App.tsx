@@ -14,6 +14,7 @@ import { applyFilters, applyPluginFilters } from "./lib/filter";
 import { parseRoute, type Route } from "./lib/route";
 import { repoSlug } from "./lib/repo";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
+import { Cluster } from "./components/Layout";
 
 type Theme = "light" | "dark";
 
@@ -150,6 +151,13 @@ export default function App() {
   const setFilter = (key: keyof Filters, value: string | null) =>
     setFilters((f) => ({ ...f, [key]: value }));
 
+  // The hero is the front page's opening. Where a page opens with its own
+  // heading and a form (the submit page, #309) the header is compact: the bar
+  // alone, so the site title, nav, language and theme stay and the title,
+  // lede and totals go. The statement's `h1` goes with them: the brand mark
+  // already names the site, and the page's own heading is the document's one.
+  const compact = route.page === "submit";
+
   return (
     <>
       <a className="skip-link" href="#results">{s.chrome.skipToContent}</a>
@@ -158,12 +166,12 @@ export default function App() {
           move — the palette belongs to the block, not to the page. */}
       <header className="topper" data-theme="crimson">
         <div className="topper__inner">
-          <div className="topper__bar">
-            <span className="topper__identity">
+          <Cluster className="topper__bar" gap="5">
+            <Cluster as="span" gap="3" className="topper__identity">
               <a className="topper__mark" href="#/">{s.chrome.brand}</a>
               <BetaBadge />
-            </span>
-            <nav className="nav" aria-label={s.chrome.nav.label}>
+            </Cluster>
+            <Cluster as="nav" gap="5" className="nav" aria-label={s.chrome.nav.label}>
               <a href="#/" aria-current={route.page === "browse" ? "page" : undefined}>
                 {s.chrome.nav.browse}
               </a>
@@ -205,9 +213,10 @@ export default function App() {
               >
                 {theme === "dark" ? s.chrome.theme.toLight : s.chrome.theme.toDark}
               </button>
-            </nav>
-          </div>
+            </Cluster>
+          </Cluster>
 
+          {!compact && (
           <div className="topper__statement">
             <h1 className="topper__title">{s.chrome.title}</h1>
             <p className="topper__lede">{s.chrome.lede}</p>
@@ -229,6 +238,7 @@ export default function App() {
               </p>
             )}
           </div>
+          )}
         </div>
       </header>
 

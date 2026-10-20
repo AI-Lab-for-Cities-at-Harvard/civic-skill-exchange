@@ -87,7 +87,7 @@ export function UploadSteps(
           <p className="steps__body" data-testid="fork-step-body">{t.send.forkBody}</p>
           <GlossaryLink word="fork" text={t.send.forkMore} />
           <Cluster>
-            <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
+            <a className="btn btn--strong" href={forkUrl(repo)} data-testid="step-fork"
               target="_blank" rel="noreferrer">{t.send.forkCta}</a>
           </Cluster>
           <Field
@@ -136,7 +136,7 @@ export function UploadSteps(
         <GlossaryLink word="commit" text={t.send.commitMore} />
         {!named ? null : uploadHref ? (
           <Cluster>
-            <a className="btn" href={uploadHref}
+            <a className="btn btn--strong" href={uploadHref}
               data-testid="step-upload" target="_blank" rel="noreferrer">
               {t.send.uploadCta}
             </a>
@@ -155,7 +155,7 @@ export function UploadSteps(
           <GlossaryLink word="pull-request" text={t.send.pullRequestMore} />
           {prHref && (
             <Cluster>
-              <a className="btn" href={prHref}
+              <a className="btn btn--strong" href={prHref}
                 data-testid="step-pr" target="_blank" rel="noreferrer">
                 {t.send.pullRequestCta}
               </a>
