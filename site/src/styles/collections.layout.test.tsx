@@ -14,8 +14,14 @@ const bodies = (selector: string) =>
   RULES.filter((r) => r.selector.split(/\s*,\s*/).includes(selector)).map((r) => r.body).join(";");
 
 describe("the collection tiles", () => {
-  it("give every row of tiles the same height", () => {
+  it("give every row of tiles the same height once they sit side by side", () => {
     expect(bodies(".collections__list")).toMatch(/grid-auto-rows:\s*1fr/);
+    expect(APP).toMatch(/@media \(min-width: 641px\) \{\s*\.collections__list \{ grid-auto-rows: 1fr; \}/);
+  });
+
+  it("let a stacked tile on a phone be as tall as its own note", () => {
+    const outside = APP.replace(/@media[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g, "");
+    expect(outside).not.toMatch(/\.collections__list\s*\{[^}]*grid-auto-rows/);
   });
 
   it("push each tile's count to its bottom edge, so the counts line up", () => {

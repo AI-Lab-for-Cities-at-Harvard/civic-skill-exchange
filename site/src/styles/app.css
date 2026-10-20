@@ -280,7 +280,11 @@ a:hover { color: var(--c-spot); }
    count to its bottom edge, so the counts line up however long a note is. The
    whole tile is the link's target, through the title's ::after. */
 .collections__heading { font-size: var(--t-lg); }
-.collections__list { grid-auto-rows: 1fr; }
+/* Only once tiles sit side by side: stacked on a phone, one height for all
+   would leave a short note's tile half empty. */
+@media (min-width: 641px) {
+  .collections__list { grid-auto-rows: 1fr; }
+}
 .tile { position: relative; justify-content: space-between; }
 .tile:hover { border-color: var(--c-border); }
 .tile__title { font-family: var(--f-sans); font-weight: 600; font-size: var(--t-base); line-height: 1.25; }
