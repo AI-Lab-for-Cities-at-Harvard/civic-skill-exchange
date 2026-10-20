@@ -47,14 +47,22 @@ when something has gone wrong.
 
 ### Step 1 — Give the page your skill
 
-Drop in a `.zip` of the skill folder, paste the address of the repository it
-lives in, or paste your `SKILL.md` directly. If the skill is one folder of a
+Drop a `.zip` of the skill folder onto the box (or choose it with the file
+button), paste the address of the repository it lives in, or paste your `SKILL.md` directly. If the skill is one folder of a
 larger repository, paste that folder's address —
 `github.com/you/repo/tree/main/my-skill` — and only that folder is read.
 A plugin goes in the same way; see [Sharing a plugin](#sharing-a-plugin).
 
+The box takes a `.zip`, not a folder: a dropped folder arrives as a directory
+entry and not as files, and the page reads archives. Zip the folder first.
+
 The archive is unpacked **in your browser**. It is not sent anywhere. The page
 reads what is already in your `SKILL.md` and fills itself in.
+
+A question reports what is wrong with it once you have edited it or clicked out
+of it, and every question does once you try to continue. A form you have not
+touched does not start out covered in errors. The grey text inside a box is an
+example (it starts "e.g."), not an answer.
 
 It checks the folder with the same rules CI applies to a skill's own
 directory. A skill with an MCP server is a plugin, so a `.mcp.json` or
@@ -100,7 +108,8 @@ leaving everything else exactly as you wrote it — body, comments, key order.
 
 **Download that folder and upload that one.** Your original on disk does not have
 the answers in it. The page shows you the lines it added, so you can see what the
-difference is.
+difference is. It counts only what changed in meaning: a description it left
+folded differently, or a value that lost its quotes, is not listed as added.
 
 ![The lines the page added to SKILL.md, each marked with a plus, above a note that your original file on disk still does not have them.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-03-what-we-added.png)
 
@@ -338,10 +347,12 @@ the plugin form by itself. The page:
   and marked complete;
 - writes `$schema`, the name `{your-github-username}-{plugin-name}` and your
   answers into `plugin.json`, and each skill's answers into its own `SKILL.md`,
-  and shows you the lines it added;
+  and shows you the lines it added, then the whole of `plugin.json`,
+  `mcp.json` and each `SKILL.md` as they will be uploaded;
 - hands the folder back for the upload into `plugins/{your-github-username}/`,
   through the same fork, upload and pull request steps as a skill of several
-  files.
+  files. As for a skill, the download waits for a username GitHub would allow
+  and a name, and says so.
 
 A plugin exported from Claude Code has `.claude-plugin/plugin.json` and
 `.mcp.json` but no `plugin.json` or `mcp.json` at its top. The page converts it
