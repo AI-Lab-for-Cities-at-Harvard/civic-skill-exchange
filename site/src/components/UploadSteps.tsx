@@ -8,7 +8,8 @@ import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import {
   checkFork, forkOwner, forkUrl, forkUploadUrl, hasNamespace, landingPath, namespaceOf,
-  pullRequestUrl, registryUploadUrl, uploadPath, usableFork, type ListingTree,
+  pullRequestText, pullRequestUrl, registryUploadUrl, uploadPath, usableFork,
+  type ListingTree, type PullRequestInput,
 } from "../lib/submit";
 import { guideHref } from "../lib/route";
 import { Field } from "./Field";
@@ -26,7 +27,7 @@ function GlossaryLink({ word, text }: { word: string; text: string }) {
 export function UploadSteps(
   {
     repo, reserved, tree, draft, folderName, folderBody,
-    forkInput, onForkInput, onDownload, canDownload,
+    forkInput, onForkInput, onDownload, canDownload, review,
   }: {
     repo: string;
     /** A namespace CODEOWNERS gates rather than a person. Its submitter has
@@ -43,6 +44,9 @@ export function UploadSteps(
     onForkInput: (value: string) => void;
     onDownload: () => void;
     canDownload: boolean;
+    /** What the pull request's title and description say (#300). Without it
+     *  the link opens GitHub's bare form. */
+    review?: PullRequestInput;
   },
 ) {
   const t = useStrings().submit;
@@ -58,7 +62,8 @@ export function UploadSteps(
   const uploadHref = !named ? null : reserved
     ? registryUploadUrl(repo, draft, tree)
     : forkUploadUrl(usable, draft, tree);
-  const prHref = reserved || !named ? null : pullRequestUrl(repo, usable);
+  const prHref = reserved || !named ? null : pullRequestUrl(
+    repo, usable, review ? pullRequestText(review) : undefined);
 
   return (
     <ol className="steps" data-testid="manual-steps">

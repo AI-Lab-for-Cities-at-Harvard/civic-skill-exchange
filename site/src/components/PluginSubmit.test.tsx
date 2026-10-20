@@ -586,3 +586,18 @@ describe("Submit — one source at a time", () => {
     expect(es.submit.intake.imported(1, "a/b", "abc1234")).toContain("Se leyó 1 archivo");
   });
 });
+
+/** #300: a plugin's pull request is reviewed by a maintainer who is asked
+ *  automatically (CODEOWNERS owns /plugins/), and the page says so. */
+describe("PluginSubmit — after the hand-off", () => {
+  it("says a maintainer is asked automatically, and pre-fills the pull request", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await user.type(screen.getByLabelText(/address of your copy/i), "sgarcese/my-copy");
+    expect(screen.getByTestId("review-who")).toHaveTextContent(/asked automatically/i);
+    const q = new URL(screen.getByTestId("step-pr").getAttribute("href")!).searchParams;
+    expect(q.get("title")).toBe("Add plugin sgarcese/housing-dashboards");
+    expect(q.get("body")).toContain("`plugins/sgarcese/housing-dashboards`");
+  });
+});
