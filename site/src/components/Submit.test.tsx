@@ -76,8 +76,33 @@ describe("Submit — the frontmatter it builds", () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await fill(user);
-    expect(document.body.textContent).toContain(
-      "mkdir -p skills/cityofx/permit-status-explainer/skills/permit-status-explainer");
+    const text = screen.getByTestId("command-line").textContent ?? "";
+    expect(text).toContain(
+      "cp -R /path/to/permit-status-explainer " +
+      "skills/cityofx/permit-status-explainer/skills/permit-status-explainer");
+    expect(text).toContain(
+      "npx tsx validator/src/cli.ts skills/cityofx/permit-status-explainer\n");
+  });
+
+  it("clones the submitter's fork and pushes there, never the registry (S-7)", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    const text = screen.getByTestId("command-line").textContent ?? "";
+    expect(text).toContain("git clone https://github.com/YOUR-USERNAME/civic-skill-exchange.git");
+    expect(text).not.toContain(`github.com/${REPO}`);
+    expect(text).toContain("git add skills/cityofx/permit-status-explainer\n");
+    expect(text).not.toContain("commit -am");
+    expect(text).toContain("git push -u origin add-permit-status-explainer");
+  });
+
+  it("renders no leading indentation on any line of the recipe", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    const lines = (screen.getByTestId("command-line").textContent ?? "").split("\n");
+    expect(lines.length).toBeGreaterThan(5);
+    for (const line of lines) expect(line).toBe(line.trimStart());
   });
 });
 

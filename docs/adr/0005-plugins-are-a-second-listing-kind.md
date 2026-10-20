@@ -131,7 +131,10 @@ for the user to add themselves.
 **The site shows plugins apart from skills.** A plugin has several categories,
 languages and sensitivities, one per skill; the catalogue's facets are for
 skills, and folding plugins into them would make each facet a question with two
-meanings.
+meanings. The facets' options and counts stay about skills; the Plugins section
+still follows the search words and whichever facets are chosen, by the fields a
+plugin has (scope and localization through any one of its skills), and the hero
+counts plugins beside skills rather than inside them (#299).
 
 ## When to revisit
 

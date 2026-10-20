@@ -186,8 +186,7 @@ export const strings: Strings = {
 
     stats: {
       skills: (n: number) => `**${n}** habilidad${n === 1 ? "" : "es"}`,
-      reviewed: (n: number) => `**${n}** revisada${n === 1 ? "" : "s"}`,
-      community: (n: number) => `**${n}** de comunidad`,
+      plugins: (n: number) => `**${n}** plugin${n === 1 ? "" : "s"}`,
     },
     footer: {
       disclaimer:
@@ -561,6 +560,18 @@ export const strings: Strings = {
 
       seeYaml: "Vea lo que se va a agregar",
       commandLine: "O hágalo desde la línea de comandos",
+      recipeIntro:
+        "Primero haga un fork del registro en GitHub y luego clone su fork, " +
+        "no el registro, donde solo sus mantenedores pueden subir cambios. " +
+        "Donde dice YOUR-USERNAME, escriba su usuario de GitHub, o pegue " +
+        "arriba la dirección de su fork y se completa sola. Donde dice " +
+        "/path/to/, escriba el lugar de su computadora donde está la carpeta " +
+        "que descargó, ya descomprimida. " +
+        "`npm ci` instala lo que necesita el verificador.",
+      recipeAfter:
+        "Cuando termine el push, git muestra un enlace para abrir el pull " +
+        "request. Si no lo ve, abra su fork en GitHub y elija " +
+        "“Compare & pull request”.",
     },
 
     update: {
@@ -1048,6 +1059,10 @@ export const strings: Strings = {
             "Agregue el intercambio y luego instale cualquier habilidad o " +
               "plugin por su nombre. La página de cada publicación muestra su " +
               "línea exacta.",
+            "Para actualizar el catálogo del intercambio en cualquier momento y " +
+              "recibir las publicaciones nuevas y actualizadas, ejecute `claude " +
+              "plugin marketplace update` (o `claude plugin marketplace update " +
+              "civic-skill-exchange`, solo para este).",
             "¿Instaló una habilidad de aquí antes de que pasara a la estructura " +
               "de plugins? Su copia sigue funcionando. `claude plugin update " +
               "{namespace}-{skill-name}@civic-skill-exchange` la pone al día; " +
@@ -1061,6 +1076,10 @@ export const strings: Strings = {
               "plugin por su nombre, el mismo que en Claude Code. La página de " +
               "cada publicación muestra su línea exacta. Como en Claude Code, " +
               "`--sparse` descarga solo las publicaciones.",
+            "Para actualizar el catálogo del intercambio en cualquier momento y " +
+              "recibir las publicaciones nuevas y actualizadas, ejecute `codex " +
+              "plugin marketplace upgrade` (o `codex plugin marketplace upgrade " +
+              "civic-skill-exchange`, solo para este).",
             "¿Instaló una habilidad de aquí antes de que pasara a la estructura " +
               "de plugins? `codex plugin marketplace upgrade` la pone al día, " +
               "con el mismo nombre.",
@@ -1659,6 +1678,13 @@ export const strings: Strings = {
       "Varias habilidades que funcionan juntas y se instalan como una sola, " +
       "con los servidores MCP a los que se conectan. Sus habilidades se " +
       "describen en la página de cada plugin.",
+    count: {
+      all: (n: number) => `${n} plugin${n === 1 ? "" : "s"}`,
+      some: (shown: number, total: number) => `${shown} de ${total} plugins`,
+    },
+    empty:
+      "Ningún plugin coincide con estos filtros. [Quite los filtros](clear) " +
+      "para ver todos los plugins.",
     card: {
       cta: "Ver este plugin",
       skills: (n: number) => `${n} habilidad${n === 1 ? "" : "es"}`,

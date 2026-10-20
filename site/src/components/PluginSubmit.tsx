@@ -26,7 +26,7 @@ import {
   pluginFieldId, readPluginSource, skillDraftFromFile, skillMdPath,
   type PluginDraft,
 } from "../lib/plugin";
-import { slugify, skillPath, type Draft } from "../lib/submit";
+import { slugify, recipe, recipeInput, type Draft } from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { isGitHubLogin } from "../lib/login";
 import { Choice, Field, type FieldNames } from "./Field";
@@ -200,7 +200,6 @@ export function PluginSubmit(
   };
 
   const id = (key: keyof PluginDraft) => pluginFieldId(key);
-  const listingPath = skillPath(draft, "plugins");
 
   /** One per-skill question, as the skill form asks it. */
   const question = (skill: string, key: string, findings: Finding[]) => {
@@ -522,13 +521,11 @@ export function PluginSubmit(
 
         <details className="disclosure">
           <summary className="disclosure__summary">{t.send.commandLine}</summary>
+          <p className="submit__note">{t.send.recipeIntro}</p>
           <pre className="submit__yaml" data-testid="command-line"><code>{
-  `git clone https://github.com/${repo}.git
-  mkdir -p ${listingPath}
-  npx tsx validator/src/cli.ts ${listingPath}
-  git checkout -b add-${draft.name || "your-plugin"}
-  git add plugins/ && git commit -m "Add ${listingPath}"
-  git push origin add-${draft.name || "your-plugin"}`}</code></pre>
+            recipe(recipeInput(repo, forkInput, draft, "plugins", "your-plugin"))
+          }</code></pre>
+          <p className="submit__note">{t.send.recipeAfter}</p>
         </details>
       </section>
     </div>

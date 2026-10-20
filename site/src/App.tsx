@@ -11,7 +11,7 @@ import { rich } from "./i18n/rich";
 import {
   DEFAULT_LOCALE, LOCALE_NAMES, locales, setLocale, useStrings,
 } from "./i18n/strings";
-import { applyFilters } from "./lib/filter";
+import { applyFilters, applyPluginFilters } from "./lib/filter";
 import { parseRoute, type Route } from "./lib/route";
 import { repoSlug } from "./lib/submit";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
@@ -126,7 +126,7 @@ export default function App() {
   // defeat the useMemo below it and re-filter the whole catalog on each keystroke.
   const skills = useMemo(() => index?.skills ?? [], [index]);
   // Absent from an index built before plugins existed (ADR 0005).
-  const plugins = index?.plugins ?? [];
+  const plugins = useMemo(() => index?.plugins ?? [], [index]);
 
   // #/about/<section> and #/guide/<section> rather than a fragment, because
   // hash routing has only one `#`. The scroll happens here rather than in the
@@ -139,6 +139,8 @@ export default function App() {
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [section, index]);
   const results = useMemo(() => applyFilters(skills, filters), [skills, filters]);
+  const pluginResults = useMemo(
+    () => applyPluginFilters(plugins, filters), [plugins, filters]);
   const active = Object.entries(filters).some(([k, v]) => (k === "q" ? v !== "" : v !== null));
 
   const setFilter = (key: keyof Filters, value: string | null) =>
@@ -207,11 +209,12 @@ export default function App() {
             <p className="topper__lede">{s.chrome.lede}</p>
             {index && (
               <p className="topper__stats">
+                {/* The catalogue's two totals, and nothing else (owner, #306):
+                    a tier count would have to say how many of each are
+                    skills and how many plugins. */}
                 {rich(s.chrome.stats.skills(index.counts.total))}
                 <span className="topper__dot" aria-hidden="true">·</span>
-                {rich(s.chrome.stats.reviewed(index.counts.reviewed))}
-                <span className="topper__dot" aria-hidden="true">·</span>
-                {rich(s.chrome.stats.community(index.counts.community))}
+                {rich(s.chrome.stats.plugins(plugins.length))}
               </p>
             )}
           </div>
@@ -324,9 +327,26 @@ export default function App() {
                 <section className="plugins" aria-labelledby="plugins-heading">
                   <h2 className="h2" id="plugins-heading">{s.plugins.heading}</h2>
                   <p>{s.plugins.intro}</p>
-                  <div className="grid">
-                    {plugins.map((pl) => <PluginCard key={pl.id} plugin={pl} />)}
-                  </div>
+                  <p className="results__count">
+                    {pluginResults.length === plugins.length
+                      ? s.plugins.count.all(plugins.length)
+                      : s.plugins.count.some(pluginResults.length, plugins.length)}
+                  </p>
+                  {pluginResults.length === 0 ? (
+                    <p className="notice">
+                      {rich(s.plugins.empty, {
+                        clear: (kids) => (
+                          <button className="linkish" onClick={() => setFilters(EMPTY_FILTERS)}>
+                            {kids}
+                          </button>
+                        ),
+                      })}
+                    </p>
+                  ) : (
+                    <div className="grid">
+                      {pluginResults.map((pl) => <PluginCard key={pl.id} plugin={pl} />)}
+                    </div>
+                  )}
                 </section>
               )}
             </>
