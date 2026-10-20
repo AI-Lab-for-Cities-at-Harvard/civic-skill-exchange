@@ -1047,6 +1047,10 @@ export const strings: Strings = {
             "Agregue el intercambio y luego instale cualquier habilidad o " +
               "plugin por su nombre. La página de cada publicación muestra su " +
               "línea exacta.",
+            "Para actualizar el catálogo del intercambio en cualquier momento y " +
+              "recibir las publicaciones nuevas y actualizadas, ejecute `claude " +
+              "plugin marketplace update` (o `claude plugin marketplace update " +
+              "civic-skill-exchange`, solo para este).",
             "¿Instaló una habilidad de aquí antes de que pasara a la estructura " +
               "de plugins? Su copia sigue funcionando. `claude plugin update " +
               "{namespace}-{skill-name}@civic-skill-exchange` la pone al día; " +
@@ -1060,6 +1064,10 @@ export const strings: Strings = {
               "plugin por su nombre, el mismo que en Claude Code. La página de " +
               "cada publicación muestra su línea exacta. Como en Claude Code, " +
               "`--sparse` descarga solo las publicaciones.",
+            "Para actualizar el catálogo del intercambio en cualquier momento y " +
+              "recibir las publicaciones nuevas y actualizadas, ejecute `codex " +
+              "plugin marketplace upgrade` (o `codex plugin marketplace upgrade " +
+              "civic-skill-exchange`, solo para este).",
             "¿Instaló una habilidad de aquí antes de que pasara a la estructura " +
               "de plugins? `codex plugin marketplace upgrade` la pone al día, " +
               "con el mismo nombre.",

@@ -1202,6 +1202,10 @@ export const en = {
           notes: [
             "Add the exchange, then install any skill or plugin by name. Each " +
               "listing's page shows its exact install line.",
+            "To refresh the exchange's catalogue at any time and pick up new " +
+              "and updated listings, run `claude plugin marketplace update` " +
+              "(or `claude plugin marketplace update civic-skill-exchange` for " +
+              "just this one).",
             "Installed a skill from here before it moved into the plugin " +
               "layout? Your copy keeps working. `claude plugin update " +
               "{namespace}-{skill-name}@civic-skill-exchange` brings it up to " +
@@ -1214,6 +1218,10 @@ export const en = {
             "Add the exchange, then install any skill or plugin by name, the " +
               "same name as in Claude Code. Each listing's page shows its exact " +
               "line. As in Claude Code, `--sparse` downloads only the listings.",
+            "To refresh the exchange's catalogue at any time and pick up new " +
+              "and updated listings, run `codex plugin marketplace upgrade` " +
+              "(or `codex plugin marketplace upgrade civic-skill-exchange` for " +
+              "just this one).",
             "Installed a skill from here before it moved into the plugin " +
               "layout? `codex plugin marketplace upgrade` brings it up to date, " +
               "under the same name.",
