@@ -12,7 +12,7 @@ import {
 } from "./i18n/strings";
 import { applyFilters, applyPluginFilters } from "./lib/filter";
 import { parseRoute, type Route } from "./lib/route";
-import { repoSlug } from "./lib/submit";
+import { repoSlug } from "./lib/repo";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
 
 type Theme = "light" | "dark";

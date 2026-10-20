@@ -8,10 +8,11 @@
  *  the measured length before navigating, never from catching an error.
  */
 
+import { repoSlug } from "./repo";
 import { describe, it, expect } from "vitest";
 import { checkFrontmatter } from "@civic-skill-exchange/validator/rules";
 import {
-  toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, repoSlug, slugify,
+  toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, slugify,
   URL_BUDGET,
   fitsInUrl,
   forkUploadUrl, pullRequestUrl, pullRequestText, PR_URL_BUDGET, registryUploadUrl, parseForkRef, skillPath, namespacePath,
