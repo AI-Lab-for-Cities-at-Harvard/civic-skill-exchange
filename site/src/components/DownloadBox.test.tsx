@@ -201,7 +201,7 @@ describe("DownloadBox — the note under the commands", () => {
   it("says both clients install from the lines above, and the rest use the download", () => {
     render(<DownloadBox skill={detail()} />);
     const box = screen.getByRole("region", { name: /use this skill/i });
-    expect(box.textContent).toMatch(/In Claude Code and Codex, the two marketplace lines are all you need/);
+    expect(box.textContent).toMatch(/In Claude Code and Codex, the two marketplace lines below are all you need/);
     expect(box.textContent).not.toMatch(/Codex, Gemini, Copilot/);
   });
 });
@@ -253,5 +253,27 @@ describe("DownloadBox — where each line is typed, and how to check", () => {
     expect(label(lines.codexInstall)).toMatch(/^En una terminal/);
     expect(label(lines.claudeCheck)).toMatch(/^En una terminal, para Claude Code/);
     expect(label(lines.codexCheck)).toMatch(/^En una terminal, para Codex/);
+  });
+});
+
+/* #302 (I-6): six routes came ahead of the line that says two of them are all
+   you need. The line now comes before the first command. */
+describe("DownloadBox — the \"all you need\" line comes first (I-6)", () => {
+  it("sits before every command", () => {
+    render(<DownloadBox skill={detail()} />);
+    const box = screen.getByRole("region", { name: /use this skill/i });
+    const note = within(box).getByText(/are all you need/i);
+    const first = box.querySelector(".download__cmd")!;
+    expect(note.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+  });
+
+  it("is only the download ahead of it", () => {
+    render(<DownloadBox skill={detail()} />);
+    const box = screen.getByRole("region", { name: /use this skill/i });
+    const note = within(box).getByText(/are all you need/i);
+    const ahead = [...box.querySelectorAll(".download__cmd")].filter((c) =>
+      c.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(ahead).toHaveLength(0);
   });
 });
