@@ -258,6 +258,7 @@ describe("Submit — plain language", () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.click(screen.getByTestId("handoff"));
     const notes = screen.getAllByText(/is required/i, { selector: ".field__finding" });
     expect(notes.length).toBeGreaterThan(0);
     for (const note of notes) expect(note.textContent).not.toMatch(/civic\./);

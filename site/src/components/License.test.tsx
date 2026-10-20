@@ -80,6 +80,9 @@ describe("the skill route", () => {
     await user.upload(archiveInput(), zip("s.zip", { "s/SKILL.md": front("permit-status-explainer") }));
     await screen.findByTestId("archive-result");
     expect(licenseBox().value).toBe("");
+    // Said once the box has been visited (#302, S-13), not on arrival.
+    await user.click(licenseBox());
+    await user.tab();
     expect(licenseBox().closest(".field")).toHaveTextContent(/license is required/i);
   });
 
@@ -138,6 +141,8 @@ describe("the plugin route", () => {
     const user = userEvent.setup();
     await drop(user, plugin());
     expect(screen.getByTestId("skill-one")).not.toHaveTextContent(/license/i);
+    await user.click(licenseBox());
+    await user.tab();
     expect(licenseBox().closest(".field")).toHaveTextContent(/license is required/i);
   });
 
