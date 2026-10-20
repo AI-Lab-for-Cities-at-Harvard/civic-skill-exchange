@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, afterEach, beforeEach, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import App from "../App";
 import { makeIndex, makePlugin, makeSkill } from "../test/fixtures";
 import { findViolations, describeViolations } from "../test/axe";
@@ -89,6 +89,80 @@ describe("the browse page", () => {
     render(<App />);
     await screen.findByText(/1 skill/i);
     expect(screen.queryByRole("region", { name: /plugins/i })).toBeNull();
+  });
+});
+
+describe("search and counts on the browse page (#299)", () => {
+  const two = (): Index => ({
+    ...makeIndex([
+      makeSkill({ id: "ns/a", name: "plain-language-notice", description: "Rewrites notices." }),
+      makeSkill({ id: "ns/b", name: "permit-explainer", description: "Explains permits." }),
+    ]),
+    plugins: [
+      makePlugin(),
+      makePlugin({ id: "ns/notice-kit", name: "notice-kit",
+        description: "Tools for plain notices.", keywords: ["notices"] }),
+    ],
+  });
+  const search = (q: string) =>
+    fireEvent.change(screen.getByLabelText("Search"), { target: { value: q } });
+  const pluginSection = () => screen.getByRole("region", { name: /plugins/i });
+
+  it("narrows the plugins to those matching every word of the search", async () => {
+    serve({ "index.json": two() });
+    render(<App />);
+    await screen.findByRole("region", { name: /plugins/i });
+    search("plain notices");
+    expect(within(pluginSection()).getByRole("link", { name: "notice-kit" })).toBeInTheDocument();
+    expect(within(pluginSection()).queryByRole("link", { name: "housing-dashboards" })).toBeNull();
+  });
+
+  it("says no plugin matches, with a way to clear, the way the skill grid does", async () => {
+    serve({ "index.json": two() });
+    render(<App />);
+    await screen.findByRole("region", { name: /plugins/i });
+    search("housingzzqq");
+    expect(within(pluginSection()).getByText(/no plugins match these filters/i))
+      .toBeInTheDocument();
+    expect(within(pluginSection()).queryAllByRole("article")).toHaveLength(0);
+    fireEvent.click(within(pluginSection()).getByRole("button", { name: /clear them/i }));
+    expect(within(pluginSection()).getAllByRole("article")).toHaveLength(2);
+  });
+
+  it("applies a facet to plugins by the fields they have", async () => {
+    const idx = two();
+    idx.plugins![1] = { ...idx.plugins![1], tier: "reviewed" };
+    serve({ "index.json": idx });
+    render(<App />);
+    await screen.findByRole("region", { name: /plugins/i });
+    fireEvent.click(screen.getByRole("radio", { name: /^Reviewed/ }));
+    expect(within(pluginSection()).getByRole("link", { name: "notice-kit" })).toBeInTheDocument();
+    expect(within(pluginSection()).queryByRole("link", { name: "housing-dashboards" })).toBeNull();
+  });
+
+  it("says exactly what each count counts", async () => {
+    serve({ "index.json": two() });
+    render(<App />);
+    await screen.findByRole("region", { name: /plugins/i });
+    const hero = () => document.querySelector(".topper__stats");
+    const grid = () => document.querySelector(".results__count");
+    // The hero and the grid count skills, and say so; plugins are counted
+    // in their own words beside the skills, never folded into them.
+    expect(hero()).toHaveTextContent("2 skills·2 plugins·0 reviewed·2 community");
+    expect(grid()).toHaveTextContent(/^2 skills$/);
+    expect(within(pluginSection()).getByText("2 plugins")).toBeInTheDocument();
+    search("housing");
+    expect(grid()).toHaveTextContent(/^0 of 2 skills$/);
+    expect(within(pluginSection()).getByText("1 of 2 plugins")).toBeInTheDocument();
+    // The hero is the catalogue's size, not the search's.
+    expect(hero()).toHaveTextContent("2 skills·2 plugins");
+  });
+
+  it("leaves the hero without a plugin count when there are no plugins", async () => {
+    serve({ "index.json": makeIndex([makeSkill()]) });
+    render(<App />);
+    await screen.findByText(/1 skill/i);
+    expect(document.querySelector(".topper__stats")).not.toHaveTextContent(/plugin/i);
   });
 });
 

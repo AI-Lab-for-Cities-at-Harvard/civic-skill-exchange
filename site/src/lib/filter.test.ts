@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { applyFilters, categoryCounts, facetCounts, matchesQuery } from "./filter";
-import { EMPTY_FILTERS, type Skill } from "./types";
+import {
+  applyFilters, applyPluginFilters, categoryCounts, facetCounts, matchesPluginQuery,
+  matchesQuery,
+} from "./filter";
+import { makePlugin } from "../test/fixtures";
+import { EMPTY_FILTERS, type Filters, type Plugin, type Skill } from "./types";
 
 function skill(over: Partial<Skill> = {}): Skill {
   return {
@@ -185,5 +189,81 @@ describe("the language facet", () => {
     // listing, and browsing must not say otherwise.
     const tested = [skill({ id: "a/1", language: "en", languages_tested: ["en", "es"] })];
     expect(applyFilters(tested, { ...EMPTY_FILTERS, language: "es" })).toEqual([]);
+  });
+});
+
+describe("matchesQuery, by separate words (#299)", () => {
+  const s = skill({
+    name: "plain-language-notice-rewriter",
+    description: "Rewrites a legal notice in plain words a resident can read.",
+    maintainer: "City of Boston",
+  });
+
+  it("finds a listing whose words are in the text but not as one phrase", () => {
+    expect(matchesQuery(s, "plain language notice")).toBe(true);
+    expect(matchesQuery(s, "notice plain")).toBe(true);
+  });
+
+  it("requires every word to match", () => {
+    expect(matchesQuery(s, "plain housingzzqq")).toBe(false);
+  });
+
+  it("lets different words match different fields", () => {
+    expect(matchesQuery(s, "boston rewrites")).toBe(true);
+  });
+
+  it("ignores case and the whitespace between and around words", () => {
+    expect(matchesQuery(s, "  PLAIN \t Notice \n")).toBe(true);
+  });
+
+  it("still matches a phrase that is in the text", () => {
+    expect(matchesQuery(s, "legal notice")).toBe(true);
+  });
+
+  it("matches everything for an empty or whitespace-only query", () => {
+    expect(matchesQuery(s, "")).toBe(true);
+    expect(matchesQuery(s, " \t\n ")).toBe(true);
+  });
+});
+
+describe("plugin filtering (#299)", () => {
+  const pl = (over: Partial<Plugin> = {}) => makePlugin(over);
+  const run = (p: Plugin, over: Partial<Filters>) =>
+    applyPluginFilters([p], { ...EMPTY_FILTERS, ...over }).length;
+
+  it("matches a plugin by separate words across its name, description and skills", () => {
+    const p = pl();
+    expect(matchesPluginQuery(p, "housing dashboards")).toBe(true);
+    expect(matchesPluginQuery(p, "briefs county")).toBe(true);
+    expect(matchesPluginQuery(p, "housing-brief")).toBe(true);
+    expect(matchesPluginQuery(p, "test suite")).toBe(true);
+    expect(matchesPluginQuery(p, "housingzzqq")).toBe(false);
+    expect(matchesPluginQuery(p, "housing housingzzqq")).toBe(false);
+    expect(matchesPluginQuery(p, "  ")).toBe(true);
+  });
+
+  it("applies the filters a plugin has a value for", () => {
+    const p = pl({ categories: ["finance", "legal"], languages: ["en", "es"],
+      data_sensitivity: "none", tier: "community" });
+    expect(run(p, { category: "legal" })).toBe(1);
+    expect(run(p, { category: "housing" })).toBe(0);
+    expect(run(p, { language: "es" })).toBe(1);
+    expect(run(p, { language: "fr" })).toBe(0);
+    expect(run(p, { dataSensitivity: "none" })).toBe(1);
+    expect(run(p, { dataSensitivity: "protected" })).toBe(0);
+    expect(run(p, { tier: "community" })).toBe(1);
+    expect(run(p, { tier: "reviewed" })).toBe(0);
+  });
+
+  it("applies scope and localization through the plugin's skills: any one is enough", () => {
+    const base = makePlugin();
+    const p = pl({ skills: [
+      { ...base.skills[0], scope: "municipal", localization: "localized" },
+      { ...base.skills[1], scope: "regional", localization: null },
+    ] });
+    expect(run(p, { scope: "regional" })).toBe(1);
+    expect(run(p, { scope: "national" })).toBe(0);
+    expect(run(p, { localization: "localized" })).toBe(1);
+    expect(run(p, { localization: "generalized" })).toBe(0);
   });
 });
