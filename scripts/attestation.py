@@ -55,6 +55,9 @@ NOTES_PLACEHOLDER = (
 #: worse than none, because it looks authoritative.
 ITEM = re.compile(r"^### (\d+)\. (.+)$", re.MULTILINE)
 
+#: What a pin in registry/reviewed.yml is.
+FULL_SHA = re.compile(r"[0-9a-f]{40}")
+
 
 def questionnaire() -> str:
     """The nine items as a markdown block, to paste into the review-request issue.
@@ -125,9 +128,15 @@ def repin_violations(root: Path, listing: str, old: str, new: str,
     and the build rewrites them. Each entry is "{status} {path}", for example
     "M skills/ns/name/SKILL.md".
     """
+    # The pins come from registry/reviewed.yml, which a pull request can edit:
+    # only a full SHA reaches git, and never where it could read as an option.
+    for pin in (old, new):
+        if not FULL_SHA.fullmatch(pin):
+            raise ValueError(f"{pin!r} is not a pin: a pin is a 40-character lowercase SHA.")
     generated = PLUGIN_GENERATED if plugin else LISTING_GENERATED
     out = subprocess.run(
-        ["git", "diff", "--name-status", "-M100%", old, new, "--", listing],
+        ["git", "diff", "--name-status", "-M100%", "--end-of-options", old, new,
+         "--", listing],
         cwd=root, capture_output=True, text=True, check=True).stdout
     found = []
     for line in out.splitlines():
