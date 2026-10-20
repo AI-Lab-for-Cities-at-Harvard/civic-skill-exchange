@@ -18,6 +18,7 @@ import { DEFAULT_LOCALE, setLocale } from "./i18n/strings";
 import { en } from "./i18n/en";
 import { findViolations, describeViolations } from "./test/axe";
 import { makeIndex, makeSkill } from "./test/fixtures";
+import { waitForLazyPage } from "./test/lazy";
 
 const INDEX = makeIndex([makeSkill()]);
 
@@ -46,7 +47,8 @@ async function open(hash: string) {
   const host = document.body.appendChild(document.createElement("div"));
   const view = render(<App />, { container: host });
   await waitFor(() => expect(screen.getByTestId("footer-meta")).toBeInTheDocument());
-  await screen.findByRole("heading", { level: 1, name: en.submit.heading });
+  // Submit is its own chunk (#314): wait for it however slow the machine (#342).
+  await waitForLazyPage(() => screen.queryByRole("heading", { level: 1, name: en.submit.heading }));
   return view;
 }
 
