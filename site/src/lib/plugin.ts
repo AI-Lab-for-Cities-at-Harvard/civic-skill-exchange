@@ -274,12 +274,30 @@ function frontmatterOf(skillMd: string): Frontmatter | null {
   }
 }
 
-/** Only this skill's own answers, so nothing the plugin declares is written
- *  into its SKILL.md. */
-export function patchPluginSkill(skillMd: string, draft: Draft): PatchedSkill {
+/** Only this skill's own answers, plus the license.
+ *
+ *  Everything else the plugin declares stays in plugin.json. The license is the
+ *  one exception, because CI's checkFrontmatter requires `license` in every
+ *  SKILL.md whether or not the skill sits in a plugin (#296). A skill takes the
+ *  plugin's license when it declares none of its own; one it does declare is its
+ *  author's, and is left as written. */
+export function patchPluginSkill(
+  skillMd: string, draft: Draft, pluginLicense = "",
+): PatchedSkill {
   const all = toFields(draft);
-  const fields = Object.fromEntries(SKILL_QUESTIONS.map((k) => [k, all[k] ?? ""]));
+  const fields: Record<string, string> = Object.fromEntries(
+    SKILL_QUESTIONS.map((k) => [k, all[k] ?? ""]));
+  fields.license = all.license || pluginLicense.trim();
   return patchSkillMd(skillMd, fields);
+}
+
+/** The license every skill in the plugin declares, when they all declare the
+ *  same one; otherwise nothing. What the submitted files already say is the only
+ *  thing the form may start from (#296), so a split or a gap offers no guess. */
+export function sharedSkillLicense(source: PluginSource): string {
+  const licenses = source.skills.map((sk) => skillDraftFromFile(sk.skillMd).license.trim());
+  const first = licenses[0] ?? "";
+  return first !== "" && licenses.every((l) => l === first) ? first : "";
 }
 
 /** The questions a skill's findings say are open, in the form's order. */
@@ -336,13 +354,15 @@ export function checkPlugin(
     }
     // A SKILL.md with no metadata block yet is asked the questions, not told
     // "metadata is required" — the answers are what create the block.
+    // The license is the plugin's to choose, once, and the page writes it into
+    // each SKILL.md. Asking each skill for it would flag a gap no box answers.
     skills[skill.name] = checkFrontmatter(
       { ...front, metadata: isObject(front.metadata) ? front.metadata : {} },
       {
         categories: CATEGORIES, directoryName: skill.name, inPlugin: true,
         namespace: namespace || undefined, author: current.author.trim() || undefined,
       },
-    );
+    ).filter((x) => x.where !== "license");
   }
   return { structural, manifest, mcp, skills };
 }
