@@ -1111,3 +1111,41 @@ describe("Submit — a username GitHub would not issue", () => {
     expect(screen.getByTestId("handoff")).toHaveAttribute("aria-disabled", "false");
   });
 });
+
+/** #300: the hand-off ends by saying what happens next, on both routes. */
+describe("Submit — after the hand-off", () => {
+  it("says what happens next on the one-file route", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("what-next")).toHaveTextContent(/Add skill/);
+    expect(screen.getByTestId("review-who")).toHaveTextContent(/nobody is asked for you/i);
+  });
+
+  it("says it on the multi-file route, and pre-fills the pull request", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.type(screen.getByLabelText(/address of your copy/i), "cityofx/my-copy");
+    expect(screen.getByTestId("what-next")).toHaveTextContent(/in English/);
+    const q = new URL(screen.getByTestId("step-pr").getAttribute("href")!).searchParams;
+    expect(q.get("title")).toMatch(/^Add skill cityofx\//);
+  });
+
+  it("titles the pull request Update when the listing is already in the registry", async () => {
+    const user = userEvent.setup();
+    const listed = makeSkill({ namespace: "cityofx", name: "permit-status-explainer" });
+    render(<Submit repo={REPO} skills={[listed]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.type(screen.getByLabelText(/address of your copy/i), "cityofx/my-copy");
+    const q = new URL(screen.getByTestId("step-pr").getAttribute("href")!).searchParams;
+    expect(q.get("title")).toBe("Update skill cityofx/permit-status-explainer");
+  });
+
+  it("step 4 says the form comes filled in", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByText(/title and description already filled in/i)).toBeInTheDocument();
+  });
+});
