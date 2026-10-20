@@ -10,7 +10,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { render } from "@testing-library/react";
-import { Cluster, Stack, type Space } from "../components/Layout";
+import { Cluster, Grid, Stack, type Space } from "../components/Layout";
 
 const strip = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, "");
 const LAYOUT = strip(readFileSync(join(__dirname, "layout.css"), "utf8"));
@@ -36,11 +36,12 @@ describe("the layout primitives' stylesheet", () => {
     const defined = new Set([...TOKENS.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));
     const used = [...LAYOUT.matchAll(/var\((--[\w-]+)\)/g)].map((m) => m[1]);
     expect(used.length).toBeGreaterThan(0);
-    expect(used.filter((u) => !defined.has(u))).toEqual([]);
+    // --l-grid-min is a primitive's own input, set by <Grid min>, not a token.
+    expect(used.filter((u) => !defined.has(u) && u !== "--l-grid-min")).toEqual([]);
   });
 
   it("keeps [hidden] working, since display:flex in a layer beats the browser's", () => {
-    expect(LAYOUT).toMatch(/\.l-stack\[hidden\],\s*\.l-cluster\[hidden\]\s*\{\s*display:\s*none;?\s*\}/);
+    expect(LAYOUT).toMatch(/\.l-stack\[hidden\],\s*\.l-cluster\[hidden\],\s*\.l-grid\[hidden\]\s*\{\s*display:\s*none;?\s*\}/);
   });
 
   it("has a class for each Cluster alignment", () => {
@@ -134,5 +135,40 @@ describe("Stack and Cluster", () => {
       <Cluster align="middle" />
     );
     expect(typeof bad).toBe("function");
+  });
+});
+
+describe("Grid (#320)", () => {
+  it("takes a gap from the scale and a minimum column width, and sets nothing else inline", () => {
+    const { container } = render(<Grid gap="5" min="14rem" as="ul"><li>a</li></Grid>);
+    const ul = container.querySelector("ul")!;
+    expect(ul).toHaveClass("l-grid", "l-gap-5");
+    expect(ul.style.getPropertyValue("--l-grid-min")).toBe("14rem");
+    expect(ul.getAttribute("style")).toBe("--l-grid-min: 14rem;");
+  });
+
+  it("defaults to a gap of 16px (gap 4)", () => {
+    const { container } = render(<Grid min="10rem" />);
+    expect(container.firstElementChild).toHaveClass("l-gap-4");
+  });
+
+  it("refuses an off-scale gap and a minimum that is not a rem length, at compile time", () => {
+    const bad = () => (
+      <>
+        {/* @ts-expect-error 7 is not a step */}
+        <Grid gap="7" min="10rem" />
+        {/* @ts-expect-error a minimum is rem, so it follows the user's text size */}
+        <Grid min="260px" />
+        {/* @ts-expect-error a minimum is required */}
+        <Grid />
+      </>
+    );
+    expect(typeof bad).toBe("function");
+  });
+
+  it("is the auto-fit columns, each at most the row, in the layout layer", () => {
+    expect(LAYOUT).toMatch(
+      /\.l-grid\s*\{[^}]*display:\s*grid;[^}]*repeat\(auto-fit,\s*minmax\(min\(var\(--l-grid-min\),\s*100%\),\s*1fr\)\)/);
+    expect(LAYOUT).toMatch(/\.l-grid\s*>\s*\*\s*\{\s*margin:\s*0;?\s*\}/);
   });
 });

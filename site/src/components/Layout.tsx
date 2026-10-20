@@ -5,10 +5,12 @@
  *  the type says which steps exist, so `gap="7"` or `gap="13px"` does not
  *  compile. Their CSS is styles/layout.css, in a cascade layer above app.css.
  *
- *  Two only, until a page being migrated needs a third (ADR 0007, decision 1).
+ *  Stack and Cluster, and Grid, which About (#320) needed: three auto-fit
+ *  tables of equal columns that a Cluster cannot make (its last row stretches).
+ *  Another only when a page being migrated needs one (ADR 0007, decision 1).
  */
 
-import type { ElementType, HTMLAttributes } from "react";
+import type { CSSProperties, ElementType, HTMLAttributes } from "react";
 
 /** The scale in tokens.css: --gap-1 … --gap-6, then the HBS block spacing. */
 export type Space = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "sm" | "md" | "lg" | "xl";
@@ -34,4 +36,19 @@ export function Cluster(
   { as: Tag = "div", gap = "3", align = "center", className, ...rest }: Props & { align?: Align },
 ) {
   return <Tag className={cx("l-cluster", `l-gap-${gap}`, `l-align-${align}`, className)} {...rest} />;
+}
+
+/** Equal columns as many as fit: each at least `min`, sharing the row, and a
+ *  last row that is short leaves its cells their column's width instead of
+ *  stretching them (which a wrapping Cluster would). `min` is a measure, not a
+ *  space, so it is a length in rem rather than a step of the scale; it is the
+ *  only inline style a primitive sets, and only as a custom property. */
+export function Grid(
+  { as: Tag = "div", gap = "4", min, className, style, ...rest }:
+    Props & { min: `${number}rem` },
+) {
+  return (
+    <Tag className={cx("l-grid", `l-gap-${gap}`, className)}
+      style={{ ...style, "--l-grid-min": min } as CSSProperties} {...rest} />
+  );
 }

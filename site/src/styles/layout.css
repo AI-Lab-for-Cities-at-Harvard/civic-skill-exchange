@@ -17,9 +17,17 @@
 .l-cluster { display: flex; flex-wrap: wrap; }
 .l-cluster > * { margin: 0; }
 
+/* Columns as many as fit, each at least --l-grid-min (set by <Grid min>) and
+ * never wider than the row, sharing it equally. */
+.l-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--l-grid-min), 100%), 1fr));
+}
+.l-grid > * { margin: 0; }
+
 /* A primitive's display is in a layer, and the browser's `[hidden]` rule is
  * not, so without this `display: flex` would beat it and `hidden` would show. */
-.l-stack[hidden], .l-cluster[hidden] { display: none; }
+.l-stack[hidden], .l-cluster[hidden], .l-grid[hidden] { display: none; }
 
 .l-align-start { align-items: flex-start; }
 .l-align-center { align-items: center; }
