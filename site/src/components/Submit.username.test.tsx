@@ -75,7 +75,8 @@ function answer(status: number) {
 
 async function skillFlow(user: ReturnType<typeof userEvent.setup>) {
   render(<Submit repo={REPO} skills={[]} mode="new" />);
-  await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+  await user.upload(
+    screen.getByLabelText(/upload the skill folder|suba la carpeta/i), MULTI());
   await screen.findByTestId("archive-result");
 }
 

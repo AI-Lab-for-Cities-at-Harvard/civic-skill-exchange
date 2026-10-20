@@ -372,6 +372,12 @@ export const en = {
       noSuchUser: (login: string) =>
         `No GitHub user called ${login}. A submission whose folder does not ` +
         "match the account that opens the pull request is rejected.",
+      /** The lookup was rate limited or the network failed (#293). Not a
+       *  verdict, so it neither warns nor blocks. */
+      userUnchecked: (login: string) =>
+        `Couldn’t check ${login} with GitHub just now — it may be ` +
+        "busy, or you may be offline. You can carry on: the checks on the pull " +
+        "request will catch a username that is wrong.",
       /** `login` is what was typed. */
       badLogin: (login: string) =>
         `\u201c${login}\u201d is not a GitHub username. A username has only ` +
@@ -589,6 +595,24 @@ export const en = {
       forkUnparsed:
         "That does not look like a GitHub repository. It should be like " +
         "`github.com/you/civic-skill-exchange`.",
+      /** The registry's own address, pasted as the fork (#293, S-8). */
+      forkIsRegistry:
+        "That is the registry’s own address, not your copy. Fork it " +
+        "first with the button above, then paste the address of the copy " +
+        "GitHub makes for you — it has your username in it, like " +
+        "`github.com/you/civic-skill-exchange`.",
+      /** `owner` is the fork's account, `login` the typed username (#293, S-1). */
+      forkMismatch: (owner: string, login: string) =>
+        `Your copy is under \`${owner}\`, but the username above is ` +
+        `\`${login}\`. They should be the same account: the folder is named ` +
+        "for the username, and only that account can open the pull request " +
+        `for it. If you are signed in to GitHub as \`${owner}\`, change the ` +
+        `username to \`${owner}\`.`,
+      /** The username box is empty, so no path can be given yet (#293, S-2). */
+      usernameNeeded:
+        "Type your GitHub username above first. It names the folder your " +
+        "submission goes in, so the upload, the download and the commands " +
+        "wait for it.",
 
       uploadTitle: "Drag the folder in",
       /** `reserved` is a namespace CODEOWNERS gates rather than a person, whose
