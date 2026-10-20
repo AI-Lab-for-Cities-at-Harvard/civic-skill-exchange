@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Cluster, Stack } from "./Layout";
 import { DownloadBox } from "./DownloadBox";
 import { History } from "./History";
 import { categoriesOf, scopesOf } from "../lib/filter";
@@ -64,31 +65,33 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
     : d.facts.someReviewer;
 
   return (
-    <div className="page detail">
-      <nav className="crumbs" aria-label={d.breadcrumb}>
-        <a href="#/">{d.catalog}</a>
-        <span aria-hidden="true">/</span>
-        <span>{detail.namespace}</span>
-      </nav>
+    <Stack className="page detail" gap="md">
+      <Stack gap="4">
+        <Cluster as="nav" className="crumbs" gap="2" align="baseline" aria-label={d.breadcrumb}>
+          <a href="#/">{d.catalog}</a>
+          <span aria-hidden="true">/</span>
+          <span>{detail.namespace}</span>
+        </Cluster>
 
-      <header className="detail__head">
-        <div className="card__badges">
-          <TierBadge tier={detail.tier} reviewed={detail.reviewed} />
-          <LabBadge namespace={detail.namespace} />
-          <LocalizationBadge value={detail.localization} />
-          <DeploymentBadge provenance={detail.provenance} detail />
-        </div>
-        <h1 className="detail__title">{detail.name}</h1>
-        {/* Submitter-authored prose, in the listing's own language. Marked so
-            a screen reader on this English page reads a Spanish description in
-            a Spanish voice (#145). */}
-        <p className="detail__desc" lang={detail.language ?? undefined}>
-          {detail.description}
-        </p>
-        <p className="detail__maintainer">
-          {d.maintainedBy(detail.maintainer ?? s.vocabulary.missing)}
-        </p>
-      </header>
+        <Stack as="header" className="detail__head" gap="3">
+          <Cluster gap="2" align="stretch">
+            <TierBadge tier={detail.tier} reviewed={detail.reviewed} />
+            <LabBadge namespace={detail.namespace} />
+            <LocalizationBadge value={detail.localization} />
+            <DeploymentBadge provenance={detail.provenance} detail />
+          </Cluster>
+          <h1 className="detail__title">{detail.name}</h1>
+          {/* Submitter-authored prose, in the listing's own language. Marked so
+              a screen reader on this English page reads a Spanish description in
+              a Spanish voice (#145). */}
+          <p className="detail__desc" lang={detail.language ?? undefined}>
+            {detail.description}
+          </p>
+          <p className="detail__maintainer">
+            {d.maintainedBy(detail.maintainer ?? s.vocabulary.missing)}
+          </p>
+        </Stack>
+      </Stack>
 
       <div className="detail__grid">
         <div className="detail__main">
@@ -105,42 +108,42 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
           )}
 
           {(detail.use_when || detail.avoid_when) && (
-            <section aria-labelledby="fit-heading" className="detail__section">
+            <Stack as="section" aria-labelledby="fit-heading" className="detail__section" gap="4">
               <h2 className="h2" id="fit-heading">{d.fit.heading}</h2>
               <p>{d.fit.caveat}</p>
               {/* The author's own prose, in the listing's language — the same
                   reason the description is marked. On the list, so both items
                   inherit it. */}
-              <dl className="fit" lang={detail.language ?? undefined}>
+              <Stack as="dl" className="fit" gap="4" lang={detail.language ?? undefined}>
                 {detail.use_when && (
-                  <div className="fit__item">
+                  <Stack gap="2" className="fit__item">
                     <dt>{d.fit.use}</dt>
                     <dd>{detail.use_when}</dd>
-                  </div>
+                  </Stack>
                 )}
                 {detail.avoid_when && (
-                  <div className="fit__item fit__item--avoid">
+                  <Stack gap="2" className="fit__item fit__item--avoid">
                     <dt>{d.fit.avoid}</dt>
                     <dd>{detail.avoid_when}</dd>
-                  </div>
+                  </Stack>
                 )}
-              </dl>
-            </section>
+              </Stack>
+            </Stack>
           )}
 
-          <section aria-labelledby="tools-heading" className="detail__section">
+          <Stack as="section" aria-labelledby="tools-heading" className="detail__section" gap="4">
             <h2 className="h2" id="tools-heading">{d.tools.heading}</h2>
             <p>{rich(d.tools.caveat)}</p>
-            <ul className="tools">
+            <Cluster as="ul" className="tools" gap="2" align="stretch">
               {detail.allowed_tools.length === 0 ? (
                 <li className="tools__none">{d.tools.none}</li>
               ) : (
                 detail.allowed_tools.map((t) => <li key={t}><code>{t}</code></li>)
               )}
-            </ul>
-          </section>
+            </Cluster>
+          </Stack>
 
-          <section aria-labelledby="structure-heading" className="detail__section">
+          <Stack as="section" aria-labelledby="structure-heading" className="detail__section" gap="4">
             <h2 className="h2" id="structure-heading">{d.structure.heading}</h2>
             <p>{rich(d.structure.caveat)}</p>
 
@@ -159,48 +162,48 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                 {d.structure.source} <span aria-hidden="true">&rarr;</span>
               </a>
             </p>
-          </section>
+          </Stack>
         </div>
 
-        <aside className="detail__side">
+        <Stack as="aside" className="detail__side" gap="5">
           <DownloadBox skill={detail} />
 
-          <section className="facts" aria-labelledby="facts-heading">
+          <Stack as="section" className="facts" aria-labelledby="facts-heading" gap="3">
             <h2 className="h3" id="facts-heading">{d.facts.heading}</h2>
-            <dl>
-              <div>
+            <Stack as="dl" gap="3">
+              <Stack gap="1">
                 <dt>{detail.category_secondary ? d.facts.categories : d.facts.category}</dt>
                 <dd>{categoriesOf(detail).map((c) => label(s.vocabulary.category, c)).join(" · ")
                   || s.vocabulary.missing}</dd>
-              </div>
-              <div>
+              </Stack>
+              <Stack gap="1">
                 <dt>{detail.scope_secondary ? d.facts.scopes : d.facts.scope}</dt>
                 <dd>{scopesOf(detail).map((v) => label(s.vocabulary.scope, v)).join(" · ")
                   || s.vocabulary.missing}</dd>
-              </div>
+              </Stack>
               {detail.jurisdiction && (
-                <div>
+                <Stack gap="1">
                   <dt>{d.facts.jurisdiction}</dt>
                   <dd>{detail.jurisdiction}</dd>
-                </div>
+                </Stack>
               )}
               {detail.localization && (
-                <div>
+                <Stack gap="1">
                   <dt>{d.facts.localization}</dt>
                   <dd>{label(s.vocabulary.localization, detail.localization)}</dd>
-                </div>
+                </Stack>
               )}
               {/* The declared language, and separately the author's claim about
                   what they tried it in. Never merged: the reviewer's verified
                   list lives on the attestation in registry/reviewed.yml, and a
                   reader who cannot tell the two apart will over-trust the
                   claim. ADR 0004. */}
-              <div>
+              <Stack gap="1">
                 <dt>{d.facts.language}</dt>
                 <dd>{label(s.vocabulary.language, detail.language)}</dd>
-              </div>
+              </Stack>
               {detail.languages_tested && detail.languages_tested.length > 0 && (
-                <div data-testid="languages-tested">
+                <Stack gap="1" data-testid="languages-tested">
                   <dt>{d.facts.languagesTested}</dt>
                   <dd>
                     {detail.languages_tested.join(", ")}
@@ -208,7 +211,7 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                       {" "}{d.facts.languagesTestedNote}
                     </span>
                   </dd>
-                </div>
+                </Stack>
               )}
               {/* The reviewer's verified list — never merged with the claim
                   above. Only ever present on a Reviewed listing, so the tier
@@ -216,7 +219,7 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                   derivation. ADR 0004 ruling 2. */}
               {detail.tier === "reviewed" &&
                 detail.verified_languages && detail.verified_languages.length > 0 && (
-                <div data-testid="verified-languages">
+                <Stack gap="1" data-testid="verified-languages">
                   <dt>{d.facts.verifiedLanguages}</dt>
                   <dd>
                     {detail.verified_languages.join(", ")}
@@ -224,42 +227,42 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                       {" "}{d.facts.verifiedLanguagesNote(reviewers)}
                     </span>
                   </dd>
-                </div>
+                </Stack>
               )}
               <ModelFacts modelsTested={detail.models_tested}
                 verifiedModels={detail.verified_models} tier={detail.tier}
                 reviewers={reviewers} />
-              <div>
+              <Stack gap="1">
                 <dt>{d.facts.sensitivity}</dt>
                 <dd>{label(s.vocabulary.sensitivity, detail.data_sensitivity)}</dd>
-              </div>
-              <div>
+              </Stack>
+              <Stack gap="1">
                 <dt>{d.facts.humanReview}</dt>
                 <dd>{d.humanReview[
                   (detail.human_review ?? "") as keyof typeof d.humanReview
                 ] ?? s.vocabulary.missing}</dd>
-              </div>
-              <div>
+              </Stack>
+              <Stack gap="1">
                 <dt>{d.facts.license}</dt>
                 <dd>{detail.license ?? s.vocabulary.missing}</dd>
-              </div>
+              </Stack>
               {detail.compatibility && (
-                <div>
+                <Stack gap="1">
                   <dt>{d.facts.compatibility}</dt>
                   <dd>{detail.compatibility}</dd>
-                </div>
+                </Stack>
               )}
               {detail.sha && (
-                <div>
+                <Stack gap="1">
                   <dt>{d.facts.commit}</dt>
                   <dd className="mono">{detail.sha.slice(0, 12)}</dd>
-                </div>
+                </Stack>
               )}
               {detail.source && (
                 /* Where the copy came from. The registry holds the content —
                    this is provenance, and the listing does not depend on that
                    repository still existing. */
-                <div data-testid="source">
+                <Stack gap="1" data-testid="source">
                   <dt>{d.facts.source}</dt>
                   <dd>
                     <a href={`https://github.com/${detail.source.repo}${
@@ -271,34 +274,34 @@ export function SkillDetail({ namespace, name }: { namespace: string; name: stri
                       <span className="mono"> @ {detail.source.commit.slice(0, 7)}</span>
                     )}
                   </dd>
-                </div>
+                </Stack>
               )}
-            </dl>
-          </section>
+            </Stack>
+          </Stack>
 
           <History history={detail.history} version={detail.version} />
 
-          <section className="facts" aria-labelledby="prov-heading">
+          <Stack as="section" className="facts" aria-labelledby="prov-heading" gap="3">
             <h2 className="h3" id="prov-heading">{d.provenance.heading}</h2>
             <p className="facts__note">{d.provenance.note}</p>
-            <dl>
-              <div>
+            <Stack as="dl" gap="3">
+              <Stack gap="1">
                 <dt>{d.provenance.deployment}</dt>
                 <dd>{label(s.vocabulary.deployment, detail.provenance.deployment)}</dd>
-              </div>
+              </Stack>
               {detail.provenance.deployed_at && (
-                <div><dt>{d.provenance.at}</dt><dd>{detail.provenance.deployed_at}</dd></div>
+                <Stack gap="1"><dt>{d.provenance.at}</dt><dd>{detail.provenance.deployed_at}</dd></Stack>
               )}
               {detail.provenance.deployed_in && (
-                <div><dt>{d.provenance.in}</dt><dd>{detail.provenance.deployed_in}</dd></div>
+                <Stack gap="1"><dt>{d.provenance.in}</dt><dd>{detail.provenance.deployed_in}</dd></Stack>
               )}
               {detail.provenance.deployed_since && (
-                <div><dt>{d.provenance.since}</dt><dd>{detail.provenance.deployed_since}</dd></div>
+                <Stack gap="1"><dt>{d.provenance.since}</dt><dd>{detail.provenance.deployed_since}</dd></Stack>
               )}
-            </dl>
-          </section>
-        </aside>
+            </Stack>
+          </Stack>
+        </Stack>
       </div>
-    </div>
+    </Stack>
   );
 }

@@ -12,6 +12,7 @@
  *  nothing here reaches tier.
  */
 
+import { Stack } from "./Layout";
 import { useStrings } from "../i18n/strings";
 import type { Skill } from "../lib/types";
 
@@ -25,20 +26,20 @@ export function History(
   if (!known && !version) return null;
 
   return (
-    <section className="facts" aria-labelledby="history-heading">
+    <Stack as="section" className="facts" aria-labelledby="history-heading" gap="3">
       <h2 className="h3" id="history-heading">{s.heading}</h2>
-      <dl>
+      <Stack as="dl" gap="3">
         {version && (
-          <div>
+          <Stack gap="1">
             <dt>{s.version}</dt>
             <dd>
               <span className="mono">{version}</span>{" "}
               <span className="facts__aside">{s.versionAside}</span>
             </dd>
-          </div>
+          </Stack>
         )}
         {history.first_seen && (
-          <div>
+          <Stack gap="1">
             <dt>{s.firstSeen}</dt>
             <dd>
               {s.when(history.first_seen)}
@@ -51,25 +52,25 @@ export function History(
                 </>
               )}
             </dd>
-          </div>
+          </Stack>
         )}
         {history.last_changed && (
-          <div>
+          <Stack gap="1">
             <dt>{s.lastChanged}</dt>
             <dd>{s.when(history.last_changed)}</dd>
-          </div>
+          </Stack>
         )}
         {history.commits !== null && (
-          <div>
+          <Stack gap="1">
             <dt>{s.commits}</dt>
             <dd>
               {history.commits}{" "}
               <span className="facts__aside">{s.commitsAside}</span>
             </dd>
-          </div>
+          </Stack>
         )}
-      </dl>
+      </Stack>
       <p className="facts__note">{s.note}</p>
-    </section>
+    </Stack>
   );
 }

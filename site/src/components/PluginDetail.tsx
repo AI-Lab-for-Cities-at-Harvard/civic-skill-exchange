@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { Cluster, Stack } from "./Layout";
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
+import { CommandRow } from "./DownloadBox";
 import { History } from "./History";
 import { TierBadge, LabBadge, SensitivityBadge, DeploymentBadge } from "./Badges";
 import { rich } from "../i18n/rich";
@@ -62,57 +64,59 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
   const language = detail.languages.length === 1 ? detail.languages[0] : undefined;
 
   return (
-    <div className="page detail">
-      <nav className="crumbs" aria-label={d.breadcrumb}>
-        <a href="#/">{d.catalog}</a>
-        <span aria-hidden="true">/</span>
-        <span>{detail.namespace}</span>
-      </nav>
+    <Stack className="page detail" gap="md">
+      <Stack gap="4">
+        <Cluster as="nav" className="crumbs" gap="2" align="baseline" aria-label={d.breadcrumb}>
+          <a href="#/">{d.catalog}</a>
+          <span aria-hidden="true">/</span>
+          <span>{detail.namespace}</span>
+        </Cluster>
 
-      <header className="detail__head">
-        <div className="card__badges">
-          <TierBadge tier={detail.tier} reviewed={detail.reviewed} />
-          <LabBadge namespace={detail.namespace} />
-          <SensitivityBadge value={detail.data_sensitivity} />
-          <DeploymentBadge provenance={detail.provenance} detail />
-        </div>
-        <h1 className="detail__title">{detail.name}</h1>
-        <p className="detail__desc" lang={language}>{detail.description}</p>
-        <p className="detail__maintainer">
-          {d.maintainedBy(detail.maintainer ?? s.vocabulary.missing)}
-        </p>
-      </header>
+        <Stack as="header" className="detail__head" gap="3">
+          <Cluster gap="2" align="stretch">
+            <TierBadge tier={detail.tier} reviewed={detail.reviewed} />
+            <LabBadge namespace={detail.namespace} />
+            <SensitivityBadge value={detail.data_sensitivity} />
+            <DeploymentBadge provenance={detail.provenance} detail />
+          </Cluster>
+          <h1 className="detail__title">{detail.name}</h1>
+          <p className="detail__desc" lang={language}>{detail.description}</p>
+          <p className="detail__maintainer">
+            {d.maintainedBy(detail.maintainer ?? s.vocabulary.missing)}
+          </p>
+        </Stack>
+      </Stack>
 
       <div className="detail__grid">
         <div className="detail__main">
           {(detail.use_when || detail.avoid_when) && (
             /* The plugin's own, declared once in plugin.json (ADR 0005). */
-            <section aria-labelledby="plugin-fit-heading" className="detail__section">
+            <Stack as="section" aria-labelledby="plugin-fit-heading" className="detail__section" gap="4">
               <h2 className="h2" id="plugin-fit-heading">{d.fit.heading}</h2>
               <p>{p.fit.caveat}</p>
-              <dl className="fit" lang={language}>
+              <Stack as="dl" className="fit" gap="4" lang={language}>
                 {detail.use_when && (
-                  <div className="fit__item">
+                  <Stack gap="2" className="fit__item">
                     <dt>{d.fit.use}</dt>
                     <dd>{detail.use_when}</dd>
-                  </div>
+                  </Stack>
                 )}
                 {detail.avoid_when && (
-                  <div className="fit__item fit__item--avoid">
+                  <Stack gap="2" className="fit__item fit__item--avoid">
                     <dt>{d.fit.avoid}</dt>
                     <dd>{detail.avoid_when}</dd>
-                  </div>
+                  </Stack>
                 )}
-              </dl>
-            </section>
+              </Stack>
+            </Stack>
           )}
 
-          <section aria-labelledby="plugin-skills-heading" className="detail__section">
+          <Stack as="section" aria-labelledby="plugin-skills-heading" className="detail__section" gap="4">
             <h2 className="h2" id="plugin-skills-heading">{p.skills.heading}</h2>
             <p>{p.skills.caveat}</p>
-            <dl className="fit">
+            <Stack as="dl" className="fit" gap="4">
               {detail.skills.map((skill) => (
-                <div className="fit__item" key={skill.name}>
+                <Stack gap="2" className="fit__item" key={skill.name}>
                   <dt><code>{skill.name}</code></dt>
                   <dd lang={skill.language ?? undefined}>{skill.description}</dd>
                   <dd className="facts__note">
@@ -120,12 +124,12 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
                       .filter((c): c is string => Boolean(c))
                       .map((c) => label(s.vocabulary.category, c)).join(" · ")}
                   </dd>
-                </div>
+                </Stack>
               ))}
-            </dl>
-          </section>
+            </Stack>
+          </Stack>
 
-          <section aria-labelledby="plugin-servers-heading" className="detail__section">
+          <Stack as="section" aria-labelledby="plugin-servers-heading" className="detail__section" gap="4">
             <h2 className="h2" id="plugin-servers-heading">{p.servers.heading}</h2>
             {detail.mcp_servers.length === 0 ? (
               <p>{p.servers.none}</p>
@@ -145,9 +149,9 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
                 </ul>
               </>
             )}
-          </section>
+          </Stack>
 
-          <section aria-labelledby="plugin-structure-heading" className="detail__section">
+          <Stack as="section" aria-labelledby="plugin-structure-heading" className="detail__section" gap="4">
             <h2 className="h2" id="plugin-structure-heading">{d.structure.heading}</h2>
             <p>{rich(d.structure.caveat)}</p>
             <ul className="tree">
@@ -164,71 +168,71 @@ export function PluginDetail({ namespace, name }: { namespace: string; name: str
                 {d.structure.source} <span aria-hidden="true">&rarr;</span>
               </a>
             </p>
-          </section>
+          </Stack>
         </div>
 
-        <aside className="detail__side">
+        <Stack as="aside" className="detail__side" gap="5">
           <PluginDownload detail={detail} />
 
-          <section className="facts" aria-labelledby="plugin-facts-heading">
+          <Stack as="section" className="facts" aria-labelledby="plugin-facts-heading" gap="3">
             <h2 className="h3" id="plugin-facts-heading">{d.facts.heading}</h2>
-            <dl>
-              <div>
+            <Stack as="dl" gap="3">
+              <Stack gap="1">
                 <dt>{p.facts.categories}</dt>
                 <dd>{detail.categories.map((c) => label(s.vocabulary.category, c)).join(" · ")
                   || s.vocabulary.missing}</dd>
-              </div>
-              <div>
+              </Stack>
+              <Stack gap="1">
                 <dt>{p.facts.languages}</dt>
                 <dd>{detail.languages.map((l) => label(s.vocabulary.language, l)).join(" · ")
                   || s.vocabulary.missing}</dd>
-              </div>
+              </Stack>
               <ModelFacts modelsTested={detail.models_tested}
                 verifiedModels={detail.verified_models} tier={detail.tier}
                 reviewers={detail.reviewed?.reviewers.length
                   ? s.badges.tier.reviewers(detail.reviewed.reviewers)
                   : d.facts.someReviewer} />
-              <div>
+              <Stack gap="1">
                 <dt>{p.facts.sensitivity}</dt>
                 <dd>{label(s.vocabulary.sensitivity, detail.data_sensitivity)}</dd>
-              </div>
-              <div>
+              </Stack>
+              <Stack gap="1">
                 <dt>{d.facts.license}</dt>
                 <dd>{detail.license ?? s.vocabulary.missing}</dd>
-              </div>
+              </Stack>
               {detail.sha && (
-                <div>
+                <Stack gap="1">
                   <dt>{d.facts.commit}</dt>
                   <dd className="mono">{detail.sha.slice(0, 12)}</dd>
-                </div>
+                </Stack>
               )}
-            </dl>
-          </section>
+            </Stack>
+          </Stack>
 
           <History history={detail.history} version={detail.version} />
 
-          <section className="facts" aria-labelledby="plugin-prov-heading">
+          <Stack as="section" className="facts" aria-labelledby="plugin-prov-heading" gap="3">
             <h2 className="h3" id="plugin-prov-heading">{d.provenance.heading}</h2>
             <p className="facts__note">{d.provenance.note}</p>
-            <dl>
-              <div>
+            <Stack as="dl" gap="3">
+              <Stack gap="1">
                 <dt>{d.provenance.deployment}</dt>
                 <dd>{label(s.vocabulary.deployment, detail.provenance.deployment)}</dd>
-              </div>
+              </Stack>
               {detail.provenance.deployed_at && (
-                <div><dt>{d.provenance.at}</dt><dd>{detail.provenance.deployed_at}</dd></div>
+                <Stack gap="1"><dt>{d.provenance.at}</dt><dd>{detail.provenance.deployed_at}</dd></Stack>
               )}
               {detail.provenance.deployed_in && (
-                <div><dt>{d.provenance.in}</dt><dd>{detail.provenance.deployed_in}</dd></div>
+                <Stack gap="1"><dt>{d.provenance.in}</dt><dd>{detail.provenance.deployed_in}</dd></Stack>
               )}
               {detail.provenance.deployed_since && (
-                <div><dt>{d.provenance.since}</dt><dd>{detail.provenance.deployed_since}</dd></div>
+                <Stack gap="1"><dt>{d.provenance.since}</dt><dd>{detail.provenance.deployed_since}</dd></Stack>
               )}
-            </dl>
-          </section>
-        </aside>
+            </Stack>
+          </Stack>
+        </Stack>
       </div>
-    </div>
+    </Stack>
   );
 }
 
@@ -262,56 +266,64 @@ function PluginDownload({ detail }: { detail: Detail }) {
   };
 
   return (
-    <section className="download" aria-labelledby="plugin-download-heading">
-      <h2 className="h3" id="plugin-download-heading">{p.heading}</h2>
+    <Stack as="section" className="download" aria-labelledby="plugin-download-heading" gap="4">
+      {/* The same groups as DownloadBox's (#318). */}
+      <Stack gap="5">
+        <Stack gap="4">
+          <Stack gap="3">
+            <h2 className="h3" id="plugin-download-heading">{p.heading}</h2>
 
-      {detail.tier === "community" ? (
-        <p className="download__warn">{rich(p.community)}</p>
-      ) : (
-        <p className="download__ok">
-          {rich(s.download.reviewed(
-            s.badges.tier.reviewers(detail.reviewed?.reviewers ?? []),
-            detail.reviewed?.date ?? "",
-            // A Lab-authored plugin discloses itself, as a skill does (ADR 0001).
-            RESERVED_NAMESPACES.has(detail.namespace),
+            {detail.tier === "community" ? (
+              <p className="download__warn">{rich(p.community)}</p>
+            ) : (
+              <p className="download__ok">
+                {rich(s.download.reviewed(
+                  s.badges.tier.reviewers(detail.reviewed?.reviewers ?? []),
+                  detail.reviewed?.date ?? "",
+                  // A Lab-authored plugin discloses itself, as a skill does (ADR 0001).
+                  RESERVED_NAMESPACES.has(detail.namespace),
+                ))}
+              </p>
+            )}
+          </Stack>
+
+          {detail.archive && (
+            <Stack gap="2" className="download__archive">
+              <Cluster>
+                <a
+                  className="btn btn--strong download__get"
+                  href={`${import.meta.env.BASE_URL}${detail.archive.path}`}
+                  download={`${detail.name}.zip`}
+                >
+                  {p.archive(bytes(detail.archive.size))}
+                </a>
+              </Cluster>
+              <span>{p.archiveNote}</span>
+            </Stack>
+          )}
+        </Stack>
+
+        <Stack gap="4">
+          {commands.map((c) => (
+            <CommandRow key={c.id} label={c.label} value={c.value} copied={copied === c.id}
+              onCopy={() => copy(c.id, c.value)} />
           ))}
-        </p>
-      )}
+        </Stack>
+      </Stack>
 
-      {detail.archive && (
-        <p className="download__archive">
-          <a
-            className="btn btn--strong download__get"
-            href={`${import.meta.env.BASE_URL}${detail.archive.path}`}
-            download={`${detail.name}.zip`}
-          >
-            {p.archive(bytes(detail.archive.size))}
+      <Stack gap="2">
+        <p className="download__note">
+          {rich(p.stepByStep, { guide: guideHref("marketplace") })}
+        </p>
+        <p className="download__note">
+          {rich(p.formatNote, { spec: "https://agent-plugins.org" })}
+        </p>
+        <p className="download__note">
+          <a className="arrow-link" href={detail.download}>
+            {s.download.github} <span aria-hidden="true">→</span>
           </a>
-          <span>{p.archiveNote}</span>
         </p>
-      )}
-
-      {commands.map((c) => (
-        <div className="download__cmd" key={c.id}>
-          <span className="download__cmd-label">{c.label}</span>
-          <code>{c.value}</code>
-          <button className="btn btn--subtle" onClick={() => copy(c.id, c.value)}>
-            {copied === c.id ? s.download.copied : s.download.copy}
-          </button>
-        </div>
-      ))}
-
-      <p className="download__note">
-        {rich(p.stepByStep, { guide: guideHref("marketplace") })}
-      </p>
-      <p className="download__note">
-        {rich(p.formatNote, { spec: "https://agent-plugins.org" })}
-      </p>
-      <p className="download__note">
-        <a className="arrow-link" href={detail.download}>
-          {s.download.github} <span aria-hidden="true">→</span>
-        </a>
-      </p>
-    </section>
+      </Stack>
+    </Stack>
   );
 }
