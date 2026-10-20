@@ -92,6 +92,16 @@
   --gap-5: 1.5rem;
   --gap-6: 2rem;
 
+  /* ---- Rhythm, by role (#287) --------------------------------------------
+   * What the scale above is used for between a page's blocks. Named by role so
+   * the rhythm block in app.css reads as a rule rather than a set of numbers,
+   * and so a change to it is one line here.
+   *   section     a section's rule to its heading, and its last content to
+   *               the next rule; also the hero to the first thing on a page
+   *   subsection  the content above a heading that opens a part of a section */
+  --space-section: var(--space-md);
+  --space-subsection: var(--gap-6);
+
   /* ---- Type -------------------------------------------------------------
    * The system is sans-serif throughout — headings included. Graphik carries
    * 348 declarations in the reference CSS against Tiempos' 32, and every
