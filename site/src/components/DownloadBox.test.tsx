@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { DownloadBox } from "./DownloadBox";
 import { makeSkill } from "../test/fixtures";
+import { installCommands } from "../lib/install";
 import type { SkillDetail } from "../lib/types";
 
 function detail(over: Partial<SkillDetail> = {}): SkillDetail {
@@ -170,5 +171,24 @@ describe("DownloadBox — the way into the guide", () => {
     expect(screen.getByText(
       "/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange " +
       "--sparse .claude-plugin skills plugins")).toBeInTheDocument();
+  });
+});
+
+
+/* #289: since the layout move, a single skill installs from Codex's
+   marketplace too, so its page gives Codex's lines, as a plugin's page does. */
+describe("DownloadBox — both clients' marketplaces", () => {
+  it("gives Claude Code's and Codex's lines, from the shared helper", () => {
+    const skill = detail();
+    render(<DownloadBox skill={skill} />);
+    for (const line of Object.values(installCommands(skill.namespace, skill.name))) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+    }
+  });
+
+  it("labels each line with the client it is for", () => {
+    render(<DownloadBox skill={detail()} />);
+    expect(screen.getByText("Codex: install it")).toBeInTheDocument();
+    expect(screen.getByText("Claude Code: install it")).toBeInTheDocument();
   });
 });
