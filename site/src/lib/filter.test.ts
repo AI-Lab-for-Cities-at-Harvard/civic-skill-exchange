@@ -258,8 +258,8 @@ describe("plugin filtering (#299)", () => {
   it("applies scope and localization through the plugin's skills: any one is enough", () => {
     const base = makePlugin();
     const p = pl({ skills: [
-      { ...base.skills[0], scope: "municipal", localization: "localized" },
-      { ...base.skills[1], scope: "regional", localization: null },
+      { ...base.skills[0]!, scope: "municipal", localization: "localized" },
+      { ...base.skills[1]!, scope: "regional", localization: null },
     ] });
     expect(run(p, { scope: "regional" })).toBe(1);
     expect(run(p, { scope: "national" })).toBe(0);

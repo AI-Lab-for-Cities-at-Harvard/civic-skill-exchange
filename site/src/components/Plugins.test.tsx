@@ -132,7 +132,7 @@ describe("search and counts on the browse page (#299)", () => {
   it("applies a facet to plugins by the fields they have", async () => {
     const idx = two();
     idx.skills = [...idx.skills, makeSkill({ id: "ns/c", name: "vetted", tier: "reviewed" })];
-    idx.plugins![1] = { ...idx.plugins![1], tier: "reviewed" };
+    idx.plugins![1] = { ...idx.plugins![1]!, tier: "reviewed" };
     serve({ "index.json": idx });
     render(<App />);
     await screen.findByRole("region", { name: /plugins/i });

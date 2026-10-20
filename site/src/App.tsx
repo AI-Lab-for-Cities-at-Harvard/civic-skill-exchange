@@ -126,7 +126,7 @@ export default function App() {
   // defeat the useMemo below it and re-filter the whole catalog on each keystroke.
   const skills = useMemo(() => index?.skills ?? [], [index]);
   // Absent from an index built before plugins existed (ADR 0005).
-  const plugins = index?.plugins ?? [];
+  const plugins = useMemo(() => index?.plugins ?? [], [index]);
 
   // #/about/<section> and #/guide/<section> rather than a fragment, because
   // hash routing has only one `#`. The scroll happens here rather than in the
