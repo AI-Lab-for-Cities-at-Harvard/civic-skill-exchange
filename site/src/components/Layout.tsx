@@ -42,13 +42,15 @@ export function Cluster(
  *  last row that is short leaves its cells their column's width instead of
  *  stretching them (which a wrapping Cluster would). `min` is a measure, not a
  *  space, so it is a length in rem rather than a step of the scale; it is the
- *  only inline style a primitive sets, and only as a custom property. */
+ *  only inline style a primitive sets, and only as a custom property. `rowGap`,
+ *  when the rows are to sit closer (or further) than the columns do, is a step
+ *  of the same scale. */
 export function Grid(
-  { as: Tag = "div", gap = "4", min, className, style, ...rest }:
-    Props & { min: `${number}rem` },
+  { as: Tag = "div", gap = "4", rowGap, min, className, style, ...rest }:
+    Props & { min: `${number}rem`; rowGap?: Space },
 ) {
   return (
-    <Tag className={cx("l-grid", `l-gap-${gap}`, className)}
+    <Tag className={cx("l-grid", `l-gap-${gap}`, rowGap && `l-row-gap-${rowGap}`, className)}
       style={{ ...style, "--l-grid-min": min } as CSSProperties} {...rest} />
   );
 }

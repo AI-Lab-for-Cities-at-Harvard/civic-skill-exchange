@@ -46,3 +46,16 @@
 .l-gap-md { gap: var(--space-md); }
 .l-gap-lg { gap: var(--space-lg); }
 .l-gap-xl { gap: var(--space-xl); }
+
+/* <Grid rowGap>: after .l-gap-*, so it narrows only the rows. */
+.l-row-gap-0 { row-gap: 0; }
+.l-row-gap-1 { row-gap: var(--gap-1); }
+.l-row-gap-2 { row-gap: var(--gap-2); }
+.l-row-gap-3 { row-gap: var(--gap-3); }
+.l-row-gap-4 { row-gap: var(--gap-4); }
+.l-row-gap-5 { row-gap: var(--gap-5); }
+.l-row-gap-6 { row-gap: var(--gap-6); }
+.l-row-gap-sm { row-gap: var(--space-sm); }
+.l-row-gap-md { row-gap: var(--space-md); }
+.l-row-gap-lg { row-gap: var(--space-lg); }
+.l-row-gap-xl { row-gap: var(--space-xl); }

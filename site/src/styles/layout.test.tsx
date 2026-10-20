@@ -147,6 +147,19 @@ describe("Grid (#320)", () => {
     expect(ul.getAttribute("style")).toBe("--l-grid-min: 14rem;");
   });
 
+  it("takes a row gap from the scale, for rows closer than the columns", () => {
+    for (const s of STEPS) {
+      const { container, unmount } = render(<Grid min="10rem" gap="6" rowGap={s} />);
+      expect(container.firstElementChild).toHaveClass("l-gap-6", `l-row-gap-${s}`);
+      expect(LAYOUT).toMatch(new RegExp(`\\.l-row-gap-${s}\\s*\\{\\s*row-gap:`));
+      unmount();
+    }
+    const { container } = render(<Grid min="10rem" />);
+    expect(container.firstElementChild!.className).not.toMatch(/row-gap/);
+    // The row gap follows the gap in the file, so it wins at equal specificity.
+    expect(LAYOUT.indexOf(".l-row-gap-0")).toBeGreaterThan(LAYOUT.indexOf(".l-gap-xl"));
+  });
+
   it("defaults to a gap of 16px (gap 4)", () => {
     const { container } = render(<Grid min="10rem" />);
     expect(container.firstElementChild).toHaveClass("l-gap-4");

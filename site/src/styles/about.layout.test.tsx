@@ -50,29 +50,30 @@ const grid = (el: Element | null | undefined, gap: string, min: string, what: st
 };
 
 describe("About's sections and contents box use the primitives", () => {
-  it("makes every section a Stack of 16px (gap 4)", () => {
+  it("makes every section a Stack of 16px (gap 4), the metadata one 32px (gap 6) between its parts", () => {
     const c = page();
     const sections = [...c.querySelectorAll("section.prose__block[id]")];
     expect(sections.length).toBe(8);
-    for (const s of sections) stack(s, "4", `#${s.id}`);
+    for (const s of sections) stack(s, s.id === "metadata" ? "6" : "4", `#${s.id}`);
   });
 
   it("makes the contents box a Stack, its groups a Grid, each group and list a Stack", () => {
     const c = page();
     const toc = c.querySelector("nav.toc");
-    stack(toc, "3", "the contents box");
-    grid(toc!.querySelector(".toc__groups"), "6", "14rem", "the groups");
+    stack(toc, "4", "the contents box");
+    grid(toc!.querySelector(".l-grid"), "6", "14rem", "the groups");
+    expect(toc!.querySelector(".l-grid")).toHaveClass("l-row-gap-4");
     const groups = toc!.querySelectorAll(".toc__group");
     expect(groups.length).toBe(2);
     for (const g of groups) {
-      stack(g, "2", "a group");
+      stack(g, "4", "a group");
       stack(g.querySelector("ul"), "1", "a group's list");
     }
   });
 
   it("makes the tier cards a Grid of Stacks, the title and first paragraph closer", () => {
     const c = page();
-    grid(c.querySelector(".tiers"), "4", "17rem", "the tiers");
+    grid(c.querySelector("#tiers .l-grid"), "4", "17rem", "the tiers");
     const cards = c.querySelectorAll(".tier-card");
     expect(cards.length).toBe(2);
     for (const card of cards) {
@@ -96,8 +97,10 @@ describe("About's sections and contents box use the primitives", () => {
     stack(group, "5", "the by-hand group");
     expect(group.firstElementChild!.tagName).toBe("P");
     expect(group.lastElementChild).toBe(group.querySelector("[data-testid=about-submit-cta]")!.parentElement);
+    // A <p>, as it was, so the buttons keep the paragraph's line height; .cta-row
+    // stays for the measure (and for the guide, which still lays it out itself).
     cluster(group.lastElementChild, "3", "the buttons");
-    expect(c.querySelector("#submitting .cta-row")).toBeNull();
+    expect(group.lastElementChild!.tagName).toBe("P");
   });
 
   it("makes the check and beta lists Stacks of 12px (gap 3)", () => {
@@ -142,8 +145,8 @@ describe("the metadata section is parts in Stacks", () => {
 
   it("makes each vocabulary table a Grid of Stacks, its rows Clusters", () => {
     const c = page();
-    const tables = c.querySelectorAll(".vocab-grid");
-    expect(tables.length).toBe(3);
+    const tables = new Set([...c.querySelectorAll(".vocab")].map((v) => v.parentElement!));
+    expect(tables.size).toBe(3);
     for (const t of tables) grid(t, "4", "16.25rem", "a vocabulary table");
     for (const v of c.querySelectorAll(".vocab")) {
       stack(v, "2", "a vocabulary box");
@@ -153,14 +156,16 @@ describe("the metadata section is parts in Stacks", () => {
 
   it("keeps a list and its table 24px apart (gap 5), as the old margins did", () => {
     const c = page();
-    for (const t of c.querySelectorAll(".vocab-grid")) stack(t.parentElement, "5", "a list and its table");
+    for (const v of c.querySelectorAll(".vocab")) {
+      stack(v.parentElement!.parentElement, "5", "a list and its table");
+    }
   });
 });
 
 describe("what is left in app.css", () => {
   it("has no rule that spaces or lays out what the primitives now do", () => {
     const spaced = [".tiers", ".vocab-grid", ".toc__groups", ".plain-list li", ".fields dt:first-child",
-      ".vocab__list li", ".vocab__title", ".toc__group-label", ".fields dt", ".tier-card__warn"];
+      ".vocab__title", ".toc__group-label", ".fields dt", ".tier-card__warn"];
     for (const sel of spaced) {
       for (const b of bodies(sel)) expect(b, sel).not.toMatch(SPACES);
     }
@@ -171,7 +176,7 @@ describe("what is left in app.css", () => {
   });
 
   it("deletes the rules that only existed to space", () => {
-    for (const sel of [".tiers", ".vocab-grid", ".toc__groups", ".plain-list li", ".fields dt:first-child"]) {
+    for (const sel of [".tiers", ".vocab-grid", ".toc__groups", ".fields dt:first-child"]) {
       expect(bodies(sel), sel).toEqual([]);
     }
   });

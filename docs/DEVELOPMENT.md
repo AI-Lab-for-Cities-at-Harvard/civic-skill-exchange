@@ -525,7 +525,11 @@ wrapping row; `align` is `start | center | end | stretch | baseline`, default
 the token scale (`"0"`–`"6"`, `"sm"`–`"xl"`), so an off-scale value fails
 `npm run typecheck`. A primitive owns the space between its children and
 nothing else: it zeroes their margins (and the browser's indent on a `<dd>`),
-so a child never brings its own. Add a third primitive only when a page being
+so a child never brings its own. `Grid` (#320) is equal columns as many as fit:
+`min` is the narrowest a column may be (a `rem` length, passed as the
+`--l-grid-min` custom property) and `gap` is a `Space`. It exists because a
+wrapping Cluster stretches a short last row, which About's three tables (the
+tier cards, the contents groups, the vocabulary boxes) must not. Add another primitive only when a page being
 migrated needs one. The skill and plugin pages (#318) needed no third: their
 rows are Stacks, a button in a column sits in a Cluster, and a gap the scale
 lacks (an off-scale 14px that came from a paragraph's `1em`) became the
@@ -556,6 +560,14 @@ site-title `h1`, so the page's own heading is the one `h1`), and the bar, the
 mode switch, the repository row and the update-mode hand-off are
 `Cluster`s and `Stack`s. `.field`, `.submit__findings` and `.cta-row` are
 shared with the plugin form, the guide and About, and wait for their pages.
+About (#320) followed: its sections, contents box, tier cards, flow line,
+description lists, vocabulary tables and bullet lists are `Stack`s, `Cluster`s
+and `Grid`s. Where a heading sat closer to its text than the 16px between
+paragraphs, the pair is its own `Stack` (gap 3), and a list with its table is
+a `Stack` of gap 5, so the old gaps survive without a margin. `.toc`,
+`.toc__title`, `.toc__list` and `.toc__link` are the guide's too, so their
+rules stay until #321 (About's `Stack`s override them); `.cta-row` stays for
+the guide, the submit page and the draft bar.
 
 **The guide (#321)** is the third page. A task is a `Stack` (32px, the
 subsection space) of its heading and lede, then its products; a product is a
