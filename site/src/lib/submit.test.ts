@@ -15,6 +15,7 @@ import {
   URL_BUDGET,
   fitsInUrl,
   forkUploadUrl, pullRequestUrl, registryUploadUrl, parseForkRef, skillPath, namespacePath,
+  uploadPath, landingPath, skillDirPath,
   EMPTY_DRAFT,
   type Draft,
 } from "./submit";
@@ -109,7 +110,9 @@ describe("newFileUrl", () => {
   it("targets the submitter's own namespace, which is what L1 checks", () => {
     const url = newFileUrl(REPO, draft(), toYaml(toFrontmatter(draft())));
     expect(url).toContain(`/${REPO}/new/main`);
-    expect(url).toContain("filename=skills%2Fcityofx%2Fpermit-status-explainer%2FSKILL.md");
+    // Nested (ADR 0006): the one file lands inside the author's own directory.
+    expect(new URL(url).searchParams.get("filename")).toBe(
+      "skills/cityofx/permit-status-explainer/skills/permit-status-explainer/SKILL.md");
   });
 
   it("carries the frontmatter in value=", () => {
@@ -245,17 +248,17 @@ describe("slugify — meeting submitters where their skills are named", () => {
 describe("the fork is asked for, not guessed", () => {
   it("builds the upload link from the fork the submitter pasted", () => {
     expect(forkUploadUrl("https://github.com/sgarcese-hbs/my-registry-copy", D))
-      .toBe("https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx");
+      .toBe("https://github.com/sgarcese-hbs/my-registry-copy/upload/main/skills/cityofx/permit-status/skills");
   });
 
   it("accepts what people actually paste — a bare slug", () => {
     expect(forkUploadUrl("sgarcese-hbs/my-copy", D))
-      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx");
+      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx/permit-status/skills");
   });
 
   it("survives a trailing slash and a .git suffix", () => {
     expect(forkUploadUrl("https://github.com/a/b.git/", D))
-      .toBe("https://github.com/a/b/upload/main/skills/cityofx");
+      .toBe("https://github.com/a/b/upload/main/skills/cityofx/permit-status/skills");
   });
 
   it("returns null rather than a link when the fork is not known yet", () => {
@@ -280,7 +283,7 @@ describe("the fork is asked for, not guessed", () => {
 describe("the write-access path", () => {
   it("uploads into the registry itself for a reserved namespace", () => {
     expect(registryUploadUrl(REPO, { ...D, author: "civic-skills" }))
-      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills`);
+      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills/permit-status/skills`);
   });
 });
 
@@ -309,19 +312,20 @@ describe("parseForkRef", () => {
  *  landed that way before this was pinned.
  */
 describe("the upload lands the folder, not a folder inside it", () => {
-  it("opens the namespace directory, so the dragged folder becomes the skill", () => {
+  it("opens the listing's skills/ directory, so the dragged folder lands as the inner skill", () => {
     expect(forkUploadUrl("sgarcese-hbs/my-copy", D))
-      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx");
+      .toBe("https://github.com/sgarcese-hbs/my-copy/upload/main/skills/cityofx/permit-status/skills");
   });
 
   it("does the same for a submitter uploading into the registry itself", () => {
     expect(registryUploadUrl(REPO, { ...D, author: "civic-skills" }))
-      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills`);
+      .toBe(`https://github.com/${REPO}/upload/main/skills/civic-skills/permit-status/skills`);
   });
 
-  it("never names the skill twice", () => {
+  it("names the skill once, in the listing directory, never again in the target", () => {
     const url = forkUploadUrl("a/b", D) ?? "";
-    expect(url.match(/permit-status/g)).toBeNull();
+    expect(url.match(/permit-status/g)).toHaveLength(1);
+    expect(url.endsWith("/permit-status/skills")).toBe(true);
   });
 });
 
@@ -350,7 +354,7 @@ describe("the second category", () => {
 describe("the namespace is lowercase however the login was typed", () => {
   it("lowercases the upload target", () => {
     expect(forkUploadUrl("a/b", { ...D, author: "CityOfX" }))
-      .toBe("https://github.com/a/b/upload/main/skills/cityofx");
+      .toBe("https://github.com/a/b/upload/main/skills/cityofx/permit-status/skills");
   });
 
   it("lowercases the skill path in the new-file editor", () => {
@@ -419,9 +423,34 @@ describe("the hand-off for a plugin", () => {
       .toBe(`https://github.com/${REPO}/upload/main/plugins/civic-skills`);
   });
 
+  it("hands a plugin's upload to plugins/{namespace} whatever the name", () => {
+    expect(forkUploadUrl("a/b", P, "plugins")).toBe("https://github.com/a/b/upload/main/plugins/sgarcese");
+  });
+
   it("names the plugin's path", () => {
     expect(skillPath(P, "plugins")).toBe("plugins/sgarcese/housing-dashboards");
     expect(namespacePath(P, "plugins")).toBe("plugins/sgarcese");
+  });
+});
+
+// ADR 0006, decision 6 (#275): the page still hands back the flat folder, and
+// the upload page opens inside the listing's own skills/ so that folder lands
+// as the nested skill. Plugins are unchanged.
+describe("the nested hand-off for a skill", () => {
+  it("uploads into skills/{ns}/{name}/skills, the folder landing at .../skills/{name}", () => {
+    expect(uploadPath(D)).toBe("skills/cityofx/permit-status/skills");
+    expect(landingPath(D)).toBe("skills/cityofx/permit-status/skills/permit-status");
+    expect(skillDirPath(D)).toBe("skills/cityofx/permit-status/skills/permit-status");
+  });
+
+  it("lowercases the namespace and leaves a plugin where it was", () => {
+    expect(uploadPath({ ...D, author: "CityOfX" })).toBe("skills/cityofx/permit-status/skills");
+    expect(uploadPath(D, "plugins")).toBe("plugins/cityofx");
+    expect(landingPath(D, "plugins")).toBe("plugins/cityofx/permit-status");
+  });
+
+  it("keeps the listing path as it was: the index, marketplace and attestation path", () => {
+    expect(skillPath(D)).toBe("skills/cityofx/permit-status");
   });
 });
 

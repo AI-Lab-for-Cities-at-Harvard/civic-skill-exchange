@@ -211,6 +211,33 @@ export function namespacePath(
   return `${tree}/${namespaceOf(draft)}`;
 }
 
+/** The author's own directory inside a single skill's listing (ADR 0006).
+ *
+ *  A listing keeps only what the registry generates at `skills/{ns}/{name}`;
+ *  everything the author wrote lives one level down, at
+ *  `skills/{ns}/{name}/skills/{name}`. */
+export function skillDirPath(draft: Named): string {
+  return `${skillPath(draft)}/skills/${trim(draft.name)}`;
+}
+
+/** The directory an upload must open in, which is where the dragged folder is
+ *  dropped *into*.
+ *
+ *  The page still hands back the flat folder, named for the skill, and GitHub
+ *  keeps a dropped folder's name. So a skill opens the upload page at the
+ *  listing's own `skills/` — GitHub creates a target that does not exist yet on
+ *  commit — and the folder lands at `skills/{ns}/{name}/skills/{name}`. A plugin
+ *  is unchanged: it opens at `plugins/{ns}` (ADR 0006, decision 6; #275). */
+export function uploadPath(draft: Named, tree: ListingTree = "skills"): string {
+  return tree === "skills"
+    ? `${skillPath(draft)}/skills` : namespacePath(draft, tree);
+}
+
+/** Where the dragged folder ends up, for telling the submitter. */
+export function landingPath(draft: Named, tree: ListingTree = "skills"): string {
+  return tree === "skills" ? skillDirPath(draft) : skillPath(draft, tree);
+}
+
 /** GitHub's new-file editor, prefilled.
  *
  *  Chosen over the issue-form path because it produces a real pull request, and
@@ -220,12 +247,15 @@ export function namespacePath(
  *  enforce. */
 export function newFileUrl(repo: string, draft: Draft, yaml: string): string {
   const url = new URL(`https://github.com/${repo}/new/main`);
-  url.searchParams.set("filename", `${skillPath(draft)}/SKILL.md`);
+  url.searchParams.set("filename", `${skillDirPath(draft)}/SKILL.md`);
   url.searchParams.set("value", yaml);
   return url.toString();
 }
 
-/** Flow 2. `value=` prefills new files only — GitHub offers no equivalent for
+/** Flow 2, where `path` is the directory holding the skill's own `SKILL.md`:
+ *  the index's `skill_path`, or `path` for a listing that is still flat.
+ *
+ *  `value=` prefills new files only — GitHub offers no equivalent for
  *  editing an existing one, and the site could not supply the current contents
  *  anyway: build_detail publishes no file contents, which is the #27 stored-XSS
  *  decision. So this opens the editor and the page gives the lines to paste. */
@@ -239,7 +269,7 @@ export function editUrl(repo: string, path: string): string {
  *  interface hard-fails above it — the cap exists to keep the registry from
  *  promising what this path cannot deliver. */
 export function uploadUrl(repo: string, draft: Draft): string {
-  return `https://github.com/${repo}/upload/main/${skillPath(draft)}`;
+  return `https://github.com/${repo}/upload/main/${uploadPath(draft)}`;
 }
 
 /** The path for somebody without a GitHub account.
@@ -327,10 +357,10 @@ export function parseForkRef(input: string): string | null {
  *  has no equivalent for a directory.
  */
 export function forkUploadUrl(
-  fork: string, draft: Pick<Draft, "author">, tree: ListingTree = "skills",
+  fork: string, draft: Named, tree: ListingTree = "skills",
 ): string | null {
   const ref = parseForkRef(fork);
-  return ref ? `https://github.com/${ref}/upload/main/${namespacePath(draft, tree)}` : null;
+  return ref ? `https://github.com/${ref}/upload/main/${uploadPath(draft, tree)}` : null;
 }
 
 /** The upload page in the registry itself, for somebody who can write to it.
@@ -344,9 +374,9 @@ export function forkUploadUrl(
  *  commit time, which is the branch this path needs and never main.
  */
 export function registryUploadUrl(
-  repo: string, draft: Pick<Draft, "author">, tree: ListingTree = "skills",
+  repo: string, draft: Named, tree: ListingTree = "skills",
 ): string {
-  return `https://github.com/${repo}/upload/main/${namespacePath(draft, tree)}`;
+  return `https://github.com/${repo}/upload/main/${uploadPath(draft, tree)}`;
 }
 
 /** The pull request, opened from the fork back to the registry.

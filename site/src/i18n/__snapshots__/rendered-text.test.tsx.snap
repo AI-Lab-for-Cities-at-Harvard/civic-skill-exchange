@@ -87,7 +87,7 @@ metadata:
   civic.deployment: "none"
 ---
 Or do it from the command linegit clone https://github.com/https://example.test/repo.git
-  mkdir -p skills//
+  mkdir -p skills///skills/
   git checkout -b add-your-skill
   git commit -am "Add skills//"
   git push origin add-your-skillInclusion in this registry is not an endorsement. Automated checks can only reject — a pass is never a statement that a skill is safe.Catalog generated 8/30/2026 · Source and submissions on GitHub · About this project",
