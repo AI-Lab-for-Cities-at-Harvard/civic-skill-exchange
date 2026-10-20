@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import type { Finding, Entry } from "@civic-skill-exchange/validator";
 import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { SKILL_LAYOUT, checkStructureCore } from "@civic-skill-exchange/validator/structure-core";
