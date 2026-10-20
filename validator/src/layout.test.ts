@@ -10,9 +10,16 @@ import { checkChangedLayout, checkNamespaceCollisions } from "./layout";
 describe("checkChangedLayout", () => {
   it("accepts a skill in the right place", () => {
     expect(checkChangedLayout([
-      "skills/cityofx/permit-status/SKILL.md",
-      "skills/cityofx/permit-status/scripts/check.py",
+      "skills/cityofx/permit-status/skills/permit-status/SKILL.md",
+      "skills/cityofx/permit-status/skills/permit-status/scripts/check.py",
     ])).toEqual([]);
+  });
+
+  it("refuses the retired flat layout, and names where SKILL.md goes", () => {
+    const findings = checkChangedLayout(["skills/cityofx/permit-status/SKILL.md"]);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.message)
+      .toContain("skills/cityofx/permit-status/skills/permit-status/SKILL.md");
   });
 
   it("rejects the shape that got through — a skill at the repository root", () => {
@@ -24,7 +31,8 @@ describe("checkChangedLayout", () => {
     ]);
     expect(findings).toHaveLength(1);
     expect(findings[0]?.where).toBe("generalize-skill/SKILL.md");
-    expect(findings[0]?.message).toContain("skills/{your-github-username}");
+    expect(findings[0]?.message).toContain(
+      "skills/{your-github-username}/{skill-name}/skills/{skill-name}/SKILL.md");
   });
 
   it("names the directory to move, so the fix is obvious", () => {
@@ -52,8 +60,8 @@ describe("checkChangedLayout", () => {
 
   it("allows an example under another name", () => {
     expect(checkChangedLayout([
-      "skills/cityofx/generalize/references/SKILL.example.md",
-      "skills/cityofx/generalize/assets/example.SKILL.md",
+      "skills/cityofx/generalize/skills/generalize/references/SKILL.example.md",
+      "skills/cityofx/generalize/skills/generalize/assets/example.SKILL.md",
     ])).toEqual([]);
   });
 
@@ -77,7 +85,7 @@ describe("checkChangedLayout", () => {
   });
 
   it("tolerates blank lines, which a changed-file list carries", () => {
-    expect(checkChangedLayout(["", "  ", "skills/a/b/SKILL.md"])).toEqual([]);
+    expect(checkChangedLayout(["", "  ", "skills/a/b/skills/b/SKILL.md"])).toEqual([]);
   });
 });
 

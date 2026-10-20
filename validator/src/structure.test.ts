@@ -8,11 +8,16 @@ import {
 } from "./structure";
 
 let dir: string;
+/** The listing, `skills/testuser/example-skill/`, which checkStructure reads. */
+let listing: string;
+/** The author's directory inside it, where everything below is written. */
 let skill: string;
+const INNER = "skills/example-skill";
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), "cse-"));
-  skill = join(dir, "skills", "testuser", "example-skill");
+  listing = join(dir, "skills", "testuser", "example-skill");
+  skill = join(listing, INNER);
   mkdirSync(skill, { recursive: true });
   writeFileSync(join(skill, "SKILL.md"), "---\nname: example-skill\n---\n\nBody.\n");
 });
@@ -23,39 +28,39 @@ const messages = (f: { where: string; message: string }[]) =>
 
 describe("checkStructure", () => {
   it("accepts a minimal well-formed skill", () => {
-    expect(checkStructure(skill)).toEqual([]);
+    expect(checkStructure(listing)).toEqual([]);
   });
 
   it("rejects symlinks", () => {
     writeFileSync(join(dir, "outside.txt"), "secrets");
     symlinkSync(join(dir, "outside.txt"), join(skill, "link.md"));
-    expect(messages(checkStructure(skill))).toMatch(/symlink/);
+    expect(messages(checkStructure(listing))).toMatch(/symlink/);
   });
 
   it("rejects a nested git directory", () => {
     mkdirSync(join(skill, ".git"));
-    expect(messages(checkStructure(skill))).toMatch(/nested git/);
+    expect(messages(checkStructure(listing))).toMatch(/nested git/);
   });
 
   it("rejects a file type outside the allowlist", () => {
     writeFileSync(join(skill, "payload.exe"), "MZ");
-    expect(messages(checkStructure(skill))).toMatch(/not an allowed file type/);
+    expect(messages(checkStructure(listing))).toMatch(/not an allowed file type/);
   });
 
   it("rejects a file over the size cap", () => {
     writeFileSync(join(skill, "big.md"), "x".repeat(MAX_FILE_BYTES + 1));
-    expect(messages(checkStructure(skill))).toMatch(/file cap/);
+    expect(messages(checkStructure(listing))).toMatch(/file cap/);
   });
 
   it("rejects content that is not valid UTF-8", () => {
     writeFileSync(join(skill, "bad.md"), Buffer.from([0xff, 0xfe, 0x00, 0x80]));
-    expect(messages(checkStructure(skill))).toMatch(/UTF-8/);
+    expect(messages(checkStructure(listing))).toMatch(/UTF-8/);
   });
 
   it("walks nested directories", () => {
     mkdirSync(join(skill, "scripts", "deep"), { recursive: true });
     writeFileSync(join(skill, "scripts", "deep", "payload.exe"), "MZ");
-    expect(messages(checkStructure(skill))).toMatch(/not an allowed file type/);
+    expect(messages(checkStructure(listing))).toMatch(/not an allowed file type/);
   });
 
   it("accepts the file types a real skill uses", () => {
@@ -63,7 +68,7 @@ describe("checkStructure", () => {
     mkdirSync(join(skill, "references"), { recursive: true });
     writeFileSync(join(skill, "scripts", "helper.py"), "print('hi')\n");
     writeFileSync(join(skill, "references", "notes.md"), "# Notes\n");
-    expect(checkStructure(skill)).toEqual([]);
+    expect(checkStructure(listing)).toEqual([]);
   });
 });
 
@@ -85,12 +90,12 @@ describe("checkStructure — behaviour the split must preserve", () => {
 
     // Asserting the array, not a regex over the joined string: a bad seam
     // reorders these without changing which findings appear.
-    expect(checkStructure(skill).map((f) => f.where)).toEqual([
-      ".git",
-      "a-link.md",
-      "b-big.md",
-      "c-bad.md",
-      "d-payload.exe",
+    expect(checkStructure(listing).map((f) => f.where)).toEqual([
+      `${INNER}/.git`,
+      `${INNER}/a-link.md`,
+      `${INNER}/b-big.md`,
+      `${INNER}/c-bad.md`,
+      `${INNER}/d-payload.exe`,
     ]);
   });
 
@@ -99,7 +104,7 @@ describe("checkStructure — behaviour the split must preserve", () => {
     // consumes budget. Pinning it: a naive port would count only the files it
     // finished checking.
     writeFileSync(join(skill, "payload.exe"), "x".repeat(2048));
-    const findings = checkStructure(skill);
+    const findings = checkStructure(listing);
     expect(findings).toHaveLength(1);
     expect(findings[0]?.message).toMatch(/not an allowed file type/);
   });
@@ -108,7 +113,7 @@ describe("checkStructure — behaviour the split must preserve", () => {
     for (let i = 0; i <= MAX_FILES_PER_SKILL; i += 1) {
       writeFileSync(join(skill, `note-${i}.md`), "x\n");
     }
-    expect(messages(checkStructure(skill)))
+    expect(messages(checkStructure(listing)))
       .toMatch(new RegExp(`over the ${MAX_FILES_PER_SKILL}-file cap`));
   });
 
@@ -117,7 +122,7 @@ describe("checkStructure — behaviour the split must preserve", () => {
     for (let i = 0; i < MAX_FILES_PER_SKILL - 1; i += 1) {
       writeFileSync(join(skill, `note-${i}.md`), "x\n");
     }
-    expect(checkStructure(skill)).toEqual([]);
+    expect(checkStructure(listing)).toEqual([]);
   });
 
   it("rejects a directory over the total-bytes cap", () => {
@@ -126,21 +131,22 @@ describe("checkStructure — behaviour the split must preserve", () => {
     for (let i = 0; i < Math.ceil(MAX_SKILL_BYTES / per) + 1; i += 1) {
       writeFileSync(join(skill, `bulk-${i}.md`), "x".repeat(per));
     }
-    expect(messages(checkStructure(skill)))
+    expect(messages(checkStructure(listing)))
       .toMatch(new RegExp(`over the ${MAX_SKILL_BYTES}-byte cap`));
   });
 
   it("rejects an extension-less file, naming the path when there is no suffix", () => {
     writeFileSync(join(skill, ".gitignore"), "node_modules\n");
-    const findings = checkStructure(skill);
+    const findings = checkStructure(listing);
     expect(findings).toHaveLength(1);
     // extname(".gitignore") is "" in Node, so the message falls back to the path.
-    expect(findings[0]?.message).toMatch(/'\.gitignore' is not an allowed file type/);
+    expect(findings[0]?.message)
+      .toMatch(/'skills\/example-skill\/\.gitignore' is not an allowed file type/);
   });
 
   it("matches the extension case-insensitively", () => {
     writeFileSync(join(skill, "NOTES.MD"), "# Notes\n");
-    expect(checkStructure(skill)).toEqual([]);
+    expect(checkStructure(listing)).toEqual([]);
   });
 });
 
@@ -188,35 +194,44 @@ describe("plugin-level files, over a real directory", () => {
   it("rejects a hooks directory once, naming it", () => {
     mkdirSync(join(skill, "hooks"));
     writeFileSync(join(skill, "hooks", "hooks.json"), "{}\n");
-    expect(checkStructure(skill).map((f) => f.where)).toEqual(["hooks"]);
+    expect(checkStructure(listing).map((f) => f.where)).toEqual([`${INNER}/hooks`]);
   });
 
   it.each(["settings.json", "settings.local.json", ".lsp.json"])(
     "rejects %s at the skill root", (name) => {
       writeFileSync(join(skill, name), "{}\n");
-      expect(messages(checkStructure(skill))).toContain(name);
+      expect(messages(checkStructure(listing))).toContain(name);
     });
 
-  it("accepts .mcp.json, which is allowed and published as executed", () => {
+  it("rejects .mcp.json: a skill with an MCP server is a plugin (ADR 0006)", () => {
     writeFileSync(join(skill, ".mcp.json"), '{"mcpServers": {}}\n');
-    expect(checkStructure(skill)).toEqual([]);
+    expect(checkStructure(listing).map((f) => f.where)).toEqual([`${INNER}/.mcp.json`]);
   });
 
   /* #183: the walk produces the `.claude-plugin` directory entry as well as
-     the file inside it, and the generated manifest has to survive both. */
-  it("accepts the generated .claude-plugin/plugin.json", () => {
-    mkdirSync(join(skill, ".claude-plugin"));
-    writeFileSync(join(skill, ".claude-plugin", "plugin.json"),
+     the file inside it, and the generated manifest has to survive both. It is
+     at the listing root, beside skills/, where the generator writes it. */
+  it("accepts the generated .claude-plugin/plugin.json at the listing root", () => {
+    mkdirSync(join(listing, ".claude-plugin"));
+    writeFileSync(join(listing, ".claude-plugin", "plugin.json"),
       '{"name": "ns-name"}\n');
-    expect(checkStructure(skill)).toEqual([]);
+    expect(checkStructure(listing)).toEqual([]);
   });
 
   it("rejects any other file under .claude-plugin/, naming it", () => {
-    mkdirSync(join(skill, ".claude-plugin"));
-    writeFileSync(join(skill, ".claude-plugin", "plugin.json"),
+    mkdirSync(join(listing, ".claude-plugin"));
+    writeFileSync(join(listing, ".claude-plugin", "plugin.json"),
       '{"name": "ns-name"}\n');
-    writeFileSync(join(skill, ".claude-plugin", "marketplace.json"), "{}\n");
-    expect(checkStructure(skill).map((f) => f.where))
+    writeFileSync(join(listing, ".claude-plugin", "marketplace.json"), "{}\n");
+    expect(checkStructure(listing).map((f) => f.where))
       .toEqual([".claude-plugin/marketplace.json"]);
+  });
+
+  it("rejects a SKILL.md at the listing root, the retired flat layout", () => {
+    writeFileSync(join(listing, "SKILL.md"), "---\nname: example-skill\n---\n\nBody.\n");
+    const findings = checkStructure(listing);
+    expect(findings.map((f) => f.where)).toEqual(["SKILL.md"]);
+    expect(findings[0]?.message)
+      .toContain("skills/testuser/example-skill/skills/example-skill/SKILL.md");
   });
 });

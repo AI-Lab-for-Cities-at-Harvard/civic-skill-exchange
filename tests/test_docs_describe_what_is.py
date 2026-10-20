@@ -67,15 +67,16 @@ def _plugin_level_refusals() -> set[str]:
 
 def test_security_md_l0_refused_files_match_the_validator() -> None:
     refused = _plugin_level_refusals()
-    assert refused == {"hooks", ".claude-plugin", "settings.json",
-                        "settings.local.json", ".lsp.json"}, (
+    assert refused == {"hooks", ".claude-plugin", ".codex-plugin", "settings.json",
+                        "settings.local.json", ".lsp.json", ".mcp.json", "mcp.json"}, (
         "validator/src/structure-core.ts's refused plugin-level paths changed; "
         "update this test and docs/SECURITY.md together"
     )
     doc = _text("docs/SECURITY.md")
     for name in refused:
         assert name in doc, f"docs/SECURITY.md's L0 file table is missing {name!r}"
-    assert ".mcp.json" in doc and "executed" in doc
+    # #151 kept .mcp.json in a single skill; ADR 0006 (decision 5) retired that.
+    assert "treated as executed" not in doc
 
 
 def test_contributing_md_lists_the_same_refused_plugin_files() -> None:
