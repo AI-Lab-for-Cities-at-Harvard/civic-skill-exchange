@@ -463,104 +463,104 @@ export function PluginSubmit(
           <p className="submit__ok" data-testid="plugin-from-file">{p.fromFile(fromFile.join(", "))}</p>
         )}
         <Stack gap="5">
-        <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={p.namespaceHint}>
-          <input id="namespace" className="input" value={draft.author}
-            onChange={onInput("author")} autoComplete="off" />
-          {reserved ? (
-            <p className="field__hint" data-testid="reserved-namespace">
-              {rich(f.reservedNamespace(draft.author.trim()))}
-            </p>
-          ) : badLogin ? (
-            <p className="field__finding" data-testid="bad-login">
-              {rich(f.badLogin(draft.author.trim()))}
-            </p>
-          ) : userCheck === "missing" ? (
-            <p className="field__finding" data-testid="no-such-user">
-              {f.noSuchUser(draft.author.trim())}
-            </p>
-          ) : userCheck === "unavailable" && (
-            <p className="field__hint" data-testid="user-unchecked">
-              {f.userUnchecked(draft.author.trim())}
-            </p>
-          )}
-        </Field>
-
-        <Field id="plugin-name" label={p.nameLabel} findings={[]}
-          hint={rich(p.nameHint(expectedPluginName({
-            namespace: ns && !badLogin ? ns : p.youExample, directoryName: draft.name || "plugin",
-          })))}>
-          <input id="plugin-name" className="input" value={typedName}
-            onChange={(e) => { setTypedName(e.target.value); set("name")(slugify(e.target.value)); }} />
-        </Field>
-
-        <Field id={id("description")} label={f.descriptionLabel}
-          findings={manifestFindings} hint={p.descriptionHint}>
-          <textarea id={id("description")} className="textarea" rows={3}
-            value={draft.description} onChange={onInput("description")} />
-        </Field>
-
-        <LicenseField id={id("license")} value={draft.license} findings={manifestFindings}
-          onChange={set("license")} />
-
-        <Field id={id("version")} label={f.versionLabel} findings={manifestFindings}
-          hint={rich(p.versionHint)}>
-          <input id={id("version")} className="input" value={draft.version}
-            onChange={onInput("version")} placeholder={f.versionPlaceholder} />
-        </Field>
-
-        <Field id={id("maintainer")} label={p.maintainerLabel} findings={manifestFindings}
-          hint={f.maintainerHint}>
-          <input id={id("maintainer")} className="input" value={draft.maintainer}
-            onChange={onInput("maintainer")} />
-        </Field>
-
-        <Choice id={id("affiliation")} label={f.affiliationLabel} value={draft.affiliation}
-          findings={manifestFindings} placeholder={f.choose}
-          onChange={set("affiliation")} options={f.affiliationChoices} />
-
-        <Choice id={id("deployment")} label={p.deploymentLabel} value={draft.deployment}
-          findings={manifestFindings} placeholder={f.choose}
-          onChange={set("deployment")} options={f.deploymentChoices}
-          hint={draft.deployment === "team" || draft.deployment === "organization"
-            ? f.deploymentHintClaim : f.deploymentHintPersonal} />
-
-        {owesOrganization && deployedAt}
-
-        <details className="disclosure">
-          <summary className="h3 disclosure__summary">{t.optional.summary}</summary>
-          <Stack gap="4">
-          <p className="field__hint">{p.fitHint}</p>
-          <Stack gap="5">
-          <Field id={id("useWhen")} label={t.optional.useWhenLabel} findings={manifestFindings}>
-            <textarea id={id("useWhen")} className="textarea" rows={2}
-              value={draft.useWhen} onChange={onInput("useWhen")} />
+          <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={p.namespaceHint}>
+            <input id="namespace" className="input" value={draft.author}
+              onChange={onInput("author")} autoComplete="off" />
+            {reserved ? (
+              <p className="field__hint" data-testid="reserved-namespace">
+                {rich(f.reservedNamespace(draft.author.trim()))}
+              </p>
+            ) : badLogin ? (
+              <p className="field__finding" data-testid="bad-login">
+                {rich(f.badLogin(draft.author.trim()))}
+              </p>
+            ) : userCheck === "missing" ? (
+              <p className="field__finding" data-testid="no-such-user">
+                {f.noSuchUser(draft.author.trim())}
+              </p>
+            ) : userCheck === "unavailable" && (
+              <p className="field__hint" data-testid="user-unchecked">
+                {f.userUnchecked(draft.author.trim())}
+              </p>
+            )}
           </Field>
-          <Field id={id("avoidWhen")} label={t.optional.avoidWhenLabel}
-            findings={manifestFindings} hint={t.optional.avoidWhenHint}>
-            <textarea id={id("avoidWhen")} className="textarea" rows={2}
-              value={draft.avoidWhen} onChange={onInput("avoidWhen")} />
+
+          <Field id="plugin-name" label={p.nameLabel} findings={[]}
+            hint={rich(p.nameHint(expectedPluginName({
+              namespace: ns && !badLogin ? ns : p.youExample, directoryName: draft.name || "plugin",
+            })))}>
+            <input id="plugin-name" className="input" value={typedName}
+              onChange={(e) => { setTypedName(e.target.value); set("name")(slugify(e.target.value)); }} />
           </Field>
-          <Field id={id("modelsTested")} label={t.optional.modelsTestedLabel}
-            findings={manifestFindings} hint={t.optional.modelsTestedHint}>
-            <input id={id("modelsTested")} className="input" value={draft.modelsTested}
-              onChange={onInput("modelsTested")}
-              placeholder={t.optional.modelsTestedPlaceholder} />
+
+          <Field id={id("description")} label={f.descriptionLabel}
+            findings={manifestFindings} hint={p.descriptionHint}>
+            <textarea id={id("description")} className="textarea" rows={3}
+              value={draft.description} onChange={onInput("description")} />
           </Field>
-          {!owesOrganization && deployedAt}
-          <Field id={id("deployedIn")} label={t.optional.deployedInLabel}
-            findings={manifestFindings} hint={t.optional.deployedInHint}>
-            <input id={id("deployedIn")} className="input" value={draft.deployedIn}
-              onChange={onInput("deployedIn")} placeholder={t.optional.deployedInPlaceholder} />
+
+          <LicenseField id={id("license")} value={draft.license} findings={manifestFindings}
+            onChange={set("license")} />
+
+          <Field id={id("version")} label={f.versionLabel} findings={manifestFindings}
+            hint={rich(p.versionHint)}>
+            <input id={id("version")} className="input" value={draft.version}
+              onChange={onInput("version")} placeholder={f.versionPlaceholder} />
           </Field>
-          <Field id={id("deployedSince")} label={t.optional.deployedSinceLabel}
-            findings={manifestFindings}>
-            <input id={id("deployedSince")} className="input" value={draft.deployedSince}
-              onChange={onInput("deployedSince")}
-              placeholder={t.optional.deployedSincePlaceholder} />
+
+          <Field id={id("maintainer")} label={p.maintainerLabel} findings={manifestFindings}
+            hint={f.maintainerHint}>
+            <input id={id("maintainer")} className="input" value={draft.maintainer}
+              onChange={onInput("maintainer")} />
           </Field>
-          </Stack>
-          </Stack>
-        </details>
+
+          <Choice id={id("affiliation")} label={f.affiliationLabel} value={draft.affiliation}
+            findings={manifestFindings} placeholder={f.choose}
+            onChange={set("affiliation")} options={f.affiliationChoices} />
+
+          <Choice id={id("deployment")} label={p.deploymentLabel} value={draft.deployment}
+            findings={manifestFindings} placeholder={f.choose}
+            onChange={set("deployment")} options={f.deploymentChoices}
+            hint={draft.deployment === "team" || draft.deployment === "organization"
+              ? f.deploymentHintClaim : f.deploymentHintPersonal} />
+
+          {owesOrganization && deployedAt}
+
+          <details className="disclosure">
+            <summary className="h3 disclosure__summary">{t.optional.summary}</summary>
+            <Stack gap="4">
+              <p className="field__hint">{p.fitHint}</p>
+              <Stack gap="5">
+                <Field id={id("useWhen")} label={t.optional.useWhenLabel} findings={manifestFindings}>
+                  <textarea id={id("useWhen")} className="textarea" rows={2}
+                    value={draft.useWhen} onChange={onInput("useWhen")} />
+                </Field>
+                <Field id={id("avoidWhen")} label={t.optional.avoidWhenLabel}
+                  findings={manifestFindings} hint={t.optional.avoidWhenHint}>
+                  <textarea id={id("avoidWhen")} className="textarea" rows={2}
+                    value={draft.avoidWhen} onChange={onInput("avoidWhen")} />
+                </Field>
+                <Field id={id("modelsTested")} label={t.optional.modelsTestedLabel}
+                  findings={manifestFindings} hint={t.optional.modelsTestedHint}>
+                  <input id={id("modelsTested")} className="input" value={draft.modelsTested}
+                    onChange={onInput("modelsTested")}
+                    placeholder={t.optional.modelsTestedPlaceholder} />
+                </Field>
+                {!owesOrganization && deployedAt}
+                <Field id={id("deployedIn")} label={t.optional.deployedInLabel}
+                  findings={manifestFindings} hint={t.optional.deployedInHint}>
+                  <input id={id("deployedIn")} className="input" value={draft.deployedIn}
+                    onChange={onInput("deployedIn")} placeholder={t.optional.deployedInPlaceholder} />
+                </Field>
+                <Field id={id("deployedSince")} label={t.optional.deployedSinceLabel}
+                  findings={manifestFindings}>
+                  <input id={id("deployedSince")} className="input" value={draft.deployedSince}
+                    onChange={onInput("deployedSince")}
+                    placeholder={t.optional.deployedSincePlaceholder} />
+                </Field>
+              </Stack>
+            </Stack>
+          </details>
         </Stack>
 
         <FindingList findings={otherManifest} testid={`findings-${PLUGIN_MANIFEST}`}
@@ -573,34 +573,34 @@ export function PluginSubmit(
         <h2 className="h2">{p.skillsHeading}</h2>
         <p>{p.skillsLede}</p>
         <Stack gap="2">
-        {source.skills.map((sk) => {
-          const findings = check.skills[sk.name] ?? [];
-          const questions = asked[sk.name] ?? [];
-          const other = findings.filter((x) => !questions.includes(x.where))
-            .map((x) => plain(x, f));
-          return (
-            <details key={sk.name} className="disclosure"
-              open={questions.length > 0 || (attempted && findings.some(waits))}
-              data-waiting={findings.some(waits) ? "true" : undefined}
-              data-testid={`skill-${sk.name}`}>
-              <summary className="disclosure__summary">
-                <code>{sk.name}</code>{" — "}
-                <span data-testid="skill-status">
-                  {findings.length === 0 ? p.skillComplete : p.skillOpen(findings.length)}
-                </span>
-              </summary>
-              <Stack gap="5">
-                {questions.map((key) => question(sk.name, key, findings))}
-                {questions.length === 0 && answered(sk.name)}
-                <FindingList findings={other} testid={`findings-skills/${sk.name}`}
-                  heading={p.skillOther} />
-                {skills[sk.name]!.problems.map((m) => (
-                  <p className="field__finding" key={m}>{m}</p>
-                ))}
-              </Stack>
-            </details>
-          );
-        })}
+          {source.skills.map((sk) => {
+            const findings = check.skills[sk.name] ?? [];
+            const questions = asked[sk.name] ?? [];
+            const other = findings.filter((x) => !questions.includes(x.where))
+              .map((x) => plain(x, f));
+            return (
+              <details key={sk.name} className="disclosure"
+                open={questions.length > 0 || (attempted && findings.some(waits))}
+                data-waiting={findings.some(waits) ? "true" : undefined}
+                data-testid={`skill-${sk.name}`}>
+                <summary className="disclosure__summary">
+                  <code>{sk.name}</code>{" — "}
+                  <span data-testid="skill-status">
+                    {findings.length === 0 ? p.skillComplete : p.skillOpen(findings.length)}
+                  </span>
+                </summary>
+                <Stack gap="5">
+                  {questions.map((key) => question(sk.name, key, findings))}
+                  {questions.length === 0 && answered(sk.name)}
+                  <FindingList findings={other} testid={`findings-skills/${sk.name}`}
+                    heading={p.skillOther} />
+                  {skills[sk.name]!.problems.map((m) => (
+                    <p className="field__finding" key={m}>{m}</p>
+                  ))}
+                </Stack>
+              </details>
+            );
+          })}
         </Stack>
       </Stack>
 
@@ -608,30 +608,30 @@ export function PluginSubmit(
         <h2 className="h2">{t.send.heading}</h2>
         <p className="submit__note">{t.send.addedNote}</p>
         <Stack gap="3">
-        <Added file={PLUGIN_MANIFEST} lines={manifestAdded}
-          summary={p.addedSummary(PLUGIN_MANIFEST, manifestAdded.length)} />
-        <Added file={PLUGIN_MCP_CONFIG} lines={mcpAdded}
-          summary={p.addedSummary(PLUGIN_MCP_CONFIG, mcpAdded.length)} />
-        {source.skills.map((sk) => {
-          const path = skillMdPath(sk.name);
-          const lines = addedFrontmatterLines(sk.skillMd, skills[sk.name]!.skillMd);
-          return <Added key={path} file={path} lines={lines}
-            summary={p.addedSummary(path, lines.length)} />;
-        })}
+          <Added file={PLUGIN_MANIFEST} lines={manifestAdded}
+            summary={p.addedSummary(PLUGIN_MANIFEST, manifestAdded.length)} />
+          <Added file={PLUGIN_MCP_CONFIG} lines={mcpAdded}
+            summary={p.addedSummary(PLUGIN_MCP_CONFIG, mcpAdded.length)} />
+          {source.skills.map((sk) => {
+            const path = skillMdPath(sk.name);
+            const lines = addedFrontmatterLines(sk.skillMd, skills[sk.name]!.skillMd);
+            return <Added key={path} file={path} lines={lines}
+              summary={p.addedSummary(path, lines.length)} />;
+          })}
 
-        {/* The whole of each file as it will be uploaded, not only the lines
-            the page added: a diff shows what changed, and this shows what the
-            reviewer will read (#302, S-15). */}
-        <FullFile path={PLUGIN_MANIFEST} text={manifest.text} summary={t.send.seeFile(PLUGIN_MANIFEST)} />
-        {(conversion?.mcp ?? source.mcp) && (
-          <FullFile path={PLUGIN_MCP_CONFIG} text={(conversion?.mcp ?? source.mcp)!}
-            summary={t.send.seeFile(PLUGIN_MCP_CONFIG)} />
-        )}
-        {source.skills.map((sk) => {
-          const path = skillMdPath(sk.name);
-          return <FullFile key={path} path={path} text={skills[sk.name]!.skillMd}
-            summary={t.send.seeFile(path)} />;
-        })}
+          {/* The whole of each file as it will be uploaded, not only the lines
+              the page added: a diff shows what changed, and this shows what the
+              reviewer will read (#302, S-15). */}
+          <FullFile path={PLUGIN_MANIFEST} text={manifest.text} summary={t.send.seeFile(PLUGIN_MANIFEST)} />
+          {(conversion?.mcp ?? source.mcp) && (
+            <FullFile path={PLUGIN_MCP_CONFIG} text={(conversion?.mcp ?? source.mcp)!}
+              summary={t.send.seeFile(PLUGIN_MCP_CONFIG)} />
+          )}
+          {source.skills.map((sk) => {
+            const path = skillMdPath(sk.name);
+            return <FullFile key={path} path={path} text={skills[sk.name]!.skillMd}
+              summary={t.send.seeFile(path)} />;
+          })}
         </Stack>
 
         {!attempted && waiting > 0 && (
