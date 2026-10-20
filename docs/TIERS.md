@@ -70,6 +70,8 @@ The SHA pin makes that attack fail closed. A reviewer attests to one commit — 
 
 That is deliberately stricter than hashing the reviewed content: a commit that touches the directory without changing the file the reviewer read demotes the skill too. Re-attesting after a typo fix is cheap. Failing to notice an amendment is not.
 
+**A re-pin** moves an attestation's `sha:` without a fresh review, after a change that moved files but changed none (ADR 0006, decision 7). For example, the layout move. Only `sha:` changes, with a dated comment above the entry saying why. CI holds a re-pin to that (`tests/test_repin.py`): when an entry's `sha:` moves and its `reviewed:` date doesn't, every file the author wrote must be byte-identical between the two pins, at most renamed. Only the registry's generated manifests may differ. Anything else, even a one-character edit, needs a fresh review with a new `reviewed:` date.
+
 This is cheap to implement and it is the single highest-value mechanism in the design.
 
 **Note:** this pattern is our own construction rather than an established convention, so treat it as the part of the design most worth testing early.
