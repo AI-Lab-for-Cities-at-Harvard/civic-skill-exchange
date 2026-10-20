@@ -264,6 +264,8 @@ a:hover { color: var(--c-spot); }
 .results__count:focus-visible { outline: 4px solid var(--c-outline); outline-offset: 1px; }
 /* Switching sides brings the bar back to just below the window's top. */
 .browse__bar { scroll-margin-top: var(--gap-4); }
+/* What a plugin is, above the plugin rows: a caption, not the page's subject. */
+.browse__intro { max-width: 66ch; font-size: var(--t-sm); color: var(--c-text-light); }
 
 /* The Skills/Plugins toggle: two links joined into one control, the side
    shown filled in. Each is at least 44px tall. */

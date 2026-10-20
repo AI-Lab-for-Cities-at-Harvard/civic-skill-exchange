@@ -406,7 +406,7 @@ export default function App() {
                 <h2 className="vh" id={`${side}-heading`}>
                   {side === "plugins" ? s.plugins.heading : s.browse.show.skills}
                 </h2>
-                {side === "plugins" && <p>{s.plugins.intro}</p>}
+                {side === "plugins" && <p className="browse__intro">{s.plugins.intro}</p>}
                 {listed.length === 0 ? (
                   <p className="notice">
                     {rich(side === "plugins" ? s.plugins.empty : s.results.empty, { clear })}
