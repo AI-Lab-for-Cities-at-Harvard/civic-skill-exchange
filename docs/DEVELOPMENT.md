@@ -572,6 +572,14 @@ rules they replaced are gone, including `.download__cmd`'s `display`, `gap` and
 supplies. `.toc__link--current` is in logical properties; `.toc`, `.cta-row`
 and `.prose` stay for About.
 
+The browse page (#319, with #208's rows) followed: the facets, a facet's
+note and options, the results, the toggle bar and the pager are `Stack`s and
+`Cluster`s. The rows are one CSS grid (`.rows`) with each row and its head a
+`subgrid`, so the tier, category and Details columns line up across rows; that
+grid is the one layout a primitive could not give. `SkillCard`, `PluginCard`
+and the card grid are gone, and the skip link and a facet option's padding are
+logical properties.
+
 ### Testing the front end
 
 Logic lives in `src/lib/` as pure functions so it can be unit-tested without a
