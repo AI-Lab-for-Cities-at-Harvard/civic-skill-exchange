@@ -5,7 +5,6 @@
     "name": "Santi Garces"
   },
   "license": "MIT",
-  "skills": "./",
   "interface": {
     "displayName": "Problem Identification Scan",
     "shortDescription": "Supports problem identification, the first phase of performance management",

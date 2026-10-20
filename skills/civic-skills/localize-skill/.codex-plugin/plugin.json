@@ -5,7 +5,6 @@
     "name": "AI Lab for Cities at Harvard"
   },
   "license": "CC0-1.0",
-  "skills": "./",
   "interface": {
     "displayName": "Localize Skill",
     "shortDescription": "Fits a generalized skill to one organization writes its local values back in and produces an ordinary, self-contained…",

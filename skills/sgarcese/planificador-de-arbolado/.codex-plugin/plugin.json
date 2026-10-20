@@ -5,7 +5,6 @@
     "name": "Santi Garces"
   },
   "license": "MIT",
-  "skills": "./",
   "interface": {
     "displayName": "Planificador De Arbolado",
     "shortDescription": "Plan de arborización urbana en tres fases a partir del portal de datos abiertos de una ciudad y su conector…",

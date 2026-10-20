@@ -5,7 +5,6 @@
     "name": "Santi Garces"
   },
   "license": "MIT",
-  "skills": "./",
   "interface": {
     "displayName": "Deep Analysis For Issues",
     "shortDescription": "This is the original civic analytics workflow",
