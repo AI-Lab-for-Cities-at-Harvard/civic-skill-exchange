@@ -449,7 +449,8 @@ a:hover { color: var(--c-spot); }
   background: var(--c-button-bg-subtle); padding: 0.1em 0.35em; border-radius: var(--radius);
 }
 
-.tiers { display: grid; gap: var(--gap-4); grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); }
+/* The tier cards sit in a <Grid>, and a card is a <Stack>: what is left here is
+   its own padding and drawing. */
 .tier-card {
   border: 1px solid var(--c-border-light); border-top: 3px solid var(--c-warn-edge);
   background: var(--c-bg-raised); padding: var(--gap-5); border-radius: var(--radius);
@@ -458,10 +459,9 @@ a:hover { color: var(--c-spot); }
 .tier-card p { font-size: var(--t-sm); }
 .tier-card__warn { color: var(--c-text-lighter); }
 
-.flow {
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-3);
-  padding: var(--gap-4) 0; max-width: none !important;
-}
+/* A <Cluster>. The line stands off the paragraphs around it by its own padding,
+   which is what the diagram needs and a gap between paragraphs does not give. */
+.flow { padding-block: var(--gap-4); max-width: none !important; }
 .flow__step {
   border: 1px solid var(--c-border); border-radius: var(--radius);
   padding: var(--gap-2) var(--gap-3); font-size: var(--t-sm);
@@ -489,7 +489,7 @@ a:hover { color: var(--c-spot); }
    different weight mid-link reads as two links. */
 .doc-link__note { color: var(--c-text-lighter); font-size: 0.9em; }
 
-.terms { max-width: var(--w-center); margin: 0 auto; }
+.terms { max-width: var(--w-center); margin-inline: auto; }
 .terms p { font-size: var(--t-sm); }
 .terms__affil { color: var(--c-text-lighter); font-size: var(--t-xs) !important; }
 
@@ -812,15 +812,10 @@ a:hover { color: var(--c-spot); }
   letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--c-text-lighter);
 }
-/* The groups sit side by side where there is room and stack where there is
-   not. Within a group the list is vertical, which is what stops eight items of
-   uneven length rearranging themselves at every breakpoint (#136). */
-.toc__groups {
-  display: grid; gap: var(--gap-4) var(--gap-6);
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-}
+/* The groups (a <Grid>) sit side by side where there is room and stack where
+   there is not. Within a group the list is vertical, which is what stops eight
+   items of uneven length rearranging themselves at every breakpoint (#136). */
 .toc__group-label {
-  margin: 0 0 var(--gap-2);
   font-size: var(--t-sm); font-weight: 600; color: var(--c-text);
 }
 .toc__list {
@@ -842,35 +837,27 @@ a:hover { color: var(--c-spot); }
 }
 
 /* The metadata reference. A description list, because that is what it is —
- * and the browser gives the term/definition relationship for free. */
-.fields { margin: var(--gap-4) 0; }
-.fields dt {
-  margin-top: var(--gap-4); font-family: var(--f-mono); font-size: var(--t-sm);
-}
-.fields dt:first-child { margin-top: 0; }
+ * and the browser gives the term/definition relationship for free. Its pairs
+ * and the space between them are <Stack>s; a description keeps its rule and
+ * its indent. */
+.fields dt { font-family: var(--f-mono); font-size: var(--t-sm); }
 .fields dd {
-  margin: var(--gap-1) 0 0; padding-left: var(--gap-4);
+  padding-inline-start: var(--gap-4);
   font-size: var(--t-sm); color: var(--c-text-light);
-  border-left: 2px solid var(--c-border-light);
+  border-inline-start: 2px solid var(--c-border-light);
 }
 
-.vocab-grid {
-  display: grid; gap: var(--gap-4);
-  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
-  margin: var(--gap-5) 0;
-  max-width: none !important;
-}
+/* A vocabulary table is a <Stack> of a title and a list, in a <Grid>. */
 .vocab {
   padding: var(--gap-3) var(--gap-4);
   border-radius: var(--radius); background: var(--c-button-bg-subtle);
 }
 .vocab__title {
-  margin: 0 0 var(--gap-2);
   font-family: var(--f-mono); font-size: var(--t-xs);
   color: var(--c-text-lighter); font-weight: 400;
 }
 .vocab__list { list-style: none; margin: 0; padding: 0; font-size: var(--t-sm); }
-.vocab__list li { display: flex; gap: var(--gap-2); padding: 2px 0; flex-wrap: wrap; }
+.vocab__list li { padding: 2px 0; }
 .vocab__list code { color: var(--c-text); }
 .vocab__list span { color: var(--c-text-light); }
 
@@ -950,8 +937,8 @@ a:hover { color: var(--c-spot); }
 
 /* Three short statements read better as three lines than as one sentence with
    semicolons holding it together. */
-.plain-list { margin: 0 0 var(--gap-4); padding-left: var(--gap-5); max-width: 66ch; }
-.plain-list li { margin-bottom: var(--gap-3); line-height: 1.65; }
+.plain-list { padding-inline-start: var(--gap-5); max-width: 66ch; }
+.plain-list li { line-height: 1.65; }
 
 /* The guide (#258): a product under each task, the steps numbered, the
    glossary set as term and meaning. */
