@@ -36,11 +36,10 @@ a:hover { color: var(--c-spot); }
   padding: var(--gap-4) var(--gap-5) var(--space-md);
 }
 /* A <Cluster> (App.tsx): the row, its gap and its wrapping are the primitive's. */
-.topper__bar {
-  justify-content: space-between;
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--c-border-light);
-}
+/* The rule under the bar belongs to the statement it separates the bar from,
+   so a compact header (#309), which has no statement, has no rule and no
+   empty band below the nav. */
+.topper__bar { justify-content: space-between; }
 .topper__mark {
   font-weight: 700; font-size: var(--t-sm);
   letter-spacing: 0.14em; text-transform: uppercase;
@@ -76,7 +75,12 @@ a:hover { color: var(--c-spot); }
 .nav a:hover { color: var(--c-text); border-bottom-color: var(--c-border); }
 .nav a[aria-current="page"] { color: var(--c-text); border-bottom-color: var(--c-spot); }
 
-.topper__statement { padding-top: var(--space-md); max-width: 46rem; }
+.topper__statement {
+  margin-top: var(--space-sm); border-top: 1px solid var(--c-border-light);
+  padding-top: var(--space-md);
+}
+/* The measure is the text's; the rule above it runs the full width. */
+.topper__statement > * { max-width: 46rem; }
 .topper__title {
   margin: 0 0 var(--gap-4);
   font-family: var(--f-sans); font-weight: 700;
