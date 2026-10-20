@@ -147,7 +147,6 @@ a:hover { color: var(--c-spot); }
  * Browse sits on the canvas: filters take 4 columns, results the remaining 12.
  */
 .layout {
-  padding-block: var(--gap-6) var(--space-lg);
   row-gap: var(--gap-6);
   align-items: start;
 }
@@ -251,10 +250,7 @@ a:hover { color: var(--c-spot); }
   font-variant-numeric: tabular-nums;
 }
 /* Plugins sit below the skills and apart from them (ADR 0005, #206). */
-.plugins {
-  margin-top: var(--space-xl); padding-top: var(--gap-4);
-  border-top: 1px solid var(--c-border);
-}
+.plugins { border-top: 1px solid var(--c-border); }
 .grid {
   display: grid; gap: var(--gap-4);
   /* Sized so three cards fit the results' twelve columns at desktop. The tease
@@ -370,30 +366,26 @@ a:hover { color: var(--c-spot); }
 
 /* ---- editorial page (About) --------------------------------------------- */
 .page {
-  max-width: var(--w-wide); margin: 0 auto;
-  padding: 0 var(--gap-5) var(--space-lg);
+  max-width: var(--w-wide); margin-inline: auto;
+  padding-inline: var(--gap-5);
 }
 .prose__block {
   max-width: var(--w-center);
-  padding: var(--space-md) 0;
   border-bottom: 1px solid var(--c-border-light);
 }
 .prose__block:last-child { border-bottom: 0; }
 .prose__block[data-theme] {
   background: var(--c-bg); color: var(--c-text);
   border-bottom: 0; max-width: none;
-  margin-top: var(--space-md);
-  padding: var(--space-md) var(--gap-5);
   border-radius: var(--radius);
 }
 .h2 {
-  margin: 0 0 var(--gap-4);
   font-family: var(--f-sans); font-weight: 700;
   font-size: var(--t-2xl); line-height: 1.15; letter-spacing: var(--track-heading);
   text-wrap: balance;
 }
 .h3 {
-  margin: 0 0 var(--gap-2); font-size: var(--t-base);
+  font-size: var(--t-base);
   font-weight: 600; letter-spacing: var(--track-tight);
 }
 .prose p { margin: 0 0 var(--gap-4); max-width: 66ch; line-height: 1.65; }
@@ -423,10 +415,6 @@ a:hover { color: var(--c-spot); }
 }
 .flow__step--mid { border-style: dashed; border-color: var(--c-spot); color: var(--c-spot); }
 .flow__arrow { color: var(--c-text-lighter); }
-
-.steps { margin: 0; padding: 0 0 0 1.2rem; display: grid; gap: var(--gap-5); }
-.steps li::marker { color: var(--c-spot); font-weight: 700; }
-.steps p { font-size: var(--t-sm); margin-bottom: 0; }
 
 .cta-row { display: flex; flex-wrap: wrap; gap: var(--gap-3); max-width: none !important; }
 .btn--strong {
@@ -459,8 +447,6 @@ a:hover { color: var(--c-spot); }
 .card__title a:hover { color: var(--c-spot); }
 
 /* ---- skill detail -------------------------------------------------------- */
-.detail { padding-top: var(--space-md); }
-
 .crumbs {
   display: flex; gap: var(--gap-2); align-items: baseline;
   font-size: var(--t-sm); color: var(--c-text-lighter);
@@ -468,11 +454,7 @@ a:hover { color: var(--c-spot); }
 }
 .crumbs a { color: var(--c-text-light); }
 
-.detail__head {
-  border-bottom: 1px solid var(--c-border-light);
-  padding-bottom: var(--space-sm);
-  margin-bottom: var(--space-md);
-}
+.detail__head { border-bottom: 1px solid var(--c-border-light); }
 .detail__title {
   margin: var(--gap-3) 0 var(--gap-3);
   font-family: var(--f-sans); font-weight: 700;
@@ -498,11 +480,7 @@ a:hover { color: var(--c-spot); }
 .detail__side { display: grid; gap: var(--gap-5); position: sticky; top: var(--gap-4); }
 @media (max-width: 1023px) { .detail__side { position: static; } }
 
-.detail__section {
-  margin-top: var(--space-md);
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--c-border-light);
-}
+.detail__section { border-top: 1px solid var(--c-border-light); }
 .detail__section > p { font-size: var(--t-sm); color: var(--c-text-light); }
 
 /* Fit — the submitter's own account of when the skill helps and when it does
@@ -562,7 +540,6 @@ a:hover { color: var(--c-spot); }
   background: var(--c-bg-raised);
   padding: var(--gap-5); border-radius: var(--radius);
 }
-.download h2 { margin-bottom: var(--gap-3); }
 .download__warn, .download__ok {
   font-size: var(--t-sm); line-height: 1.5;
   padding: var(--gap-3); border-radius: var(--radius); margin: 0 0 var(--gap-4);
@@ -606,7 +583,6 @@ a:hover { color: var(--c-spot); }
   background: var(--c-bg-raised);
   padding: var(--gap-5); border-radius: var(--radius);
 }
-.facts h2 { margin-bottom: var(--gap-3); }
 /* An inline caveat beside a value — quieter than the value, and never a
    different colour, because a number with a coloured note beside it reads as a
    score (#77). */
@@ -631,11 +607,8 @@ a:hover { color: var(--c-spot); }
  * The band paints edge to edge; its inner takes a span off the canvas so the
  * text lines up with the grid rather than the viewport.
  */
-.band {
-  background: var(--c-bg); color: var(--c-text);
-  padding-block: var(--space-md);
-}
-.band__heading { margin: 0 0 var(--gap-4); color: var(--c-text); }
+.band { background: var(--c-bg); color: var(--c-text); }
+.band__heading { color: var(--c-text); }
 
 .band__cols {
   display: grid; gap: var(--gap-6);
@@ -724,7 +697,7 @@ a:hover { color: var(--c-spot); }
 }
 
 .disclosure { border-top: 1px solid var(--c-border-light); padding-top: var(--gap-4); }
-.disclosure__summary { cursor: pointer; margin-bottom: var(--gap-4); }
+.disclosure__summary { cursor: pointer; }
 .disclosure__summary::marker { color: var(--c-text-lighter); }
 
 .submit__warn, .submit__blocked {
@@ -735,7 +708,7 @@ a:hover { color: var(--c-spot); }
 .submit__ok { color: var(--c-ok); font-size: var(--t-sm); }
 .submit__note { font-size: var(--t-sm); color: var(--c-text-light); }
 /* What a complete skill in a plugin already says (#213): question, then answer. */
-.submit__answers { font-size: var(--t-sm); margin: var(--s-2, 0.5rem) 0; }
+.submit__answers { font-size: var(--t-sm); margin: var(--gap-2) 0; }
 .submit__answers div { display: flex; flex-wrap: wrap; gap: 0 0.5em; }
 .submit__answers dt { color: var(--c-text-light); }
 .submit__answers dd { margin: 0; }
@@ -748,16 +721,24 @@ a:hover { color: var(--c-spot); }
  * no second copy of the number to fall out of step. */
 .steps {
   list-style: none;
-  margin: var(--gap-5) 0 0; padding: 0;
+  /* Space below as well as above: whatever follows the last step — the
+     account note, About's buttons — otherwise sits on its button. */
+  margin: var(--gap-5) 0; padding: 0;
   counter-reset: step;
   display: grid; gap: var(--gap-5);
   max-width: none !important;
 }
+/* A step is a stack: its parts take their space from the gap, not from their
+   own margins, so a link above a button cannot end up touching it. */
 .steps__item {
   counter-increment: step;
   position: relative;
   padding-left: calc(var(--gap-6) + var(--gap-4));
+  display: flex; flex-direction: column; gap: var(--gap-3);
 }
+.steps .steps__item > * { margin: 0; }
+/* A button or link-button keeps its own width rather than stretching. */
+.steps__item > .btn { align-self: flex-start; }
 .steps__item::before {
   content: counter(step);
   position: absolute; left: 0; top: 0;
@@ -775,10 +756,8 @@ a:hover { color: var(--c-spot); }
   width: 2px; height: calc(100% + var(--gap-5) - var(--gap-6));
   background: var(--c-border-light);
 }
-.steps__title { margin: 0 0 var(--gap-2); font-size: var(--t-base); }
-.steps__body {
-  margin: 0 0 var(--gap-3); font-size: var(--t-sm); color: var(--c-text-light);
-}
+.steps__title { font-size: var(--t-base); }
+.steps__body { font-size: var(--t-sm); color: var(--c-text-light); }
 
 /* On-this-page contents for the About page. A nav, so it is announced as one
  * and can be skipped; sticky on a wide screen only, because a sticky bar on a
@@ -800,7 +779,7 @@ a:hover { color: var(--c-spot); }
    not. Within a group the list is vertical, which is what stops eight items of
    uneven length rearranging themselves at every breakpoint (#136). */
 .toc__groups {
-  display: grid; gap: var(--gap-4) var(--space-xs);
+  display: grid; gap: var(--gap-4) var(--gap-6);
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
 }
 .toc__group-label {
@@ -878,8 +857,11 @@ a:hover { color: var(--c-spot); }
   padding: var(--gap-4); border-radius: var(--radius);
   background: var(--c-button-bg-subtle);
   font-family: var(--f-mono); font-size: var(--t-xs);
-  /* Wide content scrolls inside its own box rather than widening the page. */
-  overflow-x: auto; white-space: pre;
+  /* Wrapped, so the end of a long line is on screen: an overlay scrollbar is
+     invisible until touched, and a line that only scrolled read as clipped
+     (#287). Overflow stays for a token too long to break anywhere. */
+  white-space: pre-wrap; overflow-wrap: anywhere;
+  overflow-x: auto;
 }
 .submit__archive { margin-top: var(--gap-4); font-size: var(--t-sm); }
 .submit__findings { margin: var(--gap-2) 0 0; padding-left: var(--gap-5); }
@@ -932,8 +914,6 @@ a:hover { color: var(--c-spot); }
 /* The guide (#258): a product under each task, the steps numbered, the
    glossary set as term and meaning. */
 .guide__checked { font-size: var(--t-sm); color: var(--c-text-light); }
-.guide__product { margin-top: var(--gap-5); }
-.guide__product .h3 { margin: 0 0 var(--gap-3); }
 .guide__steps { margin: 0 0 var(--gap-4); padding-left: 1.4rem; display: grid; gap: var(--gap-2); max-width: 66ch; line-height: 1.6; }
 .guide__steps li::marker { color: var(--c-spot); font-weight: 700; }
 .guide__glossary { margin: 0; display: grid; gap: var(--gap-4); max-width: 66ch; }
@@ -942,6 +922,67 @@ a:hover { color: var(--c-spot); }
 .steps__more { margin: 0 0 var(--gap-3); font-size: var(--t-sm); }
 .guide__shots { display: grid; gap: var(--gap-4); margin-top: var(--gap-4); }
 .guide__shot { margin: 0; }
-.guide__shot img { display: block; width: 100%; max-width: 720px; height: auto; border: 1px solid var(--c-border-light); border-radius: 6px; }
+.guide__shot img { display: block; width: 100%; max-width: 720px; height: auto; border: 1px solid var(--c-border-light); border-radius: var(--radius); }
 .guide__shot figcaption { margin-top: var(--gap-2); font-size: var(--t-sm); color: var(--c-text-light); }
 .guide__captured { font-size: var(--t-sm); color: var(--c-text-light); margin: 0; }
+
+/* ---- rhythm (#287) -------------------------------------------------------
+ * The one place the space between a page's blocks is decided. Every section
+ * reads the same way on every page: its last content, --space-section, a
+ * rule, --space-section, its heading. A heading that opens a part of a
+ * section has --space-subsection above it. Headings carry no top margin of
+ * their own anywhere else.
+ *
+ * styles/rhythm.test.tsx holds the rest of this file to it: no rule outside
+ * this block gives a section or a heading vertical margin or padding, and
+ * nothing in here is a bare length. A page that needs something different
+ * changes this block, where the next reader will find it.
+ */
+
+/* Headings: the space below them, never above. */
+.h2 { margin: 0 0 var(--gap-4); }
+.h3 { margin: 0 0 var(--gap-3); }
+.steps__title { margin: 0; }
+.disclosure__summary { margin-bottom: var(--gap-4); }
+
+/* The page: the hero to its first block, and room at the foot. Browse sits on
+   the canvas rather than in .page and takes the same top. */
+.page { padding-block: var(--space-section) var(--space-lg); }
+.layout { padding-block: var(--space-section) var(--space-lg); }
+
+/* Sections. Text pages rule below each block, the detail pages above, which
+   comes to the same thing: the same space either side of every rule. */
+.prose__block { padding-block: var(--space-section); }
+.prose > .prose__block:first-child { padding-top: 0; }
+.prose .prose__block > :last-child { margin-bottom: 0; }
+.detail__head { padding-bottom: var(--space-sm); margin-bottom: var(--space-section); }
+.detail__section { margin-top: var(--space-section); padding-top: var(--space-section); }
+/* The header's rule already opens the first section. A second rule under it,
+   a section's height apart, read as an empty section. */
+.detail__main > .detail__section:first-child {
+  margin-top: 0; padding-top: 0; border-top: 0;
+}
+.band { padding-block: var(--space-section); }
+/* Plugins sit apart from the skills on purpose (ADR 0005, #206): the larger
+   space is above the rule only; below it they are a section like any other. */
+.plugins { margin-top: var(--space-xl); padding-top: var(--space-section); }
+/* A themed block is a panel, so its space is inside it as well as before. */
+.prose__block[data-theme] {
+  margin-top: var(--space-section);
+  padding: var(--space-section) var(--gap-5);
+}
+
+/* Parts of a section. */
+.prose__block > .h3:not(:first-child),
+.guide__product { margin-top: var(--space-subsection); }
+/* A disclosure that is the whole section is opened by the section's rule. A
+   rule of its own as well is the double rule #286 found above "A few optional
+   things". */
+.prose__block > .disclosure:first-child { border-top: 0; padding-top: 0; }
+
+/* Text measure is for text. A box set as a paragraph — a notice, a callout —
+   runs to the column's edge like the form beside it, instead of stopping at
+   .prose p's 66ch. :is() so this outranks that rule rather than tying it. */
+.prose :is(.notice, .submit__prereq, .submit__warn, .submit__blocked) { max-width: none; }
+
+/* ---- end of rhythm ------------------------------------------------------- */

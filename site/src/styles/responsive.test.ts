@@ -40,6 +40,23 @@ describe("the page adapts to the screen it is on", () => {
     }
   });
 
+  it("wraps a long line of code rather than hiding its end", () => {
+    // Overlay scrollbars are invisible until touched, so a block that only
+    // scrolls reads as clipped (#287). Wrapping shows the whole line; the
+    // overflow above stays for a token too long to break.
+    expect(APP).toMatch(/\.submit__yaml\s*\{[^}]*white-space:\s*pre-wrap/);
+  });
+
+  it("runs a boxed notice to the column's edge, not the text measure", () => {
+    // .prose p holds text to 66ch. A box is not a line of text: held to the
+    // same measure it stops short of the form beside it (#287).
+    for (const cls of [".submit__prereq", ".submit__warn", ".submit__blocked"]) {
+      // Under .prose, or .prose p's measure outranks it and nothing changes.
+      const rule = new RegExp(`\\.prose [^{]*\\${cls}[^{]*\\{[^}]*max-width:\\s*none`);
+      expect(APP, `${cls} should reach the column edge`).toMatch(rule);
+    }
+  });
+
   it("has a breakpoint that collapses the two-column layouts", () => {
     expect(APP).toMatch(/@media\s*\(max-width:\s*1023px\)/);
   });
