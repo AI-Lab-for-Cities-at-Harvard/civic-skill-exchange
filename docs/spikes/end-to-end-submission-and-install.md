@@ -1,7 +1,7 @@
 # An end-to-end walkthrough of submitting and installing
 
 **Issue:** [#286](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/286)
-**Status:** walkthrough complete, awaiting rulings on the recommendations at the end.
+**Status:** ruled 2026-10-20, all 13 recommendations accepted; see the rulings at the end.
 
 **Run:** 2026-10-19, against the live site at `6e3e17d`, the first commit with every listing in the nested layout (ADR 0006).
 
@@ -139,3 +139,24 @@ Each one is either a fix to file or a question. They're ordered by what blocks o
 11. **Fold the layout observations into #287.**
 12. **Question: should the install steps be readable without a browser (I-10)?** A static, pre-rendered copy of each listing's install text would let fetch tools and agents read it. That's a larger change, and the need is unproven, so my recommendation is to note it and wait.
 13. **Question: re-run this walkthrough after the fixes,** with a real fork and a real folder drag, as the check that they worked. My recommendation is yes, on the same two personas, so the results compare.
+
+## Rulings (owner, 2026-10-20)
+
+All 13 recommendations were accepted as written.
+
+| Recommendation | Issue |
+|---|---|
+| 1. Check the namespace before the hand-off | #293 |
+| 2. Keep a draft across the fork round trip | #294 |
+| 3. Make every required question visible | #295 |
+| 4. Ask for the license | #296 |
+| 5. Fix the command-line recipes | #297 |
+| 6. Say where install lines are typed, and how to check | #298 |
+| 7. Search by words, and include plugins | #299 |
+| 8. Say what happens after the hand-off | #300 |
+| 9. Codex upgrade as the general refresh | #301 |
+| 10. Smaller fixes | #302 |
+| 11. Layout observations | added to #287 |
+| 12. Install steps readable without a browser | noted; waits for a need |
+| 13. Re-run after the fixes | #303 |
+
