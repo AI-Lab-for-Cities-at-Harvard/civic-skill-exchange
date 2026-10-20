@@ -84,6 +84,11 @@ npm run test --workspaces         # validator + site
 pytest                            # scan.py and build_index.py
 ```
 
+The validator's tests need that Python too: `discover.test.ts` runs
+`scripts/build_marketplace.py --paths` to learn which files the generator
+owns, with the same interpreter `check.ts` uses (`$PYTHON`, else
+`.venv/bin/python`, else `python3`).
+
 ## How we work
 
 **One branch per feature.** Named `feat/`, `fix/`, `chore/`, or `docs/` plus a short
