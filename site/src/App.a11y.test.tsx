@@ -91,6 +91,19 @@ describe.each(locales())("the whole page has no axe violations — %s", (tag) =>
       });
     });
 
+    it("the phone's filters opened, with two set (#328)", async () => {
+      window.history.replaceState(null, "", "#/?category=hr&tier=reviewed");
+      await expectPageClean(() => {
+        const button = document.querySelector<HTMLButtonElement>("button[aria-controls=facets][aria-expanded=false]");
+        button?.click();
+        return document.querySelector("button[aria-controls=facets][aria-expanded=true]");
+      });
+    });
+
+    it("the phone's filters closed (#328)", async () => {
+      await expectPageClean(() => document.querySelector("button[aria-controls=facets][aria-expanded=false]"));
+    });
+
     it("a filter that matches nothing", async () => {
       window.history.replaceState(null, "", "#/?q=nothing-matches-this");
       await expectPageClean();
