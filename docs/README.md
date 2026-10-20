@@ -34,6 +34,7 @@ superseded by a later one.
 | [0005](adr/0005-plugins-are-a-second-listing-kind.md) | Plugins are a second listing kind — several skills and their MCP servers under `plugins/`, in the Agent Plugins layout, installable from both marketplaces |
 | [0006](adr/0006-every-listing-in-the-agent-plugins-layout.md) | Every listing in the Agent Plugins layout — a single skill's files move to `skills/{ns}/{name}/skills/{name}/`, so Codex and Claude Code both load it; built in M9 |
 | [0007](adr/0007-layout-primitives-over-the-existing-tokens.md) | Layout primitives over the existing tokens — `Stack` and `Cluster` typed to the spacing scale, CSS layers, a one-way ratchet on hand-written spacing; no CSS framework or component library |
+| [0008](adr/0008-the-browse-page-compact-rows-and-collections.md) | The browse page — collapsible rows in pages of 24, a Skills/Plugins toggle, phone filters closed, collections in `registry/collections.yml`; the tier's note moves off the closed row |
 
 ## Spikes
 
@@ -47,7 +48,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
-| [browsing-the-catalogue.md](spikes/browsing-the-catalogue.md) | A compact catalogue view, paging, and curated collections, designed as one browse page: collapsible rows, list and denser cards measured on a 56-listing synthetic catalogue, and collections in a registry file — [#208](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/208) and [#209](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/209), awaiting rulings |
+| [browsing-the-catalogue.md](spikes/browsing-the-catalogue.md) | A compact catalogue view, paging, and curated collections, designed as one browse page: collapsible rows, list and denser cards measured on a 56-listing synthetic catalogue, and collections in a registry file — [#208](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/208) and [#209](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/209), ruled; see [ADR 0008](adr/0008-the-browse-page-compact-rows-and-collections.md) |
 | [a-better-way-to-manage-spacing.md](spikes/a-better-way-to-manage-spacing.md) | Tailwind, a component library, or layout primitives of our own instead of hand-written spacing? Two proofs measured on the numbered steps — [#310](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/310), ruled; see [ADR 0007](adr/0007-layout-primitives-over-the-existing-tokens.md) |
 | [the-using-the-exchange-page.md](spikes/the-using-the-exchange-page.md) | What goes on the "Using the Exchange" page, how other pages link to it, and which screenshots it needs: the design pass before the build — [#224](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/224), ruled; the rulings are recorded at the end |
 | [every-listing-in-the-agent-plugins-layout.md](spikes/every-listing-in-the-agent-plugins-layout.md) | How every single-skill listing moves to the Agent Plugins layout: the move, the reviews, the published zip and links, the validator, the submission page, and the order of work — [#241](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/241), ruled; see [ADR 0006](adr/0006-every-listing-in-the-agent-plugins-layout.md) |
