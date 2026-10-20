@@ -109,6 +109,14 @@ describe.each([
     expect(text().split("\n")).toContain(`npx tsx validator/src/cli.ts ${listing}`);
   });
 
+  it("installs dependencies on its own line before the validator runs", () => {
+    // A fresh clone has no tsx and no yaml, so the validator line fails without it.
+    const lines = text().split("\n");
+    const ci = lines.indexOf("npm ci");
+    expect(ci).toBeGreaterThan(-1);
+    expect(ci).toBeLessThan(lines.findIndex((l) => l.startsWith("npx tsx validator")));
+  });
+
   it("has no indentation and no comment on any line", () => {
     for (const line of text().split("\n")) {
       expect(line).toBe(line.trimStart());
