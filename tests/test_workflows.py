@@ -1252,3 +1252,27 @@ def test_the_token_action_pin_accepts_any_release(uses: str) -> None:
 ])
 def test_the_token_action_pin_refuses_anything_else(uses: str) -> None:
     assert not pins_app_token_action(f"        uses: {uses}\n")
+
+
+# --------------------------------------------------------------------------- #
+# Full history (#282).
+#
+# Every job that reads history checks out with `fetch-depth: 0`. A later
+# `git fetch --depth=N` turns that full clone shallow, and the oldest commit
+# left becomes a root that `git log -- <path>` reports as touching every path.
+# The ledger check then names that commit instead of the listing's real one,
+# once a listing's last commit is more than N back on the base branch.
+
+SHALLOW = re.compile(r"git\s+fetch\b[^\n]*--(?:depth|shallow-since|shallow-exclude|deepen)\b")
+
+
+@pytest.mark.parametrize("wf", WORKFLOWS, ids=lambda p: p.name)
+def test_no_step_makes_the_checkout_shallow(wf: Path) -> None:
+    doc = yaml.safe_load(wf.read_text(encoding="utf-8"))
+    for job_name, job in (doc.get("jobs") or {}).items():
+        for step in job.get("steps") or []:
+            script = step.get("run") or ""
+            assert not SHALLOW.search(script), (
+                f"{wf.name}: job {job_name}, step {step.get('name')!r} fetches "
+                f"shallow. Fetch the base branch in full: a shallow history makes "
+                f"its oldest commit look like it touched every listing (#282).")

@@ -43,7 +43,7 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             echo "tooling=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git fetch --no-tags origin "$BASE_REF"
           git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
           if grep -qE '^(scripts|schema|registry|tests|skills|plugins)/|^pytest\.ini$|^\.github/workflows/' changed.txt; then
             echo "tooling=true" >> "$GITHUB_OUTPUT"
@@ -107,7 +107,7 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             echo "site=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git fetch --no-tags origin "$BASE_REF"
           git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
           if grep -qE '^site/|^\.github/workflows/' changed.txt; then
             echo "site=true" >> "$GITHUB_OUTPUT"
@@ -169,7 +169,7 @@ jobs:
           if [ "${{ github.event_name }}" = "push" ]; then
             echo "validator=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          git fetch --no-tags --depth=50 origin "$BASE_REF"
+          git fetch --no-tags origin "$BASE_REF"
           git diff --name-only "origin/$BASE_REF...HEAD" > changed.txt
           if grep -qE '^(validator|registry|schema|skills|plugins)/|^package(-lock)?\.json$|^\.github/workflows/' changed.txt; then
             echo "validator=true" >> "$GITHUB_OUTPUT"
