@@ -256,6 +256,9 @@ export const en = {
     details: "Details",
     hide: "Hide details",
     skillCta: "View this skill",
+    /** Numbered pages of 24. `page` is read before each number, out of sight,
+     *  so a link is "Page 2" rather than "2". */
+    pager: { label: "Pages", page: "Page", previous: "Previous", next: "Next" },
   },
 
   /** The submission wizard.

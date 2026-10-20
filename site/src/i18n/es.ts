@@ -216,6 +216,7 @@ export const strings: Strings = {
     details: "Detalles",
     hide: "Ocultar detalles",
     skillCta: "Ver esta habilidad",
+    pager: { label: "Páginas", page: "Página", previous: "Anterior", next: "Siguiente" },
   },
 
   submit: {
