@@ -63,7 +63,8 @@ describe("what happens next", () => {
     const owners = readFileSync(
       resolve(__dirname, "../../../.github/CODEOWNERS"), "utf8")
       .split("\n").filter((l) => l.trim() && !l.startsWith("#"));
-    const ownerOf = (path: string) => owners.filter((l) => l.startsWith(path)).pop()!;
+    const ownerOf = (path: string) =>
+      owners.filter((l) => l.split(/\s+/)[0] === path).pop()!;
     // A bare `/skills/` line has no owner after the path; the others do.
     expect(ownerOf("/skills/").trim().split(/\s+/)).toHaveLength(1);
     expect(ownerOf("/plugins/")).toMatch(/@AI-Lab-for-Cities-at-Harvard\/maintainers/);

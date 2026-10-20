@@ -516,6 +516,10 @@ export function PluginSubmit(
           draft={draft} folderName={folderName} folderBody={p.folderBody}
           forkInput={forkInput} onForkInput={setForkInput}
           onDownload={download} canDownload={ready && !blocked}
+          review={{
+            kind: "plugin", namespace: draft.author, name: draft.name,
+            findings: [...check.structural, ...check.manifest],
+          }}
         />
 
         <details className="disclosure">

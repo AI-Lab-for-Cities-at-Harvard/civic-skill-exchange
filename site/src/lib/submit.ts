@@ -379,18 +379,105 @@ export function registryUploadUrl(
   return `https://github.com/${repo}/upload/main/${uploadPath(draft, tree)}`;
 }
 
+/** What the pull request says about itself (#300, S-11). GitHub's form opens
+ *  with no title and nothing in the description, and a submitter has no way to
+ *  know what belongs there. */
+export interface PullRequestInput {
+  kind: "skill" | "plugin";
+  namespace: string;
+  name: string;
+  /** The listing already exists, so this changes it rather than adding it. */
+  update?: boolean;
+  /** What the page's own run of the validator's rules still reported. */
+  findings: { where: string; message: string }[];
+}
+
+export interface PullRequestText { title: string; body: string }
+
+const FINDINGS_SHOWN = 10;
+const FINDING_CHARS = 200;
+
+/** The title and description, in English whatever language the page is in. The
+ *  reader of a pull request is a maintainer, who works in English; the
+ *  submitter does not read this, it travels in the link. The page says so next
+ *  to the button, and the text is deliberately not in the i18n tables. */
+export function pullRequestText(input: PullRequestInput): PullRequestText {
+  const ns = input.namespace.trim().toLowerCase();
+  const name = input.name.trim();
+  const tree: ListingTree = input.kind === "plugin" ? "plugins" : "skills";
+  const id = `${ns}/${name}`;
+  const verb = input.update ? "Update" : "Add";
+  const lines = [
+    `${input.update ? "Updates" : "Adds"} the ${input.kind} \`${id}\` at ` +
+      `\`${tree}/${id}\`, sent from the Civic Skill Exchange submit page.`,
+    "",
+    `**Namespace:** \`${ns}\`, the submitter's GitHub login.`,
+    "",
+  ];
+  const n = input.findings.length;
+  const checked =
+    "**Checked in the browser before sending:** the registry's own " +
+    "frontmatter rules, the same module the validator runs in CI.";
+  if (n === 0) {
+    lines.push(`${checked} No findings remained.`);
+  } else {
+    lines.push(
+      `${checked} ${n} finding${n === 1 ? "" : "s"} remained, and ` +
+      `${n === 1 ? "it was" : "they were"} sent anyway:`, "");
+    for (const f of input.findings.slice(0, FINDINGS_SHOWN)) {
+      const msg = f.message.replace(/\s+/g, " ").trim();
+      lines.push(`- \`${f.where}\`: ${msg.length > FINDING_CHARS
+        ? msg.slice(0, FINDING_CHARS - 1) + "…" : msg}`);
+    }
+    if (n > FINDINGS_SHOWN) lines.push(`- and ${n - FINDINGS_SHOWN} more`);
+  }
+  lines.push("", "The checks that count run on this pull request.");
+  return { title: `${verb} ${input.kind} ${id}`, body: lines.join("\n") };
+}
+
+/** Longest the whole compare link may be. Same measurement as the hand-off
+ *  link (#24): 6.1 KB worked on GitHub, and it fails dirty above that. */
+export const PR_URL_BUDGET = URL_BUDGET;
+
+const CUT_NOTE =
+  "\n\n(The rest was left out so this link fits; the checks on this pull request list everything.)";
+
 /** The pull request, opened from the fork back to the registry.
  *
  *  The head ref is `owner:repo:branch` rather than `owner:branch`, which is
  *  GitHub's form for a fork whose name differs from the base — the case that
  *  broke this before. The upload step tells a fork's submitter to commit
  *  directly to the fork's `main` (#243), so `main` is the branch to compare.
+ *
+ *  With `text`, the link also carries `quick_pull=1` (open the form straight
+ *  away), `title` and `body`, which GitHub documents for compare links. The
+ *  body is cut at a whole line, from the end, until the link is under
+ *  PR_URL_BUDGET; a half-finished finding reads worse than a missing one.
  */
-export function pullRequestUrl(repo: string, fork: string): string | null {
+export function pullRequestUrl(
+  repo: string, fork: string, text?: PullRequestText,
+): string | null {
   const ref = parseForkRef(fork);
   if (!ref) return null;
   const [owner, name] = ref.split("/");
-  return `https://github.com/${repo}/compare/main...${owner}:${name}:main?expand=1`;
+  const base = `https://github.com/${repo}/compare/main...${owner}:${name}:main`;
+  if (!text) return `${base}?expand=1`;
+  const link = (body: string) =>
+    `${base}?quick_pull=1&title=${encodeURIComponent(text.title)}` +
+    `&body=${encodeURIComponent(body)}`;
+  if (link(text.body).length <= PR_URL_BUDGET) return link(text.body);
+  const lines = text.body.split("\n");
+  while (lines.length > 1) {
+    lines.pop();
+    const body = lines.join("\n").replace(/\n+$/, "") + CUT_NOTE;
+    if (link(body).length <= PR_URL_BUDGET) return link(body);
+  }
+  // One line alone is too long: cut it by characters, still within the budget.
+  let body = lines[0] ?? "";
+  while (body.length > 0 && link(body + CUT_NOTE).length > PR_URL_BUDGET) {
+    body = body.slice(0, Math.floor(body.length * 0.9));
+  }
+  return link(body + CUT_NOTE);
 }
 
 /** What the command-line recipe needs to know (#297). */

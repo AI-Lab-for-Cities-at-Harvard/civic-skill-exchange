@@ -531,24 +531,35 @@ describe("pullRequestUrl with a title and a description", () => {
     expect(url).not.toContain("\n");
   });
 
-  it("keeps a long description under the budget, cut at a whole line", () => {
+  it("lists at most ten findings, and says how many more there were", () => {
     const findings = Array.from({ length: 80 }, (_, i) => ({
-      where: `civic.field-${i}`, message: `message number ${i} ` + "x".repeat(150),
+      where: `civic.field-${i}`, message: `message ${i} ` + "x".repeat(400),
     }));
-    const full = pullRequestText({ kind: "skill", namespace: "cityofx", name: "p", findings });
+    const { body } = pullRequestText({ kind: "skill", namespace: "cityofx", name: "p", findings });
+    expect(body).toMatch(/80 findings remained/);
+    expect(body).toContain("civic.field-9`");
+    expect(body).not.toContain("civic.field-10`");
+    expect(body).toContain("- and 70 more");
+    // One message is cut, with an ellipsis, rather than run on.
+    expect(body.split("\n").find((l) => l.includes("civic.field-0"))!.length).toBeLessThan(260);
+  });
+
+  it("keeps a long description under the budget, cut at a whole line", () => {
+    const lines = Array.from({ length: 80 }, (_, i) => `- \`civic.field-${i}\`: ${"x".repeat(150)}`);
+    const full = { title: "Add skill cityofx/p", body: ["Opening line.", "", ...lines].join("\n") };
     const url = pullRequestUrl(REPO, "sgarcese-hbs/my-copy", full)!;
     expect(url.length).toBeLessThanOrEqual(PR_URL_BUDGET);
     const q = new URL(url).searchParams;
     expect(q.get("title")).toBe("Add skill cityofx/p");
     const body = q.get("body")!;
-    expect(body.startsWith(full.body.split("\n")[0]!)).toBe(true);
-    expect(body).toContain("civic.field-0");
-    expect(body).not.toContain("civic.field-79");
+    expect(body.startsWith("Opening line.")).toBe(true);
+    expect(body).toContain("civic.field-0`");
+    expect(body).not.toContain("civic.field-79`");
     expect(body).toMatch(/left out so this link fits/i);
-    // Every finding it kept is a whole line of the original, never half of one.
+    // Every line it kept is a whole line of the original, never half of one.
     const kept = body.split("\n").filter((l) => l.startsWith("- `"));
-    expect(kept.length).toBeGreaterThan(0);
-    for (const l of kept) expect(full.body.split("\n")).toContain(l);
+    expect(kept.length).toBeGreaterThan(10);
+    for (const l of kept) expect(lines).toContain(l);
   });
 
   it("never exceeds the budget even when one line alone is enormous", () => {

@@ -644,6 +644,48 @@ export const en = {
       pullRequestCta: "Open the pull request",
       pullRequestMore: "What happens to a pull request?",
 
+      /** After the hand-off (#300): the page's answer to "now what?". Who is
+       *  asked to review comes from .github/CODEOWNERS, and the tests read that
+       *  file, so these cannot drift from it without failing. */
+      next: {
+        heading: "What happens next",
+        checks:
+          "The checks run on the pull request as soon as it is open, and report " +
+          "back in a comment on it. Then a maintainer reads it. Fix anything the " +
+          "checks flag by adding to the same pull request.",
+        /** `/skills/` has no CODEOWNER, so GitHub requests nobody — yet the
+         *  repository still requires one approving review. */
+        whoSkill:
+          "**Nobody is asked for you.** A skill in your own folder has no " +
+          "owner assigned, so GitHub does not request a reviewer, but the " +
+          "repository still needs one approving review before anything merges, " +
+          "and it has to come from a maintainer. If it has waited a while, a " +
+          "comment on the pull request is the way to ask.",
+        /** `/plugins/` is owned by the maintainers team. */
+        whoPlugin:
+          "**A maintainer is asked automatically.** GitHub requests the " +
+          "maintainers\u2019 review on every plugin pull request, because a " +
+          "plugin runs programs on the reader\u2019s computer. You do not need " +
+          "to ask.",
+        /** The reserved namespace is owned by the maintainers team. */
+        whoReserved:
+          "**A maintainer is asked automatically.** GitHub requests the " +
+          "maintainers\u2019 review on everything in the Lab\u2019s own " +
+          "namespace. You do not need to ask.",
+        english:
+          "The pull request\u2019s title and description are filled in for you, " +
+          "in English, because the maintainers who read them work in English. " +
+          "Change anything that is wrong before you create it.",
+        singleFile:
+          "GitHub\u2019s editor cannot pre-fill a title for a one-file skill, so " +
+          "give the pull request one: **Add skill** and the name.",
+        reviewed:
+          "Once it merges, it is listed in the Community tier. The Reviewed " +
+          "tier, where the Lab reads every line of one commit, is a **separate " +
+          "request**, made after it merges: [open a review request](request). " +
+          "[What a review checks](review).",
+      },
+
       handoff: "Continue on GitHub",
       urlTooLong:
         "This is too long to carry in a link. Copy it below and paste it into " +

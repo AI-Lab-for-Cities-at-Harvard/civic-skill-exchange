@@ -725,6 +725,11 @@ export function Submit(
                 folderBody={t.send.folderBody}
                 forkInput={forkInput} onForkInput={setForkInput}
                 onDownload={download} canDownload={ready && !blocked}
+                review={{
+                  kind: "skill", namespace: draft.author, name: draft.name,
+                  update: skills.some((sk) => sk.id === `${draft.author.trim().toLowerCase()}/${draft.name.trim()}`),
+                  findings,
+                }}
               />
             </>
           ) : (
