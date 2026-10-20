@@ -406,7 +406,7 @@ plugin, and each entry in the manifest names its own `source` — so the
 client while staying where the ownership check needs it.
 
 **The generators read both layouts of a single-skill listing**
-([the layout spike](spikes/every-listing-in-the-agent-plugins-layout.md), while the
+([ADR 0006](adr/0006-every-listing-in-the-agent-plugins-layout.md), while the
 move to the second is under way). *Flat* has `SKILL.md` at the listing root.
 *Nested* has the author's files in `skills/{name}/` inside the listing, with
 only the generated manifests beside it, which is the layout a plugin's skills
