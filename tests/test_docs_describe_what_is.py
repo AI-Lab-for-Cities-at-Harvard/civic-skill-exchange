@@ -461,3 +461,19 @@ def test_the_review_guide_describes_the_models_field() -> None:
     guide = _text("docs/REVIEW.md")
     assert "models:" in guide
     assert "civic.models-tested" in guide
+
+
+# --------------------------------------------------------------------------- #
+# #209: every file in registry/ is in the architecture's layout, and the index
+# build says it publishes the collections.
+
+def test_the_architecture_layout_lists_every_registry_file() -> None:
+    layout = _text("docs/ARCHITECTURE.md").split("## Repository layout", 1)[1].split("\n## ", 1)[0]
+    for path in sorted((ROOT / "registry").glob("*.yml")):
+        assert path.name in layout, f"docs/ARCHITECTURE.md's layout omits registry/{path.name}"
+
+
+def test_the_architecture_says_the_index_carries_the_collections() -> None:
+    build = _text("docs/ARCHITECTURE.md").split("## The index build", 1)[1].split("\n## ", 1)[0]
+    assert "registry/collections.yml" in build
+    assert "`collections`" in build
