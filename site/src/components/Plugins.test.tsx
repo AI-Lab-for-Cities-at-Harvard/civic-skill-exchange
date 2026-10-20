@@ -131,6 +131,7 @@ describe("search and counts on the browse page (#299)", () => {
 
   it("applies a facet to plugins by the fields they have", async () => {
     const idx = two();
+    idx.skills = [...idx.skills, makeSkill({ id: "ns/c", name: "vetted", tier: "reviewed" })];
     idx.plugins![1] = { ...idx.plugins![1], tier: "reviewed" };
     serve({ "index.json": idx });
     render(<App />);
@@ -151,7 +152,7 @@ describe("search and counts on the browse page (#299)", () => {
     expect(hero()).toHaveTextContent("2 skills·2 plugins·0 reviewed·2 community");
     expect(grid()).toHaveTextContent(/^2 skills$/);
     expect(within(pluginSection()).getByText("2 plugins")).toBeInTheDocument();
-    search("housing");
+    search("dashboards");
     expect(grid()).toHaveTextContent(/^0 of 2 skills$/);
     expect(within(pluginSection()).getByText("1 of 2 plugins")).toBeInTheDocument();
     // The hero is the catalogue's size, not the search's.
