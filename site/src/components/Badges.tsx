@@ -34,9 +34,14 @@ export function LabBadge({ namespace }: { namespace: Skill["namespace"] }) {
  *  used to hardcode a reviewer count, which is the exact way a claim outlives
  *  the rule it came from: true only until the rule changed, and then false on
  *  every card at once (ADR 0001, ruling 4). A note derived from the ledger
- *  cannot drift from it. */
+ *  cannot drift from it.
+ *
+ *  `quiet` is the browse page's closed row (ADR 0008 decision 2): the word
+ *  alone in sight, the note still read out, after a comma. Everywhere else
+ *  the note shows. */
 export function TierBadge(
-  { tier, reviewed }: { tier: Skill["tier"]; reviewed?: Skill["reviewed"] },
+  { tier, reviewed, quiet = false }:
+  { tier: Skill["tier"]; reviewed?: Skill["reviewed"]; quiet?: boolean },
 ) {
   const s = useStrings();
   const isReviewed = tier === "reviewed";
@@ -45,7 +50,8 @@ export function TierBadge(
     <span className={`badge ${isReviewed ? "badge--ok" : "badge--warn"}`}
       title={isReviewed ? s.badges.tier.reviewedTitle : undefined}>
       {label(s.vocabulary.tier, tier)}
-      <span className="badge__note">
+      <span className={quiet ? "badge__note vh" : "badge__note"}>
+        {quiet && ", "}
         {!isReviewed ? s.badges.tier.communityNote
           : reviewers.length === 0 ? s.badges.tier.reviewedNote
           : s.badges.tier.reviewers(reviewers)}

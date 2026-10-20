@@ -26,6 +26,12 @@ a:hover { color: var(--c-spot); }
 }
 .skip-link:focus { left: var(--gap-4); top: var(--gap-4); }
 
+/* Visually hidden, still read: out of sight, in the accessibility tree. */
+.vh {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap;
+}
+
 /* ---- topper -------------------------------------------------------------
  * Full-bleed, carries its own data-theme, and uses the block-spacing scale for
  * vertical rhythm. This is the system's characteristic page opening.
