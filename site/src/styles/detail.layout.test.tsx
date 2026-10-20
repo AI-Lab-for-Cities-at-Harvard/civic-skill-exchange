@@ -167,6 +167,16 @@ describe("the install box", () => {
   });
 });
 
+describe("a Stack in a description list", () => {
+  it("clears the indent a <dd> brings, as it clears a child's margins", () => {
+    // The browser indents every <dd> 40px. The old rules zeroed it with
+    // `margin: 0`; a Stack clears only the block margins (a child may centre
+    // itself), so the indent is the Stack's to clear, not each list's.
+    const layout = readFileSync(join(__dirname, "layout.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(layout).toMatch(/\.l-stack\s*>\s*dd\s*\{[^}]*margin-inline-start\s*:\s*0/);
+  });
+});
+
 describe("what is left of the detail rules in app.css", () => {
   it("no longer spaces the header: the Stack does", () => {
     for (const sel of [".detail__title", ".detail__desc", ".detail__maintainer"]) {
