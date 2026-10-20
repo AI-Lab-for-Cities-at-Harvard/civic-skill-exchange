@@ -76,23 +76,27 @@ to install a skill.
 
 How to submit one is in [docs/SUBMITTING.md](docs/SUBMITTING.md).
 
-**In Codex**, which has its own marketplace — for **plugins**, for now:
+**In Codex**, which has its own marketplace:
 
 ```
 codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange --sparse .agents --sparse skills --sparse plugins
-codex plugin add {namespace}-{plugin-name}@civic-skill-exchange
+codex plugin add {namespace}-{skill-name}@civic-skill-exchange
 ```
 
-The plugin names are the same as Claude's, on purpose, so the command reads the
-same in both tools. `--sparse` does the same job as Claude's — only the
-marketplace and the listings are downloaded — but Codex takes one path per flag.
+A plugin installs the same way, as
+`codex plugin add {namespace}-{plugin-name}@civic-skill-exchange`. The plugin
+names are the same as Claude's, on purpose, so the command reads the same in
+both tools. `--sparse` does the same job as Claude's — only the marketplace and
+the listings are downloaded — but Codex takes one path per flag.
 
-A **single skill** installs from Codex's marketplace but does not load yet: Codex
-looks for skills one folder deeper than a single-skill listing keeps them
-([#207](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/207)).
-Until every listing takes the plugin layout, use the download link on the
-skill's page and unzip it into `.agents/skills/` in your project, or
-`~/.agents/skills/`.
+Every listing is a plugin in the Agent Plugins layout, which both tools read
+([ADR 0006](docs/adr/0006-every-listing-in-the-agent-plugins-layout.md)): a
+skill's own folder is `skills/{namespace}/{skill-name}/skills/{skill-name}/`,
+beside the manifests the registry generates. If you installed a skill before it
+moved there, `codex plugin marketplace upgrade` picks up the new layout, and in
+Claude Code `claude plugin update` does; the
+[guide](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/guide/marketplace)
+has both.
 
 **In other agent tools.** Skills here follow the open
 [Agent Skills](https://agentskills.io) format, so they work anywhere that has
@@ -105,11 +109,11 @@ the shape they expect.
 
 ```bash
 # A single skill, without cloning the whole registry
-npx degit AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/skills/{namespace}/{skill-name} ./{skill-name}
+npx degit AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/skills/{namespace}/{skill-name}/skills/{skill-name} ./{skill-name}
 
 # Or clone everything and copy what you need
 git clone https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange.git
-cp -r civic-skill-exchange/skills/{namespace}/{skill-name} ~/.claude/skills/
+cp -r civic-skill-exchange/skills/{namespace}/{skill-name}/skills/{skill-name} ~/.claude/skills/
 ```
 
 Install paths differ across agent tools — `.claude/skills/`, `.agents/skills/`, and others. Check your tool's documentation for where it looks.
@@ -118,7 +122,7 @@ Install paths differ across agent tools — `.claude/skills/`, `.agents/skills/`
 
 ## Submit
 
-Open a pull request adding your skill under `skills/{your-github-username}/{skill-name}/`. Automated checks run on the PR and report back in a comment. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contract and a worked example.
+Open a pull request adding your skill under `skills/{your-github-username}/{skill-name}/skills/{skill-name}/`: your skill's own folder, one level down, where both Claude Code and Codex load it. The registry writes the rest of the listing after merge. Automated checks run on the PR and report back in a comment. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contract and a worked example.
 
 A plugin — several skills that work together, with the MCP servers they use — goes under `plugins/{your-github-username}/{plugin-name}/` instead, and a maintainer reviews every one before it merges. The [submission page](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/submit) takes both; [docs/SUBMITTING.md](docs/SUBMITTING.md#sharing-a-plugin) walks through a plugin.
 
