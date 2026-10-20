@@ -1,7 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { About } from "./components/About";
 import { BetaBadge } from "./components/Beta";
-import { Submit } from "./components/Submit";
 import { SkillDetail } from "./components/SkillDetail";
 import { PluginCard } from "./components/PluginCard";
 import { Facet } from "./components/Facets";
@@ -29,6 +28,11 @@ const PluginDetail = lazy(() =>
  *  with every other page's. */
 const Guide = lazy(() =>
   import("./components/Guide").then((m) => ({ default: m.Guide })));
+
+/** And the submit page (#314): most readers browse and never submit, and the
+ *  form, its validator rules and its hand-off are the heaviest page here. */
+const Submit = lazy(() =>
+  import("./components/Submit").then((m) => ({ default: m.Submit })));
 
 const GITHUB = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
@@ -233,8 +237,10 @@ export default function App() {
         </main>
       ) : route.page === "submit" ? (
         <main id="results" className="page">
-          <Submit repo={repoSlug(index?.repo ?? "")} skills={skills}
-            mode={route.mode} add={route.add} />
+          <Suspense fallback={<p className="notice">{s.errors.loading}</p>}>
+            <Submit repo={repoSlug(index?.repo ?? "")} skills={skills}
+              mode={route.mode} add={route.add} />
+          </Suspense>
         </main>
       ) : route.page === "skill" ? (
         <main id="results">
