@@ -19,15 +19,15 @@
  * Exit code 0 if every checked skill passes, 1 otherwise.
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { dirname, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import {
   loadCategories, validateSkill, discoverAll, discoverChanged, checkChangedOwnership,
   authorForSkillCheck, isPluginDir,
 } from "./skill";
 import { discoverAllPlugins, validatePlugin } from "./plugin";
-import { checkChangedLayout, checkNamespaceCollisions } from "./layout";
+import { checkChangedLayout, checkNamespaceCollisions, withoutDeletions } from "./layout";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -60,7 +60,10 @@ function main(): number {
   // that invisibility is exactly what let three of them through (#85).
   if (layout) {
     const paths = readFileSync(layout, "utf8").split("\n");
-    const findings = [...checkChangedLayout(paths), ...checkNamespaceCollisions(paths)];
+    // Deletions are in the list for L1; a SKILL.md that left the tree is not
+    // somewhere the registry reads, it is gone (#276).
+    const present = withoutDeletions(paths, (p) => existsSync(join(ROOT, p)));
+    const findings = [...checkChangedLayout(present), ...checkNamespaceCollisions(paths)];
     if (findings.length === 0) {
       console.log("ok    every changed SKILL.md is in a place the registry reads");
       return 0;

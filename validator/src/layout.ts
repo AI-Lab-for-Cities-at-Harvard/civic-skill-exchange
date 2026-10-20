@@ -42,6 +42,21 @@ const isSkillFile = (path: string) =>
   path === "SKILL.md" || path.endsWith("/SKILL.md");
 
 /**
+ * The changed paths still in the tree, trimmed, with blank lines dropped.
+ *
+ * validate.yml's list carries deletions, because L1 has to see a path that
+ * left the tree (#154), and --layout reads the same list. A removal is not a
+ * misplacement: a move out of the retired flat layout deletes a SKILL.md at
+ * exactly the place checkChangedLayout refuses. `exists` is the caller's, so
+ * this module still reads nothing.
+ */
+export function withoutDeletions(
+  paths: string[], exists: (path: string) => boolean,
+): string[] {
+  return paths.map((p) => p.trim()).filter((p) => p !== "" && exists(p));
+}
+
+/**
  * Check a list of changed paths for a SKILL.md in a place nothing reads.
  *
  * Paths are repository-relative and POSIX-separated, as `git diff --name-only`
