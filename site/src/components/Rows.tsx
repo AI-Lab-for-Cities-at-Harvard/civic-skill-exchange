@@ -41,10 +41,10 @@ function Row({ item, href, level, category, children }: {
   return (
     <li className="row">
       <div className="row__head">
-        <div className="row__name">
+        <Stack gap="1" className="row__name">
           <H className="row__title"><a href={href}>{item.name}</a></H>
           <span className="row__ns">{item.namespace}</span>
-        </div>
+        </Stack>
         <Cluster gap="2" className="row__tier">
           <TierBadge tier={item.tier} reviewed={item.reviewed} quiet />
           <LabBadge namespace={item.namespace} />

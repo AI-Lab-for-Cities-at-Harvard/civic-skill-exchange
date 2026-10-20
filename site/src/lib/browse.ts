@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { LANGUAGE_PATTERN } from "@civic-skill-exchange/validator/rules";
 import {
   CATEGORY_LABELS, LOCALIZATION_LABELS, SCOPE_LABELS, SENSITIVITY_LABELS, TIER_LABELS,
@@ -63,3 +64,13 @@ export function browseHref({ filters, page, show }: BrowseState): string {
   const qs = p.toString();
   return qs ? `#/?${qs}` : "#/";
 }
+
+/** A link's click, handled in place by the page rather than by the browser,
+ *  so the page does not jump to the top (#208). A modified click (a new tab,
+ *  a new window) is the reader's and is left alone: the link's own URL is
+ *  what makes it work. */
+export const inPlace = (go: () => void) => (e: MouseEvent) => {
+  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  go();
+};

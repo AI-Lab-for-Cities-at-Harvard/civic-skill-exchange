@@ -46,7 +46,6 @@ afterEach(async () => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   window.history.replaceState(null, "", "#/");
-  window.location.hash = "";
   await setLocale(DEFAULT_LOCALE);
 });
 
@@ -239,6 +238,9 @@ describe("the Skills/Plugins toggle", () => {
     const push = vi.spyOn(window.history, "pushState");
     expect(fireEvent.click(sideLink("plugins"), { metaKey: true })).toBe(true);
     expect(push).not.toHaveBeenCalled();
+    // jsdom follows the link itself, a tick later; let it land here rather
+    // than in the next test.
+    await act(() => new Promise((r) => setTimeout(r, 0)));
   });
 
   it("follows the search and the facets on the plugins side", async () => {

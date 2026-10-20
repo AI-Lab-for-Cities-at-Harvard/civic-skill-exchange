@@ -1,16 +1,6 @@
-import type { MouseEvent } from "react";
+import { inPlace } from "../lib/browse";
 import { useStrings } from "../i18n/strings";
 import { Cluster } from "./Layout";
-
-/** A link's click, handled in place by the page rather than by the browser,
- *  so the page does not jump to the top (#208). A modified click (a new tab,
- *  a new window) is the reader's and is left alone: the link's own URL is
- *  what makes it work. */
-export const inPlace = (go: () => void) => (e: MouseEvent) => {
-  if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-  e.preventDefault();
-  go();
-};
 
 /** Numbered pages (#208, ADR 0008 decision 3). Links, not buttons: each page
  *  is a URL a reader can copy and return to with Back, which "show more" could

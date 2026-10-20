@@ -1,20 +1,21 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState, type ReactNode } from "react";
 import { About } from "./components/About";
 import { BetaBadge } from "./components/Beta";
 import { SkillDetail } from "./components/SkillDetail";
-import { PluginCard } from "./components/PluginCard";
 import { Facet } from "./components/Facets";
-import { SkillCard } from "./components/SkillCard";
+import { PluginRow, SkillRow } from "./components/Rows";
+import { Pager } from "./components/Pager";
 import { TierBand, ContributeBand } from "./components/Bands";
 import { rich } from "./i18n/rich";
 import {
   DEFAULT_LOCALE, LOCALE_NAMES, locales, setLocale, useStrings,
 } from "./i18n/strings";
 import { applyFilters, applyPluginFilters } from "./lib/filter";
+import { browseHref, inPlace, parseBrowse, PAGE_SIZE, type BrowseState } from "./lib/browse";
 import { parseRoute, type Route } from "./lib/route";
 import { repoSlug } from "./lib/repo";
 import { EMPTY_FILTERS, type Filters, type Index } from "./lib/types";
-import { Cluster } from "./components/Layout";
+import { Cluster, Stack } from "./components/Layout";
 
 type Theme = "light" | "dark";
 
@@ -73,7 +74,6 @@ export default function App() {
   const s = useStrings();
   const [index, setIndex] = useState<Index | null>(null);
   const [failed, setFailed] = useState(false);
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [chosenLocale, setChosenLocale] = useState<string>(initialLocale);
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash));
@@ -143,13 +143,67 @@ export default function App() {
     const target = document.getElementById(section);
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [section, index]);
+  // The browse page's state is its URL (#208, ADR 0008 decision 4): the
+  // filters, the page and the side of the toggle are read from the route,
+  // never held beside it, so a link, a reload and Back all agree with it.
+  const browse = useMemo(
+    () => parseBrowse(route.page === "browse" ? route.query : undefined), [route]);
+  const { filters } = browse;
+  /** Filters replace the history entry, so typing does not leave forty Back
+   *  steps; a page or a side is pushed, so Back returns to it. Handled here
+   *  rather than by a hashchange, which would scroll to the top. */
+  const navigate = (next: BrowseState, push: boolean) => {
+    const href = browseHref(next);
+    window.history[push ? "pushState" : "replaceState"](null, "", href);
+    setRoute(parseRoute(href));
+  };
+
   const results = useMemo(() => applyFilters(skills, filters), [skills, filters]);
   const pluginResults = useMemo(
     () => applyPluginFilters(plugins, filters), [plugins, filters]);
   const active = Object.entries(filters).some(([k, v]) => (k === "q" ? v !== "" : v !== null));
 
+  // A filter change goes back to page 1, and keeps the side shown.
   const setFilter = (key: keyof Filters, value: string | null) =>
-    setFilters((f) => ({ ...f, [key]: value }));
+    navigate({ ...browse, filters: { ...filters, [key]: value }, page: 1 }, false);
+  const clearFilters = () => navigate({ ...browse, filters: EMPTY_FILTERS, page: 1 }, false);
+
+  // Plugins are the toggle's other side, and only when there are any.
+  const side = browse.show === "plugins" && plugins.length > 0 ? "plugins" : "skills";
+  const listed = side === "plugins" ? pluginResults : results;
+  const pages = Math.max(1, Math.ceil(listed.length / PAGE_SIZE));
+  const page = Math.min(browse.page, pages);
+  const from = (page - 1) * PAGE_SIZE;
+  const to = Math.min(listed.length, from + PAGE_SIZE);
+  const words = side === "plugins" ? s.plugins.count : s.results;
+  const total = side === "plugins" ? plugins.length : skills.length;
+  const counted = listed.length > PAGE_SIZE
+    ? words.range(from + 1, to, listed.length, total)
+    : listed.length === total ? words.all(total) : words.some(listed.length, total);
+
+  /** Keeps the reader's place (ADR 0008 decision 5): the page moves only when
+   *  the toggle and the count have scrolled above the window, and then to just
+   *  above them. */
+  const backIntoView = () => {
+    const bar = document.getElementById("browse-bar");
+    if (bar && bar.getBoundingClientRect().top < 0) bar.scrollIntoView({ block: "start" });
+  };
+  const switchTo = (show: BrowseState["show"]) => {
+    navigate({ ...browse, show, page: 1 }, true);
+    requestAnimationFrame(backIntoView);
+  };
+  /** A page change moves focus to the count, which says which rows these
+   *  are, and Tab goes on into them. */
+  const goPage = (n: number) => {
+    navigate({ ...browse, page: n }, true);
+    requestAnimationFrame(() => {
+      document.getElementById("results-count")?.focus({ preventScroll: true });
+      backIntoView();
+    });
+  };
+  const clear = (kids: ReactNode) => (
+    <button className="linkish" onClick={clearFilters}>{kids}</button>
+  );
 
   // The hero is the front page's opening. Where a page opens with its own
   // heading and a form (the submit page, #309) the header is compact: the bar
@@ -274,8 +328,8 @@ export default function App() {
       {index && <TierBand counts={index.counts} />}
 
       <main className="layout canvas">
-        <aside className="filters" aria-label={s.facets.label}>
-          <div className="search">
+        <Stack as="aside" gap="5" className="filters" aria-label={s.facets.label}>
+          <Stack gap="2" className="search">
             <label className="search__label" htmlFor="q">{s.facets.search.label}</label>
             <input
               id="q" type="search" className="search__input"
@@ -283,7 +337,7 @@ export default function App() {
               value={filters.q}
               onChange={(e) => setFilter("q", e.target.value)}
             />
-          </div>
+          </Stack>
 
           <Facet legend={s.facets.tier.legend} field="tier" filterKey="tier"
             labels={s.vocabulary.tier}
@@ -307,74 +361,71 @@ export default function App() {
             skills={skills} filters={filters} onChange={setFilter} />
 
           {active && (
-            <button className="btn btn--subtle" onClick={() => setFilters(EMPTY_FILTERS)}>
-              {s.facets.clear}
-            </button>
+            <Cluster>
+              <button className="btn btn--subtle" onClick={clearFilters}>
+                {s.facets.clear}
+              </button>
+            </Cluster>
           )}
-        </aside>
+        </Stack>
 
-        <section id="results" className="results" aria-live="polite">
+        <Stack as="section" gap="4" id="results" className="results">
           {failed && <p className="notice notice--error">{s.errors.catalogUnavailable}</p>}
 
           {!failed && !index && <p className="notice">{s.results.loading}</p>}
 
           {index && (
             <>
-              <p className="results__count">
-                {results.length === skills.length
-                  ? s.results.all(skills.length)
-                  : s.results.some(results.length, skills.length)}
-              </p>
-
-              {results.length === 0 ? (
-                <p className="notice">
-                  {rich(s.results.empty, {
-                    clear: (kids) => (
-                      <button className="linkish" onClick={() => setFilters(EMPTY_FILTERS)}>
-                        {kids}
-                      </button>
-                    ),
-                  })}
+              {/* The toggle and the count, side by side (ADR 0008 decision 5).
+                  Plugins stay apart from skills (ADR 0005, #206): a plugin
+                  spans several categories and languages, so the facets stay
+                  about skills, and its skills are described on its own page.
+                  Each side is a link to its own URL, handled in place. The
+                  count is the live region, rather than the whole section. */}
+              <Cluster gap="4" id="browse-bar" className="browse__bar">
+                {plugins.length > 0 && (
+                  <nav className="toggle" aria-label={s.browse.show.label}>
+                    {(["skills", "plugins"] as const).map((show) => (
+                      <a key={show} href={browseHref({ ...browse, show, page: 1 })}
+                        aria-current={side === show ? "true" : undefined}
+                        onClick={inPlace(() => switchTo(show))}>
+                        {s.browse.show[show]}{" "}
+                        <span className="toggle__n">
+                          {show === "plugins" ? pluginResults.length : results.length}
+                        </span>
+                      </a>
+                    ))}
+                  </nav>
+                )}
+                <p id="results-count" className="results__count" role="status" tabIndex={-1}>
+                  {counted}
                 </p>
-              ) : (
-                <div className="grid">
-                  {results.map((sk) => <SkillCard key={sk.id} skill={sk} />)}
-                </div>
-              )}
+              </Cluster>
 
-              {/* Below the skills and apart from them, by the ruling on #206:
-                  a plugin spans several categories and languages, so the
-                  facets above stay about skills, and its skills are described
-                  on its own page rather than listed here. */}
-              {plugins.length > 0 && (
-                <section className="plugins" aria-labelledby="plugins-heading">
-                  <h2 className="h2" id="plugins-heading">{s.plugins.heading}</h2>
-                  <p>{s.plugins.intro}</p>
-                  <p className="results__count">
-                    {pluginResults.length === plugins.length
-                      ? s.plugins.count.all(plugins.length)
-                      : s.plugins.count.some(pluginResults.length, plugins.length)}
+              <Stack as="section" gap="4" aria-labelledby={`${side}-heading`}>
+                <h2 className="vh" id={`${side}-heading`}>
+                  {side === "plugins" ? s.plugins.heading : s.browse.show.skills}
+                </h2>
+                {side === "plugins" && <p>{s.plugins.intro}</p>}
+                {listed.length === 0 ? (
+                  <p className="notice">
+                    {rich(side === "plugins" ? s.plugins.empty : s.results.empty, { clear })}
                   </p>
-                  {pluginResults.length === 0 ? (
-                    <p className="notice">
-                      {rich(s.plugins.empty, {
-                        clear: (kids) => (
-                          <button className="linkish" onClick={() => setFilters(EMPTY_FILTERS)}>
-                            {kids}
-                          </button>
-                        ),
-                      })}
-                    </p>
-                  ) : (
-                    <div className="grid">
-                      {pluginResults.map((pl) => <PluginCard key={pl.id} plugin={pl} />)}
-                    </div>
-                  )}
-                </section>
-              )}
+                ) : (
+                  <ul className="rows">
+                    {side === "plugins"
+                      ? pluginResults.slice(from, to).map((pl) =>
+                        <PluginRow key={pl.id} plugin={pl} level={3} />)
+                      : results.slice(from, to).map((sk) =>
+                        <SkillRow key={sk.id} skill={sk} level={3} />)}
+                  </ul>
+                )}
+                <Pager page={page} pages={pages} go={goPage}
+                  href={(n) => browseHref({ ...browse, page: n })} />
+              </Stack>
             </>
           )}
-        </section>
+        </Stack>
       </main>
 
       {index && <ContributeBand repo={index.repo} />}
