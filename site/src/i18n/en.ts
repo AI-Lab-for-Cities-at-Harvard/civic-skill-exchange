@@ -217,8 +217,9 @@ export const en = {
     /** The counts under the statement. The bold is on the number. */
     stats: {
       skills: (n: number) => `**${n}** skill${n === 1 ? "" : "s"}`,
-      reviewed: (n: number) => `**${n}** reviewed`,
-      community: (n: number) => `**${n}** community`,
+      /** Beside the skills, never added into them. The hero gives these two
+       *  totals and no tier counts (#306). */
+      plugins: (n: number) => `**${n}** plugin${n === 1 ? "" : "s"}`,
     },
     footer: {
       disclaimer:
@@ -1832,6 +1833,13 @@ export const en = {
     intro:
       "Several skills that work together, installed as one, with the MCP " +
       "servers they connect to. Their skills are described on each plugin's page.",
+    /** The section's own count, as the grid has its own. Plugins are not folded
+     *  into the skills' count, so each says what it counts. */
+    count: {
+      all: (n: number) => `${n} plugin${n === 1 ? "" : "s"}`,
+      some: (shown: number, total: number) => `${shown} of ${total} plugins`,
+    },
+    empty: "No plugins match these filters. [Clear them](clear) to see every plugin.",
     card: {
       cta: "View this plugin",
       skills: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,

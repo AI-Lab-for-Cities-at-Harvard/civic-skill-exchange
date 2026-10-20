@@ -186,8 +186,7 @@ export const strings: Strings = {
 
     stats: {
       skills: (n: number) => `**${n}** habilidad${n === 1 ? "" : "es"}`,
-      reviewed: (n: number) => `**${n}** revisada${n === 1 ? "" : "s"}`,
-      community: (n: number) => `**${n}** de comunidad`,
+      plugins: (n: number) => `**${n}** plugin${n === 1 ? "" : "s"}`,
     },
     footer: {
       disclaimer:
@@ -1667,6 +1666,13 @@ export const strings: Strings = {
       "Varias habilidades que funcionan juntas y se instalan como una sola, " +
       "con los servidores MCP a los que se conectan. Sus habilidades se " +
       "describen en la página de cada plugin.",
+    count: {
+      all: (n: number) => `${n} plugin${n === 1 ? "" : "s"}`,
+      some: (shown: number, total: number) => `${shown} de ${total} plugins`,
+    },
+    empty:
+      "Ningún plugin coincide con estos filtros. [Quite los filtros](clear) " +
+      "para ver todos los plugins.",
     card: {
       cta: "Ver este plugin",
       skills: (n: number) => `${n} habilidad${n === 1 ? "" : "es"}`,
