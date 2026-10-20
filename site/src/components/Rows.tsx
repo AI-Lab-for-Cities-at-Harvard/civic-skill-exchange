@@ -31,8 +31,11 @@ interface Listing {
  *  of what the card used to carry. The Lab is a label here and never a
  *  section of its own. The Details button is a real button, so it opens on
  *  Enter and Space and says whether it is open. */
-function Row({ item, href, level, category, children }: {
-  item: Listing; href: string; level: Level; category: string; children: ReactNode;
+function Row({ item, href, level, category, kind, children }: {
+  item: Listing; href: string; level: Level; category: string;
+  /** What kind of listing this is, where kinds are mixed (#209). */
+  kind?: string;
+  children: ReactNode;
 }) {
   const s = useStrings();
   const [open, setOpen] = useState(false);
@@ -44,6 +47,7 @@ function Row({ item, href, level, category, children }: {
         <Stack gap="1" className="row__name">
           <H className="row__title"><a href={href}>{item.name}</a></H>
           <span className="row__ns">{item.namespace}</span>
+          {kind && <span className="row__kind">{kind}</span>}
         </Stack>
         <Cluster gap="2" className="row__tier">
           <TierBadge tier={item.tier} reviewed={item.reviewed} quiet />
@@ -91,7 +95,10 @@ export function SkillRow({ skill, level }: { skill: Skill; level: Level }) {
   );
 }
 
-export function PluginRow({ plugin, level }: {
+/** `marked` where skills and plugins are mixed, as on a collection's page
+ *  (#209): the closed row then says it is a plugin and how many skills it
+ *  carries. On the plugins side every row is one, and it would be noise. */
+export function PluginRow({ plugin, level, marked = false }: {
   plugin: Plugin; level: Level; marked?: boolean;
 }) {
   const s = useStrings();
@@ -100,6 +107,7 @@ export function PluginRow({ plugin, level }: {
   const servers = plugin.mcp_servers.length;
   return (
     <Row item={plugin} href={href} level={level}
+      kind={marked ? p.kind(plugin.skills.length) : undefined}
       category={joined(plugin.categories, s.vocabulary.category)}>
       <Cluster gap="2">
         <TierBadge tier={plugin.tier} reviewed={plugin.reviewed} />

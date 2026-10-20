@@ -274,6 +274,22 @@ a:hover { color: var(--c-spot); }
 /* What a plugin is, above the plugin rows: a caption, not the page's subject. */
 .browse__intro { max-width: 66ch; font-size: var(--t-sm); color: var(--c-text-light); }
 
+/* The collection tiles (#209, ADR 0008 decision 10): a <Stack> holding a
+   <Grid> of <Stack>s, so every space here is a primitive's and the box is the
+   tier card's (below). Every row of tiles is one height, and a tile pushes its
+   count to its bottom edge, so the counts line up however long a note is. The
+   whole tile is the link's target, through the title's ::after. */
+.collections__heading { font-size: var(--t-lg); }
+.collections__list { grid-auto-rows: 1fr; }
+.tile { position: relative; justify-content: space-between; }
+.tile:hover { border-color: var(--c-border); }
+.tile__title { font-family: var(--f-sans); font-weight: 600; font-size: var(--t-base); line-height: 1.25; }
+.tile__title a { text-decoration: none; }
+.tile__title a::after { content: ""; position: absolute; inset: 0; }
+.tile:hover .tile__title a { text-decoration: underline; color: var(--c-spot); }
+.tile__note { font-size: var(--t-sm); color: var(--c-text-light); }
+.tile__count { font-size: var(--t-xs); color: var(--c-text-lighter); font-variant-numeric: tabular-nums; }
+
 /* The Skills/Plugins toggle: two links joined into one control, the side
    shown filled in. Each is at least 44px tall. */
 .toggle {
@@ -325,6 +341,8 @@ a:hover { color: var(--c-spot); }
 .row__title a { text-decoration: none; }
 .row__title a:hover { text-decoration: underline; color: var(--c-spot); }
 .row__ns { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--c-text-lighter); }
+/* "Plugin · 3 skills", where skills and plugins are mixed (#209). */
+.row__kind { font-size: var(--t-xs); font-weight: 600; color: var(--c-text-light); }
 .row__cat { font-size: var(--t-xs); color: var(--c-text-light); }
 /* Details: a real button, drawn as a link, 44px tall. */
 .row__toggle {
@@ -347,7 +365,7 @@ a:hover { color: var(--c-spot); }
 
 /* Numbered pages: each link at least 44px square, the current one filled in
    as the toggle's side is. */
-.pager ul { list-style: none; margin: 0; padding: 0; }
+.pager ul, .collections__list { list-style: none; margin: 0; padding: 0; }
 .pager a {
   display: inline-grid; place-items: center;
   min-width: 2.75rem; min-height: 2.75rem; padding-inline: var(--gap-3);
@@ -456,12 +474,15 @@ a:hover { color: var(--c-spot); }
   background: var(--c-button-bg-subtle); padding: 0.1em 0.35em; border-radius: var(--radius);
 }
 
-/* The tier cards sit in a <Grid>, and a card is a <Stack>: what is left here is
-   its own padding and drawing. */
-.tier-card {
-  border: 1px solid var(--c-border-light); border-top: 3px solid var(--c-warn-edge);
+/* A card in a <Grid> is a <Stack>: what is left here is its own padding and
+   drawing. About's tier cards, and the browse page's collection tiles (#209),
+   which are the same box. Only a tier card takes a tier's colour along its
+   top; a tile's edge stays neutral, since crimson reads as an error's. */
+.tier-card, .tile {
+  border: 1px solid var(--c-border-light);
   background: var(--c-bg-raised); padding: var(--gap-5); border-radius: var(--radius);
 }
+.tier-card { border-top: 3px solid var(--c-warn-edge); }
 .tier-card--reviewed { border-top-color: var(--c-ok-edge); }
 .tier-card p { font-size: var(--t-sm); }
 .tier-card__warn { color: var(--c-text-lighter); }

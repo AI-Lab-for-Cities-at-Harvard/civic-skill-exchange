@@ -4,6 +4,7 @@ import { BetaBadge } from "./components/Beta";
 import { SkillDetail } from "./components/SkillDetail";
 import { Facet, FacetPanel } from "./components/Facets";
 import { PluginRow, SkillRow } from "./components/Rows";
+import { CollectionTiles } from "./components/Collections";
 import { Pager } from "./components/Pager";
 import { TierBand, ContributeBand } from "./components/Bands";
 import { rich } from "./i18n/rich";
@@ -35,6 +36,11 @@ const Guide = lazy(() =>
  *  form, its validator rules and its hand-off are the heaviest page here. */
 const Submit = lazy(() =>
   import("./components/Submit").then((m) => ({ default: m.Submit })));
+
+/** And a collection's page (#209, ADR 0008 decision 10). The tiles that lead
+ *  to it are in the entry; the page is not. */
+const CollectionPage = lazy(() =>
+  import("./components/CollectionPage").then((m) => ({ default: m.CollectionPage })));
 
 const GITHUB = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
@@ -323,6 +329,12 @@ export default function App() {
             <PluginDetail namespace={route.namespace} name={route.name} />
           </Suspense>
         </main>
+      ) : route.page === "collection" ? (
+        <main id="results">
+          <Suspense fallback={<div className="page"><p className="notice">{s.errors.loading}</p></div>}>
+            <CollectionPage slug={route.slug} index={index} failed={failed} />
+          </Suspense>
+        </main>
       ) : (
       <>
       {index && <TierBand counts={index.counts} />}
@@ -375,6 +387,14 @@ export default function App() {
           {failed && <p className="notice notice--error">{s.errors.catalogUnavailable}</p>}
 
           {!failed && !index && <p className="notice">{s.results.loading}</p>}
+
+          {/* The collections, on the unfiltered first page of the skills only
+              (#209, ADR 0008 decision 10): once a reader has searched, chosen
+              a facet, turned the page or switched to the plugins, a
+              maintainer's grouping above the results is in the way. */}
+          {index && !active && page === 1 && side === "skills" && (
+            <CollectionTiles collections={index.collections ?? []} />
+          )}
 
           {index && (
             <>

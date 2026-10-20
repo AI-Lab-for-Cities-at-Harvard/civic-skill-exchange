@@ -78,6 +78,8 @@ async function open(hash = "#/") {
 
 const t = () => strings();
 const tilesSection = () => screen.queryByRole("region", { name: t().collections.heading });
+/** The page's own h1; the site's name in the header is the other. */
+const pageTitle = () => document.querySelector("h1.detail__title") as HTMLElement;
 const tileNames = () => [...document.querySelectorAll(".tile h3")].map((h) => h.textContent);
 
 describe("the tiles on the browse page", () => {
@@ -148,13 +150,13 @@ describe("a collection's page", () => {
     await user.keyboard("{Enter}");
     await waitForLazyPage(() => document.querySelector("h1.detail__title"));
     expect(window.location.hash).toBe("#/collection/permits-start-to-finish");
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("A permit, start to finish");
+    expect(pageTitle()).toHaveTextContent("A permit, start to finish");
   });
 
   it("shows the title, the note and the notice that membership is not a review", async () => {
     await open("#/collection/permits-start-to-finish");
     await waitForLazyPage(() => document.querySelector("h1.detail__title"));
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(PERMITS.title);
+    expect(pageTitle()).toHaveTextContent(PERMITS.title);
     expect(screen.getByText(PERMITS.note)).toBeInTheDocument();
     const notice = screen.getByText(t().collections.caveat);
     expect(notice).toHaveClass("notice");
@@ -213,7 +215,7 @@ describe("a collection's page", () => {
   it("is reachable for a collection that is not featured, at its own URL", async () => {
     await open("#/collection/one-department");
     await waitForLazyPage(() => document.querySelector("h1.detail__title"));
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("One department");
+    expect(pageTitle()).toHaveTextContent("One department");
   });
 
   it("does not show the browse page's tiles or facets", async () => {
@@ -238,12 +240,17 @@ describe("an address with no collection at it", () => {
 });
 
 describe.each(locales())("a collection's page — %s", (tag) => {
-  beforeEach(async () => { await setLocale(tag); });
+  // The app opens in the language saved last, so the choice is saved too.
+  beforeEach(async () => {
+    localStorage.setItem("locale", tag);
+    await setLocale(tag);
+  });
+  afterEach(() => { localStorage.removeItem("locale"); });
 
   it("is written in the reader's language", async () => {
     await open("#/collection/writing-for-residents");
     await waitForLazyPage(() => document.querySelector("h1.detail__title"));
-    expect(screen.getByRole("heading", { level: 1 }))
+    expect(pageTitle())
       .toHaveTextContent(tag === "es" ? WRITING.title_es : WRITING.title);
     expect(screen.getByText(tag === "es" ? WRITING.note_es : WRITING.note)).toBeInTheDocument();
   });

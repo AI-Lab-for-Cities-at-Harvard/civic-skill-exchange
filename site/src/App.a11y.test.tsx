@@ -70,7 +70,19 @@ async function expectPageClean(ready?: () => Element | null) {
 }
 
 describe.each(locales())("the whole page has no axe violations — %s", (tag) => {
-  beforeEach(async () => { await setLocale(tag); });
+  // Saved as well as set: the app opens in the language saved last, and would
+  // otherwise put the page back into English as it mounts.
+  beforeEach(async () => {
+    localStorage.setItem("locale", tag);
+    await setLocale(tag);
+  });
+  afterEach(() => { localStorage.removeItem("locale"); });
+
+  it("is checked in its own language", async () => {
+    await expectPageClean();
+    await waitFor(() => expect(document.documentElement.lang).toBe(tag));
+    expect(screen.getByLabelText(strings().facets.search.label)).toBeInTheDocument();
+  });
 
   it("browsing the catalog", async () => {
     await expectPageClean();
