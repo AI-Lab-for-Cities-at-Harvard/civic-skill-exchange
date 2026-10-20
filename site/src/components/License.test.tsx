@@ -39,7 +39,7 @@ const archiveInput = () => screen.getByLabelText(/upload the skill folder/i);
 const values = () => within(licenseBox()).getAllByRole("option")
   .map((o) => (o as HTMLOptionElement).value);
 
-afterEach(() => { setLocale("en"); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(async () => { await setLocale("en"); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe("the skill route", () => {
   it("pre-fills nothing, and puts no license in the frontmatter", () => {
@@ -102,8 +102,8 @@ describe("the skill route", () => {
     expect(screen.getByLabelText(/SPDX identifier/i)).toHaveValue("MPL-2.0");
   });
 
-  it("asks in Spanish too, with its own words", () => {
-    setLocale("es");
+  it("asks in Spanish too, with its own words", async () => {
+    await setLocale("es");
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     expect(screen.getByLabelText(/^Licencia$/)).toBeInTheDocument();
   });

@@ -76,6 +76,13 @@ they are the reason this registry exists rather than a folder of gists.
 
 ![A note listing the fields read out of the uploaded file — the name, the description, the licence — so you are not asked for them twice.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-02-read-from-your-file.png)
 
+**The license is yours to choose.** The page does not fill one in for you. It
+starts empty unless your files already declare one, and it explains what a
+license means for the people who reuse your work: with none, they may not reuse
+it at all. It offers MIT, Apache-2.0 and CC-BY-4.0, and "another license" for any
+other [SPDX identifier](https://spdx.org/licenses/) such as `BSD-3-Clause`. The
+choice is written to `license:` in your `SKILL.md`.
+
 The full field reference is on the
 [About page](https://ai-lab-for-cities-at-harvard.github.io/civic-skill-exchange/#/about/metadata).
 
@@ -315,6 +322,13 @@ differ between its skills stays in each `SKILL.md`:
 Each skill's frontmatter then carries `category`, `scope`, `language`,
 `data-sensitivity` and `human-review` (and `localization` or `jurisdiction` if
 they apply) — but not the fields above.
+
+The license is asked once, for the plugin, and is not assumed: the page starts
+empty unless `plugin.json` declares one, or every skill already declares the same
+one. The registry's checks still require `license` in each `SKILL.md`, so the page
+writes the plugin's license into every skill that has none. A license a skill
+already declares is left as its author wrote it. By hand, put the same SPDX
+identifier in `plugin.json` and in each `SKILL.md`.
 
 ```bash
 npx tsx validator/src/cli.ts plugins/{your-github-username}/{plugin-name}

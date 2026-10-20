@@ -23,13 +23,14 @@ import { buildFolderZip } from "../lib/folder";
 import { addedFrontmatterLines } from "../lib/patch";
 import {
   checkPlugin, gapsOf, newFileLines, patchPluginJson, patchPluginSkill, pluginDraftFromManifest,
-  pluginFieldId, readPluginSource, skillDraftFromFile, skillMdPath,
+  pluginFieldId, readPluginSource, sharedSkillLicense, skillDraftFromFile, skillMdPath,
   type PluginDraft,
 } from "../lib/plugin";
 import { slugify, recipe, recipeInput, type Draft } from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { isGitHubLogin } from "../lib/login";
 import { Choice, Field, type FieldNames } from "./Field";
+import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
 
 const CATEGORIES = Object.keys(en.vocabulary.category);
@@ -109,7 +110,11 @@ export function PluginSubmit(
     [conversion, entries, directoryName]);
   const leftOut = conversion ? [...left, ...conversion.leftOut] : left;
   const [read] = useState(() => pluginDraftFromManifest(source.manifest, directoryName, ""));
-  const [draft, setDraft] = useState<PluginDraft>(read.draft);
+  // A license nobody has chosen is offered nothing (#296) — unless plugin.json
+  // is silent and every skill already declares the same one.
+  const [draft, setDraft] = useState<PluginDraft>(() => ({
+    ...read.draft, license: read.draft.license || sharedSkillLicense(source),
+  }));
   const [typedName, setTypedName] = useState(read.draft.name);
   const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(() =>
     Object.fromEntries(source.skills.map((sk) => [sk.name, skillDraftFromFile(sk.skillMd)])));
@@ -152,7 +157,8 @@ export function PluginSubmit(
 
   const manifest = useMemo(() => patchPluginJson(source.manifest, draft), [source, draft]);
   const skills = useMemo(() => Object.fromEntries(source.skills.map((sk) =>
-    [sk.name, patchPluginSkill(sk.skillMd, skillDrafts[sk.name]!)])), [source, skillDrafts]);
+    [sk.name, patchPluginSkill(sk.skillMd, skillDrafts[sk.name]!, draft.license)])),
+  [source, skillDrafts, draft.license]);
   const check = useMemo(() => checkPlugin(source, {
     manifest: manifest.text,
     skills: Object.fromEntries(Object.entries(skills).map(([k, v]) => [k, v.skillMd])),
@@ -394,10 +400,8 @@ export function PluginSubmit(
             value={draft.description} onChange={onInput("description")} />
         </Field>
 
-        <Field id={id("license")} label={t.optional.licenseLabel} findings={manifestFindings}>
-          <input id={id("license")} className="input" value={draft.license}
-            onChange={onInput("license")} />
-        </Field>
+        <LicenseField id={id("license")} value={draft.license} findings={manifestFindings}
+          onChange={set("license")} />
 
         <Field id={id("version")} label={f.versionLabel} findings={manifestFindings}
           hint={rich(p.versionHint)}>

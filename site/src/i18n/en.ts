@@ -393,6 +393,27 @@ export const en = {
         "What the skill does, in a couple of sentences. This is what an agent " +
         "reads to decide whether to use it.",
 
+      /** The license is asked for on both routes and never assumed (#296). */
+      licenseLabel: "License",
+      licenseHint:
+        "What other people may do with this once it is listed. With no license " +
+        "they may not reuse it at all, however freely you meant to share it. " +
+        "MIT and Apache-2.0 are common for instructions and code, and " +
+        "CC-BY-4.0 for writing; all three allow reuse as long as you are " +
+        "credited. The choice belongs to whoever owns the work, so ask your " +
+        "organization if it is not yours alone.",
+      licenseChoices: [
+        ["MIT", "MIT — short and permissive"],
+        ["Apache-2.0", "Apache-2.0 — permissive, with a patent grant"],
+        ["CC-BY-4.0", "CC-BY-4.0 — for writing; reuse with credit"],
+        ["other", "Another license — I will give its SPDX identifier"],
+      ] as Choices,
+      licenseOtherLabel: "Its SPDX identifier",
+      licenseOtherPlaceholder: "BSD-3-Clause",
+      licenseOtherHint:
+        "The short identifier from spdx.org/licenses, such as `BSD-3-Clause` " +
+        "or `MPL-2.0`. Not the license’s name, and not a link.",
+
       categoryLabel: "Category",
       categorySecondaryLabel: "A second category, if it fits one",
       categorySecondaryNone: "None — it sits in one place",
@@ -508,7 +529,6 @@ export const en = {
       toolsHint:
         "Comma separated. These are granted without asking the person who runs " +
         "it, so list the least it needs.",
-      licenseLabel: "License",
       deployedAtLabel: "Which organization uses it?",
       deployedAtHint:
         "Leave this blank if it is just you — personal use names no organization.",
