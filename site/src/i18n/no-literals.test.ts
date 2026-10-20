@@ -53,6 +53,7 @@ const FILES = [
   "components/SkillCard.tsx",
   "components/SkillDetail.tsx",
   "components/PluginSubmit.tsx",
+  "components/Rows.tsx",
   "components/Submit.tsx",
   "components/UploadSteps.tsx",
 ];

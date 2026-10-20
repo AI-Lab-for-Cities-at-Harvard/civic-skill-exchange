@@ -212,6 +212,12 @@ export const strings: Strings = {
       "para ver el catálogo completo.",
   },
 
+  browse: {
+    details: "Detalles",
+    hide: "Ocultar detalles",
+    skillCta: "Ver esta habilidad",
+  },
+
   submit: {
     heading: "Comparta una habilidad o plugin",
     lede:

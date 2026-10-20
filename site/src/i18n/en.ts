@@ -247,6 +247,17 @@ export const en = {
     empty: "No skills match these filters. [Clear them](clear) to see the whole catalog.",
   },
 
+  /** The browse page's rows, its pages and its Skills/Plugins toggle (#208,
+   *  ADR 0008). */
+  browse: {
+    /** A row's button. The row's name follows it, visually hidden, so
+     *  twenty-four of them are twenty-four different buttons to a screen
+     *  reader. */
+    details: "Details",
+    hide: "Hide details",
+    skillCta: "View this skill",
+  },
+
   /** The submission wizard.
    *
    *  Two modes, one page each: adding a listing and updating one. The wording
