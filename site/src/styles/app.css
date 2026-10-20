@@ -94,6 +94,7 @@ a:hover { color: var(--c-spot); }
   margin: 0; font-size: var(--t-sm); color: var(--c-text-light);
   display: flex; gap: var(--gap-2); align-items: baseline; flex-wrap: wrap;
 }
+.topper__cta { margin: var(--gap-3) 0 0; }
 .topper__stats strong { color: var(--c-text); font-variant-numeric: tabular-nums; }
 .topper__dot { opacity: 0.5; }
 

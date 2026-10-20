@@ -184,6 +184,7 @@ export const strings: Strings = {
       "Una ciudad que resuelve un problema una vez debería poder entregar la " +
       "solución a las siguientes cien ciudades.",
 
+    submitCta: "Subir una habilidad o plugin",
     stats: {
       skills: (n: number) => `**${n}** habilidad${n === 1 ? "" : "es"}`,
       plugins: (n: number) => `**${n}** plugin${n === 1 ? "" : "s"}`,

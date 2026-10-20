@@ -221,6 +221,13 @@ export default function App() {
                 {rich(s.chrome.stats.plugins(plugins.length))}
               </p>
             )}
+            {route.page === "browse" && (
+              <p className="topper__cta">
+                <a className="arrow-link" href="#/submit" data-testid="home-submit">
+                  {s.chrome.submitCta} <span aria-hidden="true">→</span>
+                </a>
+              </p>
+            )}
           </div>
         </div>
       </header>

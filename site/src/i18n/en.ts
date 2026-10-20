@@ -214,6 +214,8 @@ export const en = {
     lede:
       "A city that solves a problem once should be able to hand the solution " +
       "to the next hundred cities.",
+    /** Under the counts, on the home page only (#302, S-12). */
+    submitCta: "Submit a skill or plugin",
     /** The counts under the statement. The bold is on the number. */
     stats: {
       skills: (n: number) => `**${n}** skill${n === 1 ? "" : "s"}`,
