@@ -29,29 +29,33 @@ const served = (payload: Detail) =>
 const structure = () => screen.findByRole("region", { name: /what is in it/i });
 
 /** A row of the file tree. Scoped to the tree, because the paragraph above it
- *  now names `.mcp.json` too. */
+ *  names `scripts/` too. */
 const row = (path: string) =>
   screen.getByText(path, { selector: ".tree__path" }).closest("li");
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("the structure section says what runs", () => {
-  it("names .mcp.json beside scripts/, because both are executed", async () => {
+  /* #289: a single skill has no server config since ADR 0006 (decision 5),
+     so the paragraph names only what a skill can run. */
+  it("names scripts/ as what runs, and no longer a skill's .mcp.json", async () => {
     served(detail());
     render(<SkillDetail namespace="ns" name="example-skill" />);
-    expect((await structure()).textContent).toMatch(/\.mcp\.json/);
+    const text = (await structure()).textContent ?? "";
+    expect(text).toMatch(/scripts\//);
+    expect(text).not.toMatch(/\.mcp\.json/);
   });
 
   it("tags an executed file wherever it sits in the tree", async () => {
     served(detail({ files: [
-      { path: ".mcp.json", size: 120, executed: true },
+      { path: "scripts/check.py", size: 120, executed: true },
       { path: "SKILL.md", size: 4096, executed: false },
       { path: "references/notes.md", size: 20, executed: false },
     ] }));
     render(<SkillDetail namespace="ns" name="example-skill" />);
     await structure();
 
-    expect(row(".mcp.json")?.textContent).toContain("executed");
+    expect(row("scripts/check.py")?.textContent).toContain("executed");
     expect(row("references/notes.md")?.textContent).not.toContain("executed");
   });
 });

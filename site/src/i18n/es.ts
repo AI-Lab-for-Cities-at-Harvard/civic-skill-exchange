@@ -1414,9 +1414,9 @@ export const strings: Strings = {
         "termina invocándose para trabajo para el que no fue escrita. *Rechazo.*",
 
         "**¿Ejecutaríamos estos scripts?** Se lee cada línea de cada archivo " +
-        "dentro de `scripts/`, y de `.mcp.json` cuando una habilidad declara " +
-        "servidores MCP. Si no lo ejecutaríamos en nuestra propia máquina, no " +
-        "pasa. *Rechazo.*",
+        "dentro de `scripts/`, y del `mcp.json` de un plugin, que declara los " +
+        "servidores que inicia. Si no lo ejecutaríamos en nuestra propia " +
+        "máquina, no pasa. *Rechazo.*",
 
         "**¿Pide más herramientas de las que necesita?** `allowed-tools` " +
         "concede acceso sin preguntarle, y no depende de que usted confíe en " +
@@ -1544,8 +1544,8 @@ export const strings: Strings = {
     structure: {
       heading: "Qué contiene",
       caveat:
-        "Los archivos dentro de `scripts/`, y `.mcp.json` cuando una habilidad " +
-        "declara servidores MCP, **los ejecuta el agente**; el modelo no los " +
+        "Los archivos dentro de `scripts/` **los ejecuta el agente**; el " +
+        "modelo no los " +
         "lee. Léalos antes de ejecutar esta habilidad: las descripciones de " +
         "arriba le dicen lo que dice hacer, y solo el código le dice lo que hace.",
 
@@ -1641,11 +1641,11 @@ export const strings: Strings = {
       "Paso a paso: [Claude](claude) · [ChatGPT](chatgpt) · " +
       "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "En Claude Code, las dos líneas `/plugin` son todo lo que necesita: " +
-      "[qué hacen](claudeCode). Las habilidades de aquí siguen el formato " +
-      "abierto [Agent Skills](spec), así que también funcionan en ChatGPT, " +
-      "Codex, Gemini, Copilot, Cursor y otros; esos aceptan una habilidad a la " +
-      "vez, así que use la descarga de arriba.",
+      "En Claude Code y Codex, las dos líneas del marketplace son todo lo que " +
+      "necesita: [qué hacen](claudeCode). Las habilidades de aquí siguen el " +
+      "formato abierto [Agent Skills](spec), así que también funcionan en " +
+      "ChatGPT, Gemini, Copilot, Cursor y otros; esos aceptan una habilidad a " +
+      "la vez, así que use la descarga de arriba.",
     pathsNote:
       "Las rutas de instalación cambian según la herramienta de agente: " +
       "`.claude/skills/`, `.agents/skills/` y otras. Consulte la documentación " +

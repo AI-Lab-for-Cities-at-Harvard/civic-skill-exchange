@@ -1557,9 +1557,9 @@ export const en = {
         "for. *Rejection.*",
 
         "**Would we run these scripts?** Every line of every file under " +
-        "`scripts/` gets read, and of `.mcp.json` where a skill declares MCP " +
-        "servers. If we would not run it on our own machine, it does not " +
-        "pass. *Rejection.*",
+        "`scripts/` gets read, and of a plugin's `mcp.json`, which declares " +
+        "the servers it starts. If we would not run it on our own machine, it " +
+        "does not pass. *Rejection.*",
 
         "**Does it ask for more tools than it needs?** `allowed-tools` grants " +
         "access without prompting you and is not gated by trusting the " +
@@ -1686,8 +1686,8 @@ export const en = {
     structure: {
       heading: "What is in it",
       caveat:
-        "Files under `scripts/`, and `.mcp.json` where a skill declares MCP " +
-        "servers, are **executed by the agent**, not read by the model. Read " +
+        "Files under `scripts/` are **executed by the agent**, not read by " +
+        "the model. Read " +
         "them before you run this skill — the descriptions above tell you " +
         "what it claims to do, and only the code tells you what it does.",
       /** The tag on a file the agent runs rather than reads. */
@@ -1804,10 +1804,11 @@ export const en = {
       "Step by step: [Claude](claude) · [ChatGPT](chatgpt) · " +
       "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "In Claude Code the two `/plugin` lines are all you need — [what these " +
-      "do](claudeCode). Skills here follow the open [Agent Skills](spec) " +
-      "format, so they also work in ChatGPT, Codex, Gemini, Copilot, Cursor " +
-      "and others — those take a skill at a time, so use the download above.",
+      "In Claude Code and Codex, the two marketplace lines are all you need " +
+      "— [what these do](claudeCode). Skills here follow the open " +
+      "[Agent Skills](spec) format, so they also work in ChatGPT, Gemini, " +
+      "Copilot, Cursor and others — those take a skill at a time, so use the " +
+      "download above.",
     pathsNote:
       "Install paths differ across agent tools — `.claude/skills/`, " +
       "`.agents/skills/`, and others. Check your tool's docs for where it looks.",
