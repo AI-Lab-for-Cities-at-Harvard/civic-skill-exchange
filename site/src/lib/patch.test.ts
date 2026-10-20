@@ -158,6 +158,56 @@ describe("addedFrontmatterLines", () => {
   });
 });
 
+describe("addedFrontmatterLines — only what changes meaning (#302, S-14)", () => {
+  const folded =
+    "---\nname: x\ndescription: A skill that explains a permit in plain\n  language, step by step.\n---\n\nBody.\n";
+  const oneLine =
+    "---\nname: x\ndescription: A skill that explains a permit in plain language, step by step.\n---\n\nBody.\n";
+
+  it("does not count a description that was only re-folded", () => {
+    expect(addedFrontmatterLines(folded, oneLine)).toEqual([]);
+    expect(addedFrontmatterLines(oneLine, folded)).toEqual([]);
+  });
+
+  it("does not count a value that was only re-quoted", () => {
+    const quoted = '---\nname: "x"\ndescription: "A skill."\n---\n';
+    const plain = "---\nname: x\ndescription: A skill.\n---\n";
+    expect(addedFrontmatterLines(quoted, plain)).toEqual([]);
+  });
+
+  it("counts the new key and not the description re-folded beside it", () => {
+    const after =
+      "---\nname: x\ndescription: A skill that explains a permit in plain language, step by step.\n" +
+      "metadata:\n  civic.maintainer: City of X\n---\n\nBody.\n";
+    expect(addedFrontmatterLines(folded, after))
+      .toEqual(["metadata:", "civic.maintainer: City of X"]);
+  });
+
+  it("counts a description whose words changed, however it is folded", () => {
+    const after = "---\nname: x\ndescription: Something else entirely.\n---\n\nBody.\n";
+    expect(addedFrontmatterLines(folded, after))
+      .toEqual(["description: Something else entirely."]);
+  });
+
+  it("counts only the child that changed inside metadata that already existed", () => {
+    const before = "---\nname: x\nmetadata:\n  civic.scope: municipal\n  civic.category: policy\n---\n";
+    const after = "---\nname: x\nmetadata:\n  civic.scope: state\n  civic.category: policy\n---\n";
+    expect(addedFrontmatterLines(before, after)).toEqual(["civic.scope: state"]);
+  });
+
+  it("falls back to lines when the frontmatter cannot be read", () => {
+    const bad = "---\nname: [unclosed\n---\n";
+    expect(addedFrontmatterLines(bad, bad)).toEqual([]);
+  });
+
+  it("is quiet when the patch changed nothing but the folding of a real file", () => {
+    const source =
+      "---\nname: x\ndescription: >-\n  A skill that explains a permit in plain\n  language.\nlicense: MIT\n---\n\nBody.\n";
+    const out = patchSkillMd(source, { license: "MIT" });
+    expect(addedFrontmatterLines(source, out.skillMd)).toEqual([]);
+  });
+});
+
 describe("patchSkillMd and the version (#239)", () => {
   const WITH = `---
 name: a
