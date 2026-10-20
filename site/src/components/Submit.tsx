@@ -21,7 +21,7 @@ import { useDraftSaver } from "../lib/useDraftSaver";
 import { DraftBar, PluginPending } from "./DraftBar";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
-import { Choice, Field, type FieldNames } from "./Field";
+import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
 import { AfterHandoff } from "./AfterHandoff";
@@ -139,6 +139,9 @@ export function Submit(
   const [imported, setImported] = useState<ImportResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // Set by trying the hand-off, which is when every box that is wrong should
+  // say so (#302, S-13). Until then a box speaks once it has been visited.
+  const [attempted, setAttempted] = useState(false);
   // Asked for, never derived. #81: the page guessed this and was wrong two ways
   // — the owner is not the namespace for a reserved one, and the name is
   // whatever the submitter typed into GitHub's fork dialog.
@@ -444,6 +447,7 @@ export function Submit(
   );
 
   return (
+    <AttemptedProvider value={attempted}>
     <article className="prose submit">
       <section className="prose__block">
         <h2 className="h2">{t.heading}</h2>
@@ -898,6 +902,7 @@ export function Submit(
                   className={`btn btn--strong${!ready || blocked ? " btn--disabled" : ""}`}
                   href={ready && !blocked ? url : undefined}
                   aria-disabled={!ready || blocked}
+                  onClick={() => setAttempted(true)}
                   data-testid="handoff"
                 >
                   {t.send.handoff}
@@ -1003,5 +1008,6 @@ export function Submit(
       </section>
       )}
     </article>
+    </AttemptedProvider>
   );
 }

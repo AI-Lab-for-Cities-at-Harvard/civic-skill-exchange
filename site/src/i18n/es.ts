@@ -381,7 +381,7 @@ export const strings: Strings = {
         "nombre completo ni su correo.",
 
       nameLabel: "Nombre de la habilidad",
-      namePlaceholder: "Explicador de Estado de Permisos",
+      namePlaceholder: "p. ej. Explicador de Estado de Permisos",
       nameHint: "Escríbalo como quiera; nosotros ordenamos espacios y mayúsculas.",
 
       nameSlug: (slug: string) =>
@@ -409,7 +409,7 @@ export const strings: Strings = {
         ["other", "Otra licencia — yo daré su identificador SPDX"],
       ] as Choices,
       licenseOtherLabel: "Su identificador SPDX",
-      licenseOtherPlaceholder: "BSD-3-Clause",
+      licenseOtherPlaceholder: "p. ej. BSD-3-Clause",
       licenseOtherHint:
         "El identificador corto de spdx.org/licenses, como `BSD-3-Clause` o " +
         "`MPL-2.0`. No el nombre de la licencia ni un enlace.",
@@ -423,7 +423,7 @@ export const strings: Strings = {
         "esto en blanco si la suya no.",
 
       versionLabel: "Versión, si lleva una",
-      versionPlaceholder: "1.0",
+      versionPlaceholder: "p. ej. 1.0",
       versionHint:
         "Su propio número para ella, como `1.0` o `2.1.3`. Es opcional y nada " +
         "lo verifica: está para que quien la adopte note que no es lo mismo que " +
@@ -443,7 +443,7 @@ export const strings: Strings = {
       scopeSecondaryNone: "Ninguno — un solo nivel",
 
       jurisdictionLabel: "¿Está escrita para un lugar específico?",
-      jurisdictionPlaceholder: "US-MA / Boston",
+      jurisdictionPlaceholder: "p. ej. US-MA / Boston",
       jurisdictionHint:
         "Solo si la habilidad lleva las reglas, los formularios o los plazos de " +
         "ese lugar: `US-VT`, `US-MA / Boston`, `CA-ON / Toronto`. Si no, déjelo " +
@@ -474,7 +474,7 @@ export const strings: Strings = {
         "habilidad: un modelo lee una habilidad en un idioma y la sigue en " +
         "otro. Sirve para que quien la abra sepa con qué se va a encontrar.",
       languageOtherLabel: "Su etiqueta de idioma",
-      languageOtherPlaceholder: "pt-BR",
+      languageOtherPlaceholder: "p. ej. pt-BR",
       languageOtherHint:
         "Una etiqueta BCP 47, no el nombre del idioma: `pt-BR`, `fr`, `de`, " +
         "`es-419`.",
@@ -510,18 +510,18 @@ export const strings: Strings = {
         "La única que solo usted puede responder. Una habilidad honesta sobre " +
         "sus límites se adopta más rápido.",
       modelsTestedLabel: "¿Con qué modelos de IA la ha probado?",
-      modelsTestedPlaceholder: "Claude Sonnet 5, GPT-5",
+      modelsTestedPlaceholder: "p. ej. Claude Sonnet 5, GPT-5",
       modelsTestedHint:
         "Opcional, y es su propia afirmación. Separados por comas, como usted " +
         "los nombraría. Ayuda a elegir un modelo con el que se sabe que funciona.",
       languagesTestedLabel: "¿En qué idiomas la ha probado?",
-      languagesTestedPlaceholder: "en, es",
+      languagesTestedPlaceholder: "p. ej. en, es",
       languagesTestedHint:
         "Etiquetas separadas por comas, incluida la de arriba — `en, es`. Es su " +
         "propia afirmación: aquí nada la verifica, y la página la muestra como " +
         "algo que usted dijo y no como algo que alguien comprobó.",
       toolsLabel: "Herramientas que necesita",
-      toolsPlaceholder: "Read, Grep",
+      toolsPlaceholder: "p. ej. Read, Grep",
       toolsHint:
         "Separadas por comas. Se conceden sin preguntarle a quien la ejecuta, " +
         "así que enumere lo mínimo que necesita.",
@@ -529,10 +529,10 @@ export const strings: Strings = {
       deployedAtHint:
         "Déjelo en blanco si es solo usted: el uso personal no nombra ninguna organización.",
       deployedInLabel: "¿Dónde opera esa organización?",
-      deployedInPlaceholder: "US-MA / Boston",
+      deployedInPlaceholder: "p. ej. US-MA / Boston",
       deployedInHint: "Como US-MA / Boston.",
       deployedSinceLabel: "¿Aproximadamente desde cuándo?",
-      deployedSincePlaceholder: "2026-03",
+      deployedSincePlaceholder: "p. ej. 2026-03",
     },
 
     send: {
