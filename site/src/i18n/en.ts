@@ -217,8 +217,9 @@ export const en = {
     /** The counts under the statement. The bold is on the number. */
     stats: {
       skills: (n: number) => `**${n}** skill${n === 1 ? "" : "s"}`,
-      reviewed: (n: number) => `**${n}** reviewed`,
-      community: (n: number) => `**${n}** community`,
+      /** Beside the skills, never added into them. The hero gives these two
+       *  totals and no tier counts (#306). */
+      plugins: (n: number) => `**${n}** plugin${n === 1 ? "" : "s"}`,
     },
     footer: {
       disclaimer:
@@ -1212,6 +1213,10 @@ export const en = {
           notes: [
             "Add the exchange, then install any skill or plugin by name. Each " +
               "listing's page shows its exact install line.",
+            "To refresh the exchange's catalogue at any time and pick up new " +
+              "and updated listings, run `claude plugin marketplace update` " +
+              "(or `claude plugin marketplace update civic-skill-exchange` for " +
+              "just this one).",
             "Installed a skill from here before it moved into the plugin " +
               "layout? Your copy keeps working. `claude plugin update " +
               "{namespace}-{skill-name}@civic-skill-exchange` brings it up to " +
@@ -1224,6 +1229,10 @@ export const en = {
             "Add the exchange, then install any skill or plugin by name, the " +
               "same name as in Claude Code. Each listing's page shows its exact " +
               "line. As in Claude Code, `--sparse` downloads only the listings.",
+            "To refresh the exchange's catalogue at any time and pick up new " +
+              "and updated listings, run `codex plugin marketplace upgrade` " +
+              "(or `codex plugin marketplace upgrade civic-skill-exchange` for " +
+              "just this one).",
             "Installed a skill from here before it moved into the plugin " +
               "layout? `codex plugin marketplace upgrade` brings it up to date, " +
               "under the same name.",
@@ -1835,6 +1844,13 @@ export const en = {
     intro:
       "Several skills that work together, installed as one, with the MCP " +
       "servers they connect to. Their skills are described on each plugin's page.",
+    /** The section's own count, as the grid has its own. Plugins are not folded
+     *  into the skills' count, so each says what it counts. */
+    count: {
+      all: (n: number) => `${n} plugin${n === 1 ? "" : "s"}`,
+      some: (shown: number, total: number) => `${shown} of ${total} plugins`,
+    },
+    empty: "No plugins match these filters. [Clear them](clear) to see every plugin.",
     card: {
       cta: "View this plugin",
       skills: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,

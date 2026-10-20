@@ -1,4 +1,4 @@
-import type { Filters, Skill } from "./types";
+import type { Filters, Plugin, Skill } from "./types";
 
 /** Fields a free-text query searches. Maintainer is included deliberately:
  *  "who else has built this" is a question adopters actually ask. */
@@ -34,13 +34,53 @@ function pairOf(primary: string | null, secondary: string | null): string[] {
   return [...new Set(both)];
 }
 
+/** A query is its words, not one phrase: it matches when every
+ *  whitespace-separated word is found, case-insensitively, in some searched
+ *  field. Different words may be found in different fields, so
+ *  "plain language notice" finds a skill that says those words apart (#299).
+ *  An empty or whitespace-only query has no words and matches everything. */
+function matchesWords(fields: (string | null | undefined)[], query: string): boolean {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return true;
+  const haystack = fields
+    .filter((f): f is string => typeof f === "string")
+    .map((f) => f.toLowerCase());
+  return words.every((w) => haystack.some((f) => f.includes(w)));
+}
+
 export function matchesQuery(skill: Skill, query: string): boolean {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return SEARCHABLE.some((field) => {
-    const value = skill[field];
-    return typeof value === "string" && value.toLowerCase().includes(q);
-  });
+  return matchesWords(SEARCHABLE.map((field) => skill[field] as string | null), query);
+}
+
+/** What a free-text query searches in a plugin: its own words, and the names
+ *  and descriptions of the skills it installs, since those are what a reader
+ *  searching for a task would type. */
+export function matchesPluginQuery(plugin: Plugin, query: string): boolean {
+  return matchesWords([
+    plugin.name, plugin.id, plugin.description, plugin.maintainer,
+    ...plugin.keywords, ...plugin.categories,
+    ...plugin.skills.flatMap((s) => [s.name, s.description, s.jurisdiction]),
+  ], query);
+}
+
+/** The same filters as skills, by the fields a plugin has. Category, language,
+ *  sensitivity and tier are the plugin's own (the union, and the most
+ *  sensitive, of its skills'). Scope and localization are declared only per
+ *  skill, so a plugin matches when any one of its skills does — the same
+ *  reading categories already have, so choosing a facet never hides a plugin
+ *  that installs something matching it. */
+export function applyPluginFilters(plugins: Plugin[], filters: Filters): Plugin[] {
+  return plugins.filter(
+    (p) =>
+      matchesPluginQuery(p, filters.q) &&
+      (!filters.category || p.categories.includes(filters.category)) &&
+      (!filters.scope || p.skills.some((s) => s.scope === filters.scope)) &&
+      (!filters.localization ||
+        p.skills.some((s) => s.localization === filters.localization)) &&
+      (!filters.language || p.languages.includes(filters.language)) &&
+      (!filters.dataSensitivity || p.data_sensitivity === filters.dataSensitivity) &&
+      (!filters.tier || p.tier === filters.tier),
+  );
 }
 
 export function applyFilters(skills: Skill[], filters: Filters): Skill[] {

@@ -121,6 +121,44 @@ describe("the guide page", () => {
     expect(container.querySelector('#codex a[href$="/marketplace-codex"]')).not.toBeNull();
   });
 
+  /* #301: the refresh is the general way to pick up new and updated listings,
+     not only the fix for an install from before the layout move. */
+  it("presents the Codex upgrade as the refresh at any time", () => {
+    const { container } = render(<Guide />);
+    const codex = container.querySelector("#marketplace-codex")?.textContent ?? "";
+    expect(codex).toContain(
+      "To refresh the exchange's catalogue at any time and pick up new and " +
+      "updated listings, run codex plugin marketplace upgrade");
+    expect(codex).toContain("codex plugin marketplace upgrade civic-skill-exchange");
+    expect(codex).toContain("Installed a skill from here before it moved");
+  });
+
+  it("presents the Claude Code marketplace update as the refresh at any time", () => {
+    const { container } = render(<Guide />);
+    const cc = container.querySelector("#marketplace-claude-code")?.textContent ?? "";
+    expect(cc).toContain(
+      "To refresh the exchange's catalogue at any time and pick up new and " +
+      "updated listings, run claude plugin marketplace update");
+    expect(cc).toContain("claude plugin marketplace update civic-skill-exchange");
+  });
+
+  it("says the refresh in Spanish", async () => {
+    await setLocale("es");
+    const { container } = render(<Guide />);
+    const codex = container.querySelector("#marketplace-codex")?.textContent ?? "";
+    expect(codex).toContain(
+      "Para actualizar el catálogo del intercambio en cualquier momento y " +
+      "recibir las publicaciones nuevas y actualizadas, ejecute codex plugin " +
+      "marketplace upgrade");
+    expect(codex).toContain("codex plugin marketplace upgrade civic-skill-exchange");
+    const cc = container.querySelector("#marketplace-claude-code")?.textContent ?? "";
+    expect(cc).toContain(
+      "Para actualizar el catálogo del intercambio en cualquier momento y " +
+      "recibir las publicaciones nuevas y actualizadas, ejecute claude plugin " +
+      "marketplace update");
+    expect(cc).toContain("claude plugin marketplace update civic-skill-exchange");
+  });
+
   it("gives the Claude Code marketplace command with --sparse", () => {
     const { container } = render(<Guide />);
     expect(container.querySelector("#claude-code")?.textContent).toContain(
