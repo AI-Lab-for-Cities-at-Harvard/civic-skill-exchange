@@ -86,11 +86,16 @@ metadata:
   civic.human-review: "none"
   civic.deployment: "none"
 ---
-Or do it from the command linegit clone https://github.com/https://example.test/repo.git
-  mkdir -p skills///skills/
-  git checkout -b add-your-skill
-  git commit -am "Add skills//"
-  git push origin add-your-skillInclusion in this registry is not an endorsement. Automated checks can only reject — a pass is never a statement that a skill is safe.Catalog generated 8/30/2026 · Source and submissions on GitHub · About this project",
+Or do it from the command lineFork the registry on GitHub first, then clone your fork — not the registry itself, which only its maintainers can push to. Where it says YOUR-USERNAME, put your GitHub username, or paste your fork's address above and it fills in. Where it says /path/to/, put the place on your computer where the folder you downloaded is, unzipped. \`npm ci\` installs what the checker needs.git clone https://github.com/YOUR-USERNAME/repo.git
+cd repo
+git checkout -b add-your-skill
+mkdir -p skills///skills
+cp -R /path/to/your-skill skills///skills/
+npm ci
+npx tsx validator/src/cli.ts skills//
+git add skills//
+git commit -m "Add skills//"
+git push -u origin add-your-skillWhen the push finishes, git prints a link for opening the pull request. If you miss it, open your fork on GitHub and choose “Compare & pull request”.Inclusion in this registry is not an endorsement. Automated checks can only reject — a pass is never a statement that a skill is safe.Catalog generated 8/30/2026 · Source and submissions on GitHub · About this project",
 }
 `;
 
