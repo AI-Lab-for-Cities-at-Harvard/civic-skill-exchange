@@ -1844,7 +1844,7 @@ export const strings: Strings = {
       "Paso a paso: [Claude](claude) · [ChatGPT](chatgpt) · " +
       "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "En Claude Code y Codex, las dos líneas del marketplace son todo lo que " +
+      "En Claude Code y Codex, las dos líneas del marketplace de abajo son todo lo que " +
       "necesita: [qué hacen](claudeCode). Las habilidades de aquí siguen el " +
       "formato abierto [Agent Skills](spec), así que también funcionan en " +
       "ChatGPT, Gemini, Copilot, Cursor y otros; esos aceptan una habilidad a " +

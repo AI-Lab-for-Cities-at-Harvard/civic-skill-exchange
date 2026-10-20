@@ -2018,7 +2018,7 @@ export const en = {
       "Step by step: [Claude](claude) · [ChatGPT](chatgpt) · " +
       "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "In Claude Code and Codex, the two marketplace lines are all you need " +
+      "In Claude Code and Codex, the two marketplace lines below are all you need " +
       "— [what these do](claudeCode). Skills here follow the open " +
       "[Agent Skills](spec) format, so they also work in ChatGPT, Gemini, " +
       "Copilot, Cursor and others — those take a skill at a time, so use the " +
