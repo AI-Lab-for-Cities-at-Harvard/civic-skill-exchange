@@ -17,7 +17,7 @@ import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { en } from "../i18n/en";
 import { rich } from "../i18n/rich";
 import { useStrings, type Strings } from "../i18n/strings";
-import { plainMessage, fieldKey } from "../lib/plain";
+import { plainMessage, fieldKey, waits } from "../lib/plain";
 
 type Form = Strings["submit"]["form"];
 import { useUserCheck } from "../lib/useUserCheck";
@@ -37,7 +37,7 @@ import { isGitHubLogin } from "../lib/login";
 import { draftKey, readDraft, clearDraft, onlyStrings, asString, isRecord } from "../lib/draftStore";
 import { useDraftSaver } from "../lib/useDraftSaver";
 import { DraftBar } from "./DraftBar";
-import { Choice, Field, type FieldNames } from "./Field";
+import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
 import { AfterHandoff } from "./AfterHandoff";
@@ -164,6 +164,8 @@ export function PluginSubmit(
   const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(
     () => restore?.skills ?? fresh);
   const [forkInput, setForkInput] = useState(restore?.forkInput ?? "");
+  // Empty required questions stay quiet until visited or asked for (#302).
+  const [attempted, setAttempted] = useState(false);
 
   // What each skill is asked is fixed when the plugin arrives. Recomputed live,
   // a question would vanish the moment it was answered, under the cursor.
@@ -232,6 +234,8 @@ export function PluginSubmit(
   ].map((k) => pluginFieldId(k as keyof PluginDraft)));
   const otherManifest = manifestFindings.filter((x) => !fieldIds.has(x.where));
   const blocked = check.structural.length > 0;
+  const waiting = [...check.manifest, ...Object.values(check.skills).flat()]
+    .filter(waits).length;
   const folderName = draft.name.trim() || directoryName || "plugin";
   const ns = draft.author.trim().toLowerCase();
   const badLogin = ns !== "" && !isGitHubLogin(ns);
@@ -357,6 +361,7 @@ export function PluginSubmit(
   };
 
   return (
+    <AttemptedProvider value={attempted}>
     <div data-testid="plugin-mode">
       {(restoredNow || !blankForm) && (
         <DraftBar restored={restoredNow} notKept={addressesLost}
@@ -598,6 +603,15 @@ export function PluginSubmit(
             summary={t.send.seeFile(path)} />;
         })}
 
+        {!attempted && waiting > 0 && (
+          <p className="submit__note" data-testid="status">
+            {t.send.statusWaiting(waiting)}{" "}
+            <button className="btn btn--subtle" onClick={() => setAttempted(true)}>
+              {t.send.showMissing}
+            </button>
+          </p>
+        )}
+
         <p className="submit__note" data-testid="multi-file-note">
           {p.multiFileNote(source.entries.length)}
         </p>
@@ -633,5 +647,6 @@ export function PluginSubmit(
         </details>
       </section>
     </div>
+    </AttemptedProvider>
   );
 }

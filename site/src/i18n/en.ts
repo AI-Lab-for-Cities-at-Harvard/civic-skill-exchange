@@ -621,6 +621,14 @@ export const en = {
 
       /** The one status line (#295). It agrees with the findings: a count while
        *  any remain, this once none do, and the block when a file cannot go. */
+      /** Before a hand-off is tried, while empty required questions are still
+       *  quiet (#302, S-13): they are not marked yet, so the line counts them
+       *  rather than pointing at them. */
+      statusWaiting: (n: number) =>
+        `${n} question${n === 1 ? "" : "s"} still to answer. You can send it ` +
+        "anyway \u2014 the checks that count run after you do, and you can fix " +
+        "things then.",
+      showMissing: "Show what\u2019s missing",
       allClear:
         "Nothing left to fill in. The checks that count run after you send it, " +
         "and you can fix things then.",

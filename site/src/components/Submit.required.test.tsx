@@ -52,7 +52,10 @@ describe("Submit — a missing required question is never hidden", () => {
     const organization = box("civic.deployed-at");
     expect(organization).toBeInTheDocument();
     expect(hidden(organization)).toBe(false);
-    // Its own error sits beside it, and is the only one left.
+    // Its error waits until the box is visited or the missing are asked for
+    // (#302, S-13); it is then the only one left, and sits beside it.
+    expect(document.querySelectorAll(".field__finding")).toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: /show what.s missing/i }));
     expect(organization.closest(".field")!.querySelector(".field__finding"))
       .not.toBeNull();
     expect(document.querySelectorAll(".field__finding")).toHaveLength(1);
@@ -108,7 +111,7 @@ describe("Submit — one status, which agrees with the findings", () => {
 
     const status = screen.getAllByTestId("status");
     expect(status).toHaveLength(1);
-    expect(status[0]!.textContent).toMatch(/\d+ things? still to fill in/i);
+    expect(status[0]!.textContent).toMatch(/\d+ questions? still to answer/i);
     expect(status[0]!.textContent).not.toMatch(/nothing/i);
     // Where "Nothing else to fix" used to sit, beside the count.
     expect(screen.getByTestId("archive-result").textContent).not.toMatch(/nothing/i);
@@ -118,11 +121,11 @@ describe("Submit — one status, which agrees with the findings", () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await answerAllButOrganization(user, "team");
-    expect(screen.getByTestId("status").textContent).toMatch(/1 thing still to fill in/i);
+    expect(screen.getByTestId("status").textContent).toMatch(/1 question still to answer/i);
 
     await user.type(box("civic.deployed-at"), "City of X");
     expect(screen.getAllByTestId("status")).toHaveLength(1);
-    expect(screen.getByTestId("status").textContent).not.toMatch(/still to fill in/i);
+    expect(screen.getByTestId("status").textContent).not.toMatch(/still to answer/i);
     expect(screen.getByTestId("status").textContent).toMatch(/nothing left/i);
   });
 });

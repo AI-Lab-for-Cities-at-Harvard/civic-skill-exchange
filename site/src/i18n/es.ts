@@ -550,6 +550,11 @@ export const strings: Strings = {
         "todos modos: las verificaciones que cuentan se ejecutan después, y " +
         "entonces podrá corregir.",
 
+      statusWaiting: (n: number) =>
+        `Queda${n === 1 ? "" : "n"} ${n} pregunta${n === 1 ? "" : "s"} por ` +
+        "responder. Puede enviarla de todos modos: las verificaciones que " +
+        "cuentan se ejecutan después, y entonces podrá corregir.",
+      showMissing: "Mostrar lo que falta",
       allClear:
         "No queda nada por completar. Las verificaciones que cuentan se " +
         "ejecutan después de enviarla, y entonces podrá corregir.",

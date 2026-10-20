@@ -4,7 +4,7 @@
 import { createContext, useContext, useState } from "react";
 import { useStrings, type Strings } from "../i18n/strings";
 import type { Finding } from "@civic-skill-exchange/validator";
-import { plainMessage, fieldKey } from "../lib/plain";
+import { plainMessage, fieldKey, waits } from "../lib/plain";
 
 export type FieldNames = Strings["submit"]["form"]["fieldNames"];
 
@@ -13,10 +13,9 @@ export type FieldNames = Strings["submit"]["form"]["fieldNames"];
 const readable = (finding: Finding, form: Strings["submit"]["form"]) =>
   plainMessage(finding, fieldKey(finding.where, form.fieldNames), form);
 
-/** Whether a hand-off has been tried (#302, S-13). A required-field error on a
- *  form nobody has touched reads as an accusation, so a box says what is wrong
- *  with it only once it has been visited, or once the submitter has tried to
- *  go on, when every box that is wrong should say so. */
+/** Whether a hand-off has been tried (#302, S-13). An empty required box on a
+ *  form nobody has touched reads as an accusation, so it says so only once it
+ *  has been visited, or once the submitter has tried to go on. */
 const Attempted = createContext(false);
 export const AttemptedProvider = Attempted.Provider;
 
@@ -29,7 +28,8 @@ export function Field(
   const form = useStrings().submit.form;
   const attempted = useContext(Attempted);
   const [touched, setTouched] = useState(false);
-  const mine = touched || attempted ? findings.filter((f) => f.where === id) : [];
+  const mine = findings.filter((f) =>
+    f.where === id && (touched || attempted || !waits(f)));
   return (
     // Visited means left or edited. Both events bubble, so one handler covers
     // an input, a select and the license's "another" box alike.

@@ -22,6 +22,7 @@ import { DraftBar, PluginPending } from "./DraftBar";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
+import { waits } from "../lib/plain";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
 import { AfterHandoff } from "./AfterHandoff";
@@ -863,8 +864,19 @@ export function Submit(
           <p className={blocked || findings.length > 0 ? "submit__note" : "submit__ok"}
             data-testid="status">
             {blocked ? t.send.statusBlocked
-              : findings.length > 0 ? t.send.findingsNote(findings.length)
-              : t.send.allClear}
+              : findings.length === 0 ? t.send.allClear
+              // Empty required boxes are quiet until visited or the hand-off
+              // is tried (#302), so "marked above" would point at nothing.
+              : !attempted && findings.some(waits)
+                ? t.send.statusWaiting(findings.filter(waits).length)
+              : t.send.findingsNote(findings.length)}
+            {!blocked && !attempted && findings.some(waits) && (
+              <>{" "}
+                <button className="btn btn--subtle" onClick={() => setAttempted(true)}>
+                  {t.send.showMissing}
+                </button>
+              </>
+            )}
           </p>
 
           {multiFile ? (
