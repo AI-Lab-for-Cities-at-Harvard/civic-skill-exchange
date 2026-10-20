@@ -307,7 +307,6 @@ export const en = {
       /** `name` is the uploaded file's own name, or `owner/name` for an import. */
       archiveResult: (name: string, files: number) =>
         `**${name}** — ${files} file${files === 1 ? "" : "s"}.`,
-      nothingElse: "Nothing else to fix.",
       blocked: "Fix these before continuing. They cannot be corrected below.",
     },
 
@@ -356,6 +355,59 @@ export const en = {
         "civic.deployed-at": "the organization",
         "civic.deployed-in": "where it operates",
         "civic.deployed-since": "since when",
+      },
+
+      /** What a finding says to a submitter (#295). The checks are written for a
+       *  reviewer reading a diff, and quote keys and file values; each of these
+       *  says the same thing in the page's own terms. `name` is a `fieldNames`
+       *  value. */
+      plain: {
+        required: (name: string) => `${name} is required`,
+        organizationNeeded:
+          "Name the organization. Saying a team or an organization uses this is " +
+          "a claim about them, and an unnamed organization is a claim nobody can check.",
+        neverUsedHasOrganization:
+          "You said you have not used it in real work, so there is no " +
+          "organization to name. Clear this, or change that answer.",
+        notOffered: (name: string) =>
+          `That is not one of the choices for ${name}. Pick one from the list.`,
+        generalizedHasPlace:
+          "You said it is portable, with no place built in, so it cannot name a " +
+          "place. Clear the place, or change that answer.",
+        notAPlace:
+          "That is not a place this can read. Use a country code, then a state or " +
+          "province and a city if you like: US-VT, US-MA / Boston, CA-ON / Toronto.",
+        anyHasPlace:
+          "You said it works at every level of government, so it is not tied to " +
+          "one place. Name the level it is for, or clear the place.",
+        secondaryRepeats:
+          "The second level repeats the first. Clear it, or choose the other " +
+          "level the skill serves.",
+        anyAlone:
+          "“Every level” cannot be paired with a particular level. Keep " +
+          "one or the other.",
+        categoryRepeats:
+          "The second category repeats the first. Clear it, or choose a different one.",
+        testedLeavesOut:
+          "The languages you have tried it in should include the one it is " +
+          "written in. Add it, or correct that answer.",
+        testedShape:
+          "Write the languages as short codes separated by commas, like \u201cen, es\u201d, " +
+          "with nothing empty and no comma at the end.",
+        languageTag:
+          "Use the language’s short code, not its name: en, es, pt-BR.",
+        bashWildcard:
+          "This allows any shell command, and the exchange rejects that " +
+          "automatically. Name the specific commands it needs instead.",
+        sourceRepo: "Write the repository as owner/name, not as a web address.",
+        sourceCommit:
+          "Use the full 40-character commit code of the repository this came from.",
+        pluginLevel: (name: string) =>
+          `${name} is answered once, for the whole plugin. Remove it from the skill.`,
+        notForPlugin: (name: string) =>
+          `${name} is not answered here. Each skill answers its own questions in ` +
+          "its own SKILL.md.",
+        thisAnswer: "this answer",
       },
 
       /** The empty option a select opens on. Not a value. */
@@ -561,6 +613,15 @@ export const en = {
         `${n} thing${n === 1 ? "" : "s"} still to fill in, marked above. You ` +
         "can send it anyway — the checks that count run after you do, and you " +
         "can fix things then.",
+
+      /** The one status line (#295). It agrees with the findings: a count while
+       *  any remain, this once none do, and the block when a file cannot go. */
+      allClear:
+        "Nothing left to fill in. The checks that count run after you send it, " +
+        "and you can fix things then.",
+      statusBlocked:
+        "Something in your files has to change before this can be sent. It is " +
+        "marked above.",
 
       /** Four steps, because a folder cannot be put in a link. Each one is a
        *  real URL the submitter can open, and the page never asks them to type

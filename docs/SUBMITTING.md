@@ -74,6 +74,13 @@ for, what data it touches, whether its output reaches a decision about somebody.
 Those last two are the questions nobody can answer by reading your code, and
 they are the reason this registry exists rather than a folder of gists.
 
+**Every question you still owe is out in the open.** If you say a team or an
+organization uses the skill, the page asks which one right under that answer,
+rather than keeping it in "A few optional things". Anything still unanswered is
+marked in plain words beside its question, and one line above the buttons says
+how many are left, or that none are. Nothing blocks you: the checks that count
+run after you send it.
+
 ![A note listing the fields read out of the uploaded file — the name, the description, the licence — so you are not asked for them twice.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-02-read-from-your-file.png)
 
 **The license is yours to choose.** The page does not fill one in for you. It
@@ -235,7 +242,7 @@ or blocked site data), the page tells you, and the form works as it always did.
 | *a skill must live at `skills/{username}/{skill-name}/skills/{skill-name}/SKILL.md`* | The files landed in the wrong place. The page's upload lands your folder at `skills/{username}/{skill-name}/skills/{skill-name}/SKILL.md`; anywhere else is a mistake. Usually the folder was opened and its contents dragged, or the folder was dragged into a directory that already named it. Move the directory and push again. |
 | *a single skill's files go one level down* | Your files landed at `skills/{username}/{skill-name}/`, the listing's root, which holds only what the exchange generates. Move them, `SKILL.md` included, into `skills/{username}/{skill-name}/skills/{skill-name}/` and push again. |
 | *`SKILL.md` is missing* | Same cause, seen from the other side: `skills/{username}/{skill-name}/skills/{skill-name}/`, the directory the registry looks in, has no `SKILL.md`. |
-| *`civic.deployed-at` is required* | You said a team or an organization uses this. Name it, or change the answer to `personal` or `none` — personal use asks for nothing further. |
+| *`civic.deployed-at` is required* (on the page: *Name the organization*) | You said a team or an organization uses this. Name it, or change the answer to `personal` or `none` — personal use asks for nothing further. |
 | *Type your GitHub username above first* | The username box is empty. The page holds back the links, the download and the commands until it has a username, because every path it gives starts with it. |
 | *No GitHub user called …* | GitHub has no account with that username. Check the spelling against your github.com address. A folder that doesn't match the account opening the pull request is rejected. |
 | *Couldn't check … with GitHub just now* | GitHub's public lookup was busy or rate-limited, or you are offline. Nothing is wrong with the username as far as the page knows, so carry on. The checks on the pull request will catch a wrong one. |

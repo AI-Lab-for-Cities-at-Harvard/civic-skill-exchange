@@ -3,15 +3,14 @@
 
 import { useStrings, type Strings } from "../i18n/strings";
 import type { Finding } from "@civic-skill-exchange/validator";
+import { plainMessage, fieldKey } from "../lib/plain";
 
 export type FieldNames = Strings["submit"]["form"]["fieldNames"];
 
 /** Findings are written for a reviewer reading a diff, and name the raw key.
- *  Swapped for the question the submitter actually answered. */
-function readable(finding: Finding, names: FieldNames): string {
-  const name = names[finding.where as keyof FieldNames];
-  return name ? finding.message.replaceAll(finding.where, name) : finding.message;
-}
+ *  Said in the form's own words instead (#295). */
+const readable = (finding: Finding, form: Strings["submit"]["form"]) =>
+  plainMessage(finding, fieldKey(finding.where, form.fieldNames), form);
 
 export function Field(
   { label, hint, id, findings, children }: {
@@ -19,7 +18,7 @@ export function Field(
     children: React.ReactNode;
   },
 ) {
-  const names = useStrings().submit.form.fieldNames;
+  const form = useStrings().submit.form;
   const mine = findings.filter((f) => f.where === id);
   return (
     <div className={`field${mine.length ? " field--flagged" : ""}`}>
@@ -27,7 +26,7 @@ export function Field(
       {hint && <p className="field__hint">{hint}</p>}
       {children}
       {mine.map((f) => (
-        <p className="field__finding" key={f.message}>{readable(f, names)}</p>
+        <p className="field__finding" key={f.message}>{readable(f, form)}</p>
       ))}
     </div>
   );
