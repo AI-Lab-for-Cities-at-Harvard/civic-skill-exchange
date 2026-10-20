@@ -18,10 +18,8 @@ const finding = (where: string, message: string): Finding => ({ where, message }
 
 /** Where a skill's own SKILL.md may be, and nowhere else:
  *
- *  - a flat single skill, `skills/{namespace}/{name}/SKILL.md`, until the move
- *    retires that layout;
- *  - a nested single skill, `skills/{namespace}/{name}/skills/{name}/SKILL.md`,
- *    whose inner directory carries the listing's own name (ADR 0006);
+ *  - a single skill, `skills/{namespace}/{name}/skills/{name}/SKILL.md`, whose
+ *    inner directory carries the listing's own name (ADR 0006);
  *  - a plugin's skill, `plugins/{namespace}/{name}/skills/{skill}/SKILL.md`,
  *    which is where the Agent Plugins layout puts them (ADR 0005).
  *
@@ -29,9 +27,12 @@ const finding = (where: string, message: string): Finding => ({ where, message }
  *  for examples, and ADR 0006 (decision 4) reversed it: Codex loads any
  *  SKILL.md under a plugin's `skills/`, however deep. */
 const CORRECT =
-  /^(?:skills\/[^/]+\/([^/]+)(?:\/skills\/\1)?|plugins\/[^/]+\/[^/]+\/skills\/[^/]+)\/SKILL\.md$/;
+  /^(?:skills\/[^/]+\/([^/]+)\/skills\/\1|plugins\/[^/]+\/[^/]+\/skills\/[^/]+)\/SKILL\.md$/;
 
-/** A nested single skill whose inner directory is named something else. */
+/** The flat layout the move retired: SKILL.md at the listing root. */
+const FLAT = /^(skills\/[^/]+\/([^/]+))\/SKILL\.md$/;
+
+/** A single skill whose inner directory is named something else. */
 const MISNAMED_NESTED = /^(skills\/[^/]+\/([^/]+))\/skills\/[^/]+\/SKILL\.md$/;
 
 /** A SKILL.md inside a listing, below where its skill's own lives. */
@@ -55,11 +56,21 @@ export function checkChangedLayout(paths: string[]): Finding[] {
     if (!clean || !isSkillFile(clean)) continue;
     if (CORRECT.test(clean)) continue;
 
+    const flat = FLAT.exec(clean);
+    if (flat) {
+      const [, listing, name] = flat;
+      findings.push(finding(clean,
+        `a single skill's files go one level down, in ${listing}/skills/${name}/ ` +
+        `(ADR 0006), so this belongs at ${listing}/skills/${name}/SKILL.md. ` +
+        `No client loads a SKILL.md at the listing root. Move it there with ` +
+        `everything else you wrote.`));
+      continue;
+    }
     const misnamed = MISNAMED_NESTED.exec(clean);
     if (misnamed) {
       const [, listing, name] = misnamed;
       findings.push(finding(clean,
-        `a nested skill's directory is named after its listing, so this one ` +
+        `a single skill's directory is named after its listing, so this one ` +
         `belongs at ${listing}/skills/${name}/SKILL.md. Rename the inner ` +
         `directory, or, if the listing has several skills, submit it as a ` +
         `plugin under plugins/.`));
@@ -73,12 +84,13 @@ export function checkChangedLayout(paths: string[]): Finding[] {
     const suggestion = clean.includes("/")
       ? clean.slice(0, clean.lastIndexOf("/"))
       : "your-skill";
+    const folder = suggestion.slice(suggestion.lastIndexOf("/") + 1);
     findings.push(finding(clean,
-      `a skill must live at skills/{your-github-username}/{skill-name}/SKILL.md ` +
-      `(or one level down, at skills/{your-github-username}/{skill-name}/` +
-      `skills/{skill-name}/SKILL.md), or inside a plugin at plugins/{your-github-username}/{plugin-name}/` +
-      `skills/{skill-name}/SKILL.md. This one is at ${clean}, so nothing in the ` +
-      `registry reads it. Move ${suggestion} into skills/{your-github-username}/.`));
+      `a skill must live at skills/{your-github-username}/{skill-name}/` +
+      `skills/{skill-name}/SKILL.md, or inside a plugin at ` +
+      `plugins/{your-github-username}/{plugin-name}/skills/{skill-name}/SKILL.md. ` +
+      `This one is at ${clean}, so nothing in the registry reads it. Move ` +
+      `${suggestion} into skills/{your-github-username}/${folder}/skills/.`));
   }
 
   return findings;

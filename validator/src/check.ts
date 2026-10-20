@@ -31,7 +31,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { renderReport, type ScanFindings } from "./report";
-import { describeScanFailure } from "./scan-run";
+import { describeScanFailure, pythonCommand } from "./scan-run";
 import { discoverAll, isPluginDir, loadCategories, validateSkill } from "./skill";
 import { discoverAllPlugins, validatePlugin } from "./plugin";
 
@@ -57,16 +57,6 @@ function parseArgs(argv: string[]): { target?: string; author?: string } {
     else if (arg && !arg.startsWith("--")) target = arg;
   }
   return { target, author };
-}
-
-/** The interpreter that has scan.py's dependencies. The repository's own venv
- *  first, because that is what the documented setup builds; `$PYTHON` wins over
- *  it for anyone whose environment is arranged differently. */
-function pythonCommand(): string {
-  const fromEnv = process.env["PYTHON"];
-  if (fromEnv) return fromEnv;
-  const venv = join(ROOT, ".venv", "bin", "python");
-  return existsSync(venv) ? venv : "python3";
 }
 
 /** L0 and L1, in process. Prints per-skill lines, because a report that says
@@ -100,7 +90,7 @@ function runStructure(targets: string[], author?: string): boolean {
 /** L2 and L3, by running scan.py and reading the findings document it writes —
  *  the same document CI uploads and report.yml renders. */
 function runScan(target: string): { findings: ScanFindings; passed: boolean } {
-  const python = pythonCommand();
+  const python = pythonCommand(ROOT);
   const dir = mkdtempSync(join(tmpdir(), "civic-skill-check-"));
   const out = join(dir, "findings.json");
 

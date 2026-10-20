@@ -6,7 +6,7 @@ import { parse } from "yaml";
 import { checkFrontmatter, quarantineExtensions, RESERVED_NAMESPACES } from "./rules";
 import { checkYamlSafety, readEntries, splitFrontmatter } from "./structure";
 import {
-  NESTED_SKILLS_DIRECTORY, checkStructureCore, isNestedSkillListing, skillLayoutFor,
+  NESTED_SKILLS_DIRECTORY, checkStructureCore, singleSkillLayout,
 } from "./structure-core";
 import type { Finding, Frontmatter } from "./types";
 
@@ -29,25 +29,19 @@ export function validateSkill(
 ): SkillResult {
   const name = basename(skillDir);
   const namespace = basename(dirname(skillDir));
-  const entries = readEntries(skillDir);
-  const findings = checkStructureCore(entries, skillLayoutFor(entries, name));
+  const findings = checkStructureCore(readEntries(skillDir), singleSkillLayout(namespace, name));
 
-  // Nested (ADR 0006): the frontmatter is the inner SKILL.md's, still read as
-  // a single skill's. inPlugin stays false, so its civic metadata stays in its
-  // own frontmatter rather than moving to a plugin.json it doesn't have.
-  // Findings carry the inner path, as a plugin's skills' do.
-  if (isNestedSkillListing(entries)) {
-    const rel = `${NESTED_SKILLS_DIRECTORY}/${name}`;
-    const skill = checkSkillFile(join(skillDir, rel), namespace, categories, author, false);
-    return {
-      findings: [...findings,
-        ...skill.findings.map((f) => ({ ...f, where: `${rel}: ${f.where}` }))],
-      notes: skill.notes.map((n) => `${rel}: ${n}`),
-    };
-  }
-
-  const skill = checkSkillFile(skillDir, namespace, categories, author);
-  return { findings: [...findings, ...skill.findings], notes: skill.notes };
+  // The frontmatter is the inner SKILL.md's (ADR 0006), read as a single
+  // skill's: inPlugin stays false, so its civic metadata stays in its own
+  // frontmatter rather than moving to a plugin.json it doesn't have. Findings
+  // carry the inner path, as a plugin's skills' do.
+  const rel = `${NESTED_SKILLS_DIRECTORY}/${name}`;
+  const skill = checkSkillFile(join(skillDir, rel), namespace, categories, author, false);
+  return {
+    findings: [...findings,
+      ...skill.findings.map((f) => ({ ...f, where: `${rel}: ${f.where}` }))],
+    notes: skill.notes.map((n) => `${rel}: ${n}`),
+  };
 }
 
 /** The SKILL.md half of validating a skill: frontmatter and body.
@@ -100,7 +94,7 @@ export function checkSkillFile(
   return { findings, notes };
 }
 
-/** Every skill directory under skills/{namespace}/{name}/. */
+/** Every single-skill listing, skills/{namespace}/{name}/. */
 export function discoverAll(root: string): string[] {
   const skillsDir = join(root, "skills");
   if (!existsSync(skillsDir)) return [];
@@ -114,7 +108,7 @@ export function discoverAll(root: string): string[] {
   return out.sort();
 }
 
-/** Files the registry generates into a skill directory rather than the author
+/** Files the registry generates into a listing rather than the author
  *  writing them.
  *
  *  `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json` are both
@@ -137,9 +131,9 @@ export function discoverAll(root: string): string[] {
  *  `.codex-plugin/plugin.json` at any depth, which exempted hand-written files
  *  the generator never touches — and an exemption here stops the ownership
  *  check seeing a path at all, so "near enough" is a hole rather than a
- *  convenience. `discover.test.ts` reads `scripts/build_marketplace.py` and
- *  checks this still describes every file it writes, so the shape is asked for
- *  rather than kept as a second copy of the generator's list. */
+ *  convenience. `discover.test.ts` asks `build_marketplace.py --paths` what it
+ *  writes and checks this still describes every path, so the shape is asked
+ *  for rather than kept as a second copy of the generator's list. */
 const GENERATED_IN_SKILL =
   /^skills\/[^/]+\/[^/]+\/\.(?:codex|claude)-plugin\/plugin\.json$/;
 

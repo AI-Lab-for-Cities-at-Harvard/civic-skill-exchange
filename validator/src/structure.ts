@@ -13,8 +13,8 @@
  */
 
 import { readdirSync, readFileSync, lstatSync } from "node:fs";
-import { basename, join, relative } from "node:path";
-import { checkStructureCore, skillLayoutFor, type Entry } from "./structure-core";
+import { basename, dirname, join, relative } from "node:path";
+import { checkStructureCore, singleSkillLayout, type Entry } from "./structure-core";
 import type { Finding } from "./types";
 
 export {
@@ -44,9 +44,9 @@ export function readEntries(skillDir: string): Entry[] {
   });
 }
 
-/** A single skill's listing, flat or nested (ADR 0006): the layout is read
- *  from the entries, and the inner directory's name from the listing's. */
+/** A single skill's listing (ADR 0006): its namespace and the inner
+ *  directory's name are the listing's own. */
 export function checkStructure(skillDir: string): Finding[] {
-  const entries = readEntries(skillDir);
-  return checkStructureCore(entries, skillLayoutFor(entries, basename(skillDir)));
+  return checkStructureCore(readEntries(skillDir),
+    singleSkillLayout(basename(dirname(skillDir)), basename(skillDir)));
 }
