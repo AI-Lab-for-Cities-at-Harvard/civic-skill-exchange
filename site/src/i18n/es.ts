@@ -207,6 +207,10 @@ export const strings: Strings = {
     loading: "Cargando el catálogo…",
     all: (n: number) => `${n} habilidad${n === 1 ? "" : "es"}`,
     some: (shown: number, total: number) => `${shown} de ${total} habilidades`,
+    range: (from: number, to: number, shown: number, total: number) =>
+      shown === total
+        ? `Habilidades ${from}–${to} de ${total}`
+        : `Habilidades ${from}–${to} de las ${shown} que coinciden (${total} en total)`,
     empty:
       "Ninguna habilidad coincide con estos filtros. [Quite los filtros](clear) " +
       "para ver el catálogo completo.",
@@ -217,6 +221,7 @@ export const strings: Strings = {
     hide: "Ocultar detalles",
     skillCta: "Ver esta habilidad",
     pager: { label: "Páginas", page: "Página", previous: "Anterior", next: "Siguiente" },
+    show: { label: "Habilidades o plugins", skills: "Habilidades", plugins: "Plugins" },
   },
 
   submit: {
@@ -1881,6 +1886,10 @@ export const strings: Strings = {
     count: {
       all: (n: number) => `${n} plugin${n === 1 ? "" : "s"}`,
       some: (shown: number, total: number) => `${shown} de ${total} plugins`,
+      range: (from: number, to: number, shown: number, total: number) =>
+        shown === total
+          ? `Plugins ${from}–${to} de ${total}`
+          : `Plugins ${from}–${to} de los ${shown} que coinciden (${total} en total)`,
     },
     empty:
       "Ningún plugin coincide con estos filtros. [Quite los filtros](clear) " +

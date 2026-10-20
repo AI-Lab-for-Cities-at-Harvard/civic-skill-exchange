@@ -244,6 +244,11 @@ export const en = {
     loading: "Loading the catalog…",
     all: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,
     some: (shown: number, total: number) => `${shown} of ${total} skills`,
+    /** When the skills take more than a page: which of them this page shows. */
+    range: (from: number, to: number, shown: number, total: number) =>
+      shown === total
+        ? `Skills ${from}–${to} of ${total}`
+        : `Skills ${from}–${to} of the ${shown} that match (${total} in all)`,
     empty: "No skills match these filters. [Clear them](clear) to see the whole catalog.",
   },
 
@@ -259,6 +264,10 @@ export const en = {
     /** Numbered pages of 24. `page` is read before each number, out of sight,
      *  so a link is "Page 2" rather than "2". */
     pager: { label: "Pages", page: "Page", previous: "Previous", next: "Next" },
+    /** The Skills/Plugins toggle, `Skills 48 | Plugins 8`; each side's count
+     *  follows the search and the filters. Its words are also the visually
+     *  hidden heading of the side it shows. */
+    show: { label: "Skills or plugins", skills: "Skills", plugins: "Plugins" },
   },
 
   /** The submission wizard.
@@ -2074,6 +2083,10 @@ export const en = {
     count: {
       all: (n: number) => `${n} plugin${n === 1 ? "" : "s"}`,
       some: (shown: number, total: number) => `${shown} of ${total} plugins`,
+      range: (from: number, to: number, shown: number, total: number) =>
+        shown === total
+          ? `Plugins ${from}–${to} of ${total}`
+          : `Plugins ${from}–${to} of the ${shown} that match (${total} in all)`,
     },
     empty: "No plugins match these filters. [Clear them](clear) to see every plugin.",
     card: {
