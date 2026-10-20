@@ -16,7 +16,10 @@ import { PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG, expectedPluginName, summarizeMcpSer
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { en } from "../i18n/en";
 import { rich } from "../i18n/rich";
-import { useStrings } from "../i18n/strings";
+import { useStrings, type Strings } from "../i18n/strings";
+import { plainMessage, fieldKey } from "../lib/plain";
+
+type Form = Strings["submit"]["form"];
 import { useUserCheck } from "../lib/useUserCheck";
 import { convertClaudeCode, type Addresses } from "../lib/convert";
 import { buildFolderZip } from "../lib/folder";
@@ -54,26 +57,29 @@ const SKILL_DRAFT_KEY: Record<string, keyof Draft> = {
   "civic.human-review": "humanReview",
 };
 
-/** A finding's raw key swapped for the question it is about. The plugin form's
- *  findings carry a path — `plugin.json#extensions.….civic.maintainer` — so the
- *  key is its last part. */
-function plain(finding: Finding, names: FieldNames): Finding {
-  const key = finding.where in names ? finding.where
-    : /(civic\.[a-z-]+|[a-z$]+)$/.exec(finding.where)?.[1] ?? finding.where;
-  const name = names[key as keyof FieldNames];
-  return name ? { ...finding, message: finding.message.replaceAll(key, name) } : finding;
+/** A finding said in the form's own words (#295). The plugin form's findings
+ *  carry a path — `plugin.json#extensions.….civic.maintainer` — so the key is its
+ *  last part. */
+function plain(finding: Finding, form: Form): Finding {
+  const key = fieldKey(finding.where, form.fieldNames);
+  return { ...finding, message: plainMessage(finding, key, form) };
 }
 
 function FindingList({ findings, testid, heading }: {
   findings: Finding[]; testid: string; heading?: string;
 }) {
+  const form = useStrings().submit.form;
   if (findings.length === 0) return null;
   return (
     <div data-testid={testid}>
       {heading && <p className="submit__note">{heading}</p>}
       <ul className="submit__findings">
         {findings.map((f) => (
-          <li key={`${f.where}${f.message}`}><code>{f.where}</code> {f.message}</li>
+          <li key={`${f.where}${f.message}`}><code>{
+            /* The question, not the key it is stored under. A file path stays. */
+            (form.fieldNames as Record<string, string>)[fieldKey(f.where, form.fieldNames)]
+              ?? f.where
+          }</code> {f.message}</li>
         ))}
       </ul>
     </div>
@@ -210,7 +216,7 @@ export function PluginSubmit(
   const mcpAdded = conversion?.mcp ? newFileLines(conversion.mcp) : [];
 
   const names = f.fieldNames;
-  const manifestFindings = check.manifest.map((x) => plain(x, names));
+  const manifestFindings = check.manifest.map((x) => plain(x, f));
   const fieldIds = new Set<string>([
     "description", "license", "version", "maintainer", "affiliation", "deployment",
     "deployedAt", "deployedIn", "deployedSince", "useWhen", "avoidWhen", "modelsTested",
@@ -247,6 +253,19 @@ export function PluginSubmit(
 
   const id = (key: keyof PluginDraft) => pluginFieldId(key);
 
+  // Asked where the claim is made: a team or an organization named as the user
+  // owes the organization's name, and a required question inside a closed
+  // "optional" section is one nobody can find (#295).
+  const owesOrganization =
+    draft.deployment === "team" || draft.deployment === "organization";
+  const deployedAt = (
+    <Field id={id("deployedAt")} label={t.optional.deployedAtLabel}
+      findings={manifestFindings}>
+      <input id={id("deployedAt")} className="input" value={draft.deployedAt}
+        onChange={onInput("deployedAt")} />
+    </Field>
+  );
+
   /** One per-skill question, as the skill form asks it. */
   const question = (skill: string, key: string, findings: Finding[]) => {
     const draftKey = SKILL_DRAFT_KEY[key]!;
@@ -254,7 +273,7 @@ export function PluginSubmit(
     const onChange = setSkill(skill, draftKey);
     const boxId = `skills/${skill}:${key}`;
     const mine = findings.filter((x) => x.where === key)
-      .map((x) => ({ ...plain(x, names), where: boxId }));
+      .map((x) => ({ ...plain(x, f), where: boxId }));
     switch (key) {
       case "civic.category":
       case "civic.category-secondary":
@@ -473,6 +492,8 @@ export function PluginSubmit(
           hint={draft.deployment === "team" || draft.deployment === "organization"
             ? f.deploymentHintClaim : f.deploymentHintPersonal} />
 
+        {owesOrganization && deployedAt}
+
         <details className="disclosure">
           <summary className="h3 disclosure__summary">{t.optional.summary}</summary>
           <p className="field__hint">{p.fitHint}</p>
@@ -491,11 +512,7 @@ export function PluginSubmit(
               onChange={onInput("modelsTested")}
               placeholder={t.optional.modelsTestedPlaceholder} />
           </Field>
-          <Field id={id("deployedAt")} label={t.optional.deployedAtLabel}
-            findings={manifestFindings}>
-            <input id={id("deployedAt")} className="input" value={draft.deployedAt}
-              onChange={onInput("deployedAt")} />
-          </Field>
+          {!owesOrganization && deployedAt}
           <Field id={id("deployedIn")} label={t.optional.deployedInLabel}
             findings={manifestFindings} hint={t.optional.deployedInHint}>
             <input id={id("deployedIn")} className="input" value={draft.deployedIn}
@@ -522,7 +539,7 @@ export function PluginSubmit(
           const findings = check.skills[sk.name] ?? [];
           const questions = asked[sk.name] ?? [];
           const other = findings.filter((x) => !questions.includes(x.where))
-            .map((x) => plain(x, names));
+            .map((x) => plain(x, f));
           return (
             <details key={sk.name} className="disclosure" open={questions.length > 0}
               data-testid={`skill-${sk.name}`}>
