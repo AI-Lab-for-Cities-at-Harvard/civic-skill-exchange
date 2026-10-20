@@ -417,6 +417,12 @@ To re-record a deliberate growth: `npm run build` then
 to make a red gate green, and never to absorb a locale — that is the failure
 the gate exists to report.
 
+**So is a page most readers never open.** `App.tsx` loads the plugin page, the
+guide and the submit page with `lazy()` (#314), and `src/lazy-routes.test.ts`
+fails on a static import of any of them. The entry chunk is what a reader
+browsing the catalogue downloads; a page imported eagerly lands in it whether
+or not anyone goes there.
+
 ### Adding a locale
 
 Four steps, and the tests say when each is done.
