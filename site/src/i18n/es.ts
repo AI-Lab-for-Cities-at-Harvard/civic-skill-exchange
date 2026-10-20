@@ -187,8 +187,6 @@ export const strings: Strings = {
     stats: {
       skills: (n: number) => `**${n}** habilidad${n === 1 ? "" : "es"}`,
       plugins: (n: number) => `**${n}** plugin${n === 1 ? "" : "s"}`,
-      reviewed: (n: number) => `**${n}** revisada${n === 1 ? "" : "s"}`,
-      community: (n: number) => `**${n}** de comunidad`,
     },
     footer: {
       disclaimer:

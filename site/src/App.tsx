@@ -209,17 +209,12 @@ export default function App() {
             <p className="topper__lede">{s.chrome.lede}</p>
             {index && (
               <p className="topper__stats">
+                {/* The catalogue's two totals, and nothing else (owner, #306):
+                    a tier count would have to say how many of each are
+                    skills and how many plugins. */}
                 {rich(s.chrome.stats.skills(index.counts.total))}
-                {plugins.length > 0 && (
-                  <>
-                    <span className="topper__dot" aria-hidden="true">·</span>
-                    {rich(s.chrome.stats.plugins(plugins.length))}
-                  </>
-                )}
                 <span className="topper__dot" aria-hidden="true">·</span>
-                {rich(s.chrome.stats.reviewed(index.counts.reviewed))}
-                <span className="topper__dot" aria-hidden="true">·</span>
-                {rich(s.chrome.stats.community(index.counts.community))}
+                {rich(s.chrome.stats.plugins(plugins.length))}
               </p>
             )}
           </div>

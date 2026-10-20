@@ -217,11 +217,9 @@ export const en = {
     /** The counts under the statement. The bold is on the number. */
     stats: {
       skills: (n: number) => `**${n}** skill${n === 1 ? "" : "s"}`,
-      /** Beside the skills, never added into them: the reviewed and community
-       *  counts after it are of skills. Shown only when the catalogue has plugins. */
+      /** Beside the skills, never added into them. The hero gives these two
+       *  totals and no tier counts (#306). */
       plugins: (n: number) => `**${n}** plugin${n === 1 ? "" : "s"}`,
-      reviewed: (n: number) => `**${n}** reviewed`,
-      community: (n: number) => `**${n}** community`,
     },
     footer: {
       disclaimer:
