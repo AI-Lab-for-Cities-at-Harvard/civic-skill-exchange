@@ -407,11 +407,16 @@ accrete strings for the next locale to translate for nothing.
 **A locale is a separate chunk.** ADR 0004 decision 5: a locale costs the
 English visitor nothing. `strings.ts` imports `en.ts` statically and reaches
 every other locale through `LOCALES`, whose entries are `import()` thunks Vite
-gives their own chunk. `scripts/size.mjs` holds the English entry chunk to
-`size-baseline.json` within 3%, runs at the end of `npm run build` — so the CI
-Site job enforces it — and is driven by `src/i18n/bundle-size.test.ts`, which
-builds once into a temporary directory and then reads the output: the Spanish
-sentences have to be in the `es-*.js` chunk and nowhere near the entry chunk.
+gives their own chunk. `scripts/size.mjs` holds what an English visitor
+downloads at startup to `size-baseline.json` within 3%. "At startup" means what
+`dist/index.html` loads before anything is clicked: the entry chunk and every
+chunk it preloads, since Rollup can split modules the entry shares with a lazy
+page into a preloaded chunk of their own (#337). The gate runs at the end of
+`npm run build` — so the CI Site job enforces it — and is driven by
+`src/i18n/bundle-size.test.ts`, which builds once into a temporary directory and
+then reads the output: the Spanish sentences have to be in the `es-*.js` chunk
+and in nothing loaded at startup. `src/i18n/size-gate.test.ts` checks the
+arithmetic on a synthetic build.
 To re-record a deliberate growth: `npm run build` then
 `node scripts/size.mjs --record`, with the reason in the commit message. Never
 to make a red gate green, and never to absorb a locale — that is the failure
@@ -419,7 +424,7 @@ the gate exists to report.
 
 **So is a page most readers never open.** `App.tsx` loads the plugin page, the
 guide and the submit page with `lazy()` (#314), and `src/lazy-routes.test.ts`
-fails on a static import of any of them. The entry chunk is what a reader
+fails on a static import of any of them. What loads at startup is what a reader
 browsing the catalogue downloads; a page imported eagerly lands in it whether
 or not anyone goes there.
 
