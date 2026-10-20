@@ -154,8 +154,9 @@ What is checked, and what is deliberately not, is in
 
 | What you see | What it means |
 |---|---|
-| *a skill must live at `skills/{username}/{skill-name}/SKILL.md`* | The files landed in the wrong place. The page's upload lands your folder at `skills/{username}/{skill-name}/skills/{skill-name}/SKILL.md`; anywhere else is a mistake. Usually the folder was opened and its contents dragged, or the folder was dragged into a directory that already named it. Move the directory and push again. |
-| *`SKILL.md` is missing* | Same cause, seen from the other side: the directory the registry looked in has no `SKILL.md` at its top level. |
+| *a skill must live at `skills/{username}/{skill-name}/skills/{skill-name}/SKILL.md`* | The files landed in the wrong place. The page's upload lands your folder at `skills/{username}/{skill-name}/skills/{skill-name}/SKILL.md`; anywhere else is a mistake. Usually the folder was opened and its contents dragged, or the folder was dragged into a directory that already named it. Move the directory and push again. |
+| *a single skill's files go one level down* | Your files landed at `skills/{username}/{skill-name}/`, the listing's root, which holds only what the exchange generates. Move them, `SKILL.md` included, into `skills/{username}/{skill-name}/skills/{skill-name}/` and push again. |
+| *`SKILL.md` is missing* | Same cause, seen from the other side: `skills/{username}/{skill-name}/skills/{skill-name}/`, the directory the registry looks in, has no `SKILL.md`. |
 | *`civic.deployed-at` is required* | You said a team or an organization uses this. Name it, or change the answer to `personal` or `none` — personal use asks for nothing further. |
 | A field you never filled in | The page reports findings without blocking, on purpose. You can send a submission with them outstanding, and fix them on the pull request. |
 

@@ -103,8 +103,8 @@ file is the whole interface between them, and it is specified in
 `references/contract.md` **inside each skill** rather than here:
 
 ```
-skills/civic-skills/generalize-skill/references/contract.md
-skills/civic-skills/localize-skill/references/contract.md
+skills/civic-skills/generalize-skill/skills/generalize-skill/references/contract.md
+skills/civic-skills/localize-skill/skills/localize-skill/references/contract.md
 ```
 
 Read that file for the shape — the slot keys, what `what` and `exact` mean, how
