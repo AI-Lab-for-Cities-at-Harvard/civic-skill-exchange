@@ -79,7 +79,7 @@ describe("saving as you type", () => {
     await saved();
     const raw = localStorage.getItem(SKILL)!;
     expect(raw).not.toMatch(/token|authorization|bearer/i);
-    expect(Object.keys(JSON.parse(raw)).sort()).toEqual(["data", "v"]);
+    expect(Object.keys(JSON.parse(raw)).sort()).toEqual(["data", "savedAt", "v"]);
   });
 
   it("keeps the fork address the submitter typed", async () => {
@@ -89,7 +89,7 @@ describe("saving as you type", () => {
     await user.upload(archiveInput(),
       zip("a.zip", { "a/SKILL.md": SKILL_MD, "a/scripts/x.sh": "echo" }));
     await screen.findByTestId("archive-result");
-    const fork = await screen.findByLabelText(/fork/i, { selector: "input" });
+    const fork = await screen.findByLabelText(/address of your copy/i);
     await user.type(fork, "cityofx/my-fork");
     await waitFor(() => expect(localStorage.getItem(SKILL)).toContain("cityofx/my-fork"));
   });
@@ -118,12 +118,12 @@ describe("restoring", () => {
   it("restores the choice of 'other' language with its typed tag", async () => {
     const user = userEvent.setup();
     const first = render(<Submit repo={REPO} skills={[]} mode="new" />);
-    await user.selectOptions(screen.getByLabelText(/^Language/i), "other");
-    await user.type(screen.getByLabelText(/language tag/i), "qu");
+    await user.selectOptions(screen.getByLabelText(/what language is it written in/i), "other");
+    await user.type(screen.getByLabelText(/its language tag/i), "qu");
     await waitFor(() => expect(localStorage.getItem(SKILL)).toContain('"qu"'));
     first.unmount();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
-    expect(screen.getByLabelText(/language tag/i)).toHaveValue("qu");
+    expect(screen.getByLabelText(/its language tag/i)).toHaveValue("qu");
   });
 
   it("says so in Spanish, with the Spanish words", async () => {

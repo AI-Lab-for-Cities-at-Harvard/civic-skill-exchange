@@ -31,6 +31,9 @@ import {
 } from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { isGitHubLogin } from "../lib/login";
+import { draftKey, readDraft, clearDraft, onlyStrings, asString, isRecord } from "../lib/draftStore";
+import { useDraftSaver } from "../lib/useDraftSaver";
+import { DraftBar } from "./DraftBar";
 import { Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
@@ -113,15 +116,39 @@ export function PluginSubmit(
     [conversion, entries, directoryName]);
   const leftOut = conversion ? [...left, ...conversion.leftOut] : left;
   const [read] = useState(() => pluginDraftFromManifest(source.manifest, directoryName, ""));
-  // A license nobody has chosen is offered nothing (#296) — unless plugin.json
-  // is silent and every skill already declares the same one.
-  const [draft, setDraft] = useState<PluginDraft>(() => ({
+  // What the folder says on its own, which is what the form is "blank" at, and
+  // what Start over returns to (#294).
+  const [fresh] = useState<Record<string, Draft>>(() =>
+    Object.fromEntries(source.skills.map((sk) => [sk.name, skillDraftFromFile(sk.skillMd)])));
+  // Answers kept from the last visit to this same plugin. Another plugin's are
+  // left where they are and not shown.
+  const [restore] = useState(() => {
+    const saved = readDraft(draftKey({ route: "plugin" }));
+    const data = saved?.data ?? {};
+    if (!saved || data.directoryName !== directoryName) return null;
+    const stored = isRecord(data.skillDrafts) ? data.skillDrafts : {};
+    return {
+      draft: onlyStrings(read.draft, data.draft),
+      typedName: asString(data.typedName, read.draft.name),
+      skills: Object.fromEntries(Object.entries(fresh).map(
+        ([name, base]) => [name, onlyStrings(base, stored[name])])),
+      forkInput: asString(data.forkInput),
+      addressesTyped: typeof data.addressesTyped === "number" ? data.addressesTyped : 0,
+    };
+  });
+  const [restoredNow, setRestoredNow] = useState(restore !== null);
+  // The form as the folder leaves it: what it starts at, what counts as blank,
+  // and what Start over returns to. A license nobody has chosen is offered
+  // nothing (#296) — unless plugin.json is silent and every skill already
+  // declares the same one.
+  const [initial] = useState<PluginDraft>(() => ({
     ...read.draft, license: read.draft.license || sharedSkillLicense(source),
   }));
-  const [typedName, setTypedName] = useState(read.draft.name);
-  const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(() =>
-    Object.fromEntries(source.skills.map((sk) => [sk.name, skillDraftFromFile(sk.skillMd)])));
-  const [forkInput, setForkInput] = useState("");
+  const [draft, setDraft] = useState<PluginDraft>(restore?.draft ?? initial);
+  const [typedName, setTypedName] = useState(restore?.typedName ?? read.draft.name);
+  const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(
+    () => restore?.skills ?? fresh);
+  const [forkInput, setForkInput] = useState(restore?.forkInput ?? "");
 
   // What each skill is asked is fixed when the plugin arrives. Recomputed live,
   // a question would vanish the moment it was answered, under the cursor.
@@ -132,6 +159,27 @@ export function PluginSubmit(
     return Object.fromEntries(source.skills.map((sk) =>
       [sk.name, gapsOf(initial.skills[sk.name] ?? [])]));
   });
+
+  // Saved as it is typed. Pasted server addresses are left out on purpose: an
+  // address can carry a key in its query string, and the page cannot tell.
+  const addressesTyped = Object.values(addresses).filter((a) => a.trim() !== "").length;
+  const toKeep = useMemo(() => ({
+    directoryName, draft, typedName, skillDrafts, forkInput,
+    addressesTyped: addressesTyped > 0 ? addressesTyped : restore?.addressesTyped ?? 0,
+  }), [directoryName, draft, typedName, skillDrafts, forkInput, addressesTyped, restore]);
+  const blankForm = JSON.stringify([draft, typedName, skillDrafts, forkInput, addressesTyped])
+    === JSON.stringify([initial, read.draft.name, fresh, "", 0]);
+  const { failed: cannotSave } = useDraftSaver(draftKey({ route: "plugin" }), toKeep, {
+    blank: blankForm,
+  });
+  const startOver = () => {
+    clearDraft(draftKey({ route: "plugin" }));
+    setDraft(initial); setTypedName(read.draft.name); setSkillDrafts(fresh);
+    setForkInput(""); setAddresses({});
+    setRestoredNow(false);
+  };
+  const addressesLost = restore && restore.addressesTyped > 0 && addressesTyped === 0
+    ? [t.draft.addressesNotKept] : [];
 
   const set = (key: keyof PluginDraft) => (value: string) =>
     setDraft((d) => ({ ...d, [key]: value }));
@@ -282,6 +330,10 @@ export function PluginSubmit(
 
   return (
     <div data-testid="plugin-mode">
+      {(restoredNow || !blankForm) && (
+        <DraftBar restored={restoredNow} notKept={addressesLost}
+          unsaved={cannotSave} onStartOver={startOver} />
+      )}
       <section className="prose__block" data-testid="plugin-summary">
         <h2 className="h2">{p.heading}</h2>
         {conversion && (
