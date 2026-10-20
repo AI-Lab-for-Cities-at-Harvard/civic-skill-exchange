@@ -34,7 +34,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from build_index import ROOT, head_sha
+from build_index import ROOT, NoSkillMd, head_sha, skill_dir_of
 
 #: The attesting party, per ADR 0001. Overridable for when a second one exists.
 DEFAULT_REVIEWERS = ["AI Lab for Cities at Harvard"]
@@ -118,9 +118,16 @@ def check_clone(root: Path, skill: Path, plugin: bool = False) -> None:
     if plugin and not (skill / "plugin.json").is_file():
         raise Unusable(
             f"{skill} has no plugin.json — there is no plugin there to attest to.")
-    if not plugin and not (skill / "SKILL.md").is_file():
-        raise Unusable(
-            f"{skill} has no SKILL.md — there is no skill there to attest to.")
+    if not plugin:
+        # Flat or nested (ADR 0006): the SKILL.md may be one level down. The
+        # SHA and the dirty check below stay on the listing directory, which is
+        # what the build pins.
+        try:
+            skill_dir_of(skill)
+        except NoSkillMd as missing:
+            raise Unusable(
+                f"{skill} has no SKILL.md — there is no skill there to attest "
+                f"to. ({missing})") from missing
 
     if _git(["rev-parse", "--is-shallow-repository"], root) == "true":
         raise Unusable(
