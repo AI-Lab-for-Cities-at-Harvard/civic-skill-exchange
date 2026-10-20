@@ -3,6 +3,7 @@ import { rich } from "../i18n/rich";
 import { useStrings, type Strings } from "../i18n/strings";
 import { aboutHref, guideHref, skillHref } from "../lib/route";
 import type { Skill } from "../lib/types";
+import { Stack } from "./Layout";
 
 const REPO = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 const SPEC = "https://agentskills.io";
@@ -236,20 +237,20 @@ export function About(
         <p>{rich(a.submitting.lede, { submit: "#/submit" })}</p>
         <p>{rich(a.submitting.installGuide, { guide: guideHref() })}</p>
         <p>{a.submitting.byHand}</p>
-        <ol className="steps">
-          <li className="steps__item">
+        <Stack as="ol" gap="5" className="steps">
+          <Stack as="li" gap="3" className="steps__item">
             <h3 className="steps__title">{a.submitting.steps.namespaceTitle}</h3>
             <p className="steps__body">{rich(a.submitting.steps.namespace)}</p>
-          </li>
-          <li className="steps__item">
+          </Stack>
+          <Stack as="li" gap="3" className="steps__item">
             <h3 className="steps__title">{a.submitting.steps.frontmatterTitle}</h3>
             <p className="steps__body">{rich(a.submitting.steps.frontmatter)}</p>
-          </li>
-          <li className="steps__item">
+          </Stack>
+          <Stack as="li" gap="3" className="steps__item">
             <h3 className="steps__title">{a.submitting.steps.pullRequestTitle}</h3>
             <p className="steps__body">{a.submitting.steps.pullRequest}</p>
-          </li>
-        </ol>
+          </Stack>
+        </Stack>
         <p className="cta-row">
           <a className="btn btn--strong" href="#/submit" data-testid="about-submit-cta">
             {a.submitting.cta}

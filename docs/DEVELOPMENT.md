@@ -501,6 +501,46 @@ Headings run tight: weight 700 for display and 600 for smaller titles, with
 `--track-display` / `--track-heading` / `--track-tight` matching where the
 reference CSS clusters (-.02em to -.04em).
 
+### Layout primitives, cascade layers and the spacing ratchet
+
+Decided in [ADR 0007](adr/0007-layout-primitives-over-the-existing-tokens.md),
+analysed in [the spacing spike](spikes/a-better-way-to-manage-spacing.md).
+
+**Layers.** `src/styles/index.css` is the site's one stylesheet entry
+(`main.tsx` imports nothing else). It declares `@layer legacy, layout;`, puts
+`tokens.css` and `app.css` in `legacy` and `layout.css` in `layout`. A layer
+beats any rule in a lower layer whatever its specificity, so a primitive's
+reset outranks `.prose p`. One consequence: a primitive's `display: flex` also
+beats the browser's own `[hidden]`, so `layout.css` restores it with
+`.l-stack[hidden], .l-cluster[hidden] { display: none; }`.
+
+**Primitives.** `components/Layout.tsx` has `Stack` (a column) and `Cluster` (a
+wrapping row; `align` is `start | center | end | stretch | baseline`, default
+`center`). Both take `as` and a `gap`, and a `gap` is only a `Space`, a step of
+the token scale (`"0"`–`"6"`, `"sm"`–`"xl"`), so an off-scale value fails
+`npm run typecheck`. A primitive owns the space between its children and
+nothing else: it zeroes their margins, so a child never brings its own. Add a
+third primitive only when a page being migrated needs one.
+
+**Who spaces what.** The rhythm block in `app.css` spaces sections and
+headings. Primitives space the parts within a section. Component CSS keeps a
+component's own padding. A rhythm entry is removed only where a primitive
+makes it redundant.
+
+**Migrating a page.** Replace its hand-written margins and grids with the
+primitives, delete the rules they replace, and convert that page's physical
+`left`/`right` to logical properties (`padding-inline-start`,
+`inset-inline-start`, `margin-inline-end`) so it holds in right-to-left.
+
+**The ratchet.** `src/styles/ratchet.test.ts` records two counts in
+`app.css`: rules that set spacing (`margin*`, `padding*`, `gap`, `row-gap`,
+`column-gap`) and physical `left`/`right` declarations (`left`, `right`,
+`margin-`/`padding-`/`border-` `left`/`right`). It fails if either goes up.
+When a migration removes rules the count goes down and the test fails the
+other way, so a stale record cannot hide the next regression. Its message
+says the new number; set `RECORDED` in the test to it, in the same commit as
+the migration. Never raise a number: use a primitive or a logical property.
+
 ### Testing the front end
 
 Logic lives in `src/lib/` as pure functions so it can be unit-tested without a

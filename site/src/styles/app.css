@@ -718,30 +718,30 @@ a:hover { color: var(--c-spot); }
  * An ordered list, so the count and the order are the document's rather than
  * the stylesheet's — a screen reader announces "3 of 4" without being told.
  * The numerals are drawn from the list counter for the same reason: there is
- * no second copy of the number to fall out of step. */
+ * no second copy of the number to fall out of step.
+ *
+ * The list and each step are a <Stack> (components/Layout.tsx), which owns the
+ * space between their parts: 24px between steps, 12px within one. A button
+ * sits in a <Cluster> so it keeps its own width. What is left here is the
+ * counter, the indent past it, and the drawing — all in logical properties,
+ * so the marker and the indent follow the reading direction. */
 .steps {
   list-style: none;
   /* Space below as well as above: whatever follows the last step — the
-     account note, About's buttons — otherwise sits on its button. */
-  margin: var(--gap-5) 0; padding: 0;
+     account note, About's buttons — otherwise sits on its button. Outside
+     the primitives until the section around it is one. */
+  margin-block: var(--gap-5); padding: 0;
   counter-reset: step;
-  display: grid; gap: var(--gap-5);
   max-width: none !important;
 }
-/* A step is a stack: its parts take their space from the gap, not from their
-   own margins, so a link above a button cannot end up touching it. */
 .steps__item {
   counter-increment: step;
   position: relative;
-  padding-left: calc(var(--gap-6) + var(--gap-4));
-  display: flex; flex-direction: column; gap: var(--gap-3);
+  padding-inline-start: calc(var(--gap-6) + var(--gap-4));
 }
-.steps .steps__item > * { margin: 0; }
-/* A button or link-button keeps its own width rather than stretching. */
-.steps__item > .btn { align-self: flex-start; }
 .steps__item::before {
   content: counter(step);
-  position: absolute; left: 0; top: 0;
+  position: absolute; inset-inline-start: 0; top: 0;
   width: var(--gap-6); height: var(--gap-6);
   display: grid; place-items: center;
   border-radius: 50%;
@@ -752,7 +752,7 @@ a:hover { color: var(--c-spot); }
  * than spoken, and it stops before the last marker. */
 .steps__item:not(:last-child)::after {
   content: ""; position: absolute;
-  left: calc(var(--gap-6) / 2 - 1px); top: var(--gap-6);
+  inset-inline-start: calc(var(--gap-6) / 2 - 1px); top: var(--gap-6);
   width: 2px; height: calc(100% + var(--gap-5) - var(--gap-6));
   background: var(--c-border-light);
 }
@@ -919,7 +919,7 @@ a:hover { color: var(--c-spot); }
 .guide__glossary { margin: 0; display: grid; gap: var(--gap-4); max-width: 66ch; }
 .guide__glossary dt { font-weight: 700; margin-bottom: var(--gap-1); }
 .guide__glossary dd { margin: 0; line-height: 1.6; }
-.steps__more { margin: 0 0 var(--gap-3); font-size: var(--t-sm); }
+.steps__more { font-size: var(--t-sm); }
 .guide__shots { display: grid; gap: var(--gap-4); margin-top: var(--gap-4); }
 .guide__shot { margin: 0; }
 .guide__shot img { display: block; width: 100%; max-width: 720px; height: auto; border: 1px solid var(--c-border-light); border-radius: var(--radius); }
@@ -932,6 +932,12 @@ a:hover { color: var(--c-spot); }
  * rule, --space-section, its heading. A heading that opens a part of a
  * section has --space-subsection above it. Headings carry no top margin of
  * their own anywhere else.
+ *
+ * The division of labour (ADR 0007): this block spaces sections and headings;
+ * the layout primitives (<Stack>, <Cluster>, styles/layout.css) space the
+ * parts within a section; component CSS keeps a component's own padding. An
+ * entry leaves this block only where a primitive makes it redundant, not
+ * because a page was migrated.
  *
  * styles/rhythm.test.tsx holds the rest of this file to it: no rule outside
  * this block gives a section or a heading vertical margin or padding, and
