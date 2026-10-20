@@ -29,6 +29,7 @@ import { SENSITIVITY_LABELS } from "../lib/labels";
 import { EMPTY_FILTERS } from "../lib/types";
 import { makeIndex, makeSkill } from "../test/fixtures";
 import type { Skill, SkillDetail as Detail } from "../lib/types";
+import { waitForLazyPage } from "../test/lazy";
 
 const REVIEWED = {
   date: "2026-08-30", expires: "2027-08-30",
@@ -106,7 +107,7 @@ async function page(hash: string) {
   window.location.hash = hash;
   const { container } = render(<App />);
   await waitFor(() => expect(screen.getByText(/Catalog generated/)).toBeInTheDocument());
-  await waitFor(() => expect(screen.queryByText(/^Loading/)).toBeNull());
+  await waitForLazyPage();
   return surface(container);
 }
 
