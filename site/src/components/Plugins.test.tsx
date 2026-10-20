@@ -15,6 +15,7 @@ import { findViolations, describeViolations } from "../test/axe";
 import { parseRoute, pluginHref } from "../lib/route";
 import { PluginCard } from "./PluginCard";
 import { PluginDetail } from "./PluginDetail";
+import { installCommands } from "../lib/install";
 import { DEFAULT_LOCALE, setLocale } from "../i18n/strings";
 import type { Index, PluginDetail as Detail } from "../lib/types";
 
@@ -241,6 +242,38 @@ describe("the plugin page", () => {
     render(<PluginDetail namespace="ns" name="housing-dashboards" />);
     const servers = await screen.findByRole("region", { name: /mcp servers/i });
     expect(servers.textContent).toMatch(/no MCP server/i);
+  });
+
+  /* #298: as on a skill's page (DownloadBox.test.tsx). */
+  describe("says where each install line is typed, and how to check", () => {
+    afterEach(async () => { await setLocale(DEFAULT_LOCALE); });
+    const labelOf = (command: string) =>
+      (screen.getByText(command).closest(".download__cmd") as HTMLElement)
+        .querySelector(".download__cmd-label")?.textContent ?? "";
+
+    it("in English", async () => {
+      serve({ "plugins/ns/housing-dashboards.json": detail() });
+      render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+      const lines = installCommands("ns", "housing-dashboards");
+      await screen.findByText(lines.claudeInstall);
+      expect(labelOf(lines.claudeMarketplace)).toMatch(/^Inside Claude Code/);
+      expect(labelOf(lines.claudeInstall)).toMatch(/^Inside Claude Code/);
+      expect(labelOf(lines.codexInstall)).toMatch(/^In a terminal/);
+      expect(labelOf(lines.claudeCheck)).toBe("In a terminal, for Claude Code: check it worked");
+      expect(labelOf(lines.codexCheck)).toBe("In a terminal, for Codex: check it worked");
+    });
+
+    it("in Spanish", async () => {
+      await setLocale("es");
+      serve({ "plugins/ns/housing-dashboards.json": detail() });
+      render(<PluginDetail namespace="ns" name="housing-dashboards" />);
+      const lines = installCommands("ns", "housing-dashboards");
+      await screen.findByText(lines.claudeInstall);
+      expect(labelOf(lines.claudeInstall)).toMatch(/^Dentro de Claude Code/);
+      expect(labelOf(lines.codexInstall)).toMatch(/^En una terminal/);
+      expect(labelOf(lines.claudeCheck)).toMatch(/^En una terminal, para Claude Code/);
+      expect(labelOf(lines.codexCheck)).toMatch(/^En una terminal, para Codex/);
+    });
   });
 
   it("gives the install commands for the plugin's marketplace name", async () => {

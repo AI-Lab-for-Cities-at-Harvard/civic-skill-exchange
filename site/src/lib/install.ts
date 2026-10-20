@@ -19,6 +19,12 @@ export const CLAUDE_MARKETPLACE =
 export const CODEX_MARKETPLACE =
   `codex plugin marketplace add ${REPO} --sparse .agents --sparse skills --sparse plugins`;
 
+/** How to check an install worked (#298): each CLI's `plugin list`, both typed
+ *  in a terminal. Checked against `claude plugin list --help` (claude 2.1.302)
+ *  and `codex plugin list --help` (codex 0.163.0). */
+export const CLAUDE_CHECK = "claude plugin list";
+export const CODEX_CHECK = "codex plugin list";
+
 export function installCommands(namespace: string, name: string) {
   const id = `${installName(namespace, name)}@${MARKETPLACE}`;
   return {
@@ -26,5 +32,7 @@ export function installCommands(namespace: string, name: string) {
     claudeInstall: `/plugin install ${id}`,
     codexMarketplace: CODEX_MARKETPLACE,
     codexInstall: `codex plugin add ${id}`,
+    claudeCheck: CLAUDE_CHECK,
+    codexCheck: CODEX_CHECK,
   };
 }

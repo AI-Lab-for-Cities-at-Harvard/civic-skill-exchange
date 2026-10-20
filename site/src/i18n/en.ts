@@ -1141,11 +1141,20 @@ export const en = {
         claudeCode: {
           heading: "In Claude Code",
           steps: [
-            "Add the exchange once, with the first command below.",
-            "Install any skill by name with the second. Every skill page shows " +
-              "its exact install line, ready to copy.",
+            "Inside Claude Code, add the exchange once, with the first command " +
+              "below.",
+            "Still inside Claude Code, install any skill by name with the " +
+              "second. Every skill page shows its exact install line, ready to " +
+              "copy.",
+            "Check it worked: in a terminal, outside Claude Code, run the " +
+              "third. The skill should be in the list.",
           ],
           notes: [
+            "`/plugin` and `claude plugin` are the same command: `/plugin " +
+              "install …` inside Claude Code and `claude plugin install …` in a " +
+              "terminal do the same thing.",
+            "`--scope` sets where an install goes: `user`, `project` or " +
+              "`local`. The default is `user`, which is for you in every project.",
             "`--sparse` downloads the listings and leaves out the website and " +
               "tools that live alongside them. It works without it; it is just " +
               "smaller.",
@@ -1221,6 +1230,8 @@ export const en = {
               "layout? Your copy keeps working. `claude plugin update " +
               "{namespace}-{skill-name}@civic-skill-exchange` brings it up to " +
               "date; restart Claude Code to load it.",
+            "Type the two marketplace lines inside Claude Code. To check it " +
+              "worked, run `claude plugin list` in a terminal.",
           ],
         },
         codex: {
@@ -1229,6 +1240,7 @@ export const en = {
             "Add the exchange, then install any skill or plugin by name, the " +
               "same name as in Claude Code. Each listing's page shows its exact " +
               "line. As in Claude Code, `--sparse` downloads only the listings.",
+            "To check it worked, run `codex plugin list` in a terminal.",
             "To refresh the exchange's catalogue at any time and pick up new " +
               "and updated listings, run `codex plugin marketplace upgrade` " +
               "(or `codex plugin marketplace upgrade civic-skill-exchange` for " +
@@ -1808,10 +1820,12 @@ export const en = {
      *  #289), which is the shortest path in and needs no knowledge of where a
      *  tool keeps its skills. The commands themselves are not prose. */
     commands: {
-      claudeMarketplace: "Claude Code: add the marketplace, once",
-      claudeInstall: "Claude Code: install it",
-      codexMarketplace: "Codex: add the marketplace, once",
-      codexInstall: "Codex: install it",
+      claudeMarketplace: "Inside Claude Code: add the marketplace, once",
+      claudeInstall: "Inside Claude Code: install it",
+      claudeCheck: "In a terminal, for Claude Code: check it worked",
+      codexMarketplace: "In a terminal, for Codex: add the marketplace, once",
+      codexInstall: "In a terminal, for Codex: install it",
+      codexCheck: "In a terminal, for Codex: check it worked",
       degit: "Just this skill",
       clone: "The whole registry",
     },
@@ -1900,10 +1914,12 @@ export const en = {
       archive: (size: string) => `Download the plugin (${size})`,
       archiveNote: "A zip of this folder, every skill included.",
       commands: {
-        claudeMarketplace: "Claude Code: add the marketplace, once",
-        claudeInstall: "Claude Code: install it",
-        codexMarketplace: "Codex: add the marketplace, once",
-        codexInstall: "Codex: install it",
+        claudeMarketplace: "Inside Claude Code: add the marketplace, once",
+        claudeInstall: "Inside Claude Code: install it",
+        claudeCheck: "In a terminal, for Claude Code: check it worked",
+        codexMarketplace: "In a terminal, for Codex: add the marketplace, once",
+        codexInstall: "In a terminal, for Codex: install it",
+        codexCheck: "In a terminal, for Codex: check it worked",
       },
       /** The guide's section on adding the exchange (#259). */
       stepByStep: "[Step by step](guide): adding the exchange to Claude Code or Codex.",

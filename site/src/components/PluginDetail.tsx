@@ -245,8 +245,10 @@ function PluginDownload({ detail }: { detail: Detail }) {
   const commands = [
     { id: "claude-marketplace", label: p.commands.claudeMarketplace, value: lines.claudeMarketplace },
     { id: "claude-install", label: p.commands.claudeInstall, value: lines.claudeInstall },
+    { id: "claude-check", label: p.commands.claudeCheck, value: lines.claudeCheck },
     { id: "codex-marketplace", label: p.commands.codexMarketplace, value: lines.codexMarketplace },
     { id: "codex-install", label: p.commands.codexInstall, value: lines.codexInstall },
+    { id: "codex-check", label: p.commands.codexCheck, value: lines.codexCheck },
   ];
 
   const copy = async (id: string, value: string) => {

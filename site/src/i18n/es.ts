@@ -980,11 +980,21 @@ export const strings: Strings = {
         claudeCode: {
           heading: "En Claude Code",
           steps: [
-            "Agregue el intercambio una vez, con el primer comando de abajo.",
-            "Instale cualquier habilidad por su nombre con el segundo. La " +
-              "página de cada habilidad muestra su línea exacta, lista para copiar.",
+            "Dentro de Claude Code, agregue el intercambio una vez, con el " +
+              "primer comando de abajo.",
+            "Ya dentro de Claude Code, instale cualquier habilidad por su " +
+              "nombre con el segundo. La página de cada habilidad muestra su " +
+              "línea exacta, lista para copiar.",
+            "Compruebe que quedó instalada: en una terminal, fuera de Claude " +
+              "Code, ejecute el tercero. La habilidad debe aparecer en la lista.",
           ],
           notes: [
+            "`/plugin` y `claude plugin` son el mismo comando: `/plugin " +
+              "install …` dentro de Claude Code y `claude plugin install …` en " +
+              "una terminal hacen lo mismo.",
+            "`--scope` indica dónde se hace la instalación: `user`, `project` " +
+              "o `local`. El valor predeterminado es `user`, que es para usted " +
+              "en todos sus proyectos.",
             "`--sparse` descarga las publicaciones y deja fuera el sitio web y " +
               "las herramientas que las acompañan. Funciona sin él; solo es " +
               "más liviano.",
@@ -1067,6 +1077,9 @@ export const strings: Strings = {
               "de plugins? Su copia sigue funcionando. `claude plugin update " +
               "{namespace}-{skill-name}@civic-skill-exchange` la pone al día; " +
               "reinicie Claude Code para cargarla.",
+            "Escriba las dos líneas del marketplace dentro de Claude Code. Para " +
+              "comprobar que quedó instalado, ejecute `claude plugin list` en " +
+              "una terminal.",
           ],
         },
         codex: {
@@ -1076,6 +1089,8 @@ export const strings: Strings = {
               "plugin por su nombre, el mismo que en Claude Code. La página de " +
               "cada publicación muestra su línea exacta. Como en Claude Code, " +
               "`--sparse` descarga solo las publicaciones.",
+            "Para comprobar que quedó instalado, ejecute `codex plugin list` " +
+              "en una terminal.",
             "Para actualizar el catálogo del intercambio en cualquier momento y " +
               "recibir las publicaciones nuevas y actualizadas, ejecute `codex " +
               "plugin marketplace upgrade` (o `codex plugin marketplace upgrade " +
@@ -1646,10 +1661,12 @@ export const strings: Strings = {
       "habilidades: sin git y sin línea de comandos.",
 
     commands: {
-      claudeMarketplace: "Claude Code: agregue el marketplace, una sola vez",
-      claudeInstall: "Claude Code: instálela",
-      codexMarketplace: "Codex: agregue el marketplace, una sola vez",
-      codexInstall: "Codex: instálela",
+      claudeMarketplace: "Dentro de Claude Code: agregue el marketplace, una sola vez",
+      claudeInstall: "Dentro de Claude Code: instálela",
+      claudeCheck: "En una terminal, para Claude Code: compruebe que quedó instalada",
+      codexMarketplace: "En una terminal, para Codex: agregue el marketplace, una sola vez",
+      codexInstall: "En una terminal, para Codex: instálela",
+      codexCheck: "En una terminal, para Codex: compruebe que quedó instalada",
       degit: "Solo esta habilidad",
       clone: "Todo el registro",
     },
@@ -1731,10 +1748,12 @@ export const strings: Strings = {
       archive: (size: string) => `Descargar el plugin (${size})`,
       archiveNote: "Un zip de esta carpeta, con todas sus habilidades.",
       commands: {
-        claudeMarketplace: "Claude Code: agregue el marketplace, una sola vez",
-        claudeInstall: "Claude Code: instálelo",
-        codexMarketplace: "Codex: agregue el marketplace, una sola vez",
-        codexInstall: "Codex: instálelo",
+        claudeMarketplace: "Dentro de Claude Code: agregue el marketplace, una sola vez",
+        claudeInstall: "Dentro de Claude Code: instálelo",
+        claudeCheck: "En una terminal, para Claude Code: compruebe que quedó instalado",
+        codexMarketplace: "En una terminal, para Codex: agregue el marketplace, una sola vez",
+        codexInstall: "En una terminal, para Codex: instálelo",
+        codexCheck: "En una terminal, para Codex: compruebe que quedó instalado",
       },
       stepByStep: "[Paso a paso](guide): cómo agregar el intercambio a Claude Code o Codex.",
       formatNote:

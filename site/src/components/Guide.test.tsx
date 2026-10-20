@@ -166,6 +166,58 @@ describe("the guide page", () => {
       "--sparse .claude-plugin skills plugins");
   });
 
+  /* #298 (I-2 to I-5). From the CLIs (claude 2.1.302, codex 0.163.0):
+     `claude plugin install --scope` is "user, project, or local (default:
+     user)"; `plugin list` lists plugins. */
+  describe("says where to type, what scope is, and how to check", () => {
+    const text = (id: string) => document.getElementById(id)?.textContent ?? "";
+
+    it("says Claude Code's install lines are typed inside Claude Code", () => {
+      render(<Guide />);
+      expect(text("claude-code")).toMatch(/inside Claude Code/);
+    });
+
+    it("says /plugin and claude plugin are the same command", () => {
+      render(<Guide />);
+      expect(text("claude-code")).toMatch(/\/plugin and claude plugin are the same command/);
+    });
+
+    it("states the scope default and the choices as the CLI's help does", () => {
+      render(<Guide />);
+      const t = text("claude-code");
+      expect(t).toContain("--scope");
+      expect(t).toMatch(/user.*default/);
+      expect(t).toMatch(/project/);
+      expect(t).toMatch(/local/);
+    });
+
+    it("gives the check line in each client's section", () => {
+      render(<Guide />);
+      expect(text("claude-code")).toContain("claude plugin list");
+      expect(text("marketplace-claude-code")).toContain("claude plugin list");
+      expect(text("marketplace-codex")).toContain("codex plugin list");
+    });
+
+    it("claims no restart after a first install, which no help text states", () => {
+      render(<Guide />);
+      expect(text("claude-code")).not.toMatch(/restart/i);
+      // The update note's restart is the CLI's own: "restart required to apply".
+      expect(text("marketplace-claude-code")).toMatch(/restart Claude Code to load it/);
+    });
+
+    it("says the same in Spanish", async () => {
+      await setLocale("es");
+      render(<Guide />);
+      const t = text("claude-code");
+      expect(t).toMatch(/dentro de Claude Code/);
+      expect(t).toMatch(/\/plugin y claude plugin son el mismo comando/);
+      expect(t).toContain("--scope");
+      expect(t).toMatch(/user.*predeterminado/);
+      expect(text("marketplace-claude-code")).toContain("claude plugin list");
+      expect(text("marketplace-codex")).toContain("codex plugin list");
+    });
+  });
+
   it("links the share section to the submission page", () => {
     const { container } = render(<Guide />);
     expect(container.querySelector('#share a[href="#/submit"]')).not.toBeNull();
