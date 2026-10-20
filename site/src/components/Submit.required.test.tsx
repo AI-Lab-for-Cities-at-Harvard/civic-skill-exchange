@@ -3,11 +3,21 @@
  *  S-3 and S-9 of the end-to-end spike).
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { zipSync, strToU8 } from "fflate";
 import { Submit } from "./Submit";
+
+/* The username box is looked up on GitHub after a pause (useUserCheck). A
+   test never reaches the network: on a slow runner the real lookup came back
+   "no such user" before the test ended and added a second error. */
+beforeEach(() => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+    ok: true, status: 200, json: () => Promise.resolve({ login: "cityofx" }),
+  }));
+});
+afterEach(() => vi.unstubAllGlobals());
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 type User = ReturnType<typeof userEvent.setup>;
