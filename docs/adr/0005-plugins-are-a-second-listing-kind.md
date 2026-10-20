@@ -1,5 +1,7 @@
 # ADR 0005 — Plugins are a second listing kind
 
+> **Amended by [ADR 0006](0006-every-listing-in-the-agent-plugins-layout.md) for the single-skill layout.** Every single-skill listing now keeps its files in `skills/{namespace}/{name}/skills/{name}/`, in the Agent Plugins layout, so "one directory is one skill" no longer describes `skills/` as this record does. What follows about plugins stands.
+
 **Status:** accepted, 2026-09-30
 **Rulings:** [#206](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/206)
 **Specification:** [Agent Plugins 1.0.0](https://agent-plugins.org/specification), schemas vendored in [`schema/agent-plugins/1.0.0/`](../../schema/agent-plugins/1.0.0/)

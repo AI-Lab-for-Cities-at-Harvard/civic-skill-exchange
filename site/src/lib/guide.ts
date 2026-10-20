@@ -59,7 +59,7 @@ export const COMMANDS: Partial<Record<`${Task}.${Product}`, string[]>> = {
   ],
   "marketplace.codex": [
     `codex plugin marketplace add ${REPO} --sparse .agents --sparse skills --sparse plugins`,
-    `codex plugin add {namespace}-{plugin-name}@${MARKETPLACE}`,
+    `codex plugin add {namespace}-{name}@${MARKETPLACE}`,
   ],
 };
 

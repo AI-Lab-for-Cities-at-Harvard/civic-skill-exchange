@@ -1021,9 +1021,9 @@ export const strings: Strings = {
               "`~/.agents/skills/` para tenerla en todas partes.",
           ],
           notes: [
-            "El marketplace de Codex instala **plugins** del intercambio, pero " +
-              "todavía no habilidades sueltas; eso viene en camino. Mientras " +
-              "tanto, la descarga es el camino.",
+            "Codex también puede instalar una habilidad por su nombre desde su " +
+              "propio marketplace, como Claude Code: [agregue el " +
+              "intercambio](marketplaceCodex) una vez.",
             "Otras herramientas: revise dónde busca habilidades la suya. " +
               "`.agents/skills/` en su proyecto también sirve para Gemini CLI y " +
               "Antigravity, y Claude Code lee `.claude/skills/`.",
@@ -1048,17 +1048,22 @@ export const strings: Strings = {
             "Agregue el intercambio y luego instale cualquier habilidad o " +
               "plugin por su nombre. La página de cada publicación muestra su " +
               "línea exacta.",
+            "¿Instaló una habilidad de aquí antes de que pasara a la estructura " +
+              "de plugins? Su copia sigue funcionando. `claude plugin update " +
+              "{namespace}-{skill-name}@civic-skill-exchange` la pone al día; " +
+              "reinicie Claude Code para cargarla.",
           ],
         },
         codex: {
           heading: "En Codex",
           notes: [
-            "Agregue el intercambio y luego instale un plugin por su nombre. " +
-              "La página de cada plugin muestra su línea exacta. Como en Claude " +
-              "Code, `--sparse` descarga solo las publicaciones.",
-            "Por ahora esto es para **plugins**. Una habilidad suelta se " +
-              "instala pero todavía no se carga, así que use [la " +
-              "descarga](codex).",
+            "Agregue el intercambio y luego instale cualquier habilidad o " +
+              "plugin por su nombre, el mismo que en Claude Code. La página de " +
+              "cada plugin muestra su línea exacta. Como en Claude Code, " +
+              "`--sparse` descarga solo las publicaciones.",
+            "¿Instaló una habilidad de aquí antes de que pasara a la estructura " +
+              "de plugins? `codex plugin marketplace upgrade` la pone al día, " +
+              "con el mismo nombre.",
           ],
         },
       },
@@ -1344,8 +1349,10 @@ export const strings: Strings = {
       steps: {
         namespaceTitle: "Póngala en su propio espacio de nombres",
         namespace:
-          "`skills/{your-github-username}/{skill-name}/` con un `SKILL.md`, " +
-          "más los directorios opcionales `scripts/` y `references/`.",
+          "`skills/{your-github-username}/{skill-name}/skills/{skill-name}/` " +
+          "con un `SKILL.md`, más los directorios opcionales `scripts/` y " +
+          "`references/`. El intercambio genera el resto de la publicación " +
+          "cuando se integra.",
         frontmatterTitle: "Complete el frontmatter",
         frontmatter:
           "Los seis campos de la especificación Agent Skills, más los " +

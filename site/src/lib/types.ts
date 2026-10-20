@@ -80,10 +80,13 @@ export interface Skill {
   };
   has_scripts: boolean;
   script_files: string[];
+  /** The listing, `skills/{ns}/{name}`: what the marketplaces install and the
+   *  GitHub link opens. */
   path: string;
-  /** Where `SKILL.md` and the author's files are: `path` for a flat listing,
-   *  `skills/{ns}/{name}/skills/{name}` for a nested one (ADR 0006). */
-  skill_path?: string;
+  /** Where `SKILL.md` and the author's files are,
+   *  `skills/{ns}/{name}/skills/{name}` (ADR 0006): what a copy, an edit
+   *  link or the file list means by the skill. */
+  skill_path: string;
   download: string;
 }
 

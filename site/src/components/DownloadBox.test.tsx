@@ -41,6 +41,16 @@ describe("DownloadBox — the no-tooling path", () => {
     expect(screen.getByText(/git clone/)).toBeInTheDocument();
   });
 
+  /* ADR 0006, decision 3: the author's files are at skill_path, one level
+     below the listing. degit of the listing would copy the generated
+     manifests and leave SKILL.md a folder too deep for any skills directory. */
+  it("copies the skill's own folder, at skill_path, with degit", () => {
+    render(<DownloadBox skill={detail()} />);
+    expect(screen.getByText(
+      "npx degit AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/" +
+      "skills/ns/example-skill/skills/example-skill example-skill")).toBeInTheDocument();
+  });
+
   it("still carries the Community disclaimer beside the button", () => {
     render(<DownloadBox skill={detail({ tier: "community" })} />);
     expect(screen.getByText(/nobody has reviewed this skill/i)).toBeInTheDocument();

@@ -5,7 +5,7 @@ import { describe, it, expect } from "vitest";
 import { checkFrontmatter } from "@civic-skill-exchange/validator/rules";
 import {
   checkStructureCore, checkPathSafety, ALLOWED_SUFFIXES, MAX_FILES_PER_SKILL,
-  nestedSkillLayout, innerSkillLayout, SKILL_LAYOUT,
+  singleSkillLayout, SKILL_LAYOUT,
 } from "@civic-skill-exchange/validator";
 
 const CATEGORIES = ["finance"];
@@ -79,12 +79,10 @@ describe("the structural rules are importable from the site", () => {
   });
 });
 
-/** ADR 0006: CI checks a nested listing's inner directory, and the submission
- *  page checks the flat folder an author brings, which is what lands there.
- *  Both run innerSkillLayout, so the page refuses exactly what CI refuses
- *  inside skills/{name}/, a server config and a manifest copy included. A flat
- *  listing on disk keeps SKILL_LAYOUT, and #151's .mcp.json allowance, until
- *  the move retires it. */
+/** ADR 0006: CI checks a listing's inner directory, and the submission page
+ *  checks the flat folder an author brings, which is what lands there. Both
+ *  run SKILL_LAYOUT, so the page refuses exactly what CI refuses inside
+ *  skills/{name}/, a server config and a manifest copy included. */
 describe("the submission page's flat folder gets the inner-directory rules", () => {
   const file = (path: string) =>
     ({ path, kind: "file" as const, bytes: new TextEncoder().encode("x\n") });
@@ -97,17 +95,16 @@ describe("the submission page's flat folder gets the inner-directory rules", () 
 
   it("refuses a deep SKILL.md and suggests SKILL.example.md", () => {
     const findings = checkStructureCore(
-      [file("SKILL.md"), file("references/SKILL.md")], innerSkillLayout(NAME));
+      [file("SKILL.md"), file("references/SKILL.md")], SKILL_LAYOUT);
     expect(findings.map((f) => f.where)).toEqual(["references/SKILL.md"]);
     expect(findings[0]?.message).toContain("SKILL.example.md");
   });
 
-  it.each([".mcp.json", "mcp.json", ".claude-plugin/plugin.json"])(
-    "refuses %s, which a flat listing on disk still allows", (path) => {
+  it.each([".mcp.json", "mcp.json", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json"])(
+    "refuses %s, which only the registry writes, at the listing root", (path) => {
       const entries = [file("SKILL.md"), file(path)];
-      expect(checkStructureCore(entries, innerSkillLayout(NAME)).map((f) => f.where))
+      expect(checkStructureCore(entries, SKILL_LAYOUT).map((f) => f.where))
         .toEqual([path]);
-      expect(checkStructureCore(entries, SKILL_LAYOUT)).toEqual([]);
     });
 
   it("finds what CI finds in the same files one level down, in the same words", () => {
@@ -117,8 +114,8 @@ describe("the submission page's flat folder gets the inner-directory rules", () 
       { path: inner, kind: "dir" as const },
       ...folder.map((e) => ({ ...e, path: `${inner}/${e.path}` })),
     ];
-    const page = checkStructureCore(folder, innerSkillLayout(NAME));
-    const ci = checkStructureCore(nested, nestedSkillLayout(NAME));
+    const page = checkStructureCore(folder, SKILL_LAYOUT);
+    const ci = checkStructureCore(nested, singleSkillLayout("testuser", NAME));
     expect(page.map((f) => f.where)).toEqual([
       ".claude-plugin/plugin.json", ".mcp.json", "hooks/hooks.json", "mcp.json",
       "references/SKILL.md", "settings.json",

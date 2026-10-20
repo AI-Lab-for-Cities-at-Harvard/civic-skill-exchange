@@ -6,11 +6,13 @@
  *  their namespace.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from "node:fs";
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from "vitest";
+import { spawnSync } from "node:child_process";
+import { copyFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { pythonCommand } from "./scan-run";
 import { discoverChanged, isGeneratedInSkill } from "./skill";
 
 /** The repository, so the generator can be asked what it writes. */
@@ -28,9 +30,11 @@ beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), "discover-"));
   changed = join(root, "changed.txt");
   for (const dir of ["skills/alice/one", "skills/bob/two"]) {
+    const name = dir.split("/").pop()!;
     mkdirSync(join(root, dir, ".codex-plugin"), { recursive: true });
     mkdirSync(join(root, dir, ".claude-plugin"), { recursive: true });
-    writeFileSync(join(root, dir, "SKILL.md"), "---\nname: x\n---\n");
+    mkdirSync(join(root, dir, "skills", name), { recursive: true });
+    writeFileSync(join(root, dir, "skills", name, "SKILL.md"), "---\nname: x\n---\n");
     writeFileSync(join(root, dir, ".codex-plugin", "plugin.json"), "{}");
     writeFileSync(join(root, dir, ".claude-plugin", "plugin.json"), "{}");
   }
@@ -39,11 +43,11 @@ afterEach(() => rmSync(root, { recursive: true, force: true }));
 
 describe("discoverChanged", () => {
   it("finds a skill whose content changed", () => {
-    expect(changedPaths(["skills/alice/one/SKILL.md"])).toEqual(["skills/alice/one"]);
+    expect(changedPaths(["skills/alice/one/skills/one/SKILL.md"])).toEqual(["skills/alice/one"]);
   });
 
   it("finds one whose supporting files changed", () => {
-    expect(changedPaths(["skills/alice/one/scripts/thing.py"]))
+    expect(changedPaths(["skills/alice/one/skills/one/scripts/thing.py"]))
       .toEqual(["skills/alice/one"]);
   });
 
@@ -70,7 +74,7 @@ describe("discoverChanged", () => {
 
   it("still validates a skill that changed for a real reason alongside them", () => {
     expect(changedPaths([
-      "skills/alice/one/SKILL.md",
+      "skills/alice/one/skills/one/SKILL.md",
       "skills/alice/one/.codex-plugin/plugin.json",
       "skills/bob/two/.codex-plugin/plugin.json",
     ])).toEqual(["skills/alice/one"]);
@@ -93,70 +97,94 @@ describe("discoverChanged", () => {
 });
 
 /* The exemption has to be exactly what scripts/build_marketplace.py writes into
-   a skill directory. A pattern that matched `.codex-plugin/plugin.json` at any
-   depth exempted a hand-written file the generator never touches, and the
-   exemption is what stops L1 seeing a path at all — so this asks the generator
-   for the shape rather than keeping a second copy of it.
+   a listing. A pattern that matched `.codex-plugin/plugin.json` at any depth
+   exempted a hand-written file the generator never touches, and the exemption
+   is what stops L1 seeing a path at all — so this asks the generator for the
+   paths rather than keeping a second copy of them.
 
-   The generator writes more than one file into a skill directory since #183
-   added the Claude per-plugin manifest, so it is asked for *every* path rather
-   than the first — a second output the exemption did not cover would fail L1's
-   ownership check on maintenance work, which is the bug the exemption exists
-   to prevent. */
+   Asked, not read: `build_marketplace.py --paths` prints every path it owns,
+   and is the same question the Manifest workflow asks before it stages what it
+   regenerated (#188). This used to match `skill_dir / "x" / "y"` in the
+   generator's source, so renaming a Python variable broke it (#276). It runs
+   the real generator over a throwaway tree, with one single-skill listing and
+   one plugin, so no listed skill is read (test_no_listing_coupling.py). */
+let generatorTree: string;
+let owned: string[];
+
+beforeAll(() => {
+  generatorTree = mkdtempSync(join(tmpdir(), "generator-"));
+  const write = (rel: string, content: string) => {
+    mkdirSync(dirname(join(generatorTree, rel)), { recursive: true });
+    writeFileSync(join(generatorTree, rel), content);
+  };
+  // The generator resolves its root from where the script sits, so it is
+  // copied in beside the module it imports.
+  mkdirSync(join(generatorTree, "scripts"));
+  for (const script of ["build_marketplace.py", "build_index.py"]) {
+    copyFileSync(join(GENERATOR_ROOT, "scripts", script), join(generatorTree, "scripts", script));
+  }
+  const skill = (name: string) =>
+    `---\nname: ${name}\ndescription: A skill.\nlicense: MIT\n` +
+    `metadata:\n  civic.maintainer: Test\n---\n\nBody.\n`;
+  write("skills/alice/one/skills/one/SKILL.md", skill("one"));
+  write("plugins/carol/kit/plugin.json", JSON.stringify({
+    name: "carol-kit", description: "A kit.", author: { name: "Carol" },
+  }));
+  write("plugins/carol/kit/mcp.json", JSON.stringify({
+    mcpServers: { s: { type: "streamable-http", url: "https://s.example.org/mcp" } },
+  }));
+  write("plugins/carol/kit/skills/brief/SKILL.md", skill("brief"));
+
+  const python = pythonCommand(GENERATOR_ROOT);
+  const run = spawnSync(python,
+    [join(generatorTree, "scripts", "build_marketplace.py"), "--paths"], { encoding: "utf8" });
+  if (run.status !== 0) {
+    throw new Error(`'${python} scripts/build_marketplace.py --paths' failed ` +
+      `(${run.error?.message ?? `exit ${run.status}`}): ${run.stderr}\n` +
+      "It needs pyyaml: see docs/DEVELOPMENT.md — Setup, or set $PYTHON.");
+  }
+  owned = run.stdout.split("\n").map((l) => l.trim()).filter(Boolean);
+});
+afterAll(() => rmSync(generatorTree, { recursive: true, force: true }));
+
+/** What the generator writes inside every listing under `tree`, relative to
+ *  the listing: `skills/{ns}/{name}/` or `plugins/{ns}/{name}/`. */
+const ownedIn = (tree: string): string[] => [...new Set(owned
+  .filter((p) => p.startsWith(`${tree}/`))
+  .map((p) => p.split("/").slice(3).join("/")))].sort();
+
 describe("the generated-file exemption matches the generator", () => {
-  const source = () => readFileSync(
-    join(GENERATOR_ROOT, "scripts", "build_marketplace.py"), "utf8");
-
-  it("finds the generator's per-skill loop and the files it writes", () => {
-    // Guards the guard: the assertions below pass trivially if these drift.
-    expect(source()).toContain('(root / "skills").glob("*/*")');
-    expect(generatedInSkill().length).toBeGreaterThanOrEqual(2);
+  it("asks the generator, and hears about a single skill's manifests", () => {
+    // Guards the guard: the assertions below pass trivially if this is empty.
+    expect(ownedIn("skills")).toEqual([".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]);
   });
 
   it("exempts every path the generator writes", () => {
-    for (const [dir, file] of generatedInSkill()) {
-      expect(isGeneratedInSkill(`skills/ns/name/${dir}/${file}`)).toBe(true);
+    for (const rel of ownedIn("skills")) {
+      expect(isGeneratedInSkill(`skills/ns/name/${rel}`)).toBe(true);
     }
   });
 
   it("exempts them nowhere else in the tree", () => {
-    for (const [dir, file] of generatedInSkill()) {
-      expect(isGeneratedInSkill(`skills/ns/name/nested/${dir}/${file}`)).toBe(false);
-      expect(isGeneratedInSkill(`skills/ns/${dir}/${file}`)).toBe(false);
+    for (const rel of ownedIn("skills")) {
+      const [dir, file] = rel.split("/");
+      expect(isGeneratedInSkill(`skills/ns/name/skills/name/${rel}`)).toBe(false);
+      expect(isGeneratedInSkill(`skills/ns/name/nested/${rel}`)).toBe(false);
+      expect(isGeneratedInSkill(`skills/ns/${rel}`)).toBe(false);
       expect(isGeneratedInSkill(`skills/ns/name/${file}`)).toBe(false);
-    }
-  });
-
-  it("exempts no other file in the same generated directory", () => {
-    for (const [dir] of generatedInSkill()) {
       expect(isGeneratedInSkill(`skills/ns/name/${dir}/other.json`)).toBe(false);
     }
   });
-
-  /** Every `skill_dir / "..." / "..."` the generator writes, as its segments. */
-  function generatedInSkill(): [string, string][] {
-    return [...source().matchAll(/skill_dir \/ "([^"]+)" \/ "([^"]+)"/g)]
-      .map((m) => [m[1]!, m[2]!]);
-  }
 });
 
-/* The same guard for plugins (ADR 0005). The generator names what it writes
-   into a plugin in one tuple, PLUGIN_GENERATED, so that is what is read. */
+/* The same guard for plugins (ADR 0005), from the same answer. */
 describe("the plugin exemption matches the generator", () => {
-  const generatedInPlugin = (): string[] => {
-    const source = readFileSync(
-      join(GENERATOR_ROOT, "scripts", "build_marketplace.py"), "utf8");
-    const tuple = /^PLUGIN_GENERATED = \((.*)\)$/m.exec(source)?.[1] ?? "";
-    return [...tuple.matchAll(/Path\(([^)]*)\)((?:\s*\/\s*"[^"]+")*)/g)].map((m) =>
-      [...`${m[1]}${m[2]}`.matchAll(/"([^"]+)"/g)].map((s) => s[1]).join("/"));
-  };
-
   it("finds the paths the generator writes into a plugin", () => {
-    expect(generatedInPlugin()).toEqual([".claude-plugin/plugin.json", ".mcp.json"]);
+    expect(ownedIn("plugins")).toEqual([".claude-plugin/plugin.json", ".mcp.json"]);
   });
 
   it("exempts each of them at a plugin root, and nowhere deeper", () => {
-    for (const rel of generatedInPlugin()) {
+    for (const rel of ownedIn("plugins")) {
       expect(isGeneratedInSkill(`plugins/ns/name/${rel}`)).toBe(true);
       expect(isGeneratedInSkill(`plugins/ns/name/skills/s/${rel}`)).toBe(false);
       expect(isGeneratedInSkill(`plugins/ns/${rel}`)).toBe(false);

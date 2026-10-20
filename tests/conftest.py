@@ -56,7 +56,10 @@ def render_frontmatter(front: dict) -> str:
 
 @pytest.fixture
 def make_skill(tmp_path):
-    """Build a skill directory. Returns its path.
+    """Build a single-skill listing in the nested layout (ADR 0006) and return
+    the listing directory, `skills/{namespace}/{name}/`. SKILL.md and every
+    `files=` path are written to the author's directory inside it,
+    `skills/{namespace}/{name}/skills/{name}/`; `inner(listing)` names it.
 
     make_skill()                                  a valid skill
     make_skill(name="other")                      a different directory name
@@ -75,7 +78,8 @@ def make_skill(tmp_path):
         files: dict[str, str] | None = None,
         overrides: dict | None = None,
     ) -> Path:
-        skill_dir = tmp_path / "skills" / namespace / name
+        listing = tmp_path / "skills" / namespace / name
+        skill_dir = inner(listing)
         skill_dir.mkdir(parents=True, exist_ok=True)
 
         if raw is not None:
@@ -101,9 +105,15 @@ def make_skill(tmp_path):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
 
-        return skill_dir
+        return listing
 
     return _make
+
+
+def inner(listing: Path) -> Path:
+    """The author's directory inside a single-skill listing: the one holding
+    its SKILL.md (ADR 0006)."""
+    return listing / "skills" / listing.name
 
 
 

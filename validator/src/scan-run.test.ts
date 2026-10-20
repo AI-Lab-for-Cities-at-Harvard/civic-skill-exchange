@@ -11,7 +11,7 @@ import { describeScanFailure } from "./scan-run";
 
 const NO_SKILL_MD =
   "scan.py: cannot scan testuser/example-skill: /tmp/x/skills/testuser/example-skill " +
-  "has no SKILL.md, at its root or in skills/example-skill/.\n";
+  "has no SKILL.md: it goes at skills/testuser/example-skill/skills/example-skill/SKILL.md.\n";
 const SYMLINK =
   "scan.py: cannot scan testuser/example-skill: /tmp/x/skills/testuser/example-skill/" +
   "skills/example-skill/SKILL.md is a symlink; a skill's own files must be in the listing.\n";

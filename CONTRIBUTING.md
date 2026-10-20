@@ -20,11 +20,18 @@ Two things worth knowing up front:
 ## 1. Create the directory
 
 ```
-skills/{your-github-username}/{skill-name}/
+skills/{your-github-username}/{skill-name}/skills/{skill-name}/
 ├── SKILL.md          required
 ├── scripts/          optional — code the agent executes
 └── references/       optional — data, templates, examples the agent reads
 ```
+
+Your skill's own folder is one level down, in `skills/{skill-name}/` inside the
+listing `skills/{your-github-username}/{skill-name}/`. That is the Agent Plugins
+layout, where both Claude Code and Codex load a skill
+([ADR 0006](docs/adr/0006-every-listing-in-the-agent-plugins-layout.md)). The
+listing's root holds only what the registry generates, so a `SKILL.md` or any
+other file there is refused, with the path it belongs at.
 
 Rules the automation enforces:
 
@@ -35,25 +42,21 @@ Rules the automation enforces:
   **plugin** and go under `plugins/{your-github-username}/{plugin-name}/`
   instead — see [Plugins](#plugins) below.
 - No symlinks, no binaries, no nested `.git` directories, no compiled artifacts.
-- No `hooks/`, `.claude-plugin/`, `settings.json`, `settings.local.json`, or
-  `.lsp.json` — the skill directory is a plugin root a client installs
-  directly, and these are refused outright rather than merely reviewed.
-  `.mcp.json` is the one exception for a skill already listed with its
-  `SKILL.md` at the top of its directory: it stays, and is treated as
-  executed code like anything under `scripts/`. The submission page checks a
-  skill folder with the rules for the inner `skills/{skill-name}/` directory
-  that every single skill moves into
-  ([ADR 0006](docs/adr/0006-every-listing-in-the-agent-plugins-layout.md)),
-  where no client reads a server config, so the page refuses `.mcp.json` and
-  `mcp.json`: a skill with an MCP server is a plugin. See [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
-- Two files inside your directory are **not yours to write**:
-  `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json`. The registry
-  generates both from your frontmatter after your pull request merges, in
-  `.github/workflows/manifest.yml` — so do not hand-edit them, and do not
-  commit them yourself. The pull request check that reports them stale is a
-  warning: nothing is needed from you. A generated file inside your skill
-  directory that is not the generator's is refused, because the registry
-  writes those.
+- No `hooks/`, `.claude-plugin/`, `.codex-plugin/`, `settings.json`,
+  `settings.local.json`, `.lsp.json`, `.mcp.json` or `mcp.json` in your
+  skill's folder. These are files a client acts on rather than content anybody
+  reads, and inside a skill no client reads them, so they are refused outright
+  rather than merely reviewed. A skill with an MCP server is a plugin: see
+  [Plugins](#plugins) below, and
+  [docs/SECURITY.md](docs/SECURITY.md#which-files-a-skill-may-contain).
+- Two files in your listing are **not yours to write**:
+  `.codex-plugin/plugin.json` and `.claude-plugin/plugin.json`, at the root of
+  `skills/{your-github-username}/{skill-name}/`, beside your skill's folder.
+  The registry generates both from your frontmatter after your pull request
+  merges, in `.github/workflows/manifest.yml` — so do not hand-edit them, and
+  do not commit them yourself. The pull request check that reports them stale
+  is a warning: nothing is needed from you. A generated file in your listing
+  that is not the generator's is refused, because the registry writes those.
 - **All four size limits**, so you can check before you hit them:
 
   | Limit | Value |

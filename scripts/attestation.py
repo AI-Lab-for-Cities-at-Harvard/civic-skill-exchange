@@ -119,7 +119,7 @@ def check_clone(root: Path, skill: Path, plugin: bool = False) -> None:
         raise Unusable(
             f"{skill} has no plugin.json — there is no plugin there to attest to.")
     if not plugin:
-        # Flat or nested (ADR 0006): the SKILL.md may be one level down. The
+        # The SKILL.md is one level down, in skills/{name}/ (ADR 0006). The
         # SHA and the dirty check below stay on the listing directory, which is
         # what the build pins.
         try:

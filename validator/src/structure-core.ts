@@ -163,36 +163,37 @@ export function deepSkillMessage(rel: string): string {
 
 /** Plugin-level files a client acts on, which a skill may not ship (#151).
  *
- *  `build_marketplace.py` makes the skill directory the Claude plugin root, so
- *  anything here is honoured on `/plugin install` — and honoured by code, not
- *  by a model. `hooks/hooks.json` is the sharp end: it runs shell commands at
- *  session start with nothing between the install and the command, which is the
- *  class SECURITY.md §3 says an LLM cannot gate. Every one of these carries an
+ *  `hooks/hooks.json` is the sharp end: it runs shell commands at session
+ *  start with nothing between the install and the command, which is the class
+ *  SECURITY.md §3 says an LLM cannot gate. Every one of these carries an
  *  allowlisted suffix, so before this rule they passed L0 unremarked.
  *
- *  Keyed on the first path segment, because the plugin root is the skill
- *  directory: a copy under `references/` or `assets/` is documentation and no
- *  client loads it. (A SKILL.md is the exception, since Codex does load one
+ *  They are refused in a skill's own folder: the folder an author brings to
+ *  the submission page, and `skills/{name}/` inside a listing, where it lands
+ *  (ADR 0006). No client reads them there, and an author who wrote one
+ *  expected it to do something. Keyed on the first path segment of that
+ *  folder, so a copy under `references/` or `assets/` is documentation, which
+ *  no client loads. (A SKILL.md is the exception, since Codex does load one
  *  there: `isLoadableNestedSkill` refuses it wherever it sits.)
  *
- *  `.mcp.json` is deliberately absent. An MCP server can be genuinely useful to
- *  a skill, so the ruling on #151 keeps it and treats it as executed instead:
- *  `build_index.py` publishes it beside `scripts/`, and `scan.py` reads the
- *  commands it launches.
+ *  A plugin's skills get the same rules (plugin-core.ts), after their own
+ *  messages for a server config and a manifest.
  */
+const MANIFEST_COPY = "the registry generates a single skill's manifests at " +
+  "the listing root, beside skills/{name}/, from its SKILL.md. A copy in the " +
+  "skill's own folder is one no client reads. Remove it.";
+
+const SERVER_CONFIG = "a single skill's listing holds no server config: no " +
+  "client reads one inside the skill's own folder, and the listing root holds " +
+  "only generated files. A skill with an MCP server is a plugin (ADR 0006): " +
+  "submit it under plugins/, with the server in its mcp.json.";
+
 const PLUGIN_DIRECTORIES = new Map<string, string>([
   ["hooks", "plugin hooks run shell commands at session start with no model in " +
-    "the path, so nothing downstream can refuse them — the skill directory is " +
-    "the plugin root, and a client would run these on install. A skill may not " +
-    "ship hooks."],
-  [".claude-plugin", "the registry generates this directory from the listing " +
-    "itself, so an author's copy would shadow it and describe the plugin as " +
-    "something other than what the catalogue shows. Only " +
-    ".claude-plugin/plugin.json may appear here, and only because " +
-    "scripts/build_marketplace.py writes it: " +
-    "`build_marketplace.py --check` fails any pull request whose copy " +
-    "differs from what the generator produces, so inline hooks or MCP " +
-    "servers cannot be smuggled through it."],
+    "the path, so nothing downstream can refuse them. A skill may not ship " +
+    "hooks."],
+  [".claude-plugin", MANIFEST_COPY],
+  [".codex-plugin", MANIFEST_COPY],
 ]);
 
 const PLUGIN_FILES = new Map<string, string>([
@@ -205,36 +206,14 @@ const PLUGIN_FILES = new Map<string, string>([
   [".lsp.json", "this declares language servers a client launches, so it is a " +
     "command that runs with no model in the path rather than content anybody " +
     "reads."],
+  [".mcp.json", SERVER_CONFIG],
+  ["mcp.json", SERVER_CONFIG],
 ]);
 
-/** The one path under `.claude-plugin/` a skill directory may carry (#183).
- *
- *  `scripts/build_marketplace.py` writes this file into every listed skill, so
- *  refusing it would fail the whole registry. It is safe to allow for the
- *  reason the rest of the directory is not: the generator produces it, and
- *  `build_marketplace.py --check` compares the committed copy against what the
- *  generator produces. That step is blocking — validate.yml runs it on every
- *  pull request that touches `skills/`, and nothing repairs a stale copy after
- *  a merge (#170). So a manifest carrying inline `hooks` or `mcpServers` fails
- *  the pull request rather than reaching a client: an author cannot smuggle
- *  anything through a file whose exact bytes are derived from their SKILL.md.
- *
- *  Anything else under `.claude-plugin/` is still refused. The directory is
- *  where a client looks for the plugin's own manifest, and #151's reason — an
- *  author's copy shadowing the registry's — holds for every path in it but
- *  this one. */
-const CLAUDE_PLUGIN_DIRECTORY = ".claude-plugin";
-export const GENERATED_PLUGIN_MANIFEST = `${CLAUDE_PLUGIN_DIRECTORY}/plugin.json`;
-
-/** Why this path is refused, or null. `where` carries the path itself. */
+/** Why this path, relative to a skill's own folder, is refused, or null.
+ *  `where` carries the path itself. */
 export function rejectedPluginPath(rel: string): string | null {
   const first = rel.split("/")[0]!;
-  // The directory entry itself passes too: the walk emits it alongside the
-  // generated manifest, and reporting it would fail every listing.
-  if (first === CLAUDE_PLUGIN_DIRECTORY &&
-      (rel === CLAUDE_PLUGIN_DIRECTORY || rel === GENERATED_PLUGIN_MANIFEST)) {
-    return null;
-  }
   return PLUGIN_DIRECTORIES.get(first)
     ?? (rel === first ? PLUGIN_FILES.get(first) ?? null : null);
 }
@@ -256,16 +235,16 @@ export interface StructureLayout {
   noun: string;
 }
 
-/** A skill directory's own rules: a flat listing, the folder an author drops
- *  on the submission page, and the inside of a nested listing's
- *  `skills/{name}/` (ADR 0006), which nestedSkillLayout delegates to. */
+/** A skill's own folder: what an author brings to the submission page, and
+ *  `skills/{name}/` inside a listing, which singleSkillLayout delegates to
+ *  (ADR 0006). One set of rules, so the page refuses what CI will. */
 export const SKILL_LAYOUT: StructureLayout = {
   rejected: (rel) => rejectedPluginPath(rel),
   misplacedSkill: (rel) => isLoadableNestedSkill(rel) ? deepSkillMessage(rel) : null,
   noun: "skill",
 };
 
-/** The directory a nested single skill keeps its files in (ADR 0006). */
+/** The directory a single skill keeps its files in (ADR 0006). */
 export const NESTED_SKILLS_DIRECTORY = "skills";
 
 /** The two manifests the registry writes at a single skill's listing root. */
@@ -273,64 +252,15 @@ export const GENERATED_SKILL_MANIFESTS = [
   ".codex-plugin/plugin.json", ".claude-plugin/plugin.json",
 ] as const;
 
-/** Whether a single skill's entries are in the nested layout: a `skills/`
- *  directory and no SKILL.md at the root. A listing with a root SKILL.md is
- *  flat, and the flat rules refuse anything under `skills/{name}/SKILL.md` as
- *  a SKILL.md below the skill's own. The folder an author brings to the
- *  submission page has its SKILL.md at the root, so it is always flat. */
-export function isNestedSkillListing(entries: Entry[]): boolean {
-  let nested = false;
-  for (const { path, kind } of entries) {
-    if (path === "SKILL.md" && kind === "file") return false;
-    if (path === NESTED_SKILLS_DIRECTORY || path.startsWith(`${NESTED_SKILLS_DIRECTORY}/`)) {
-      nested = true;
-    }
-  }
-  return nested;
-}
-
-/** Why a path inside the nested skill's own directory is refused, or null.
- *  `inner` is relative to `skills/{name}/`. The flat skill's rules, plus the
- *  two things that only make sense at a listing root, as a plugin's skill
- *  refuses them (rejectedInPlugin). */
-function rejectedInNestedSkill(inner: string, name: string): string | null {
-  if (inner === ".mcp.json" || inner === "mcp.json") {
-    return `no client reads a server config inside ` +
-      `${NESTED_SKILLS_DIRECTORY}/${name}/, and a single skill's listing root ` +
-      `holds only generated files. A skill with an MCP server is a plugin ` +
-      `(ADR 0006): submit it under plugins/, with the server in its mcp.json.`;
-  }
-  if (/^\.(?:claude|codex)-plugin(?:\/|$)/.test(inner)) {
-    return `the registry generates a single skill's manifests at the listing ` +
-      `root, beside ${NESTED_SKILLS_DIRECTORY}/. A copy inside the skill is ` +
-      `one no client reads. Remove it.`;
-  }
-  return SKILL_LAYOUT.rejected(inner, "file");
-}
-
-/** The rules for what goes in a nested skill's `skills/{name}/`, with paths
- *  relative to it (ADR 0006). nestedSkillLayout applies them inside a listing,
- *  and the submission page applies them to the flat folder an author brings,
- *  which is what lands there — so the page refuses what CI will.
+/** A single skill's listing, `skills/{namespace}/{name}/` (ADR 0006): it holds
+ *  the generated `.codex-plugin/` and `.claude-plugin/` and `skills/{name}/`,
+ *  and nothing else; `skills/{name}/` gets SKILL_LAYOUT. The caps are
+ *  checkStructureCore's, over every entry, so they cover the whole listing.
  *
- *  SKILL_LAYOUT stays as it is for a flat listing on disk, which keeps #151's
- *  `.mcp.json` and its generated manifests at its root until the move retires
- *  the flat layout. */
-export function innerSkillLayout(name: string): StructureLayout {
-  return {
-    rejected: (rel) => rejectedInNestedSkill(rel, name),
-    misplacedSkill: (rel) => SKILL_LAYOUT.misplacedSkill(rel),
-    noun: "skill",
-  };
-}
-
-/** A nested single skill's rules (ADR 0006): `skills/{ns}/{name}/` holds the
- *  generated `.codex-plugin/` and `.claude-plugin/` and `skills/{name}/`, and
- *  nothing else; `skills/{name}/` gets the flat skill's rules. The caps are
- *  checkStructureCore's, over every entry, so they cover the whole listing. */
-export function nestedSkillLayout(name: string): StructureLayout {
+ *  A SKILL.md at the listing root is the flat layout the move retired. No
+ *  client loads it, so it is refused with the path it belongs at. */
+export function singleSkillLayout(namespace: string, name: string): StructureLayout {
   const inner = `${NESTED_SKILLS_DIRECTORY}/${name}`;
-  const innerRules = innerSkillLayout(name);
   const generatedDirs = GENERATED_SKILL_MANIFESTS.map((m) => m.split("/")[0]!);
 
   const rejected = (rel: string, kind: Entry["kind"]): string | null => {
@@ -352,14 +282,21 @@ export function nestedSkillLayout(name: string): StructureLayout {
           `listing: ${inner}/. Move what is in ${rel} there, or, if this listing ` +
           `has several skills, submit it as a plugin under plugins/.`;
       }
-      return parts.length === 2 ? null : innerRules.rejected(parts.slice(2).join("/"), kind);
+      return parts.length === 2 ? null : SKILL_LAYOUT.rejected(parts.slice(2).join("/"), kind);
+    }
+    if (rel === "SKILL.md") {
+      return `a single skill's files go one level down, in ${inner}/ (ADR 0006), ` +
+        `so its SKILL.md belongs at skills/${namespace}/${name}/${inner}/SKILL.md. ` +
+        `Move it there with everything else you wrote: no client loads a ` +
+        `SKILL.md at the listing root, which holds only the manifests the ` +
+        `registry generates.`;
     }
     if (rel === ".mcp.json" || rel === "mcp.json") {
       return `a single skill's listing root holds only generated files, and a ` +
         `skill with an MCP server is a plugin (ADR 0006). Submit it under ` +
         `plugins/, with the server in its mcp.json.`;
     }
-    return `a nested skill's listing root holds only the generated ` +
+    return `a single skill's listing root holds only the generated ` +
       `${generatedDirs.join("/ and ")}/ and ${inner}/. Everything the author ` +
       `writes goes in ${inner}/: move this to ${inner}/${rel}.`;
   };
@@ -367,16 +304,11 @@ export function nestedSkillLayout(name: string): StructureLayout {
   const misplacedSkill = (rel: string): string | null => {
     if (!rel.startsWith(`${inner}/`)) return null;  // refused by `rejected`
     // Asked of the inner rules, but reported against the listing's own path.
-    return innerRules.misplacedSkill(rel.slice(inner.length + 1)) === null
+    return SKILL_LAYOUT.misplacedSkill(rel.slice(inner.length + 1)) === null
       ? null : deepSkillMessage(rel);
   };
 
   return { rejected, misplacedSkill, noun: "skill" };
-}
-
-/** The layout a single skill's entries call for: nested or flat. */
-export function skillLayoutFor(entries: Entry[], name: string): StructureLayout {
-  return isNestedSkillListing(entries) ? nestedSkillLayout(name) : SKILL_LAYOUT;
 }
 
 export function checkStructureCore(

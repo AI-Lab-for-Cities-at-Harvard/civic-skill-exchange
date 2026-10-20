@@ -44,6 +44,7 @@ export function makeSkill(over: Partial<Skill> = {}): Skill {
     has_scripts: false,
     script_files: [],
     path: "skills/ns/example-skill",
+    skill_path: "skills/ns/example-skill/skills/example-skill",
     download: "https://example.test",
     ...over,
   };

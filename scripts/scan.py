@@ -363,13 +363,12 @@ def scan_text(text: str, signatures: list[Signature], rel: str) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- #
-# MCP servers (#151).
+# MCP servers (#151, ADR 0005).
 #
-# `build_marketplace.py` makes the skill directory the Claude plugin root, so a
-# plugin-level file an author ships is honoured on install. L0 refuses all of
-# them but one: `.mcp.json` stays, because an MCP server can be genuinely useful
-# to a skill. The cost of keeping it is that a client launches what it declares,
-# so the fields a client executes are read as commands rather than left as text.
+# A client launches the servers a plugin's `mcp.json` declares, so the fields a
+# client executes are read as commands rather than left as text. A single skill
+# declares none: a skill with an MCP server is a plugin (ADR 0006, decision 5),
+# and L0 refuses a server config anywhere in a single skill's listing.
 #
 # The shape this catches is fetch-and-run: a server whose command pulls a
 # package off the network and runs it at launch. There is no model between the
@@ -381,11 +380,9 @@ def scan_text(text: str, signatures: list[Signature], rel: str) -> list[dict]:
 # prose — a description mentioning `npx -y` is not a command, and a blocker that
 # fires on prose is one people learn to route around.
 #
-# URLs need nothing new here. `.mcp.json` carries an allowlisted suffix, so the
+# URLs need nothing new here. `mcp.json` carries an allowlisted suffix, so the
 # text scan above already gives it `external-url` on the same terms a script
-# gets it, including the localization disposition.
-
-MCP_CONFIG = ".mcp.json"
+# gets it.
 
 MCP: list[Signature] = [
     (
@@ -404,10 +401,9 @@ MCP: list[Signature] = [
             re.IGNORECASE,
         ),
         "MCP server command that fetches code from the network and runs it when "
-        "the server starts. The skill directory is the plugin root, so this runs "
-        "on install with no model in the path, and what it resolves later is not "
-        "what a reviewer read. Name a command the skill ships or the host "
-        "already has.",
+        "the server starts. A client runs this when the plugin loads, with no "
+        "model in the path, and what it resolves later is not what a reviewer "
+        "read. Name a command the plugin ships or the host already has.",
     ),
 ]
 
@@ -415,7 +411,7 @@ MCP: list[Signature] = [
 def mcp_servers(text: str) -> dict[str, dict]:
     """The `mcpServers` mapping, or nothing when the file is not that shape.
 
-    A malformed `.mcp.json` is L0's finding to report, not this scanner's to
+    A malformed `mcp.json` is L0's finding to report, not this scanner's to
     crash on — the same call `localization_of` makes about frontmatter.
     """
     try:
@@ -447,17 +443,15 @@ def server_line(text: str, name: str) -> int:
     return text.count("\n", 0, match.start()) + 1 if match else 1
 
 
-def scan_mcp(skill_dir: Path, config: str = MCP_CONFIG) -> list[dict]:
-    """Blocking findings from the MCP servers a skill declares.
+def scan_mcp(plugin_dir: Path, config: str) -> list[dict]:
+    """Blocking findings from the MCP servers a plugin declares in `config`,
+    the author's `mcp.json` (its `.mcp.json` is generated from it).
 
     One finding per server rather than one per file: each server is a separate
     decision by the author, and fixing one to discover the next on resubmission
     is a loop worth not building.
-
-    `config` is the file a client reads: `.mcp.json` at a skill's root, and the
-    author's `mcp.json` for a plugin, whose `.mcp.json` is generated from it.
     """
-    path = skill_dir / config
+    path = plugin_dir / config
     if not path.is_file() or path.is_symlink():
         return []
     try:
@@ -683,7 +677,7 @@ def scan_plugin(plugin_dir: Path) -> dict:
 
 
 def scan_skill(listing_dir: Path) -> dict:
-    """L2 and L3 for one single-skill listing, flat or nested (ADR 0006).
+    """L2 and L3 for one single-skill listing (ADR 0006).
 
     Every file in the listing is scanned, and paths are reported relative to
     it. The frontmatter checks read the skill's own SKILL.md, found by
@@ -726,11 +720,6 @@ def scan_skill(listing_dir: Path) -> dict:
                 "explanation": WILDCARD_BASH_EXPLANATION,
             }
         )
-
-    # The MCP servers this skill launches on install (#151), read as commands
-    # rather than as the text the loop above already scanned. At the listing
-    # root, because that is the plugin root a client reads.
-    blocking.extend(scan_mcp(listing_dir))
 
     return {
         "blocking": blocking,

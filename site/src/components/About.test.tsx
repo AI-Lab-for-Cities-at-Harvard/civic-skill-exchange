@@ -10,6 +10,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { About } from "./About";
 import { makeSkill } from "../test/fixtures";
+import { DEFAULT_LOCALE, locales, setLocale } from "../i18n/strings";
 
 const SKILLS = [
   makeSkill({ namespace: "civic-skills", name: "generalize-skill" }),
@@ -35,6 +36,21 @@ describe("About — the skills that do the work", () => {
     render(<About skills={[makeSkill({ namespace: "cityofx", name: "generalize-skill" })]} />);
     expect(screen.getByTestId("link-generalize"))
       .toHaveAttribute("href", "#/skill/cityofx/generalize-skill");
+  });
+});
+
+/* ADR 0006: a single skill's files are one level down in its listing, so the
+   by-hand steps name that path, in every locale (owner's ruling on #276). */
+describe("About — building a listing by hand", () => {
+  it("names the nested path", async () => {
+    for (const tag of locales()) {
+      await setLocale(tag);
+      const { container, unmount } = render(<About skills={[]} />);
+      expect(container.textContent, tag)
+        .toContain("skills/{your-github-username}/{skill-name}/skills/{skill-name}/");
+      unmount();
+    }
+    await setLocale(DEFAULT_LOCALE);
   });
 });
 

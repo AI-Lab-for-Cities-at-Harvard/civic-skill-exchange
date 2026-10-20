@@ -249,28 +249,29 @@ describe("the deep-SKILL.md rule agrees with layout.ts", () => {
   it.each(["references/SKILL.example.md", "assets/templates/SKILL.example.md"])(
     "%s is an example, and passes both", (path) => {
       expect(checkStructureCore([file("SKILL.md", "x"), file(path, "x")])).toEqual([]);
-      expect(checkChangedLayout([`skills/ns/name/${path}`])).toEqual([]);
+      expect(checkChangedLayout([`skills/ns/name/skills/name/${path}`])).toEqual([]);
     });
 
   it.each([
     "nested/SKILL.md", "scripts/SKILL.md", "references/SKILL.md", "assets/templates/SKILL.md",
   ])("%s is rejected by both", (path) => {
     expect(checkStructureCore([file("SKILL.md", "x"), file(path, "x")])).toHaveLength(1);
-    expect(checkChangedLayout([`skills/ns/name/${path}`])).toHaveLength(1);
+    expect(checkChangedLayout([`skills/ns/name/skills/name/${path}`])).toHaveLength(1);
   });
 });
 
-/** Plugin-level files a client acts on (#151).
+/** Plugin-level files a client acts on (#151), in a skill's own folder: what
+ *  an author brings to the submission page, and skills/{name}/ in a listing.
  *
- *  `build_marketplace.py` makes the skill directory the Claude plugin root, so
- *  a plugin-level file an author ships is honoured on `/plugin install`. The
- *  worst of them is `hooks/hooks.json`: it runs shell commands at session start
- *  with no model in the path, which is the class SECURITY.md §3 says an LLM
- *  cannot gate. `.json` is allowlisted, so a hook shipped inside a skill passed
- *  L0 with one soft `external-url` flag.
+ *  The worst of them is `hooks/hooks.json`: it runs shell commands at session
+ *  start with no model in the path, which is the class SECURITY.md §3 says an
+ *  LLM cannot gate. `.json` is allowlisted, so a hook shipped inside a skill
+ *  passed L0 with one soft `external-url` flag.
  *
- *  `.mcp.json` is the ruled exception — an MCP server can be useful to a skill,
- *  so it stays, and `build_index.py` publishes it as executed instead.
+ *  #151 kept `.mcp.json` when the skill directory was the Claude plugin root.
+ *  In the nested layout it is not, a server config there is one no client
+ *  reads, and a skill with an MCP server is a plugin (ADR 0006, decision 5).
+ *  The manifests are the registry's, written at the listing root.
  */
 describe("plugin-level files a skill may not ship", () => {
   const withRoot = (path: string) =>
@@ -284,6 +285,10 @@ describe("plugin-level files a skill may not ship", () => {
     ".claude-plugin/marketplace.json",
     ".claude-plugin/hooks/hooks.json",
     ".claude-plugin/plugin.jsonc",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".mcp.json",
+    "mcp.json",
   ])("%s is rejected, and the finding names the path", (path) => {
     const findings = checkStructureCore(withRoot(path));
     expect(findings).toHaveLength(1);
@@ -316,47 +321,30 @@ describe("plugin-level files a skill may not ship", () => {
     expect(checkStructureCore([file("hooks/hooks.json", "{}")])).toHaveLength(1);
   });
 
-  it("keeps .mcp.json, which the ruling on #151 allows", () => {
-    expect(checkStructureCore(withRoot(".mcp.json"))).toEqual([]);
+  it("says a server config makes the skill a plugin", () => {
+    for (const path of [".mcp.json", "mcp.json"]) {
+      expect(checkStructureCore(withRoot(path))[0]?.message).toMatch(/plugins\//);
+    }
   });
 
-  it("leaves the generated .codex-plugin manifest alone", () => {
-    // build_marketplace.py writes one into every listing, so rejecting it
-    // would fail every skill in the registry.
-    expect(checkStructureCore(withRoot(".codex-plugin/plugin.json"))).toEqual([]);
-  });
-
-  /* #183 narrowed the `.claude-plugin/` refusal to everything except the one
-     file the generator writes there. #151 refused the directory outright
-     because an author's copy would shadow the generated manifest — and that
-     reasoning holds for every path under it but the generated one, which
-     `build_marketplace.py --check` compares byte for byte against what the
-     generator produces before validate.yml will let the pull request pass. */
-  it("leaves the generated .claude-plugin manifest alone", () => {
-    expect(checkStructureCore(withRoot(".claude-plugin/plugin.json"))).toEqual([]);
-  });
-
-  it("does not report the .claude-plugin directory entry itself", () => {
-    expect(checkStructureCore([
-      file("SKILL.md", "x"),
-      { path: ".claude-plugin", kind: "dir" },
-      file(".claude-plugin/plugin.json", "{}\n"),
-    ])).toEqual([]);
-  });
-
-  it("still refuses another file beside the generated one", () => {
+  /* The registry writes a single skill's two manifests at its listing root,
+     beside skills/{name}/ (ADR 0006). A copy in the skill's own folder is one
+     no client reads, and an author's copy is not the registry's. */
+  it("reports a manifest directory once, with what is inside it", () => {
     const findings = checkStructureCore([
       file("SKILL.md", "x"),
       { path: ".claude-plugin", kind: "dir" },
       file(".claude-plugin/plugin.json", "{}\n"),
       file(".claude-plugin/settings.json", "{}\n"),
     ]);
-    expect(findings.map((f) => f.where)).toEqual([".claude-plugin/settings.json"]);
+    expect(findings.map((f) => f.where)).toEqual([".claude-plugin"]);
   });
 
-  it("says a differing copy is caught, so nothing can be smuggled in", () => {
-    expect(rejectedPluginPath(".claude-plugin/other.json"))
-      .toMatch(/build_marketplace\.py --check/);
+  it("says the registry generates the manifests at the listing root", () => {
+    for (const path of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
+      expect(rejectedPluginPath(path)).toMatch(/registry generates/);
+      expect(rejectedPluginPath(path)).toMatch(/listing root/);
+    }
   });
 
   it.each([

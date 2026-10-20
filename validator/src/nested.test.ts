@@ -1,19 +1,18 @@
-/** A single skill one level down (ADR 0006, decisions 1 and 4; #273).
+/** A single skill one level down (ADR 0006, decisions 1 and 4; #273, #276).
  *
- *  A nested listing is `skills/{ns}/{name}/skills/{name}/SKILL.md`, with the
- *  two generated manifests at the listing root and nothing else there. Flat
- *  listings keep passing until the move retires them, so both layouts are
- *  accepted here, and each is held to its own rules.
+ *  A listing is `skills/{ns}/{name}/skills/{name}/SKILL.md`, with the two
+ *  generated manifests at the listing root and nothing else there. The flat
+ *  layout, SKILL.md at the listing root, is retired: it is refused, on disk and
+ *  over changed paths, with the path it belongs at.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, renameSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { checkChangedLayout } from "./layout";
 import {
-  checkStructureCore, innerSkillLayout, isNestedSkillListing, nestedSkillLayout, skillLayoutFor,
-  MAX_FILES_PER_SKILL, SKILL_LAYOUT, type Entry,
+  checkStructureCore, singleSkillLayout, MAX_FILES_PER_SKILL, SKILL_LAYOUT, type Entry,
 } from "./structure-core";
 import { checkStructure } from "./structure";
 import { validateSkill } from "./skill";
@@ -27,11 +26,13 @@ const dir = (path: string): Entry => ({ path, kind: "dir" });
 const messages = (f: { where: string; message: string }[]) =>
   f.map((x) => `${x.where}: ${x.message}`).join(" | ");
 
+const NAMESPACE = "testuser";
 const NAME = "permit-explainer";
 const INNER = `skills/${NAME}`;
+const NESTED_SKILL_MD = `skills/${NAMESPACE}/${NAME}/skills/${NAME}/SKILL.md`;
 
-/** A nested listing's entries, sorted the way readEntries sorts them. */
-const nested = (...extra: Entry[]): Entry[] => [
+/** A listing's entries, sorted the way readEntries sorts them. */
+const listing = (...extra: Entry[]): Entry[] => [
   dir(".claude-plugin"),
   file(".claude-plugin/plugin.json", "{}\n"),
   dir(".codex-plugin"),
@@ -42,26 +43,10 @@ const nested = (...extra: Entry[]): Entry[] => [
   ...extra,
 ].sort((a, b) => a.path.localeCompare(b.path));
 
-const check = (...extra: Entry[]) => checkStructureCore(nested(...extra), nestedSkillLayout(NAME));
+const layout = singleSkillLayout(NAMESPACE, NAME);
+const check = (...extra: Entry[]) => checkStructureCore(listing(...extra), layout);
 
-describe("telling the layouts apart", () => {
-  it("reads a listing with skills/ and no root SKILL.md as nested", () => {
-    expect(isNestedSkillListing(nested())).toBe(true);
-    expect(skillLayoutFor(nested(), NAME)).not.toBe(SKILL_LAYOUT);
-  });
-
-  it("reads a listing with a root SKILL.md as flat", () => {
-    const flat = [file("SKILL.md"), dir("references"), file("references/a.md")];
-    expect(isNestedSkillListing(flat)).toBe(false);
-    expect(skillLayoutFor(flat, NAME)).toBe(SKILL_LAYOUT);
-  });
-
-  it("reads a dropped folder as flat, which is what the submission page has", () => {
-    expect(isNestedSkillListing([file("SKILL.md"), file("scripts/x.py")])).toBe(false);
-  });
-});
-
-describe("a nested listing's root", () => {
+describe("a listing's root", () => {
   it("accepts the generated manifests and skills/{name}/", () => {
     expect(check()).toEqual([]);
   });
@@ -77,12 +62,20 @@ describe("a nested listing's root", () => {
     expect(findings[0]?.message).toContain(`skills/${NAME}/${where}`);
   });
 
-  it("refuses a root SKILL.md beside skills/, and says where it goes", () => {
-    // Discovery reads this as flat (there is a root SKILL.md), so the nested
-    // rules only meet it when a caller asks for them.
-    const findings = checkStructureCore(
-      [...nested(), file("SKILL.md", "---\nname: x\n---\n")], nestedSkillLayout(NAME));
-    expect(findings.map((f) => f.where)).toContain("SKILL.md");
+  it("refuses a root SKILL.md beside skills/, and names the nested path", () => {
+    const findings = check(file("SKILL.md", "---\nname: x\n---\n"));
+    expect(findings.map((f) => f.where)).toEqual(["SKILL.md"]);
+    expect(findings[0]?.message).toContain(NESTED_SKILL_MD);
+  });
+
+  it("refuses a flat listing, SKILL.md at the root and no skills/, naming the nested path", () => {
+    const flat = [
+      file("SKILL.md", "---\nname: x\n---\n"), dir("references"), file("references/a.md"),
+    ];
+    const findings = checkStructureCore(flat, layout);
+    expect(findings.map((f) => f.where)).toEqual(["SKILL.md", "references"]);
+    expect(findings[0]?.message).toContain(NESTED_SKILL_MD);
+    expect(findings[1]?.message).toContain(`skills/${NAME}/references`);
   });
 
   it("refuses a server config at the root: a skill with an MCP server is a plugin", () => {
@@ -108,7 +101,7 @@ describe("a nested listing's root", () => {
       dir(".codex-plugin"), file(".codex-plugin/plugin.json", "{}\n"),
       dir("skills"), dir("skills/wrong-name"), file("skills/wrong-name/SKILL.md"),
     ];
-    const findings = checkStructureCore(entries, nestedSkillLayout(NAME));
+    const findings = checkStructureCore(entries, layout);
     expect(findings.map((f) => f.where)).toEqual(["skills/wrong-name"]);
     expect(findings[0]?.message).toContain(`skills/${NAME}/`);
   });
@@ -118,8 +111,8 @@ describe("a nested listing's root", () => {
   });
 });
 
-describe("a nested listing's inner directory", () => {
-  it("accepts what a flat skill may carry", () => {
+describe("a listing's inner directory", () => {
+  it("accepts what a skill may carry", () => {
     expect(check(
       dir(`${INNER}/references`), file(`${INNER}/references/notes.md`),
       dir(`${INNER}/scripts`), file(`${INNER}/scripts/helper.py`),
@@ -167,44 +160,41 @@ describe("a nested listing's inner directory", () => {
 });
 
 /** The submission page validates the folder an author brings with the rules
- *  CI applies once it sits in skills/{name}/. One layout holds them, and the
- *  nested layout delegates to it, so there is one copy of the rule. */
-describe("innerSkillLayout, the inner directory's rules on their own", () => {
-  const inner = (...extra: Entry[]) =>
-    checkStructureCore([file("SKILL.md"), ...extra], innerSkillLayout(NAME));
+ *  CI applies once it sits in skills/{name}/. One layout holds them,
+ *  SKILL_LAYOUT, and the listing's layout delegates to it, so there is one
+ *  copy of the rule. */
+describe("SKILL_LAYOUT, the author's folder on its own", () => {
+  const folder = (...extra: Entry[]) => checkStructureCore([file("SKILL.md"), ...extra]);
 
   it.each([".mcp.json", "mcp.json", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json"])(
-    "refuses %s, which a flat listing on disk still allows", (path) => {
-      expect(inner(file(path, "{}\n")).map((f) => f.where)).toEqual([path]);
-      expect(checkStructureCore([file("SKILL.md"), file(path, "{}\n")])).toEqual([]);
+    "refuses %s", (path) => {
+      expect(folder(file(path, "{}\n")).map((f) => f.where)).toEqual([path]);
+      expect(checkStructureCore([file("SKILL.md"), file(path, "{}\n")], SKILL_LAYOUT))
+        .toEqual(folder(file(path, "{}\n")));
     });
 
   it.each(["hooks/hooks.json", "settings.json", ".lsp.json", "references/SKILL.md"])(
-    "refuses %s, as the flat rules do", (path) => {
-      expect(inner(file(path, "{}\n")).map((f) => f.where)).toEqual([path]);
+    "refuses %s", (path) => {
+      expect(folder(file(path, "{}\n")).map((f) => f.where)).toEqual([path]);
     });
 
-  it("gives the same message the nested layout gives inside skills/{name}/", () => {
+  it.each(["references/SKILL.md", "assets/SKILL.md", "nested/SKILL.md"])(
+    "refuses %s, reversing #78's exemption, and suggests SKILL.example.md", (path) => {
+      const findings = folder(file(path));
+      expect(findings.map((f) => f.where)).toEqual([path]);
+      expect(findings[0]?.message).toContain("SKILL.example.md");
+    });
+
+  it("gives the same message the listing's layout gives inside skills/{name}/", () => {
     for (const path of [".mcp.json", "mcp.json", ".codex-plugin/plugin.json", "settings.json"]) {
       expect(check(file(`${INNER}/${path}`, "{}\n"))[0]?.message)
-        .toBe(inner(file(path, "{}\n"))[0]?.message);
+        .toBe(folder(file(path, "{}\n"))[0]?.message);
     }
   });
 });
 
-describe("a flat skill, until the move retires it", () => {
-  const flat = (...extra: Entry[]) => checkStructureCore([file("SKILL.md"), ...extra]);
-
-  it.each(["references/SKILL.md", "assets/SKILL.md", "nested/SKILL.md"])(
-    "refuses %s, reversing #78's exemption, and suggests SKILL.example.md", (path) => {
-      const findings = flat(file(path));
-      expect(findings.map((f) => f.where)).toEqual([path]);
-      expect(findings[0]?.message).toContain("SKILL.example.md");
-    });
-});
-
 // --------------------------------------------------------------------------- //
-// On disk: checkStructure and validateSkill pick the layout themselves.
+// On disk: checkStructure and validateSkill read the listing.
 
 const singleSkill = (name: string) => `---
 name: ${name}
@@ -226,19 +216,19 @@ metadata:
 Body.
 `;
 
-describe("validating a nested listing on disk", () => {
+describe("validating a listing on disk", () => {
   let root: string;
-  let listing: string;
+  let listingDir: string;
 
   const write = (rel: string, content: string) => {
-    const path = join(listing, rel);
+    const path = join(listingDir, rel);
     mkdirSync(dirname(path), { recursive: true });
     writeFileSync(path, content);
   };
 
   beforeEach(() => {
     root = mkdtempSync(join(tmpdir(), "cse-nested-"));
-    listing = join(root, "skills", "testuser", NAME);
+    listingDir = join(root, "skills", NAMESPACE, NAME);
     write(".codex-plugin/plugin.json", "{}\n");
     write(".claude-plugin/plugin.json", "{}\n");
     write(`${INNER}/SKILL.md`, singleSkill(NAME));
@@ -247,72 +237,79 @@ describe("validating a nested listing on disk", () => {
   afterEach(() => rmSync(root, { recursive: true, force: true }));
 
   it("passes structure and frontmatter", () => {
-    expect(checkStructure(listing)).toEqual([]);
-    expect(validateSkill(listing, CATEGORIES, "testuser").findings).toEqual([]);
+    expect(checkStructure(listingDir)).toEqual([]);
+    expect(validateSkill(listingDir, CATEGORIES, NAMESPACE).findings).toEqual([]);
   });
 
   it("reads the inner SKILL.md with inPlugin false, so civic metadata stays in it", () => {
     // In a plugin these three fields would be refused as describing the whole
     // plugin. Here they are required, so dropping one is a finding.
     write(`${INNER}/SKILL.md`, singleSkill(NAME).replace("  civic.maintainer: Test User\n", ""));
-    expect(messages(validateSkill(listing, CATEGORIES, "testuser").findings))
+    expect(messages(validateSkill(listingDir, CATEGORIES, NAMESPACE).findings))
       .toMatch(/civic\.maintainer is required/);
   });
 
   it("holds the inner SKILL.md's name to the listing's", () => {
     write(`${INNER}/SKILL.md`, singleSkill("something-else"));
-    expect(messages(validateSkill(listing, CATEGORIES, "testuser").findings))
+    expect(messages(validateSkill(listingDir, CATEGORIES, NAMESPACE).findings))
       .toMatch(/does not match the directory/);
   });
 
   it("reports a missing inner SKILL.md under its own path", () => {
-    rmSync(join(listing, INNER, "SKILL.md"));
-    const findings = validateSkill(listing, CATEGORIES, "testuser").findings;
+    rmSync(join(listingDir, INNER, "SKILL.md"));
+    const findings = validateSkill(listingDir, CATEGORIES, NAMESPACE).findings;
     expect(findings.map((f) => f.where)).toContain(`${INNER}: SKILL.md`);
   });
 
   it("refuses an inner directory under another name", () => {
-    rmSync(join(listing, "skills"), { recursive: true });
+    rmSync(join(listingDir, "skills"), { recursive: true });
     write("skills/other/SKILL.md", singleSkill("other"));
-    expect(messages(validateSkill(listing, CATEGORIES, "testuser").findings))
+    expect(messages(validateSkill(listingDir, CATEGORIES, NAMESPACE).findings))
       .toMatch(/skills\/other: /);
   });
 
   it("refuses an author file left at the listing root", () => {
     write("README.md", "# readme\n");
-    expect(messages(checkStructure(listing))).toContain(`skills/${NAME}/README.md`);
+    expect(messages(checkStructure(listingDir))).toContain(`skills/${NAME}/README.md`);
   });
 
-  it("still accepts a flat listing", () => {
-    rmSync(join(listing, "skills"), { recursive: true });
-    write("SKILL.md", singleSkill(NAME));
-    expect(validateSkill(listing, CATEGORIES, "testuser").findings).toEqual([]);
+  it("refuses a flat listing, and names where its SKILL.md goes", () => {
+    renameSync(join(listingDir, INNER, "SKILL.md"), join(listingDir, "SKILL.md"));
+    rmSync(join(listingDir, "skills"), { recursive: true });
+    const structure = checkStructure(listingDir);
+    expect(structure.map((f) => f.where)).toEqual(["SKILL.md"]);
+    expect(structure[0]?.message).toContain(NESTED_SKILL_MD);
+    const findings = validateSkill(listingDir, CATEGORIES, NAMESPACE).findings;
+    expect(findings.map((f) => f.where)).toEqual(["SKILL.md", `${INNER}: SKILL.md`]);
   });
 });
 
 describe("--layout, over changed paths", () => {
-  it("accepts a nested skill", () => {
+  it("accepts a skill one level down", () => {
     expect(checkChangedLayout([
-      `skills/testuser/${NAME}/skills/${NAME}/SKILL.md`,
-      `skills/testuser/${NAME}/skills/${NAME}/references/notes.md`,
+      `skills/${NAMESPACE}/${NAME}/skills/${NAME}/SKILL.md`,
+      `skills/${NAMESPACE}/${NAME}/skills/${NAME}/references/notes.md`,
     ])).toEqual([]);
   });
 
-  it("still accepts a flat skill", () => {
-    expect(checkChangedLayout([`skills/testuser/${NAME}/SKILL.md`])).toEqual([]);
+  it("refuses a flat skill, and names the nested path", () => {
+    const findings = checkChangedLayout([`skills/${NAMESPACE}/${NAME}/SKILL.md`]);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.where).toBe(`skills/${NAMESPACE}/${NAME}/SKILL.md`);
+    expect(findings[0]?.message).toContain(NESTED_SKILL_MD);
   });
 
   it("refuses an inner directory whose name is not the listing's", () => {
-    const findings = checkChangedLayout([`skills/testuser/${NAME}/skills/other/SKILL.md`]);
+    const findings = checkChangedLayout([`skills/${NAMESPACE}/${NAME}/skills/other/SKILL.md`]);
     expect(findings).toHaveLength(1);
-    expect(findings[0]?.message).toContain(`skills/testuser/${NAME}/skills/${NAME}/SKILL.md`);
+    expect(findings[0]?.message).toContain(NESTED_SKILL_MD);
   });
 
   it.each([
-    `skills/testuser/${NAME}/references/SKILL.md`,
-    `skills/testuser/${NAME}/assets/SKILL.md`,
-    `skills/testuser/${NAME}/skills/${NAME}/references/SKILL.md`,
-    `skills/testuser/${NAME}/skills/${NAME}/extra/SKILL.md`,
+    `skills/${NAMESPACE}/${NAME}/references/SKILL.md`,
+    `skills/${NAMESPACE}/${NAME}/assets/SKILL.md`,
+    `skills/${NAMESPACE}/${NAME}/skills/${NAME}/references/SKILL.md`,
+    `skills/${NAMESPACE}/${NAME}/skills/${NAME}/extra/SKILL.md`,
     "plugins/testuser/housing/skills/brief/references/SKILL.md",
     "plugins/testuser/housing/skills/brief/assets/SKILL.md",
   ])("refuses %s below a skill's own, and suggests SKILL.example.md", (path) => {
