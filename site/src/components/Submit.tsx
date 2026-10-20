@@ -162,15 +162,15 @@ export function Submit(
     useState(() => readDraft(draftKey({ route: "plugin" })));
   const SKILL_KEY = draftKey({ route: "skill" });
   const pasteTooLong = pasted.length > MAX_KEPT_PASTE;
-  const upload = archive
-    ? { kind: imported ? "repo" as const : "zip" as const, name: archive.name }
-    : gaps.upload;
   const toKeep = useMemo(() => ({
     draft, typedName, forkInput, repoUrl, otherLanguage,
     pasted: pasteTooLong ? "" : pasted,
     pasteTooLong: pasteTooLong || (gaps.pasteTooLong && pasted === ""),
-    upload,
-  }), [draft, typedName, forkInput, repoUrl, otherLanguage, pasted, pasteTooLong, gaps, upload]);
+    upload: archive
+      ? { kind: imported ? "repo" as const : "zip" as const, name: archive.name }
+      : gaps.upload,
+  }), [draft, typedName, forkInput, repoUrl, otherLanguage, pasted, pasteTooLong, gaps,
+    archive, imported]);
   const blankForm = isBlank(draft) && typedName === "" && pasted === "" && forkInput === ""
     && repoUrl === "" && !otherLanguage && !archive && !gaps.upload;
   const { failed: cannotSave } = useDraftSaver(SKILL_KEY, toKeep, {

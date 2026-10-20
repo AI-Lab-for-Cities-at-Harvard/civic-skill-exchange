@@ -18,7 +18,8 @@ export function useDraftSaver(
 ): { failed: boolean } {
   const [failed, setFailed] = useState(false);
   const latest = useRef({ key, data, blank });
-  latest.current = { key, data, blank };
+  // Kept current for the pagehide handler, which outlives any one render.
+  useEffect(() => { latest.current = { key, data, blank }; });
   // Whether anything has been in the form since this page opened.
   const dirty = useRef(false);
 

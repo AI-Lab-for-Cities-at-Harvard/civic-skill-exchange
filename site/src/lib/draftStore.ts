@@ -110,14 +110,12 @@ export function writeDraft(key: string, data: Record<string, unknown>): boolean 
  *  dropped, one stored lacks (a field since added) keeps its default, and a
  *  value of the wrong type is ignored. A draft is data from a place the page
  *  does not control. */
-export function onlyStrings<T extends Record<string, string>>(
-  template: T, stored: unknown,
-): T {
-  const out: Record<string, string> = { ...template };
+export function onlyStrings<T extends object>(template: T, stored: unknown): T {
+  const out = { ...template } as Record<string, unknown>;
   if (isRecord(stored)) {
     for (const key of Object.keys(template)) {
       const value = stored[key];
-      if (typeof value === "string") out[key] = value;
+      if (typeof value === "string" && typeof out[key] === "string") out[key] = value;
     }
   }
   return out as T;
