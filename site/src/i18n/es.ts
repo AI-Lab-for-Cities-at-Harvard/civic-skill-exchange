@@ -1349,8 +1349,10 @@ export const strings: Strings = {
       steps: {
         namespaceTitle: "Póngala en su propio espacio de nombres",
         namespace:
-          "`skills/{your-github-username}/{skill-name}/` con un `SKILL.md`, " +
-          "más los directorios opcionales `scripts/` y `references/`.",
+          "`skills/{your-github-username}/{skill-name}/skills/{skill-name}/` " +
+          "con un `SKILL.md`, más los directorios opcionales `scripts/` y " +
+          "`references/`. El intercambio genera el resto de la publicación " +
+          "cuando se integra.",
         frontmatterTitle: "Complete el frontmatter",
         frontmatter:
           "Los seis campos de la especificación Agent Skills, más los " +

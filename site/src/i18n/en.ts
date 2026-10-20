@@ -1494,8 +1494,10 @@ export const en = {
       steps: {
         namespaceTitle: "Put it in your own namespace",
         namespace:
-          "`skills/{your-github-username}/{skill-name}/` with a `SKILL.md`, " +
-          "plus optional `scripts/` and `references/` directories.",
+          "`skills/{your-github-username}/{skill-name}/skills/{skill-name}/` " +
+          "with a `SKILL.md`, plus optional `scripts/` and `references/` " +
+          "directories. The exchange generates the rest of the listing when " +
+          "it merges.",
         frontmatterTitle: "Fill in the frontmatter",
         frontmatter:
           "The six fields of the Agent Skills spec, plus `civic.*` metadata: " +
