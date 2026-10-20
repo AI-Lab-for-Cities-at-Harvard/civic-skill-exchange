@@ -181,3 +181,14 @@ def test_a_re_pin_keeps_every_other_field():
 def test_the_generated_sets_match_the_build():
     assert attestation.LISTING_GENERATED == build_index.LISTING_GENERATED
     assert attestation.PLUGIN_GENERATED == build_index.PLUGIN_GENERATED
+
+
+@pytest.mark.parametrize("bad", ["--output=/tmp/x", "HEAD", "main", "a" * 39, "A" * 40, ""])
+def test_a_pin_that_is_not_a_full_sha_is_refused_before_git_sees_it(repo, bad):
+    """The pins come from registry/reviewed.yml, which a pull request can edit,
+    so one must never reach git as an option or a ref name."""
+    root, old = repo
+    with pytest.raises(ValueError, match="40"):
+        attestation.repin_violations(root, LISTING, bad, old)
+    with pytest.raises(ValueError, match="40"):
+        attestation.repin_violations(root, LISTING, old, bad)
