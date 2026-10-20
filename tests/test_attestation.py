@@ -31,11 +31,12 @@ SKILL_ID = "civic-skills/generalize-skill"
 
 @pytest.fixture
 def repo(tmp_path):
-    """A throwaway repository with one skill in it, committed."""
+    """A throwaway repository with one skill in it, committed, its SKILL.md in
+    skills/{name}/ as every listing keeps it (ADR 0006)."""
     skill = tmp_path / "skills" / "cityofx" / "permit-status-explainer"
-    skill.mkdir(parents=True)
-    (skill / "SKILL.md").write_text("---\nname: permit-status-explainer\n---\n\nBody.\n",
-                                    encoding="utf-8")
+    (skill / "skills" / skill.name).mkdir(parents=True)
+    (skill / "skills" / skill.name / "SKILL.md").write_text(
+        "---\nname: permit-status-explainer\n---\n\nBody.\n", encoding="utf-8")
     for command in (["git", "init", "-q", "-b", "main"],
                     ["git", "add", "-A"],
                     ["git", "-c", "user.email=t@e.x", "-c", "user.name=T",
@@ -116,8 +117,8 @@ def test_what_it_emits_actually_promotes_the_skill(repo, monkeypatch):
 
 def test_it_refuses_when_the_skill_has_uncommitted_changes(repo):
     skill = repo / "skills" / "cityofx" / "permit-status-explainer"
-    (skill / "SKILL.md").write_text("---\nname: permit-status-explainer\n---\n\nEdited.\n",
-                                    encoding="utf-8")
+    (skill / "skills" / skill.name / "SKILL.md").write_text(
+        "---\nname: permit-status-explainer\n---\n\nEdited.\n", encoding="utf-8")
     with pytest.raises(attestation.Unusable) as refused:
         attestation.check_clone(repo, skill)
     assert "uncommitted" in str(refused.value).lower()
@@ -448,11 +449,28 @@ def test_it_still_refuses_a_listing_with_no_skill_md_anywhere(nested_repo):
     assert "SKILL.md" in str(refused.value)
 
 
-def test_it_refuses_a_listing_with_a_skill_md_in_both_layouts(nested_repo):
+def test_it_refuses_a_root_skill_md_beside_the_nested_one(nested_repo):
     listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
     (listing / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
     with pytest.raises(attestation.Unusable):
         attestation.check_clone(nested_repo, listing)
+
+
+def test_it_refuses_a_flat_listing_and_says_where_skill_md_goes(nested_repo):
+    """The flat layout is retired (ADR 0006, step 4). The build would not read
+    it, so there is nothing to attest to, and the refusal names the path."""
+    listing = nested_repo / "skills" / "cityofx" / "permit-status-explainer"
+    inner = listing / "skills" / "permit-status-explainer"
+    (inner / "SKILL.md").rename(listing / "SKILL.md")
+    inner.rmdir()
+    (listing / "skills").rmdir()
+    subprocess.run(["git", "add", "-A"], cwd=nested_repo, check=True)
+    subprocess.run(["git", "-c", "user.email=t@e.x", "-c", "user.name=T",
+                    "commit", "-q", "-m", "Flatten"], cwd=nested_repo, check=True)
+    with pytest.raises(attestation.Unusable) as refused:
+        attestation.check_clone(nested_repo, listing)
+    assert ("skills/cityofx/permit-status-explainer/skills/permit-status-explainer/SKILL.md"
+            in str(refused.value))
 
 
 def test_the_sha_of_a_nested_listing_is_the_last_commit_to_touch_its_root(

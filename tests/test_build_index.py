@@ -15,7 +15,7 @@ import pytest
 
 import build_index
 import conftest
-from conftest import VALID_FRONTMATTER
+from conftest import VALID_FRONTMATTER, inner
 
 SHA = "a" * 40
 OTHER_SHA = "b" * 40
@@ -335,7 +335,7 @@ def test_detail_reports_the_archive_so_the_page_can_state_its_size(make_skill, t
 
 def test_archive_skips_symlinks_like_the_detail_payload_does(make_skill, tmp_path):
     skill = make_skill()
-    (skill / "evil.md").symlink_to("/etc/passwd")
+    (inner(skill) / "evil.md").symlink_to("/etc/passwd")
     out = tmp_path / "out"
     entry = build_index.build_entry(skill, {}, {})
     build_index.write_outputs(skill, entry, out)
@@ -505,8 +505,8 @@ def git_skill(tmp_path, monkeypatch):
                        capture_output=True)
 
     skill = tmp_path / "skills" / "cityofx" / "permit-status-explainer"
-    skill.mkdir(parents=True)
-    (skill / "SKILL.md").write_text(
+    inner(skill).mkdir(parents=True)
+    (inner(skill) / "SKILL.md").write_text(
         conftest.render_frontmatter(dict(
             conftest.VALID_FRONTMATTER, name="permit-status-explainer"))
         + "\n\nBody.\n", encoding="utf-8")
@@ -515,7 +515,7 @@ def git_skill(tmp_path, monkeypatch):
     run("-c", "user.email=t@e.x", "-c", "user.name=T", "commit", "-q",
         "-m", "Add the permit explainer (#12)")
     for n in (1, 2):
-        (skill / f"note{n}.md").write_text("x\n", encoding="utf-8")
+        (inner(skill) / f"note{n}.md").write_text("x\n", encoding="utf-8")
         run("-c", "user.email=t@e.x", "-c", "user.name=T", "add", "-A")
         run("-c", "user.email=t@e.x", "-c", "user.name=T", "commit", "-q",
             "-m", f"Touch it again ({n})")
@@ -599,31 +599,21 @@ def test_history_does_not_order_the_catalogue():
 # --------------------------------------------------------------------------- #
 # What runs rather than what is read (#151).
 #
-# `scripts/` was the whole of it until the ruling on #151 kept `.mcp.json` and
-# refused plugin hooks. The skill directory is the Claude plugin root, so a
-# client launches the servers `.mcp.json` declares on install — a file the page
-# must not describe as one somebody reads.
+# `scripts/` is what a single skill runs. #151 also kept a root `.mcp.json`,
+# when the skill directory was the Claude plugin root; in the nested layout it
+# is not (ADR 0006), no client reads a server config inside skills/{name}/, and
+# a skill with an MCP server is a plugin (decision 5).
 
 
-def test_detail_marks_the_mcp_config_as_executed(make_skill):
+def test_a_server_config_in_the_authors_directory_is_not_published_as_executed(make_skill):
+    """L0 refuses it, and nothing launches it, so the page must not say the
+    listing runs it."""
     skill = make_skill(files={".mcp.json": '{"mcpServers": {}}\n'})
-    detail = build_index.build_detail(skill, build_index.build_entry(skill, {}, {}))
-    assert {f["path"]: f["executed"] for f in detail["files"]}[".mcp.json"] is True
-
-
-def test_the_mcp_config_is_listed_beside_scripts(make_skill):
-    skill = make_skill(files={".mcp.json": "{}\n", "scripts/helper.py": "x = 1\n"})
     entry = build_index.build_entry(skill, {}, {})
-    assert entry["script_files"] == [".mcp.json", "scripts/helper.py"]
-    assert entry["has_scripts"] is True
-
-
-def test_a_skill_whose_only_executed_file_is_the_mcp_config_still_has_some(make_skill):
-    """`has_scripts` is what the catalogue reads to say a listing runs code, and
-    an MCP server is code the agent launches."""
-    entry = build_index.build_entry(make_skill(files={".mcp.json": "{}\n"}), {}, {})
-    assert entry["has_scripts"] is True
-    assert entry["script_files"] == [".mcp.json"]
+    detail = build_index.build_detail(skill, entry)
+    assert {f["path"]: f["executed"] for f in detail["files"]}[".mcp.json"] is False
+    assert entry["script_files"] == []
+    assert entry["has_scripts"] is False
 
 
 def test_a_skill_that_runs_nothing_says_so(make_skill):
@@ -633,9 +623,7 @@ def test_a_skill_that_runs_nothing_says_so(make_skill):
 
 
 def test_an_mcp_config_below_the_root_is_documentation(make_skill):
-    """The plugin root is the skill directory, so only the root file is loaded.
-    A copy under references/ is an example, and the same exemption applies here
-    as to a second SKILL.md."""
+    """A copy under references/ is an example, which nothing launches."""
     skill = make_skill(files={"references/.mcp.json": "{}\n"})
     entry = build_index.build_entry(skill, {}, {})
     detail = build_index.build_detail(skill, entry)
@@ -648,7 +636,7 @@ def test_the_index_and_the_detail_agree_on_what_runs(make_skill):
     """Two lists of executed files would drift, and the page and the catalogue
     would then disagree about what a listing does."""
     skill = make_skill(files={
-        ".mcp.json": "{}\n", "scripts/a.py": "a\n", "references/b.md": "b\n",
+        "scripts/a.py": "a\n", "scripts/b.sh": "b\n", "references/b.md": "b\n",
     })
     entry = build_index.build_entry(skill, {}, {})
     detail = build_index.build_detail(skill, entry)
@@ -1103,23 +1091,11 @@ def test_a_plugin_publishes_the_models_its_author_tried(make_plugin):
 # --------------------------------------------------------------------------- #
 # Nested single skills (ADR 0006, #274)
 #
-# A listing is either flat, SKILL.md at its root, or nested, with everything the
-# author wrote one level down in skills/{name}/ and only generated files beside
-# it. Every reader goes through build_index.skill_dir_of, so a listing whose
-# SKILL.md can't be found fails the build instead of dropping out of it.
-
-
-def nest(listing):
-    """Move everything an author wrote into skills/{name}/, as the layout move
-    will, and leave the generated manifests at the listing root."""
-    import shutil
-
-    inner = listing / "skills" / listing.name
-    inner.mkdir(parents=True)
-    for child in sorted(listing.iterdir()):
-        if child.name != "skills":
-            shutil.move(str(child), str(inner / child.name))
-    return listing
+# Everything the author wrote is one level down in skills/{name}/, with only
+# generated files beside it; the flat layout, SKILL.md at the listing root, is
+# retired (step 4). Every reader goes through build_index.skill_dir_of, so a
+# listing whose SKILL.md can't be found fails the build instead of dropping out
+# of it.
 
 
 def generated_manifests(listing):
@@ -1131,7 +1107,7 @@ def generated_manifests(listing):
 
 
 def test_a_nested_listing_is_built_from_its_inner_skill_md(make_skill):
-    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    listing = make_skill(name="example-skill", namespace="cityofx")
     entry = build_index.build_entry(listing, {}, {})
     assert entry is not None
     assert entry["id"] == "cityofx/example-skill"
@@ -1140,21 +1116,24 @@ def test_a_nested_listing_is_built_from_its_inner_skill_md(make_skill):
 
 
 def test_a_nested_entry_keeps_path_and_adds_skill_path(make_skill):
-    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    listing = make_skill(name="example-skill", namespace="cityofx")
     entry = build_index.build_entry(listing, {}, {})
     assert entry["path"] == "skills/cityofx/example-skill"
     assert entry["skill_path"] == "skills/cityofx/example-skill/skills/example-skill"
     assert entry["download"].endswith("/tree/main/skills/cityofx/example-skill")
 
 
-def test_a_flat_entrys_skill_path_equals_its_path(make_skill):
-    entry = build_index.build_entry(make_skill(namespace="cityofx"), {}, {})
-    assert entry["skill_path"] == entry["path"] == "skills/cityofx/example-skill"
+def test_a_flat_listing_fails_the_build_and_says_where_skill_md_goes(make_skill):
+    listing = make_skill(namespace="cityofx")
+    (inner(listing) / "SKILL.md").rename(listing / "SKILL.md")
+    with pytest.raises(build_index.NoSkillMd,
+                       match="skills/cityofx/example-skill/skills/example-skill/SKILL.md"):
+        build_index.build_entry(listing, {}, {})
 
 
 def test_a_listing_with_no_skill_md_fails_the_build_rather_than_vanishing(make_skill):
     listing = make_skill(name="example-skill", namespace="cityofx")
-    (listing / "SKILL.md").unlink()
+    (inner(listing) / "SKILL.md").unlink()
     with pytest.raises(build_index.NoSkillMd, match="example-skill"):
         build_index.build_entry(listing, {}, {})
 
@@ -1163,51 +1142,51 @@ def test_main_fails_when_a_listing_has_no_skill_md(make_skill, tmp_path, monkeyp
     """The index must not come out with fewer skills and a warning."""
     make_skill(name="good", namespace="cityofx")
     broken = make_skill(name="broken", namespace="cityofx")
-    (broken / "SKILL.md").unlink()
-    (broken / "notes.md").write_text("x\n", encoding="utf-8")
+    (inner(broken) / "SKILL.md").unlink()
+    (inner(broken) / "notes.md").write_text("x\n", encoding="utf-8")
     monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
     with pytest.raises(build_index.NoSkillMd):
         build_index.main_with(tmp_path / "out")
     assert not (tmp_path / "out" / "index.json").exists()
 
 
-def test_main_indexes_a_nested_listing_beside_a_flat_one(make_skill, tmp_path, monkeypatch):
-    make_skill(name="flat-one", namespace="cityofx")
-    nest(make_skill(name="nested-one", namespace="cityofx"))
+def test_main_indexes_every_listing_with_its_skill_path(make_skill, tmp_path, monkeypatch):
+    make_skill(name="one", namespace="cityofx")
+    make_skill(name="two", namespace="cityofx")
     monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
     out = tmp_path / "out"
     build_index.main_with(out)
     index = json.loads((out / "index.json").read_text(encoding="utf-8"))
     paths = {e["id"]: (e["path"], e["skill_path"]) for e in index["skills"]}
     assert paths == {
-        "cityofx/flat-one": ("skills/cityofx/flat-one", "skills/cityofx/flat-one"),
-        "cityofx/nested-one": ("skills/cityofx/nested-one",
-                               "skills/cityofx/nested-one/skills/nested-one"),
+        "cityofx/one": ("skills/cityofx/one", "skills/cityofx/one/skills/one"),
+        "cityofx/two": ("skills/cityofx/two", "skills/cityofx/two/skills/two"),
     }
+
+
+def test_main_fails_on_a_flat_listing_beside_a_nested_one(make_skill, tmp_path, monkeypatch):
+    """The index must not come out with the flat one quietly missing."""
+    make_skill(name="nested-one", namespace="cityofx")
+    flat = make_skill(name="flat-one", namespace="cityofx")
+    (inner(flat) / "SKILL.md").rename(flat / "SKILL.md")
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
+    with pytest.raises(build_index.NoSkillMd, match="flat-one"):
+        build_index.main_with(tmp_path / "out")
+    assert not (tmp_path / "out" / "index.json").exists()
 
 
 def test_a_nested_detail_lists_the_authors_files_relative_to_skill_path(make_skill):
     listing = make_skill(name="example-skill", namespace="cityofx", files={
         "references/notes.md": "n\n", "scripts/run.py": "x = 1\n"})
-    nest(listing)
     generated_manifests(listing)
     detail = build_index.build_detail(listing, build_index.build_entry(listing, {}, {}))
     assert [f["path"] for f in detail["files"]] == [
         "SKILL.md", "references/notes.md", "scripts/run.py"]
 
 
-def test_a_flat_detail_still_lists_its_generated_manifests(make_skill):
-    """Nothing changes for a flat listing."""
-    listing = make_skill(name="example-skill", namespace="cityofx")
-    generated_manifests(listing)
-    detail = build_index.build_detail(listing, build_index.build_entry(listing, {}, {}))
-    paths = [f["path"] for f in detail["files"]]
-    assert ".codex-plugin/plugin.json" in paths and ".claude-plugin/plugin.json" in paths
-
-
 def test_a_nested_listings_scripts_are_executed_so_has_scripts_stays_true(make_skill):
-    listing = nest(make_skill(files={"scripts/run.py": "x = 1\n",
-                                     "references/notes.md": "n\n"}))
+    listing = make_skill(files={"scripts/run.py": "x = 1\n",
+                                "references/notes.md": "n\n"})
     entry = build_index.build_entry(listing, {}, {})
     assert entry["has_scripts"] is True
     assert entry["script_files"] == ["scripts/run.py"]
@@ -1216,7 +1195,7 @@ def test_a_nested_listings_scripts_are_executed_so_has_scripts_stays_true(make_s
 
 
 def test_a_nested_listing_without_scripts_has_none(make_skill):
-    entry = build_index.build_entry(nest(make_skill()), {}, {})
+    entry = build_index.build_entry(make_skill(), {}, {})
     assert entry["has_scripts"] is False and entry["script_files"] == []
 
 
@@ -1232,7 +1211,6 @@ def test_the_executed_rule_follows_skills_star_scripts():
 def test_a_nested_archive_is_rooted_at_the_authors_directory(make_skill, tmp_path):
     listing = make_skill(name="example-skill", namespace="cityofx",
                          files={"references/notes.md": "hi\n"})
-    nest(listing)
     generated_manifests(listing)
     out = tmp_path / "out"
     entry = build_index.build_entry(listing, {}, {})
@@ -1243,19 +1221,8 @@ def test_a_nested_archive_is_rooted_at_the_authors_directory(make_skill, tmp_pat
     assert names == ["example-skill/SKILL.md", "example-skill/references/notes.md"]
 
 
-def test_a_nested_archive_matches_the_flat_one_for_the_same_files(make_skill, tmp_path):
-    """The same shape as today's flat zip, byte for byte."""
-    flat = make_skill(name="same", namespace="a", files={"references/n.md": "n\n"})
-    nested = nest(make_skill(name="same", namespace="b", files={"references/n.md": "n\n"}))
-    out = tmp_path / "out"
-    for listing in (flat, nested):
-        build_index.write_outputs(listing, build_index.build_entry(listing, {}, {}), out)
-    assert ((out / "skills" / "a" / "same.zip").read_bytes()
-            == (out / "skills" / "b" / "same.zip").read_bytes())
-
-
 def test_the_nested_detail_payload_states_its_skill_path(make_skill, tmp_path):
-    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    listing = make_skill(name="example-skill", namespace="cityofx")
     out = tmp_path / "out"
     detail = build_index.write_outputs(listing, build_index.build_entry(listing, {}, {}), out)
     written = json.loads((out / "skills" / "cityofx" / "example-skill.json")
@@ -1309,7 +1276,7 @@ def test_the_attestation_sha_of_a_nested_listing_is_its_root_commits(tmp_path, m
                                    ".claude-plugin/hooks.json"])
 def test_a_stray_file_in_a_nested_listing_fails_the_index_and_names_it(
         make_skill, tmp_path, monkeypatch, stray):
-    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    listing = make_skill(name="example-skill", namespace="cityofx")
     generated_manifests(listing)
     path = listing / stray
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -1323,15 +1290,9 @@ def test_a_stray_file_in_a_nested_listing_fails_the_index_and_names_it(
 
 
 def test_the_generated_manifests_are_not_stray(make_skill):
-    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
+    listing = make_skill(name="example-skill", namespace="cityofx")
     generated_manifests(listing)
     assert build_index.build_entry(listing, {}, {}) is not None
-
-
-def test_a_flat_listing_may_hold_what_it_always_could(make_skill):
-    listing = make_skill(files={".mcp.json": "{}\n", "scripts/run.py": "x\n"})
-    entry = build_index.build_entry(listing, {}, {})
-    assert entry["script_files"] == [".mcp.json", "scripts/run.py"]
 
 
 def test_the_archive_and_detail_never_include_a_path_that_resolves_outside(
@@ -1339,10 +1300,9 @@ def test_the_archive_and_detail_never_include_a_path_that_resolves_outside(
     outside = tmp_path / "outside"
     outside.mkdir()
     (outside / "secret.md").write_text("s\n", encoding="utf-8")
-    listing = nest(make_skill(name="example-skill", namespace="cityofx"))
-    inner = listing / "skills" / "example-skill"
-    (inner / "linked").symlink_to(outside, target_is_directory=True)
-    (inner / "file.md").symlink_to(outside / "secret.md")
+    listing = make_skill(name="example-skill", namespace="cityofx")
+    (inner(listing) / "linked").symlink_to(outside, target_is_directory=True)
+    (inner(listing) / "file.md").symlink_to(outside / "secret.md")
 
     entry = build_index.build_entry(listing, {}, {})
     detail = build_index.build_detail(listing, entry)
