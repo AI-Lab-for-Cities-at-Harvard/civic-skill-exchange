@@ -1211,7 +1211,7 @@ export const en = {
           heading: "In Codex",
           notes: [
             "Add the exchange, then install any skill or plugin by name, the " +
-              "same name as in Claude Code. Each plugin's page shows its exact " +
+              "same name as in Claude Code. Each listing's page shows its exact " +
               "line. As in Claude Code, `--sparse` downloads only the listings.",
             "Installed a skill from here before it moved into the plugin " +
               "layout? `codex plugin marketplace upgrade` brings it up to date, " +
@@ -1784,12 +1784,14 @@ export const en = {
       "A zip of this folder. Upload it wherever your agent tool takes skills " +
       "— no git, no command line.",
 
-    /** The registry is a Claude Code plugin marketplace (#73), which is the
-     *  shortest path in and needs no knowledge of where a tool keeps its
-     *  skills. The commands themselves are not prose. */
+    /** The registry is a Claude Code and a Codex plugin marketplace (#73,
+     *  #289), which is the shortest path in and needs no knowledge of where a
+     *  tool keeps its skills. The commands themselves are not prose. */
     commands: {
-      marketplace: "Add the marketplace, once",
-      install: "Install it",
+      claudeMarketplace: "Claude Code: add the marketplace, once",
+      claudeInstall: "Claude Code: install it",
+      codexMarketplace: "Codex: add the marketplace, once",
+      codexInstall: "Codex: install it",
       degit: "Just this skill",
       clone: "The whole registry",
     },

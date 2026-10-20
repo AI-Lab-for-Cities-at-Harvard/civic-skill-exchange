@@ -1059,7 +1059,7 @@ export const strings: Strings = {
           notes: [
             "Agregue el intercambio y luego instale cualquier habilidad o " +
               "plugin por su nombre, el mismo que en Claude Code. La página de " +
-              "cada plugin muestra su línea exacta. Como en Claude Code, " +
+              "cada publicación muestra su línea exacta. Como en Claude Code, " +
               "`--sparse` descarga solo las publicaciones.",
             "¿Instaló una habilidad de aquí antes de que pasara a la estructura " +
               "de plugins? `codex plugin marketplace upgrade` la pone al día, " +
@@ -1627,8 +1627,10 @@ export const strings: Strings = {
       "habilidades: sin git y sin línea de comandos.",
 
     commands: {
-      marketplace: "Agregue el marketplace, una sola vez",
-      install: "Instálela",
+      claudeMarketplace: "Claude Code: agregue el marketplace, una sola vez",
+      claudeInstall: "Claude Code: instálela",
+      codexMarketplace: "Codex: agregue el marketplace, una sola vez",
+      codexInstall: "Codex: instálela",
       degit: "Solo esta habilidad",
       clone: "Todo el registro",
     },

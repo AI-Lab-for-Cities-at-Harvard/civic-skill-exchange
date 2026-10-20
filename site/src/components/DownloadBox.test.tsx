@@ -141,8 +141,8 @@ describe("DownloadBox — installing as a plugin", () => {
 
   it("puts the plugin path first, because it is the one that needs no tooling knowledge", () => {
     render(<DownloadBox skill={detail({ namespace: "cityofx", name: "permit-status" })} />);
-    const labels = screen.getAllByText(/Just this skill|The whole registry|Add the marketplace|Install it/);
-    expect(labels[0]).toHaveTextContent(/Add the marketplace/);
+    const labels = screen.getAllByText(/Just this skill|The whole registry|add the marketplace|install it/i);
+    expect(labels[0]).toHaveTextContent("Claude Code: add the marketplace, once");
   });
 });
 

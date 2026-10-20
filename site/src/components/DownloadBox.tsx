@@ -4,6 +4,7 @@ import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { bytes } from "../lib/format";
 import { guideHref } from "../lib/route";
+import { REPO, installCommands } from "../lib/install";
 import type { SkillDetail } from "../lib/types";
 
 /** The disclaimer sits here, not in a footer, because this is the moment
@@ -21,38 +22,28 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
   const selfReviewed =
     skill.tier === "reviewed" && RESERVED_NAMESPACES.has(skill.namespace);
 
-  const repo = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
-
-  // The registry is a Claude Code plugin marketplace (#73), which is the
-  // shortest path in and needs no knowledge of where a tool keeps its skills.
-  //
-  // The plugin name carries the namespace, matching what
-  // scripts/build_marketplace.py writes: plugin names are unique across a
-  // marketplace and two people may publish the same skill name.
-  const marketplace = "civic-skill-exchange";
+  // The registry is a Claude Code and a Codex plugin marketplace, which is
+  // the shortest path in and needs no knowledge of where a tool keeps its
+  // skills. Since the layout move (ADR 0006) a single skill installs from
+  // either, as a plugin does, so both clients' lines are here (#289).
+  const lines = installCommands(skill.namespace, skill.name);
+  const c = s.download.commands;
   const commands = [
-    {
-      id: "marketplace",
-      label: s.download.commands.marketplace,
-      // The same --sparse as the guide and README (#259).
-      value: `/plugin marketplace add ${repo} --sparse .claude-plugin skills plugins`,
-    },
-    {
-      id: "install",
-      label: s.download.commands.install,
-      value: `/plugin install ${skill.namespace}-${skill.name}@${marketplace}`,
-    },
+    { id: "claude-marketplace", label: c.claudeMarketplace, value: lines.claudeMarketplace },
+    { id: "claude-install", label: c.claudeInstall, value: lines.claudeInstall },
+    { id: "codex-marketplace", label: c.codexMarketplace, value: lines.codexMarketplace },
+    { id: "codex-install", label: c.codexInstall, value: lines.codexInstall },
     {
       id: "degit",
       label: s.download.commands.degit,
       // The skill's own folder, not the listing around it (ADR 0006): what
       // lands is {name}/SKILL.md, ready for a skills directory.
-      value: `npx degit ${repo}/${skill.skill_path} ${skill.name}`,
+      value: `npx degit ${REPO}/${skill.skill_path} ${skill.name}`,
     },
     {
       id: "clone",
       label: s.download.commands.clone,
-      value: `git clone https://github.com/${repo}.git`,
+      value: `git clone https://github.com/${REPO}.git`,
     },
   ];
 
