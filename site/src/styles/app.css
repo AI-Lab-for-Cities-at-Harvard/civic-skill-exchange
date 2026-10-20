@@ -19,12 +19,12 @@ a:hover { color: var(--c-spot); }
 }
 
 .skip-link {
-  position: absolute; left: -9999px;
+  position: absolute; inset-inline-start: -9999px;
   background: var(--c-bg-raised); color: var(--c-text);
   padding: var(--gap-3) var(--gap-4); z-index: 10;
   border: 1px solid var(--c-border);
 }
-.skip-link:focus { left: var(--gap-4); top: var(--gap-4); }
+.skip-link:focus { inset-inline-start: var(--gap-4); top: var(--gap-4); }
 
 /* Visually hidden, still read: out of sight, in the accessibility tree. */
 .vh {
@@ -163,8 +163,9 @@ a:hover { color: var(--c-spot); }
   .layout > .filters, .layout > .results { grid-column: 1 / -1; }
 }
 
-/* ---- filters ---- */
-.filters { display: grid; gap: var(--gap-5); position: sticky; top: var(--gap-4); }
+/* ---- filters ----
+ * A <Stack> (App.tsx): the search and each facet, spaced by its gap. */
+.filters { position: sticky; top: var(--gap-4); }
 @media (max-width: 1023px) { .filters { position: static; } }
 
 /* The filter rail was the last piece of the page still wearing the operating
@@ -190,11 +191,10 @@ a:hover { color: var(--c-spot); }
    clear button is left alone so keyboard and screen-reader users keep it. */
 
 .facet { border: 0; padding: 0; margin: 0; }
-.facet__note {
-  margin: 0 0 var(--gap-2);
-  font-size: var(--t-xs); color: var(--c-text-lighter); line-height: 1.4;
-}
-.facet__options { display: grid; }
+/* The note and the options are a <Stack> (Facets.tsx); the legend is not a
+   flex item in any browser, so it keeps the space below it that it shares
+   with the search's label. */
+.facet__note { font-size: var(--t-xs); color: var(--c-text-lighter); line-height: 1.4; }
 
 /* Each option is a full-width row, so the hit area is the row rather than the
    dot. The control itself is drawn from tokens: appearance:none and a ring
@@ -202,7 +202,7 @@ a:hover { color: var(--c-spot); }
 .facet__option {
   display: flex; align-items: center; gap: var(--gap-3);
   font-size: var(--t-sm); cursor: pointer;
-  padding: var(--gap-2) var(--gap-2) var(--gap-2) var(--gap-1);
+  padding-block: var(--gap-2); padding-inline: var(--gap-1) var(--gap-2);
   border-radius: var(--radius);
   transition: background-color 120ms ease;
 }
@@ -250,62 +250,106 @@ a:hover { color: var(--c-spot); }
   color: var(--c-spot); text-decoration: underline;
 }
 
-/* ---- results ---- */
+/* ---- results (#208, #319, ADR 0008) --------------------------------------
+ * The results are a <Stack>: the bar (the toggle and the count, a <Cluster>),
+ * then the rows, then the pager. What is left here is each part's own look.
+ */
 .results__count {
-  margin: 0 0 var(--gap-4);
   font-size: var(--t-sm); color: var(--c-text-light);
   font-variant-numeric: tabular-nums;
 }
-/* Plugins sit below the skills and apart from them (ADR 0005, #206). */
-.plugins { border-top: 1px solid var(--c-border); }
-.grid {
-  display: grid; gap: var(--gap-4);
-  /* Sized so three cards fit the results' twelve columns at desktop. The tease
-     got shorter, not fewer-per-screen — density was not part of the brief. */
-  grid-template-columns: repeat(auto-fill, minmax(16.5rem, 1fr));
-}
+/* Focus lands on the count after a page change. It is not a control, so the
+   ring shows only when the reader is on the keyboard. */
+.results__count:focus { outline: none; }
+.results__count:focus-visible { outline: 4px solid var(--c-outline); outline-offset: 1px; }
+/* Switching sides brings the bar back to just below the window's top. */
+.browse__bar { scroll-margin-top: var(--gap-4); }
 
-.card {
+/* The Skills/Plugins toggle: two links joined into one control, the side
+   shown filled in. Each is at least 44px tall. */
+.toggle {
+  display: inline-flex; overflow: hidden;
+  border: 1px solid var(--c-border); border-radius: var(--radius);
+}
+.toggle a {
+  display: inline-flex; align-items: center; gap: var(--gap-2); min-height: 2.75rem;
+  padding-inline: var(--gap-4);
+  font-weight: 600; text-decoration: none;
+  color: var(--c-text); background: var(--c-bg-raised);
+}
+.toggle a + a { border-inline-start: 1px solid var(--c-border); }
+.toggle a[aria-current="true"] { color: var(--c-bg); background: var(--c-text); }
+/* Inside the box, so overflow: hidden does not clip the ring. */
+.toggle a:focus-visible { outline-offset: -4px; }
+.toggle__n { font-weight: 400; font-size: var(--t-sm); font-variant-numeric: tabular-nums; }
+
+/* The rows. One grid for the whole list and each row a subgrid of it, so the
+   tier, the category and the Details button line up from row to row. The name
+   takes what the longest needs up to 40% of the width, so names do not wrap at
+   desktop; the category wraps instead. */
+.rows {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; row-gap: var(--gap-2); column-gap: var(--gap-4);
+  grid-template-columns: fit-content(40%) max-content minmax(0, 1fr) auto;
+}
+.row {
+  grid-column: 1 / -1;
+  display: grid; grid-template-columns: subgrid; row-gap: var(--gap-3);
+  padding: var(--gap-3) var(--gap-4);
   background: var(--c-bg-raised);
-  border: 1px solid var(--c-border-light);
-  border-radius: var(--radius);
-  padding: var(--gap-5);
-  display: flex; flex-direction: column; gap: var(--gap-3);
-  min-height: 100%;
+  border: 1px solid var(--c-border-light); border-radius: var(--radius);
+  transition: border-color 0.15s ease;
 }
-.card__badges {
-  display: flex; flex-wrap: wrap; gap: var(--gap-2);
-  /* Reserve two rows. Cards whose badges wrap further would otherwise push
-     their titles out of line with every neighbour in the row. */
-  min-height: 1.5rem;
+/* A row is a target, not a container, and an open one stays marked. */
+.row:hover, .row:has([aria-expanded="true"]) { border-color: var(--c-border); }
+.row__head, .row__body { grid-column: 1 / -1; }
+.row__head {
+  display: grid; grid-template-columns: subgrid; row-gap: var(--gap-2);
+  align-items: center;
 }
-.card__title {
-  margin: 0; font-family: var(--f-sans); font-weight: 600;
-  font-size: var(--t-lg); line-height: 1.25; letter-spacing: var(--track-tight);
-  /* Skill names are hyphenated compounds. Left to itself the browser breaks
-     them mid-word — "federal-grant-fit-" / "check" — so wrap on the hyphens. */
-  overflow-wrap: anywhere; text-wrap: pretty;
+.row__title {
+  font-family: var(--f-sans); font-weight: 600;
+  font-size: var(--t-base); line-height: 1.25;
+  /* Hyphenated compounds: wrap on the hyphens if they ever must. */
+  overflow-wrap: anywhere;
 }
-.card__title a { text-decoration: none; }
-.card__title a:hover { text-decoration: underline; }
-.card__ns {
-  margin: 0; font-family: var(--f-mono);
-  font-size: var(--t-xs); color: var(--c-text-lighter);
+.row__title a { text-decoration: none; }
+.row__title a:hover { text-decoration: underline; color: var(--c-spot); }
+.row__ns { font-family: var(--f-mono); font-size: var(--t-xs); color: var(--c-text-lighter); }
+.row__cat { font-size: var(--t-xs); color: var(--c-text-light); }
+/* Details: a real button, drawn as a link, 44px tall. */
+.row__toggle {
+  min-height: 2.75rem; padding: 0 var(--gap-2); justify-self: end;
+  background: none; border: 0; cursor: pointer; white-space: nowrap;
+  font: inherit; font-size: var(--t-sm); color: var(--c-text); text-decoration: underline;
 }
-.card__desc { margin: 0; color: var(--c-text-light); font-size: var(--t-sm); }
+.row__toggle:hover { color: var(--c-spot); }
+.row__body { padding-top: var(--gap-3); border-top: 1px solid var(--c-border-light); }
+.row__desc { color: var(--c-text-light); font-size: var(--t-sm); }
+.row__meta { font-size: var(--t-xs); color: var(--c-text-lighter); }
 
-/* One line, not a four-row table. The description carries the meaning; this
-   just says roughly where the skill belongs. margin-top:auto pins it and the
-   call to action to the foot so cards of different description lengths still
-   line their bottoms up across a row. */
-.card__meta {
-  margin: auto 0 0; padding-top: var(--gap-3);
-  border-top: 1px solid var(--c-border-light);
-  display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-2);
-  font-size: var(--t-xs); color: var(--c-text-lighter);
+/* At a phone, two columns: the name with Details beside it, then the tier
+   and the category below them, across both. Still one grid and its subgrids. */
+@media (max-width: 640px) {
+  .rows { grid-template-columns: minmax(0, 1fr) auto; }
+  .row__tier, .row__cat { grid-column: 1 / -1; }
+  .row__toggle { grid-column: 2; grid-row: 1; }
 }
-.card__dot { opacity: 0.5; }
-.card__cta { margin: 0; }
+
+/* Numbered pages: each link at least 44px square, the current one filled in
+   as the toggle's side is. */
+.pager ul { list-style: none; margin: 0; padding: 0; }
+.pager a {
+  display: inline-grid; place-items: center;
+  min-width: 2.75rem; min-height: 2.75rem; padding-inline: var(--gap-3);
+  color: var(--c-text); text-decoration: none;
+  border: 1px solid var(--c-border-light); border-radius: var(--radius);
+}
+.pager a:hover { border-color: var(--c-spot); }
+.pager a[aria-current="page"] {
+  font-weight: 700; color: var(--c-bg); background: var(--c-text); border-color: var(--c-text);
+}
+
 .mono { font-family: var(--f-mono); font-size: var(--t-xs); }
 
 /* ---- badges ---- */
@@ -446,12 +490,6 @@ a:hover { color: var(--c-spot); }
 .terms { max-width: var(--w-center); margin: 0 auto; }
 .terms p { font-size: var(--t-sm); }
 .terms__affil { color: var(--c-text-lighter); font-size: var(--t-xs) !important; }
-
-/* Cards pick up the spot colour on hover — the system treats a card as a
-   target, not a container. */
-.card { transition: border-color 0.15s ease; }
-.card:hover { border-color: var(--c-border); }
-.card__title a:hover { color: var(--c-spot); }
 
 /* ---- skill detail -------------------------------------------------------- */
 .crumbs {
@@ -969,9 +1007,6 @@ a:hover { color: var(--c-spot); }
   margin-top: 0; padding-top: 0; border-top: 0;
 }
 .band { padding-block: var(--space-section); }
-/* Plugins sit apart from the skills on purpose (ADR 0005, #206): the larger
-   space is above the rule only; below it they are a section like any other. */
-.plugins { margin-top: var(--space-xl); padding-top: var(--space-section); }
 /* A themed block is a panel, so its space is inside it as well as before. */
 .prose__block[data-theme] {
   margin-top: var(--space-section);

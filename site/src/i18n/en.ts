@@ -1175,12 +1175,6 @@ export const en = {
     },
   },
 
-  /** A tease, not a summary: who vouched for it, what it is called, what it
-   *  does, and roughly where it belongs. */
-  card: {
-    cta: "View this skill",
-  },
-
   /** The filters down the side of the catalogue.
    *
    *  A facet's `note` is where the vocabulary gets explained, because the
@@ -2089,7 +2083,7 @@ export const en = {
           : `Plugins ${from}–${to} of the ${shown} that match (${total} in all)`,
     },
     empty: "No plugins match these filters. [Clear them](clear) to see every plugin.",
-    card: {
+    row: {
       cta: "View this plugin",
       skills: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,
       servers: (n: number) => `${n} MCP server${n === 1 ? "" : "s"}`,

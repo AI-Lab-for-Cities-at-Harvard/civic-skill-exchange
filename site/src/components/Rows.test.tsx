@@ -172,17 +172,17 @@ describe("a plugin row", () => {
   it("opens to how many skills and servers it has, and its description", async () => {
     const { toggle, body } = row(<PluginRow level={3} plugin={makePlugin({ languages: ["es"] })} />);
     await userEvent.setup().click(toggle);
-    expect(body).toHaveTextContent(strings().plugins.card.skills(2));
-    expect(body).toHaveTextContent(strings().plugins.card.servers(1));
+    expect(body).toHaveTextContent(strings().plugins.row.skills(2));
+    expect(body).toHaveTextContent(strings().plugins.row.servers(1));
     expect(within(body).getByText(/Housing dashboards and briefs/)).toHaveAttribute("lang", "es");
-    expect(within(body).getByRole("link", { name: strings().plugins.card.cta }))
+    expect(within(body).getByRole("link", { name: strings().plugins.row.cta }))
       .toHaveAttribute("href", "#/plugin/ns/housing-dashboards");
   });
 
   it("says so when it connects to no server", async () => {
     const { toggle, body } = row(<PluginRow level={3} plugin={makePlugin({ mcp_servers: [] })} />);
     await userEvent.setup().click(toggle);
-    expect(body).toHaveTextContent(strings().plugins.card.noServers);
+    expect(body).toHaveTextContent(strings().plugins.row.noServers);
   });
 
   it("carries the Lab label on a Lab plugin", () => {

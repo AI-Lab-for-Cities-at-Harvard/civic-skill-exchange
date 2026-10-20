@@ -93,7 +93,7 @@ export function SkillRow({ skill, level }: { skill: Skill; level: Level }) {
 
 export function PluginRow({ plugin, level }: { plugin: Plugin; level: Level }) {
   const s = useStrings();
-  const p = s.plugins.card;
+  const p = s.plugins.row;
   const href = pluginHref(plugin.namespace, plugin.name);
   const servers = plugin.mcp_servers.length;
   return (

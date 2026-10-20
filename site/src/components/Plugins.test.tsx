@@ -13,7 +13,6 @@ import App from "../App";
 import { makeIndex, makePlugin, makeSkill } from "../test/fixtures";
 import { findViolations, describeViolations } from "../test/axe";
 import { parseRoute, pluginHref } from "../lib/route";
-import { PluginCard } from "./PluginCard";
 import { PluginDetail } from "./PluginDetail";
 import { installCommands } from "../lib/install";
 import { DEFAULT_LOCALE, setLocale } from "../i18n/strings";
@@ -187,18 +186,6 @@ describe("search and counts on the browse page (#299)", () => {
   });
 });
 
-describe("the plugin card", () => {
-  it("says how many skills and servers it carries", () => {
-    render(<PluginCard plugin={makePlugin()} />);
-    expect(screen.getByTestId("plugin-card-meta").textContent)
-      .toMatch(/2 skills.*1 MCP server/);
-  });
-
-  it("marks the description with its language", () => {
-    render(<PluginCard plugin={makePlugin({ languages: ["es"] })} />);
-    expect(screen.getByText(/Housing dashboards and briefs/)).toHaveAttribute("lang", "es");
-  });
-});
 
 describe("the plugin page", () => {
   it("lists every skill it installs, with what each does", async () => {

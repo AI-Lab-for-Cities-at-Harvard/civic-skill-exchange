@@ -1,8 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { SensitivityBadge, DeploymentBadge, TierBadge, LabBadge } from "./Badges";
-import { SkillCard } from "./SkillCard";
+import { SkillRow } from "./Rows";
 import { makeSkill } from "../test/fixtures";
+import type { Skill } from "../lib/types";
+
+/** A browse row (#208), as the browse page renders it: `head` is the closed
+ *  row a reader sees first, `body` what Details opens. */
+function row(skill: Skill, part: "head" | "body" = "head"): HTMLElement {
+  const { container } = render(<ul><SkillRow skill={skill} level={3} /></ul>);
+  return container.querySelector(`.row__${part}`) as HTMLElement;
+}
 
 /** Data sensitivity moved from a meta row to a badge (#23, ruling 1). It badges
  *  the exception, not the default: 'none' is the common case and a chip on
@@ -30,15 +38,15 @@ describe("SensitivityBadge", () => {
   });
 });
 
-describe("SkillCard carries the sensitivity badge", () => {
+describe("an open browse row carries the sensitivity badge", () => {
   it("shows it for a protected skill", () => {
-    render(<SkillCard skill={makeSkill({ data_sensitivity: "protected" })} />);
-    expect(screen.getByText(/statutory regime/i)).toBeInTheDocument();
+    const h = row(makeSkill({ data_sensitivity: "protected" }), "body");
+    expect(within(h).getByText(/statutory regime/i)).toBeInTheDocument();
   });
 
   it("stays clean for an ordinary one", () => {
-    render(<SkillCard skill={makeSkill({ data_sensitivity: "none" })} />);
-    expect(screen.queryByText(/personal data/i)).not.toBeInTheDocument();
+    const h = row(makeSkill({ data_sensitivity: "none" }), "body");
+    expect(within(h).queryByText(/personal data/i)).not.toBeInTheDocument();
   });
 });
 
@@ -158,16 +166,16 @@ describe("TierBadge names who attested, from the ledger", () => {
   });
 });
 
-describe("SkillCard feeds the badge its attestation", () => {
-  it("so a card names who attested, not how many did", () => {
-    render(<SkillCard skill={makeSkill({
+describe("a browse row feeds the badge its attestation", () => {
+  it("so a row names who attested, not how many did", () => {
+    const h = row(makeSkill({
       tier: "reviewed",
       reviewed: {
         date: "2026-08-30", expires: "2027-08-30",
         reviewers: ["AI Lab for Cities at Harvard"], notes: "",
       },
-    })} />);
-    expect(screen.getByText(/AI Lab for Cities at Harvard/))
+    }));
+    expect(within(h).getByText(/AI Lab for Cities at Harvard/))
       .toBeInTheDocument();
   });
 });
@@ -209,28 +217,28 @@ describe("LabBadge", () => {
 describe("the Lab badge stands at both tiers", () => {
   const lab = { namespace: "civic-skills" };
 
-  it("appears on a Community card, where nothing else discloses it", () => {
-    render(<SkillCard skill={makeSkill({ ...lab, tier: "community" })} />);
-    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+  it("appears on a Community row, where nothing else discloses it", () => {
+    const h = row(makeSkill({ ...lab, tier: "community" }));
+    expect(within(h).getByText("Written by the AI Lab")).toBeInTheDocument();
   });
 
-  it("appears on a Reviewed card, beside a tier badge that names the Lab too", () => {
-    render(<SkillCard skill={makeSkill({
+  it("appears on a Reviewed row, beside a tier badge that names the Lab too", () => {
+    const h = row(makeSkill({
       ...lab, tier: "reviewed",
       reviewed: {
         date: "2026-08-30", expires: "2027-08-30",
         reviewers: ["AI Lab for Cities at Harvard"], notes: "",
       },
-    })} />);
+    }));
     // Two chips, two different facts: who wrote it, and who read it.
-    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
-    expect(screen.getByText(/AI Lab for Cities at Harvard/))
+    expect(within(h).getByText("Written by the AI Lab")).toBeInTheDocument();
+    expect(within(h).getByText(/AI Lab for Cities at Harvard/))
       .toBeInTheDocument();
   });
 
-  it("stays off a card nobody at the Lab wrote", () => {
-    render(<SkillCard skill={makeSkill({ namespace: "cityofx" })} />);
-    expect(screen.queryByText(/Written by the AI Lab/)).not.toBeInTheDocument();
+  it("stays off a row nobody at the Lab wrote", () => {
+    const h = row(makeSkill({ namespace: "cityofx" }));
+    expect(within(h).queryByText(/Written by the AI Lab/)).not.toBeInTheDocument();
   });
 });
 
@@ -239,14 +247,15 @@ describe("the Lab badge stands at both tiers", () => {
  *  #52 dropped the Community chip from Lab listings as redundant. It is not a
  *  provenance label: it is the only card-level statement that nobody has read
  *  the skill, and a Lab skill clears the same automated checks as any other and
- *  no more. Both chips show, and the note stays (ruling 3). */
+ *  no more. Both chips show, and the note stays (ruling 3) — on the browse
+ *  page's closed row as visually hidden text (ADR 0008 decision 2). */
 describe("the Community chip on a Lab-authored listing", () => {
   it("shows beside the Lab chip", () => {
-    render(<SkillCard skill={makeSkill({
+    const h = row(makeSkill({
       namespace: "civic-skills", tier: "community",
-    })} />);
-    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
-    expect(screen.getByText("automated checks only")).toBeInTheDocument();
+    }));
+    expect(within(h).getByText("Written by the AI Lab")).toBeInTheDocument();
+    expect(within(h).getByText(/automated checks only/)).toBeInTheDocument();
   });
 
   it("keeps its note, which is why the chip works", () => {
@@ -255,21 +264,21 @@ describe("the Community chip on a Lab-authored listing", () => {
   });
 
   it("is unchanged on everybody else's Community listing", () => {
-    render(<SkillCard skill={makeSkill({ namespace: "cityofx", tier: "community" })} />);
-    expect(screen.getByText("automated checks only")).toBeInTheDocument();
-    expect(screen.queryByText(/Written by the AI Lab/)).not.toBeInTheDocument();
+    const h = row(makeSkill({ namespace: "cityofx", tier: "community" }));
+    expect(within(h).getByText(/automated checks only/)).toBeInTheDocument();
+    expect(within(h).queryByText(/Written by the AI Lab/)).not.toBeInTheDocument();
   });
 
   it("leaves a Lab skill that reached Reviewed alone", () => {
-    render(<SkillCard skill={makeSkill({
+    const h = row(makeSkill({
       namespace: "civic-skills", tier: "reviewed",
       reviewed: {
         date: "2026-08-30", expires: "2027-08-30",
         reviewers: ["AI Lab for Cities at Harvard"], notes: "",
       },
-    })} />);
-    expect(screen.getByText(/AI Lab for Cities at Harvard/))
+    }));
+    expect(within(h).getByText(/AI Lab for Cities at Harvard/))
       .toBeInTheDocument();
-    expect(screen.getByText("Written by the AI Lab")).toBeInTheDocument();
+    expect(within(h).getByText("Written by the AI Lab")).toBeInTheDocument();
   });
 });

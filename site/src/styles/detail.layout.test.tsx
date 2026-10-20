@@ -195,11 +195,8 @@ describe("what is left of the detail rules in app.css", () => {
     for (const sel of [".fit", ".fit dd", ".tree", ".facts dd", ".facts__note", ".facts dl"]) {
       for (const b of bodies(sel)) expect(b, sel).not.toMatch(/(^|[;\s])margin[\w-]*\s*:/);
     }
-    for (const sel of [".fit__item", ".card__badges"]) {
-      // .card__badges is still the cards' (SkillCard, PluginCard); .fit__item
-      // keeps its padding and its edge, and loses the grid.
-      if (sel === ".fit__item") for (const b of bodies(sel)) expect(b).not.toMatch(LAYS_OUT);
-    }
+    // .fit__item keeps its padding and its edge, and loses the grid.
+    for (const b of bodies(".fit__item")) expect(b).not.toMatch(LAYS_OUT);
   });
 
   it("no longer lays out the install box: the Stacks do", () => {

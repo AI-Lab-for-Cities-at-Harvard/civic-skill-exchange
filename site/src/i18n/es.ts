@@ -1013,10 +1013,6 @@ export const strings: Strings = {
     },
   },
 
-  card: {
-    cta: "Ver esta habilidad",
-  },
-
   facets: {
     label: "Filtrar habilidades",
 
@@ -1894,7 +1890,7 @@ export const strings: Strings = {
     empty:
       "Ningún plugin coincide con estos filtros. [Quite los filtros](clear) " +
       "para ver todos los plugins.",
-    card: {
+    row: {
       cta: "Ver este plugin",
       skills: (n: number) => `${n} habilidad${n === 1 ? "" : "es"}`,
       servers: (n: number) => `${n} servidor${n === 1 ? "" : "es"} MCP`,
