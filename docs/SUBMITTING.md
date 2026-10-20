@@ -206,6 +206,28 @@ asks for it. After the pull request merges, open an issue from the
 [review request template](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/new?template=review-request.yml).
 The page links it too.
 
+### If you leave the page and come back
+
+The page remembers your answers **in this browser**, as you type. Going to GitHub
+to fork and coming back, closing the tab, or reloading all leave them where they
+were, and the page says "We restored the answers you had typed here" when it
+has put them back. Nothing is sent anywhere to do this, and no password or
+token is stored: only what you typed into the form, which includes the address
+of your fork once you have pasted it.
+
+What a browser cannot keep is the files you gave it. The page names them when
+it restores your answers, and asks for them again: choose the `.zip` again, or
+read the repository again, and your answers stay as they were. A pasted
+`SKILL.md` is kept (it is text you typed), unless it is very long. A plugin is
+the same: drop its folder in again and its answers are filled back in. Server
+addresses you pasted for a plugin are not kept, because an address can carry a
+key in it; the page says so.
+
+To **start over**, press **Start over** near the top of the form. It empties the
+form and deletes what was saved. It is also the way to clear your answers from
+a shared computer. If the browser does not let the page save (a private window
+or blocked site data), the page tells you, and the form works as it always did.
+
 ### If it goes wrong
 
 | What you see | What it means |

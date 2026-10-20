@@ -752,6 +752,32 @@ export const en = {
         "yours is not listed yet, [submit it as a new skill](new) first.",
     },
 
+    /** Answers kept in this browser through the trip to GitHub and back (#294). */
+    draft: {
+      saved:
+        "Your answers are saved in this browser as you type, so you can go to " +
+        "GitHub and come back. The Start over button clears them.",
+      restored:
+        "We restored the answers you had typed here. They were kept in this " +
+        "browser; nothing was sent anywhere.",
+      notKept: "These could not be kept, so please add them again:",
+      zipNotKept: (name: string) =>
+        `The file you uploaded, ${name}. Choose it again.`,
+      repoNotKept: (name: string) =>
+        `The files read from ${name}. Read the repository again.`,
+      pasteNotKept:
+        "The SKILL.md you pasted was too long to keep. Paste it again.",
+      addressesNotKept:
+        "The server addresses you pasted. Paste them again.",
+      pluginPending: (name: string) =>
+        `You have a saved draft for the plugin ${name}. Drop that folder in ` +
+        "again and your answers will be filled in.",
+      unsaved:
+        "This browser is not letting the page save your answers, so they will " +
+        "be lost if you leave.",
+      startOver: "Start over",
+    },
+
     /** A plugin dropped or imported instead of a skill (#213). The page switches
      *  by itself on a root plugin.json; the plugin is asked about once and each
      *  skill only where its SKILL.md is silent. */

@@ -673,6 +673,31 @@ export const strings: Strings = {
         "habilidad nueva](new).",
     },
 
+    draft: {
+      saved:
+        "Sus respuestas se guardan en este navegador mientras escribe, para " +
+        "que pueda ir a GitHub y volver. El botón Empezar de nuevo las borra.",
+      restored:
+        "Restauramos las respuestas que había escrito aquí. Estaban guardadas " +
+        "en este navegador; no se envió nada a ningún lado.",
+      notKept: "Esto no se pudo conservar, así que vuelva a agregarlo:",
+      zipNotKept: (name: string) =>
+        `El archivo que subió, ${name}. Elíjalo de nuevo.`,
+      repoNotKept: (name: string) =>
+        `Los archivos leídos de ${name}. Lea el repositorio de nuevo.`,
+      pasteNotKept:
+        "El SKILL.md que pegó era demasiado largo para conservarlo. Péguelo de nuevo.",
+      addressesNotKept:
+        "Las direcciones de servidores que pegó. Péguelas de nuevo.",
+      pluginPending: (name: string) =>
+        `Tiene un borrador guardado del plugin ${name}. Suelte esa carpeta ` +
+        "otra vez y sus respuestas se completarán.",
+      unsaved:
+        "Este navegador no deja que la página guarde sus respuestas, así que " +
+        "se perderán si sale de ella.",
+      startOver: "Empezar de nuevo",
+    },
+
     plugin: {
       heading: "Sobre el plugin",
       summary: (name: string, skills: number, servers: number) =>

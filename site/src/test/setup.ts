@@ -18,3 +18,9 @@ import { afterEach } from "vitest";
 // Vitest does not unmount between tests on its own, and a left-over tree makes
 // the next getByRole ambiguous in ways that are miserable to debug.
 afterEach(cleanup);
+
+// Drafts are kept in localStorage (#294), which jsdom shares across the tests of
+// a file. A draft one test saved must not be restored into the next.
+afterEach(() => {
+  try { window.localStorage.clear(); } catch { /* a test that blocks storage */ }
+});

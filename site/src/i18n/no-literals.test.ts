@@ -41,6 +41,7 @@ const FILES = [
   "components/Bands.tsx",
   "components/Beta.tsx",
   "components/DocLink.tsx",
+  "components/DraftBar.tsx",
   "components/DownloadBox.tsx",
   "components/Facets.tsx",
   "components/Field.tsx",
