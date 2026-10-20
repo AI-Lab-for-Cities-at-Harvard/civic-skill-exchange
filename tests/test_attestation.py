@@ -188,12 +188,14 @@ REQUIRED_KEYS = {"sha", "reviewers", "reviewed", "expires", "notes"}
 
 
 def _listing(entry: dict) -> tuple[str, str, str]:
-    """(tree, id, the file every listing of that kind has). A plugin is
-    attested with `plugin:` and pinned to its directory under plugins/
-    (ADR 0005, ruling 4 on #211); everything else is a skill."""
+    """(tree, id, the file every listing of that kind has, relative to the
+    listing). A plugin is attested with `plugin:` and pinned to its directory
+    under plugins/ (ADR 0005, ruling 4 on #211); everything else is a single
+    skill, whose SKILL.md is one level down, in skills/{name}/ (ADR 0006)."""
     if "plugin" in entry:
         return "plugins", str(entry["plugin"]), "plugin.json"
-    return "skills", str(entry["skill"]), "SKILL.md"
+    skill = str(entry["skill"])
+    return "skills", skill, f"skills/{skill.split('/')[-1]}/SKILL.md"
 
 
 def _id(entry: dict) -> str:
