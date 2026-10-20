@@ -119,10 +119,12 @@ describe("the phone's filters (#328)", () => {
       .filter((r) => r[1]!.split(/\s*,\s*/).map((x) => x.trim()).includes(selector))
       .map((r) => r[2]!);
 
-  it("hides the button by default and shows it below 1024px", () => {
-    expect(bodies(".filters__toggle").join(";")).toMatch(/display\s*:\s*none/);
-    expect(inMedia(/max-width\s*:\s*1023px/, ".filters__toggle").join(";"))
-      .toMatch(/display\s*:\s*inline-flex/);
+  it("hides the button from 1024px up, and only there", () => {
+    expect(inMedia(/min-width\s*:\s*1024px/, ".filters__toggle").join(";"))
+      .toMatch(/display\s*:\s*none/);
+    const outside = bodies(".filters__toggle").length - inMedia(/min-width\s*:\s*1024px/, ".filters__toggle").length;
+    expect(outside).toBe(1);
+    expect(APP.replace(/@media[^{]*\{[^{}]*\{[^{}]*\}\s*\}/g, "")).not.toMatch(/\.filters__toggle[^{]*\{[^}]*display\s*:\s*none/);
   });
 
   it("is at least 44px tall", () => {

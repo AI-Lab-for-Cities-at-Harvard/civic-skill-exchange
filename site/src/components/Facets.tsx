@@ -1,3 +1,4 @@
+import { useState, type ReactNode } from "react";
 import { categoryCounts, facetCounts, scopeCounts } from "../lib/filter";
 import { Stack } from "./Layout";
 import { useStrings } from "../i18n/strings";
@@ -13,6 +14,32 @@ interface FacetProps {
   filters: Filters;
   onChange: (key: keyof Filters, value: string | null) => void;
   note?: string;
+}
+
+/** The facets and the button that opens them (#328, ADR 0008 decision 6).
+ *
+ *  Below 1024px the facets start closed behind a Filters button that says how
+ *  many are set (the search is not a facet and does not count); at 1024px and
+ *  wider the button is hidden and the facets always show (app.css, layout.css).
+ *  The panel is `hidden` when closed, which the Stack honours. Focus stays on
+ *  the button as it opens, and choosing a facet does not close it: the result
+ *  count's live region says what changed.
+ */
+export function FacetPanel({ filters, children }: { filters: Filters; children: ReactNode }) {
+  const s = useStrings();
+  const [open, setOpen] = useState(false);
+  const set = Object.entries(filters).filter(([k, v]) => k !== "q" && v !== null).length;
+  return (
+    <>
+      <button type="button" className="btn filters__toggle"
+        aria-expanded={open} aria-controls="facets" onClick={() => setOpen(!open)}>
+        {s.facets.toggle(set)}
+      </button>
+      <Stack id="facets" gap="5" className="filters__facets" hidden={!open}>
+        {children}
+      </Stack>
+    </>
+  );
 }
 
 /** Counts come from the whole catalog, not the filtered set, so a facet never
