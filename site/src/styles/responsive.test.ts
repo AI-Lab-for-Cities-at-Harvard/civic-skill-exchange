@@ -12,6 +12,7 @@ import { join } from "node:path";
 
 const ROOT = join(__dirname, "..", "..");
 const APP = readFileSync(join(__dirname, "app.css"), "utf8");
+const LAYOUT = readFileSync(join(__dirname, "layout.css"), "utf8");
 const TOKENS = readFileSync(join(__dirname, "tokens.css"), "utf8");
 const HTML = readFileSync(join(ROOT, "index.html"), "utf8");
 
@@ -70,9 +71,11 @@ describe("the page adapts to the screen it is on", () => {
   });
 
   it("wraps rows rather than letting them overflow", () => {
-    for (const cls of [".modes", ".submit__row", ".cta-row", ".card__badges"]) {
+    for (const cls of [".cta-row", ".card__badges"]) {
       const rule = new RegExp(`\\${cls}\\s*\\{[^}]*flex-wrap:\\s*wrap`);
       expect(APP, `${cls} should wrap`).toMatch(rule);
     }
+    // .modes and .submit__row are <Cluster>s since #309: the primitive wraps.
+    expect(LAYOUT).toMatch(/\.l-cluster\s*\{[^}]*flex-wrap:\s*wrap/);
   });
 });
