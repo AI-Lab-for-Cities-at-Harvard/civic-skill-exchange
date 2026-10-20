@@ -80,6 +80,18 @@ describe("the guide page", () => {
     expect(container.querySelector("#codex")?.textContent).not.toMatch(/not single skills yet/);
   });
 
+  /* #289: a skill's page gives Codex's exact line too, not only a plugin's. */
+  it("says every listing's page shows its exact Codex line", async () => {
+    const { container, unmount } = render(<Guide />);
+    const codex = container.querySelector("#marketplace-codex")?.textContent ?? "";
+    expect(codex).toContain("Each listing's page shows its exact line");
+    expect(codex).not.toContain("Each plugin's page");
+    unmount();
+    await setLocale("es");
+    const es = render(<Guide />).container.querySelector("#marketplace-codex")?.textContent ?? "";
+    expect(es).toContain("La página de cada publicación muestra su línea exacta");
+  });
+
   it("sends a Codex reader of the install section to the marketplace", () => {
     const { container } = render(<Guide />);
     expect(container.querySelector('#codex a[href$="/marketplace-codex"]')).not.toBeNull();

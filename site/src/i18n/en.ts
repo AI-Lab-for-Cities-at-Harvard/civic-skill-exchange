@@ -1211,7 +1211,7 @@ export const en = {
           heading: "In Codex",
           notes: [
             "Add the exchange, then install any skill or plugin by name, the " +
-              "same name as in Claude Code. Each plugin's page shows its exact " +
+              "same name as in Claude Code. Each listing's page shows its exact " +
               "line. As in Claude Code, `--sparse` downloads only the listings.",
             "Installed a skill from here before it moved into the plugin " +
               "layout? `codex plugin marketplace upgrade` brings it up to date, " +
@@ -1557,9 +1557,9 @@ export const en = {
         "for. *Rejection.*",
 
         "**Would we run these scripts?** Every line of every file under " +
-        "`scripts/` gets read, and of `.mcp.json` where a skill declares MCP " +
-        "servers. If we would not run it on our own machine, it does not " +
-        "pass. *Rejection.*",
+        "`scripts/` gets read, and of a plugin's `mcp.json`, which declares " +
+        "the servers it starts. If we would not run it on our own machine, it " +
+        "does not pass. *Rejection.*",
 
         "**Does it ask for more tools than it needs?** `allowed-tools` grants " +
         "access without prompting you and is not gated by trusting the " +
@@ -1686,8 +1686,8 @@ export const en = {
     structure: {
       heading: "What is in it",
       caveat:
-        "Files under `scripts/`, and `.mcp.json` where a skill declares MCP " +
-        "servers, are **executed by the agent**, not read by the model. Read " +
+        "Files under `scripts/` are **executed by the agent**, not read by " +
+        "the model. Read " +
         "them before you run this skill — the descriptions above tell you " +
         "what it claims to do, and only the code tells you what it does.",
       /** The tag on a file the agent runs rather than reads. */
@@ -1784,12 +1784,14 @@ export const en = {
       "A zip of this folder. Upload it wherever your agent tool takes skills " +
       "— no git, no command line.",
 
-    /** The registry is a Claude Code plugin marketplace (#73), which is the
-     *  shortest path in and needs no knowledge of where a tool keeps its
-     *  skills. The commands themselves are not prose. */
+    /** The registry is a Claude Code and a Codex plugin marketplace (#73,
+     *  #289), which is the shortest path in and needs no knowledge of where a
+     *  tool keeps its skills. The commands themselves are not prose. */
     commands: {
-      marketplace: "Add the marketplace, once",
-      install: "Install it",
+      claudeMarketplace: "Claude Code: add the marketplace, once",
+      claudeInstall: "Claude Code: install it",
+      codexMarketplace: "Codex: add the marketplace, once",
+      codexInstall: "Codex: install it",
       degit: "Just this skill",
       clone: "The whole registry",
     },
@@ -1802,10 +1804,11 @@ export const en = {
       "Step by step: [Claude](claude) · [ChatGPT](chatgpt) · " +
       "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "In Claude Code the two `/plugin` lines are all you need — [what these " +
-      "do](claudeCode). Skills here follow the open [Agent Skills](spec) " +
-      "format, so they also work in ChatGPT, Codex, Gemini, Copilot, Cursor " +
-      "and others — those take a skill at a time, so use the download above.",
+      "In Claude Code and Codex, the two marketplace lines are all you need " +
+      "— [what these do](claudeCode). Skills here follow the open " +
+      "[Agent Skills](spec) format, so they also work in ChatGPT, Gemini, " +
+      "Copilot, Cursor and others — those take a skill at a time, so use the " +
+      "download above.",
     pathsNote:
       "Install paths differ across agent tools — `.claude/skills/`, " +
       "`.agents/skills/`, and others. Check your tool's docs for where it looks.",

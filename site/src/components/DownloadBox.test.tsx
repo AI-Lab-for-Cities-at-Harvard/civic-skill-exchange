@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { DownloadBox } from "./DownloadBox";
 import { makeSkill } from "../test/fixtures";
+import { installCommands } from "../lib/install";
 import type { SkillDetail } from "../lib/types";
 
 function detail(over: Partial<SkillDetail> = {}): SkillDetail {
@@ -140,8 +141,8 @@ describe("DownloadBox — installing as a plugin", () => {
 
   it("puts the plugin path first, because it is the one that needs no tooling knowledge", () => {
     render(<DownloadBox skill={detail({ namespace: "cityofx", name: "permit-status" })} />);
-    const labels = screen.getAllByText(/Just this skill|The whole registry|Add the marketplace|Install it/);
-    expect(labels[0]).toHaveTextContent(/Add the marketplace/);
+    const labels = screen.getAllByText(/Just this skill|The whole registry|add the marketplace|install it/i);
+    expect(labels[0]).toHaveTextContent("Claude Code: add the marketplace, once");
   });
 });
 
@@ -170,5 +171,36 @@ describe("DownloadBox — the way into the guide", () => {
     expect(screen.getByText(
       "/plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange " +
       "--sparse .claude-plugin skills plugins")).toBeInTheDocument();
+  });
+});
+
+
+/* #289: since the layout move, a single skill installs from Codex's
+   marketplace too, so its page gives Codex's lines, as a plugin's page does. */
+describe("DownloadBox — both clients' marketplaces", () => {
+  it("gives Claude Code's and Codex's lines, from the shared helper", () => {
+    const skill = detail();
+    render(<DownloadBox skill={skill} />);
+    for (const line of Object.values(installCommands(skill.namespace, skill.name))) {
+      expect(screen.getByText(line)).toBeInTheDocument();
+    }
+  });
+
+  it("labels each line with the client it is for", () => {
+    render(<DownloadBox skill={detail()} />);
+    expect(screen.getByText("Codex: install it")).toBeInTheDocument();
+    expect(screen.getByText("Claude Code: install it")).toBeInTheDocument();
+  });
+});
+
+/* #289: the note under the commands said only Claude Code used the /plugin
+   lines and Codex took "a skill at a time". Since the layout move Codex
+   installs from its marketplace too; the download is for everything else. */
+describe("DownloadBox — the note under the commands", () => {
+  it("says both clients install from the lines above, and the rest use the download", () => {
+    render(<DownloadBox skill={detail()} />);
+    const box = screen.getByRole("region", { name: /use this skill/i });
+    expect(box.textContent).toMatch(/In Claude Code and Codex, the two marketplace lines are all you need/);
+    expect(box.textContent).not.toMatch(/Codex, Gemini, Copilot/);
   });
 });

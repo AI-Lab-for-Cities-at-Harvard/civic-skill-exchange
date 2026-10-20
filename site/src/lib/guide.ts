@@ -4,9 +4,7 @@
  *  component, so the page file exports nothing but the page. */
 
 import type { Strings } from "../i18n/strings";
-
-const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
-const MARKETPLACE = "civic-skill-exchange";
+import { CLAUDE_MARKETPLACE, CODEX_MARKETPLACE, MARKETPLACE, REPO } from "./install";
 export const SECURITY = `https://github.com/${REPO}/blob/main/docs/SECURITY.md`;
 
 /** When every step on this page was last checked against the product it
@@ -50,15 +48,15 @@ export const glossaryAnchor = (word: string) =>
  *  live here rather than in the strings. */
 export const COMMANDS: Partial<Record<`${Task}.${Product}`, string[]>> = {
   "install.claudeCode": [
-    `/plugin marketplace add ${REPO} --sparse .claude-plugin skills plugins`,
+    CLAUDE_MARKETPLACE,
     `/plugin install {namespace}-{skill-name}@${MARKETPLACE}`,
   ],
   "marketplace.claudeCode": [
-    `/plugin marketplace add ${REPO} --sparse .claude-plugin skills plugins`,
+    CLAUDE_MARKETPLACE,
     `/plugin install {namespace}-{name}@${MARKETPLACE}`,
   ],
   "marketplace.codex": [
-    `codex plugin marketplace add ${REPO} --sparse .agents --sparse skills --sparse plugins`,
+    CODEX_MARKETPLACE,
     `codex plugin add {namespace}-{name}@${MARKETPLACE}`,
   ],
 };

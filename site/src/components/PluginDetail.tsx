@@ -8,10 +8,8 @@ import { useStrings } from "../i18n/strings";
 import { ModelFacts } from "./ModelFacts";
 import { label } from "../lib/labels";
 import { bytes } from "../lib/format";
+import { installCommands } from "../lib/install";
 import type { PluginDetail as Detail } from "../lib/types";
-
-const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
-const MARKETPLACE = "civic-skill-exchange";
 
 /** A plugin's page (ADR 0005). SkillDetail's shape, with the two things a
  *  plugin adds made first-class: the skills it installs, and the servers it
@@ -243,15 +241,12 @@ function PluginDownload({ detail }: { detail: Detail }) {
   const p = s.plugins.download;
   const [copied, setCopied] = useState<string | null>(null);
 
+  const lines = installCommands(detail.namespace, detail.name);
   const commands = [
-    { id: "claude-marketplace", label: p.commands.claudeMarketplace,
-      value: `/plugin marketplace add ${REPO} --sparse .claude-plugin skills plugins` },
-    { id: "claude-install", label: p.commands.claudeInstall,
-      value: `/plugin install ${detail.namespace}-${detail.name}@${MARKETPLACE}` },
-    { id: "codex-marketplace", label: p.commands.codexMarketplace,
-      value: `codex plugin marketplace add ${REPO} --sparse .agents --sparse skills --sparse plugins` },
-    { id: "codex-install", label: p.commands.codexInstall,
-      value: `codex plugin add ${detail.namespace}-${detail.name}@${MARKETPLACE}` },
+    { id: "claude-marketplace", label: p.commands.claudeMarketplace, value: lines.claudeMarketplace },
+    { id: "claude-install", label: p.commands.claudeInstall, value: lines.claudeInstall },
+    { id: "codex-marketplace", label: p.commands.codexMarketplace, value: lines.codexMarketplace },
+    { id: "codex-install", label: p.commands.codexInstall, value: lines.codexInstall },
   ];
 
   const copy = async (id: string, value: string) => {
