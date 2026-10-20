@@ -72,6 +72,16 @@ describe("the rows", () => {
   });
 });
 
+describe("the plugins side's introduction", () => {
+  // Design check: at body size and the column's full width it read as the
+  // page's subject and ran past 110 characters a line. It is a caption.
+  it("is set as a caption, at a readable measure", () => {
+    const body = bodies(".browse__intro").join(";");
+    expect(body).toMatch(/font-size\s*:\s*var\(--t-sm\)/);
+    expect(body).toMatch(/max-width\s*:\s*66ch/);
+  });
+});
+
 describe("every new control is at least 44px", () => {
   it.each([".row__toggle", ".toggle a", ".pager a"])("%s", (sel) => {
     expect(bodies(sel).join(";")).toMatch(/min-height\s*:\s*2\.75rem/);
