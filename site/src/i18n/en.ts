@@ -639,8 +639,10 @@ export const en = {
 
       pullRequestTitle: "Open the pull request",
       pullRequestBody:
-        "This button compares your copy with the registry and lets you open the " +
-        "pull request. The checks run on it, and a maintainer takes it from there.",
+        "This button compares your copy with the registry and opens the pull " +
+        "request form with a title and description already filled in. Check " +
+        "them, then choose \u201cCreate pull request\u201d. The checks run on it, " +
+        "and a maintainer takes it from there.",
       pullRequestCta: "Open the pull request",
       pullRequestMore: "What happens to a pull request?",
 

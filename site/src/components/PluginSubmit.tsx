@@ -34,6 +34,7 @@ import { isGitHubLogin } from "../lib/login";
 import { Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
+import { AfterHandoff } from "./AfterHandoff";
 
 const CATEGORIES = Object.keys(en.vocabulary.category);
 
@@ -521,6 +522,7 @@ export function PluginSubmit(
             findings: [...check.structural, ...check.manifest],
           }}
         />
+        <AfterHandoff repo={repo} kind="plugin" reserved={reserved} />
 
         <details className="disclosure">
           <summary className="disclosure__summary">{t.send.commandLine}</summary>

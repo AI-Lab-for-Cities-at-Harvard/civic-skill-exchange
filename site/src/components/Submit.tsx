@@ -19,6 +19,7 @@ import { useStrings } from "../i18n/strings";
 import { Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
+import { AfterHandoff } from "./AfterHandoff";
 import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
@@ -727,7 +728,8 @@ export function Submit(
                 onDownload={download} canDownload={ready && !blocked}
                 review={{
                   kind: "skill", namespace: draft.author, name: draft.name,
-                  update: skills.some((sk) => sk.id === `${draft.author.trim().toLowerCase()}/${draft.name.trim()}`),
+                  update: skills.some((sk) => sk.namespace === draft.author.trim().toLowerCase()
+                    && sk.name === draft.name.trim()),
                   findings,
                 }}
               />
@@ -760,6 +762,8 @@ export function Submit(
             </p>
             </>
           )}
+
+          <AfterHandoff repo={repo} kind="skill" reserved={reserved} singleFile={!multiFile} />
 
           {mailto ? (
             <p className="submit__note">

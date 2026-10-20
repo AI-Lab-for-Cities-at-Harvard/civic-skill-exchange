@@ -123,7 +123,8 @@ and the plugin form alike:
   owns that repository is not necessarily the person submitting it.
 
 **If your skill is one file**, the page opens GitHub's editor with the whole file
-already in it. Commit, and GitHub offers the pull request. You are done.
+already in it. Commit, and GitHub offers the pull request. GitHub's editor cannot
+carry a title, so give the pull request one yourself: **Add skill** and the name.
 
 **If it is more than one file**, four steps:
 
@@ -154,7 +155,17 @@ already in it. Commit, and GitHub offers the pull request. You are done.
    ![The commit box at the foot of the upload page, with Commit directly to the main branch selected. Leave it that way: the fork is your own copy.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-03-commit-box.png)
 
 4. **Open the pull request.** The button on the page compares your fork's `main`
-   with the registry and lets you open it.
+   with the registry and opens GitHub's pull request form with a **title and
+   description already filled in**: `Add skill {username}/{skill-name}` (or
+   `Update skill …` when the skill is already listed, and `plugin` for a plugin),
+   and a description naming the listing, your namespace and what the page
+   checked in your browser — the registry's own field rules, the same module CI
+   runs — including any findings still outstanding. They are in English whatever
+   language the page is in, because the maintainers who read them work in
+   English. Read them, change anything that is wrong, and choose **Create pull
+   request**. A very long list of findings is cut at a whole line so the link
+   stays within what GitHub accepts; the checks on the pull request list
+   everything.
 
 
 
@@ -165,8 +176,10 @@ a pull request* rather than committing to `main`.
 
 ### Step 5 — The checks run, and report back
 
-A comment appears on your pull request. It names anything blocking, anything
-flagged for a human, and which step failed if one did.
+The checks start as soon as the pull request is open, and a comment appears on it.
+It names anything blocking, anything flagged for a human, and which step failed
+if one did. Then a maintainer reads it. The page says the same thing after the
+hand-off.
 
 - **Blocking** stops the merge. Do not rewrite code to dodge a signature —
   explain what you are doing in a comment. There are legitimate reasons to need
@@ -176,6 +189,22 @@ flagged for a human, and which step failed if one did.
 
 What is checked, and what is deliberately not, is in
 [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+
+**Who is asked to review.** It depends on where the pull request lands, and
+comes from [`.github/CODEOWNERS`](../.github/CODEOWNERS):
+
+| Your pull request touches | Who GitHub asks | What you do |
+|---|---|---|
+| `skills/{your-username}/` only | **Nobody.** The folder has no owner, so no reviewer is requested. The repository still needs one approving review before anything merges, and it has to come from a maintainer. | Nothing is required. If it has waited a while, comment on the pull request. |
+| `plugins/` (any plugin, even in your own namespace) | **The maintainers team, automatically.** | Nothing. |
+| `skills/civic-skills/` (the Lab's own namespace) | **The maintainers team, automatically.** | Nothing. |
+
+**The Reviewed tier is a separate request.** A merged skill lists in the
+Community tier. Reviewed means the Lab read every line of one commit
+([TIERS.md](TIERS.md), [REVIEW.md](REVIEW.md)), and nothing on the pull request
+asks for it. After the pull request merges, open an issue from the
+[review request template](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/new?template=review-request.yml).
+The page links it too.
 
 ### If it goes wrong
 

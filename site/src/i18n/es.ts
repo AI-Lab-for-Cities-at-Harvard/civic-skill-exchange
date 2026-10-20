@@ -567,9 +567,10 @@ export const strings: Strings = {
 
       pullRequestTitle: "Abra el pull request",
       pullRequestBody:
-        "Este botón compara su copia con el registro y le deja abrir el pull " +
-        "request. Las verificaciones se ejecutan sobre él, y desde ahí sigue " +
-        "un mantenedor.",
+        "Este botón compara su copia con el registro y abre el formulario del " +
+        "pull request con el título y la descripción ya escritos. Revíselos y " +
+        "elija “Create pull request”. Las verificaciones se ejecutan sobre él, " +
+        "y desde ahí sigue un mantenedor.",
       pullRequestCta: "Abrir el pull request",
       pullRequestMore: "¿Qué pasa con un pull request?",
 

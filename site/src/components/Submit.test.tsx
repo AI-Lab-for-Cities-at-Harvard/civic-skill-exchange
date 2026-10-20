@@ -1114,6 +1114,11 @@ describe("Submit — a username GitHub would not issue", () => {
 
 /** #300: the hand-off ends by saying what happens next, on both routes. */
 describe("Submit — after the hand-off", () => {
+  const MULTI = () => file("skill.zip", {
+    "permit-status-explainer/SKILL.md": SKILL_MD,
+    "permit-status-explainer/scripts/reading_level.py": "print(1)\n",
+  });
+
   it("says what happens next on the one-file route", () => {
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     expect(screen.getByTestId("what-next")).toHaveTextContent(/Add skill/);
@@ -1144,8 +1149,11 @@ describe("Submit — after the hand-off", () => {
     expect(q.get("title")).toBe("Update skill cityofx/permit-status-explainer");
   });
 
-  it("step 4 says the form comes filled in", () => {
+  it("step 4 says the form comes filled in", async () => {
+    const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
     expect(screen.getByText(/title and description already filled in/i)).toBeInTheDocument();
   });
 });
