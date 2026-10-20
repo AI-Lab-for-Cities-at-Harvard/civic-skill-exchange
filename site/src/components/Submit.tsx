@@ -25,6 +25,7 @@ import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
 import { waits } from "../lib/plain";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
+import { Stack } from "./Layout";
 import { AfterHandoff } from "./AfterHandoff";
 import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
@@ -547,8 +548,8 @@ export function Submit(
             {/* A zip dropped here is read as if it had been chosen. A folder
                 cannot be: a drop hands over a directory entry, not bytes, and
                 the zip reader is the only one the page has. */}
-            <div
-              className="dropzone" data-testid="dropzone"
+            <Stack
+              gap="2" className="dropzone" data-testid="dropzone"
               data-over={dragging ? "true" : undefined}
               onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
               onDragLeave={() => setDragging(false)}
@@ -558,13 +559,13 @@ export function Submit(
                 onFile(e.dataTransfer?.files?.[0]);
               }}
             >
-              <p className="dropzone__hint">{t.intake.dropHint}</p>
+              <p>{t.intake.dropHint}</p>
               <input
                 key={inputKey}
                 id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
                 onChange={(e) => onFile(e.target.files?.[0])}
               />
-            </div>
+            </Stack>
           </Field>
 
           <Field id="paste" label={t.intake.pasteLabel} findings={[]}>

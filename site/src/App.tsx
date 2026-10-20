@@ -222,7 +222,7 @@ export default function App() {
               </p>
             )}
             {route.page === "browse" && (
-              <p className="topper__cta">
+              <p className="topper__stats">
                 <a className="arrow-link" href="#/submit" data-testid="home-submit">
                   {s.chrome.submitCta} <span aria-hidden="true">→</span>
                 </a>
