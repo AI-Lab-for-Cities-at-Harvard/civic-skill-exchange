@@ -246,3 +246,84 @@ describe("S-15: the plugin's username help is about a plugin", () => {
     expect(field.querySelector(".field__hint")!.textContent).toMatch(/skill/i);
   });
 });
+
+// --------------------------------------------------------------------------- //
+// The narrowed rule, and a status line that agrees with the screen.
+
+describe("S-13: only an empty required box waits", () => {
+  const front = (extra: string) => `---\nname: permit-status-explainer\n${extra}---\nBody.\n`;
+
+  it("shows a problem with a value read from a dropped file at once", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(archiveInput(), zip("s.zip", {
+      "s/SKILL.md": front("description: too short\nlicense: MIT\n"),
+    }));
+    await screen.findByTestId("archive-result");
+    const field = screen.getByLabelText(/^Description/i).closest(".field")!;
+    expect(field).toHaveTextContent(/at least 40 characters/i);
+  });
+
+  it("keeps the empty required boxes of that same file waiting", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(archiveInput(), zip("s.zip", {
+      "s/SKILL.md": front("description: too short\nlicense: MIT\n"),
+    }));
+    await screen.findByTestId("archive-result");
+    expect(screen.queryAllByText(/is required/i, { selector: ".field__finding" })).toHaveLength(0);
+  });
+});
+
+describe("the status line agrees with what is on screen", () => {
+  it("counts questions still to answer, not 'marked above', before a hand-off is tried", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    const status = screen.getByTestId("status");
+    expect(status.textContent).toMatch(/\d+ questions? still to answer/i);
+    expect(status.textContent).not.toMatch(/marked above/i);
+  });
+
+  it("has a button that shows what is missing, and then says 'marked above'", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.click(screen.getByRole("button", { name: /show what.s missing/i }));
+    expect(screen.queryAllByText(/is required/i, { selector: ".field__finding" }).length)
+      .toBeGreaterThan(3);
+    expect(screen.getByTestId("status").textContent).toMatch(/marked above/i);
+    expect(screen.queryByRole("button", { name: /show what.s missing/i })).toBeNull();
+  });
+
+  it("does the same for a multi-file skill, whose steps have no hand-off link", async () => {
+    const user = userEvent.setup();
+    await dropMultiFileSkill(user);
+    await user.click(screen.getByRole("button", { name: /show what.s missing/i }));
+    expect(screen.queryAllByText(/is required/i, { selector: ".field__finding" }).length)
+      .toBeGreaterThan(0);
+  });
+
+  it("is in Spanish too", async () => {
+    localStorage.setItem("locale", "es");
+    await setLocale("es");
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByRole("button", { name: /mostrar lo que falta/i })).toBeInTheDocument();
+  });
+});
+
+describe("the plugin form's waiting errors", () => {
+  const bareSkillPlugin = () => zip("p.zip", {
+    "p/plugin.json": MANIFEST,
+    "p/skills/bare/SKILL.md": "---\nname: bare\ndescription: Refreshes a dashboard with the latest releases.\nlicense: MIT\n---\n",
+  });
+
+  it("offers the same button, and it shows the skill's waiting errors", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(archiveInput(), bareSkillPlugin());
+    const plugin = await screen.findByTestId("plugin-mode");
+    expect(within(plugin).queryAllByText(/is required|needs an answer|to answer/i,
+      { selector: ".field__finding" })).toHaveLength(0);
+    await user.click(within(plugin).getByRole("button", { name: /show what.s missing/i }));
+    expect(plugin.querySelectorAll(".field__finding").length).toBeGreaterThan(0);
+    expect(within(plugin).queryByRole("button", { name: /show what.s missing/i })).toBeNull();
+  });
+});
