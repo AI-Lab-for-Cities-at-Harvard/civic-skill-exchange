@@ -3,7 +3,7 @@
  *  and I-6 in DownloadBox.test.tsx. */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { zipSync, strToU8 } from "fflate";
 import userEvent from "@testing-library/user-event";
 import { Submit } from "./Submit";
@@ -142,5 +142,107 @@ describe("S-13: errors wait for a touch or a hand-off", () => {
     await user.click(screen.getByTestId("handoff"));
     expect(requiredNotes().length).toBeGreaterThan(3);
     expect(errors().length).toBeGreaterThan(3);
+  });
+});
+
+// --------------------------------------------------------------------------- //
+// S-15: the plugin route, beside the skill route.
+
+const MANIFEST = JSON.stringify({
+  name: "housing-dashboards", version: "0.3.4", license: "MIT",
+  description: "Housing dashboards, refreshes and briefs for any U.S. city or county.",
+}, null, 2);
+
+const PLUGIN = () => zip("housing-dashboards.zip", {
+  "housing-dashboards/plugin.json": MANIFEST,
+  "housing-dashboards/skills/housing-brief/SKILL.md":
+    "---\nname: housing-brief\ndescription: Writes a short housing conditions brief.\nlicense: MIT\n---\n\n# Housing brief\n",
+});
+
+const MULTI = () => zip("s.zip", {
+  "s/SKILL.md": SKILL_MD,
+  "s/references/notes.md": "# Notes\n",
+});
+
+const archiveInput = () => screen.getByLabelText(/upload the skill folder/i);
+
+async function dropPlugin(user: ReturnType<typeof userEvent.setup>) {
+  render(<Submit repo={REPO} skills={[]} mode="new" />);
+  await user.upload(archiveInput(), PLUGIN());
+  return screen.findByTestId("plugin-mode");
+}
+
+async function dropMultiFileSkill(user: ReturnType<typeof userEvent.setup>) {
+  render(<Submit repo={REPO} skills={[]} mode="new" />);
+  await user.upload(archiveInput(), MULTI());
+  await screen.findByTestId("multi-file-note");
+}
+
+describe("S-15: the plugin route previews whole files", () => {
+  it("offers the whole of plugin.json as it will be uploaded", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    await user.type(screen.getByLabelText(/Who maintains it/i), "City of X");
+    const preview = screen.getByTestId("file-plugin.json");
+    expect(preview.tagName).toBe("DETAILS");
+    expect(within(preview).getByText(/"name": "housing-dashboards"/)).toBeInTheDocument();
+    expect(preview).toHaveTextContent("City of X");
+  });
+
+  it("offers the whole of each skill's SKILL.md, body and all", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    const preview = screen.getByTestId("file-skills/housing-brief/SKILL.md");
+    expect(preview).toHaveTextContent("# Housing brief");
+    expect(preview).toHaveTextContent("name: housing-brief");
+  });
+});
+
+describe("S-15: one download gate on both routes", () => {
+  it("holds the plugin's folder until there is a username, and says why", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    expect(screen.getByTestId("download-folder")).toBeDisabled();
+    expect(screen.getByTestId("download-why")).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/GitHub username/i), "maria-lopez");
+    expect(screen.getByTestId("download-folder")).toBeEnabled();
+    expect(screen.queryByTestId("download-why")).not.toBeInTheDocument();
+  });
+
+  it("holds the skill's folder the same way, with the same words", async () => {
+    const user = userEvent.setup();
+    await dropMultiFileSkill(user);
+    await user.type(screen.getByLabelText(/^Skill name/i), "permit-status-explainer");
+    expect(screen.getByTestId("download-folder")).toBeDisabled();
+    expect(screen.getByTestId("download-why")).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/GitHub username/i), "maria-lopez");
+    expect(screen.getByTestId("download-folder")).toBeEnabled();
+    expect(screen.queryByTestId("download-why")).not.toBeInTheDocument();
+  });
+
+  it("gives both routes the same note", async () => {
+    const user = userEvent.setup();
+    await dropMultiFileSkill(user);
+    const skillNote = screen.getByTestId("download-why").textContent;
+    cleanup();
+    await dropPlugin(user);
+    expect(screen.getByTestId("download-why").textContent).toBe(skillNote);
+  });
+});
+
+describe("S-15: the plugin's username help is about a plugin", () => {
+  it("does not call it a skill", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    const field = screen.getByLabelText(/GitHub username/i).closest(".field")!;
+    const hint = field.querySelector(".field__hint")!.textContent ?? "";
+    expect(hint).not.toMatch(/skill/i);
+    expect(hint).toMatch(/plugin|listing/i);
+  });
+
+  it("keeps the skill route's help about a skill", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    const field = screen.getByLabelText(/GitHub username/i).closest(".field")!;
+    expect(field.querySelector(".field__hint")!.textContent).toMatch(/skill/i);
   });
 });
