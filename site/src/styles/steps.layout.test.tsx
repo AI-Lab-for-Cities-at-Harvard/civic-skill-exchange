@@ -77,7 +77,9 @@ describe("what is left of .steps in app.css", () => {
   });
 
   it("no longer lays a step out: that is the Stack's", () => {
-    for (const r of stepRules) {
+    // The markers are drawn boxes with their own centring; the list and the
+    // step are the elements the Stack lays out.
+    for (const r of stepRules.filter((x) => !x.selector.includes("::"))) {
       expect(r.body, r.selector).not.toMatch(/(^|[;\s])(display\s*:\s*(grid|flex)|gap\s*:|align-self\s*:)/);
     }
     expect(APP).not.toMatch(/\.steps\s+\.steps__item\s*>\s*\*/);

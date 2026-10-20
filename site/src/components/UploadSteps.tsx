@@ -13,6 +13,7 @@ import {
 } from "../lib/submit";
 import { guideHref } from "../lib/route";
 import { Field } from "./Field";
+import { Cluster, Stack } from "./Layout";
 
 /** A step's GitHub word, in the guide's glossary (#259). In a new tab: leaving
  *  this page in the same one would unmount the form and lose what was typed. */
@@ -66,27 +67,29 @@ export function UploadSteps(
     repo, usable, review ? pullRequestText(review) : undefined);
 
   return (
-    <ol className="steps" data-testid="manual-steps">
-      <li className="steps__item">
+    <Stack as="ol" gap="5" className="steps" data-testid="manual-steps">
+      <Stack as="li" gap="3" className="steps__item">
         <h3 className="steps__title">{t.send.folderTitle}</h3>
         <p className="steps__body">{rich(folderBody)}</p>
-        <button
-          className="btn btn--strong" onClick={onDownload}
-          disabled={!canDownload} data-testid="download-folder"
-        >
-          {t.send.downloadFolder(folderName)}
-        </button>
-      </li>
+        <Cluster>
+          <button
+            className="btn btn--strong" onClick={onDownload}
+            disabled={!canDownload} data-testid="download-folder"
+          >
+            {t.send.downloadFolder(folderName)}
+          </button>
+        </Cluster>
+      </Stack>
 
       {!reserved && (
-        <li className="steps__item">
+        <Stack as="li" gap="3" className="steps__item">
           <h3 className="steps__title">{t.send.forkTitle}</h3>
           <p className="steps__body" data-testid="fork-step-body">{t.send.forkBody}</p>
           <GlossaryLink word="fork" text={t.send.forkMore} />
-          <p className="cta-row">
+          <Cluster>
             <a className="btn" href={forkUrl(repo)} data-testid="step-fork"
               target="_blank" rel="noreferrer">{t.send.forkCta}</a>
-          </p>
+          </Cluster>
           <Field
             id="fork" label={t.send.forkLabel} findings={[]} hint={t.send.forkHint}
           >
@@ -114,10 +117,10 @@ export function UploadSteps(
               </p>
             )}
           </Field>
-        </li>
+        </Stack>
       )}
 
-      <li className="steps__item">
+      <Stack as="li" gap="3" className="steps__item">
         <h3 className="steps__title">{t.send.uploadTitle}</h3>
         {named ? (
           <p className="steps__body" data-testid="upload-step-body">
@@ -132,30 +135,34 @@ export function UploadSteps(
         )}
         <GlossaryLink word="commit" text={t.send.commitMore} />
         {!named ? null : uploadHref ? (
-          <a className="btn" href={uploadHref}
-            data-testid="step-upload" target="_blank" rel="noreferrer">
-            {t.send.uploadCta}
-          </a>
+          <Cluster>
+            <a className="btn" href={uploadHref}
+              data-testid="step-upload" target="_blank" rel="noreferrer">
+              {t.send.uploadCta}
+            </a>
+          </Cluster>
         ) : (
           <p className="submit__note" data-testid="upload-waiting">
             {t.send.uploadWaiting}
           </p>
         )}
-      </li>
+      </Stack>
 
       {!reserved && (
-        <li className="steps__item">
+        <Stack as="li" gap="3" className="steps__item">
           <h3 className="steps__title">{t.send.pullRequestTitle}</h3>
           <p className="steps__body">{t.send.pullRequestBody}</p>
           <GlossaryLink word="pull-request" text={t.send.pullRequestMore} />
           {prHref && (
-            <a className="btn" href={prHref}
-              data-testid="step-pr" target="_blank" rel="noreferrer">
-              {t.send.pullRequestCta}
-            </a>
+            <Cluster>
+              <a className="btn" href={prHref}
+                data-testid="step-pr" target="_blank" rel="noreferrer">
+                {t.send.pullRequestCta}
+              </a>
+            </Cluster>
           )}
-        </li>
+        </Stack>
       )}
-    </ol>
+    </Stack>
   );
 }
