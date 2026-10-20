@@ -35,12 +35,11 @@ a:hover { color: var(--c-spot); }
   max-width: var(--w-wide); margin: 0 auto;
   padding: var(--gap-4) var(--gap-5) var(--space-md);
 }
-.topper__bar {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--gap-5); flex-wrap: wrap;
-  padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--c-border-light);
-}
+/* A <Cluster> (App.tsx): the row, its gap and its wrapping are the primitive's. */
+/* The rule under the bar belongs to the statement it separates the bar from,
+   so a compact header (#309), which has no statement, has no rule and no
+   empty band below the nav. */
+.topper__bar { justify-content: space-between; }
 .topper__mark {
   font-weight: 700; font-size: var(--t-sm);
   letter-spacing: 0.14em; text-transform: uppercase;
@@ -48,11 +47,9 @@ a:hover { color: var(--c-spot); }
 }
 .topper__mark:hover { color: var(--c-text); text-decoration: underline; }
 
-/* The site identity and its release marker travel together, so the marker
-   cannot be mistaken for a nav item or wrap away from the name it qualifies. */
-.topper__identity {
-  display: inline-flex; align-items: center; gap: var(--gap-3);
-}
+/* The site identity and its release marker travel together (a <Cluster>), so
+   the marker cannot be mistaken for a nav item or wrap away from the name it
+   qualifies. */
 
 /* Deliberately not a .badge. The tier badges are filled and carry status about
    a skill; this is an outline on the band it sits in and carries status about
@@ -71,7 +68,6 @@ a:hover { color: var(--c-spot); }
   border-color: var(--c-text); text-decoration: none;
 }
 
-.nav { display: flex; align-items: center; gap: var(--gap-5); flex-wrap: wrap; }
 .nav a {
   font-size: var(--t-sm); text-decoration: none; color: var(--c-text-light);
   padding-bottom: 2px; border-bottom: 2px solid transparent;
@@ -79,7 +75,12 @@ a:hover { color: var(--c-spot); }
 .nav a:hover { color: var(--c-text); border-bottom-color: var(--c-border); }
 .nav a[aria-current="page"] { color: var(--c-text); border-bottom-color: var(--c-spot); }
 
-.topper__statement { padding-top: var(--space-md); max-width: 46rem; }
+.topper__statement {
+  margin-top: var(--space-sm); border-top: 1px solid var(--c-border-light);
+  padding-top: var(--space-md);
+}
+/* The measure is the text's; the rule above it runs the full width. */
+.topper__statement > * { max-width: 46rem; }
 .topper__title {
   margin: 0 0 var(--gap-4);
   font-family: var(--f-sans); font-weight: 700;
@@ -662,7 +663,7 @@ a:hover { color: var(--c-spot); }
 }
 /* The flag is a rule beside the field, not a red fill. A wall of red on a form
    somebody is still filling in reads as failure rather than guidance. */
-.field--flagged { border-left: 2px solid var(--c-warn-edge); padding-left: var(--gap-4); }
+.field--flagged { border-inline-start: 2px solid var(--c-warn-edge); padding-inline-start: var(--gap-4); }
 /* Crimson, via the token, never the literal hex. Upstream a field error turns
    the label crimson and gives the control a 1px crimson border, which means
    error and brand share a colour there and now here — accepted deliberately
@@ -689,7 +690,7 @@ a:hover { color: var(--c-spot); }
 }
 .input::placeholder, .textarea::placeholder { color: var(--c-text-light); }
 /* A select still needs its affordance, so it keeps the native arrow. */
-.select { -webkit-appearance: auto; appearance: auto; padding-left: 0; }
+.select { -webkit-appearance: auto; appearance: auto; padding-inline-start: 0; }
 .input:hover, .select:hover, .textarea:hover { border-bottom-color: var(--c-border-dark); }
 .textarea { resize: vertical; }
 .input:focus-visible, .select:focus-visible, .textarea:focus-visible {
@@ -846,8 +847,9 @@ a:hover { color: var(--c-spot); }
 .submit__prereq {
   margin: var(--gap-4) 0 0;
   padding: var(--gap-3) var(--gap-4);
-  border-left: 3px solid var(--c-info);
-  border-radius: 0 var(--radius) var(--radius) 0;
+  border-inline-start: 3px solid var(--c-info);
+  border-radius: var(--radius);
+  border-start-start-radius: 0; border-end-start-radius: 0;
   background: var(--c-info); color: var(--c-on-info);
   font-size: var(--t-sm);
 }
@@ -873,7 +875,6 @@ a:hover { color: var(--c-spot); }
 .submit__archive { margin-top: var(--gap-4); font-size: var(--t-sm); }
 .submit__findings { margin: var(--gap-2) 0 0; padding-left: var(--gap-5); }
 .submit__findings li { margin-bottom: var(--gap-2); font-size: var(--t-xs); }
-.submit__handoff { margin-top: var(--gap-4); }
 
 /* Disabled by attribute as well as by class: an anchor without href is already
    out of the tab order, and aria-disabled tells a screen reader why it is
@@ -892,7 +893,6 @@ a:hover { color: var(--c-spot); }
    choice between two states, and the current one is filled rather than merely
    underlined — underline alone is easy to miss above a long form. */
 .modes {
-  display: flex; flex-wrap: wrap; gap: var(--gap-1);
   margin: var(--gap-5) 0; padding: var(--gap-1);
   border: 1px solid var(--c-border-light); border-radius: var(--radius);
   width: fit-content; max-width: 100%;
@@ -909,7 +909,6 @@ a:hover { color: var(--c-spot); }
 .modes__item:focus-visible { outline: 4px solid var(--c-outline); outline-offset: 1px; }
 
 /* The repo field and its button sit on one line until there is no room. */
-.submit__row { display: flex; flex-wrap: wrap; gap: var(--gap-2); align-items: stretch; }
 .submit__row .input { flex: 1 1 18rem; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 

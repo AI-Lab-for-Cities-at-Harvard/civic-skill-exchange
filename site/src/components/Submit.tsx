@@ -25,7 +25,7 @@ import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
 import { waits } from "../lib/plain";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
-import { Stack } from "./Layout";
+import { Cluster, Stack } from "./Layout";
 import { AfterHandoff } from "./AfterHandoff";
 import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
@@ -452,7 +452,9 @@ export function Submit(
     <AttemptedProvider value={attempted}>
     <article className="prose submit">
       <section className="prose__block">
-        <h2 className="h2">{t.heading}</h2>
+        {/* The document's one h1 (#309): the compact header leaves out the
+            site-title h1, so the page's own heading takes the level. */}
+        <h1 className="h2">{t.heading}</h1>
         <p className="lede">{t.lede}</p>
 
         {/* Before the form, not after it. Every path this page offers ends on
@@ -473,7 +475,7 @@ export function Submit(
             be sent to someone, bookmarked, and reached with the back button —
             and a skill page linking straight to the update mode needs no extra
             machinery. */}
-        <nav className="modes" aria-label={t.modes.label}>
+        <Cluster as="nav" gap="1" align="stretch" className="modes" aria-label={t.modes.label}>
           <a
             className="modes__item" href={submitHref("new")}
             aria-current={mode === "new" ? "page" : undefined}
@@ -488,7 +490,7 @@ export function Submit(
           >
             {t.modes.update}
           </a>
-        </nav>
+        </Cluster>
 
         {mode === "new" && (
           <p className="submit__warn">{t.communityWarn}</p>
@@ -516,7 +518,7 @@ export function Submit(
             id="repo" label={t.intake.repoLabel} findings={[]}
             hint={t.intake.repoHint}
           >
-            <span className="submit__row">
+            <Cluster as="span" gap="2" align="stretch" className="submit__row">
               <input
                 id="repo" className="input" value={repoUrl}
                 placeholder={t.intake.repoPlaceholder}
@@ -529,7 +531,7 @@ export function Submit(
               >
                 {importing ? t.intake.reading : t.intake.read}
               </button>
-            </span>
+            </Cluster>
           </Field>
 
           {imported && (
@@ -587,7 +589,7 @@ export function Submit(
           )}
 
           {archive && (
-            <div className="submit__archive" data-testid="archive-result">
+            <Stack gap="4" className="submit__archive" data-testid="archive-result">
               <p>{rich(t.intake.archiveResult(archive.name, archive.files))}</p>
               {archive.left.length > 0 && (
                 /* Left out is not the same as wrong. Named so nothing vanishes
@@ -605,7 +607,7 @@ export function Submit(
                   ))}
                 </ul>
               )}
-            </div>
+            </Stack>
           )}
 
           {blocked && (
@@ -912,7 +914,7 @@ export function Submit(
                 {t.send.usernameNeeded}
               </p>
             )}
-            <p className="cta-row">
+            <Cluster as="p" gap="3" className="cta-row">
               {urlFits ? (
                 <a
                   className={`btn btn--strong${!ready || blocked ? " btn--disabled" : ""}`}
@@ -931,7 +933,7 @@ export function Submit(
               <button className="btn" onClick={copy}>
                 {copied ? t.send.copied : t.send.copy}
               </button>
-            </p>
+            </Cluster>
             </>
           )}
 
@@ -995,32 +997,37 @@ export function Submit(
             {t.update.nothingListed}
           </p>
         )}
-        <label className="field__label" htmlFor="add">{t.update.pick}</label>
-        <select
-          id="add" className="select" value={add ?? ""}
-          onChange={(e) => { window.location.hash = e.target.value
-            ? `#/submit?add=${encodeURIComponent(e.target.value)}` : "#/submit"; }}
-        >
-          <option value="">{t.update.choose}</option>
-          {(missingFit.length ? missingFit : skills).map((sk) => (
-            <option key={sk.id} value={sk.id}>{sk.id}</option>
-          ))}
-        </select>
-        {listed && (
-          <div className="submit__handoff" data-testid="edit-handoff">
-            <p className="field__hint">{rich(t.update.pasteHint)}</p>
-            <pre className="submit__yaml"><code>{
+        <Stack gap="4">
+          <Stack gap="1">
+            <label className="field__label" htmlFor="add">{t.update.pick}</label>
+            <select
+              id="add" className="select" value={add ?? ""}
+              onChange={(e) => { window.location.hash = e.target.value
+                ? `#/submit?add=${encodeURIComponent(e.target.value)}` : "#/submit"; }}
+            >
+              <option value="">{t.update.choose}</option>
+              {(missingFit.length ? missingFit : skills).map((sk) => (
+                <option key={sk.id} value={sk.id}>{sk.id}</option>
+              ))}
+            </select>
+          </Stack>
+          {listed && (
+            <Stack gap="3" data-testid="edit-handoff">
+              <p className="field__hint">{rich(t.update.pasteHint)}</p>
+              <pre className="submit__yaml"><code>{
 `  civic.use-when: "When this skill earns its place."
   civic.avoid-when: "When it does not."`}</code></pre>
-            <a className="btn btn--strong" href={editUrl(repo, listed.skill_path)}>
-              {t.update.editCta(listed.id)}
-            </a>
-          </div>
-        )}
-
-        <p className="submit__note">
-          {rich(t.update.notFinding, { new: submitHref("new") })}
-        </p>
+              <Cluster>
+                <a className="btn btn--strong" href={editUrl(repo, listed.skill_path)}>
+                  {t.update.editCta(listed.id)}
+                </a>
+              </Cluster>
+            </Stack>
+          )}
+          <p className="submit__note">
+            {rich(t.update.notFinding, { new: submitHref("new") })}
+          </p>
+        </Stack>
       </section>
       )}
     </article>

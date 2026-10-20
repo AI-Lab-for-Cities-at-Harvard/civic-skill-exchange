@@ -546,6 +546,13 @@ other way, so a stale record cannot hide the next regression. Its message
 says the new number; set `RECORDED` in the test to it, in the same commit as
 the migration. Never raise a number: use a primitive or a logical property.
 
+**Migrated so far:** the numbered steps (#316) and the submit page (#309): its
+header is compact (`App.tsx` drops the hero's statement, and with it the
+site-title `h1`, so the page's own heading is the one `h1`), and the bar, the
+mode switch, the repository row and the update-mode hand-off are
+`Cluster`s and `Stack`s. `.field`, `.submit__findings` and `.cta-row` are
+shared with the plugin form, the guide and About, and wait for their pages.
+
 ### Testing the front end
 
 Logic lives in `src/lib/` as pure functions so it can be unit-tested without a

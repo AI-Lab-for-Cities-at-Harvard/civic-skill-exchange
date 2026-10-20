@@ -130,19 +130,19 @@ describe("the mail to a maintainer stays in English", () => {
 
 describe("the page is titled for plugins as well as skills (#247)", () => {
   const view = () => render(<Submit repo={REPO} skills={[]} mode="new" />);
-  const heading = (name: string) =>
-    screen.getByRole("heading", { level: 2, name });
+  const heading = (name: string, level = 2) =>
+    screen.getByRole("heading", { level, name });
 
   it("is titled 'Share a skill or plugin' in English", () => {
     view();
-    expect(heading("Share a skill or plugin")).toBeInTheDocument();
+    expect(heading("Share a skill or plugin", 1)).toBeInTheDocument();
     expect(heading("Submit a new skill or plugin")).toBeInTheDocument();
   });
 
   it("is titled 'Comparta una habilidad o plugin' in Spanish", async () => {
     await setLocale("es");
     view();
-    expect(heading("Comparta una habilidad o plugin")).toBeInTheDocument();
+    expect(heading("Comparta una habilidad o plugin", 1)).toBeInTheDocument();
     expect(heading("Subir una habilidad o plugin nuevo")).toBeInTheDocument();
   });
 
