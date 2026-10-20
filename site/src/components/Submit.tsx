@@ -138,6 +138,7 @@ export function Submit(
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<ImportResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [dragging, setDragging] = useState(false);
   // Asked for, never derived. #81: the page guessed this and was wrong two ways
   // — the owner is not the namespace for a reserved one, and the name is
   // whatever the submitter typed into GitHub's fork dialog.
@@ -538,11 +539,27 @@ export function Submit(
           )}
 
           <Field id="archive" label={t.intake.archiveLabel} findings={[]} hint={t.intake.archiveHint}>
-            <input
-              key={inputKey}
-              id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
-              onChange={(e) => onFile(e.target.files?.[0])}
-            />
+            {/* A zip dropped here is read as if it had been chosen. A folder
+                cannot be: a drop hands over a directory entry, not bytes, and
+                the zip reader is the only one the page has. */}
+            <div
+              className="dropzone" data-testid="dropzone"
+              data-over={dragging ? "true" : undefined}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                onFile(e.dataTransfer?.files?.[0]);
+              }}
+            >
+              <p className="dropzone__hint">{t.intake.dropHint}</p>
+              <input
+                key={inputKey}
+                id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
+                onChange={(e) => onFile(e.target.files?.[0])}
+              />
+            </div>
           </Field>
 
           <Field id="paste" label={t.intake.pasteLabel} findings={[]}>

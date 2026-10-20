@@ -235,8 +235,8 @@ export const strings: Strings = {
     intake: {
       heading: "Subir una habilidad o plugin nuevo",
       lede:
-        "¿Ya tiene una? Suéltela aquí y el resto de esta página se completa " +
-        "solo. Si su habilidad vive en su propio repositorio, **Code → " +
+        "¿Ya tiene una? Suelte su .zip en el recuadro de abajo y el resto de " +
+        "esta página se completa solo. Si su habilidad vive en su propio repositorio, **Code → " +
         "Download ZIP** en GitHub le da el archivo que debe soltar.",
 
       repoLabel: "El repositorio de GitHub de su habilidad",
@@ -254,6 +254,7 @@ export const strings: Strings = {
         (folder && branch ? ` (rama \`${branch}\`)` : "") + ` en \`${commit}\`.`,
 
       archiveLabel: "O suba la carpeta de la habilidad como .zip",
+      dropHint: "Suelte un .zip aquí, o elija uno. ¿Una carpeta? Comprímala primero.",
       archiveHint:
         "También sirve la carpeta de un plugin. Se descomprime en su navegador. " +
         "No se envía a ninguna parte.",

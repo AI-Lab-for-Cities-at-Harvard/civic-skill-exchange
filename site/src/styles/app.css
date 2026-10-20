@@ -863,6 +863,12 @@ a:hover { color: var(--c-spot); }
   white-space: pre-wrap; overflow-wrap: anywhere;
   overflow-x: auto;
 }
+.dropzone {
+  border: 2px dashed var(--c-border); border-radius: var(--radius);
+  padding: var(--gap-4);
+}
+.dropzone[data-over="true"] { border-style: solid; }
+.dropzone__hint { margin: 0 0 var(--gap-2); font-size: var(--t-sm); }
 .submit__archive { margin-top: var(--gap-4); font-size: var(--t-sm); }
 .submit__findings { margin: var(--gap-2) 0 0; padding-left: var(--gap-5); }
 .submit__findings li { margin-bottom: var(--gap-2); font-size: var(--t-xs); }

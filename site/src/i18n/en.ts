@@ -278,9 +278,9 @@ export const en = {
     intake: {
       heading: "Submit a new skill or plugin",
       lede:
-        "Already have one? Drop it here and the rest of this page fills itself " +
-        "in. If your skill lives in its own repository, GitHub\u2019s **Code → " +
-        "Download ZIP** gives you the file to drop.",
+        "Already have one? Drop its .zip on the box below and the rest of this " +
+        "page fills itself in. If your skill lives in its own repository, " +
+        "GitHub\u2019s **Code → Download ZIP** gives you the file to drop.",
 
       repoLabel: "Your skill's GitHub repository",
       repoHint:
@@ -299,6 +299,9 @@ export const en = {
         (folder && branch ? ` (branch \`${branch}\`)` : "") + ` at \`${commit}\`.`,
 
       archiveLabel: "Or upload the skill folder as a .zip",
+      /** Inside the drop zone. A dropped folder cannot be read, so the zone
+       *  asks for a zip and says what to do with a folder. */
+      dropHint: "Drop a .zip here, or choose one. A folder? Zip it first.",
       archiveHint:
         "A plugin folder works too. Unpacked in your browser. It is not sent anywhere.",
 
