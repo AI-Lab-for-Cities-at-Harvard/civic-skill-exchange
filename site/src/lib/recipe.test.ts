@@ -78,7 +78,8 @@ describe.each([
 ])("the %s recipe, run against bare repositories", (_kind, tree, listing, landing) => {
   const text = () => recipe({
     ...recipeInput(REPO, "cityofx/civic-skill-exchange", draft, tree, "x"),
-    forkUrl: fork, folder: handedBack,
+    // `git clone` names the directory for the address, so for fork.git it is "fork".
+    forkUrl: fork, cloneDir: "fork", folder: handedBack,
   });
 
   it("pushes a branch to the fork, with the files at the nested path", () => {
@@ -143,8 +144,7 @@ describe("what the recipe is made of", () => {
     expect(lines[0]).toBe("git clone https://github.com/sgarcese/my-copy.git");
     expect(lines[1]).toBe("cd my-copy");
     expect(lines.at(-1)).toBe("git push -u origin add-permit-status");
-    expect(readFileSync(join(__dirname, "submit.ts"), "utf8"))
-      .not.toContain("commit -am");
+    expect(lines.join("\n")).not.toContain("commit -am");
   });
 
   it("stands a placeholder in for a fork not yet pasted, never the registry", () => {

@@ -184,15 +184,40 @@ recapture.
 
 ## Doing it from the command line instead
 
+First fork the registry on GitHub, so that you have a copy of your own. You
+clone your fork, not the registry, because only the registry's maintainers can
+push to the registry. Then, with the folder the submission page handed back
+(unzipped) at `/path/to/{skill-name}`:
+
 ```bash
-git clone https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange.git
+git clone https://github.com/{your-github-username}/civic-skill-exchange.git
 cd civic-skill-exchange
-mkdir -p skills/{your-github-username}/{skill-name}/skills/{skill-name}
-# write SKILL.md, plus scripts/ and references/ if you need them
-npx tsx validator/src/cli.ts skills/{your-github-username}/{skill-name}
 git checkout -b add-{skill-name}
-git add skills/ && git commit -m "Add {skill-name}"
-git push origin add-{skill-name}
+mkdir -p skills/{your-github-username}/{skill-name}/skills
+cp -R /path/to/{skill-name} skills/{your-github-username}/{skill-name}/skills/{skill-name}
+npx tsx validator/src/cli.ts skills/{your-github-username}/{skill-name}
+git add skills/{your-github-username}/{skill-name}
+git commit -m "Add skills/{your-github-username}/{skill-name}"
+git push -u origin add-{skill-name}
+```
+
+If you renamed your fork, use its name in the clone address and in `cd`. When
+the push finishes, `git` prints a link for opening the pull request; if you miss
+it, open your fork on GitHub and choose "Compare & pull request".
+
+For a plugin, the same steps go under `plugins/`, with the folder copied to
+`plugins/{your-github-username}/{plugin-name}`:
+
+```bash
+git clone https://github.com/{your-github-username}/civic-skill-exchange.git
+cd civic-skill-exchange
+git checkout -b add-{plugin-name}
+mkdir -p plugins/{your-github-username}
+cp -R /path/to/{plugin-name} plugins/{your-github-username}/{plugin-name}
+npx tsx validator/src/cli.ts plugins/{your-github-username}/{plugin-name}
+git add plugins/{your-github-username}/{plugin-name}
+git commit -m "Add plugins/{your-github-username}/{plugin-name}"
+git push -u origin add-{plugin-name}
 ```
 
 That validator command is the same module the website and CI both run, so it

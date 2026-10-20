@@ -632,6 +632,16 @@ export const en = {
 
       seeYaml: "See what will be added",
       commandLine: "Or do it from the command line",
+      recipeIntro:
+        "Fork the registry on GitHub first, then clone your fork — not the " +
+        "registry itself, which only its maintainers can push to. Where it " +
+        "says YOUR-USERNAME, put your GitHub username, or paste your fork's " +
+        "address above and it fills in. Where it says /path/to/, put the " +
+        "place on your computer where the folder you downloaded is, unzipped.",
+      recipeAfter:
+        "When the push finishes, git prints a link for opening the pull " +
+        "request. If you miss it, open your fork on GitHub and choose " +
+        "“Compare & pull request”.",
     },
 
     update: {

@@ -4,7 +4,7 @@ import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/val
 import { SKILL_LAYOUT, checkStructureCore } from "@civic-skill-exchange/validator/structure-core";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
-  fitsInUrl, skillPath, skillDirPath, slugify, type Draft,
+  fitsInUrl, recipe, recipeInput, slugify, type Draft,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
@@ -784,12 +784,11 @@ export function Submit(
 
           <details className="disclosure">
             <summary className="disclosure__summary">{t.send.commandLine}</summary>
-            <pre className="submit__yaml"><code>{
-  `git clone https://github.com/${repo}.git
-  mkdir -p ${skillDirPath(draft)}
-  git checkout -b add-${draft.name || "your-skill"}
-  git commit -am "Add ${skillPath(draft)}"
-  git push origin add-${draft.name || "your-skill"}`}</code></pre>
+            <p className="submit__note">{t.send.recipeIntro}</p>
+            <pre className="submit__yaml" data-testid="command-line"><code>{
+              recipe(recipeInput(repo, forkInput, draft, "skills", "your-skill"))
+            }</code></pre>
+            <p className="submit__note">{t.send.recipeAfter}</p>
           </details>
         </section>
         </>

@@ -561,6 +561,17 @@ export const strings: Strings = {
 
       seeYaml: "Vea lo que se va a agregar",
       commandLine: "O hágalo desde la línea de comandos",
+      recipeIntro:
+        "Primero haga un fork del registro en GitHub y luego clone su fork, " +
+        "no el registro, donde solo sus mantenedores pueden subir cambios. " +
+        "Donde dice YOUR-USERNAME, escriba su usuario de GitHub, o pegue " +
+        "arriba la dirección de su fork y se completa sola. Donde dice " +
+        "/path/to/, escriba el lugar de su computadora donde está la carpeta " +
+        "que descargó, ya descomprimida.",
+      recipeAfter:
+        "Cuando termine el push, git muestra un enlace para abrir el pull " +
+        "request. Si no lo ve, abra su fork en GitHub y elija " +
+        "“Compare & pull request”.",
     },
 
     update: {

@@ -392,3 +392,65 @@ export function pullRequestUrl(repo: string, fork: string): string | null {
   const [owner, name] = ref.split("/");
   return `https://github.com/${repo}/compare/main...${owner}:${name}:main?expand=1`;
 }
+
+/** What the command-line recipe needs to know (#297). */
+export interface RecipeInput {
+  /** The submitter's fork, as a clone address. Never the registry: the recipe
+   *  pushes there, and the registry refuses a push from anyone who is not a
+   *  maintainer. */
+  forkUrl: string;
+  /** The directory the clone makes, which is the fork's own name. */
+  cloneDir: string;
+  /** The branch to create and push. */
+  branch: string;
+  /** Where the folder the page handed back is on the submitter's machine. */
+  folder: string;
+  /** Where the listing lives: `skills/{ns}/{name}` or `plugins/{ns}/{name}`. */
+  listing: string;
+  /** Where the copied folder must end up, inside the clone. */
+  landing: string;
+}
+
+/** The command-line route, as the lines to type, and nothing but commands.
+ *
+ *  Joined from an array, not a template literal: a literal indented to sit
+ *  inside JSX renders that indent on every line after the first (S-7). The
+ *  steps are the ones the page's other route does by hand: clone *your fork*,
+ *  branch, copy the folder in (the earlier recipe never did, and `commit -am`
+ *  skips files git has not seen), add, commit, push to the fork.
+ *
+ *  The prose around it — fork first, how to open the pull request — is in the
+ *  i18n strings, so these lines stay copy-and-paste. */
+export function recipe(r: RecipeInput): string {
+  const parent = r.landing.split("/").slice(0, -1).join("/");
+  return [
+    `git clone ${r.forkUrl}`,
+    `cd ${r.cloneDir}`,
+    `git checkout -b ${r.branch}`,
+    `mkdir -p ${parent}`,
+    `cp -R ${r.folder} ${r.landing}`,
+    `npx tsx validator/src/cli.ts ${r.listing}`,
+    `git add ${r.listing}`,
+    `git commit -m "Add ${r.listing}"`,
+    `git push -u origin ${r.branch}`,
+  ].join("\n");
+}
+
+/** The recipe's inputs for a draft: what the page can know filled in, and a
+ *  placeholder for what only the submitter can, their fork and where the
+ *  download went. */
+export function recipeInput(
+  repo: string, fork: string, draft: Named, tree: ListingTree, fallbackName: string,
+): RecipeInput {
+  const name = trim(draft.name) || fallbackName;
+  const ref = parseForkRef(fork);
+  const repoName = repo.split("/").pop() ?? repo;
+  return {
+    forkUrl: `https://github.com/${ref ?? `YOUR-USERNAME/${repoName}`}.git`,
+    cloneDir: ref ? ref.split("/")[1]! : repoName,
+    branch: `add-${name}`,
+    folder: `/path/to/${name}`,
+    listing: skillPath(draft, tree),
+    landing: landingPath(draft, tree),
+  };
+}
