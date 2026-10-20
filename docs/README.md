@@ -33,6 +33,7 @@ superseded by a later one.
 | [0004](adr/0004-language-is-metadata-and-verification-not-translation.md) | Language is metadata and verification, not translation — a listing declares its language, the ledger records what a reviewer verified, and the site ships in Spanish |
 | [0005](adr/0005-plugins-are-a-second-listing-kind.md) | Plugins are a second listing kind — several skills and their MCP servers under `plugins/`, in the Agent Plugins layout, installable from both marketplaces |
 | [0006](adr/0006-every-listing-in-the-agent-plugins-layout.md) | Every listing in the Agent Plugins layout — a single skill's files move to `skills/{ns}/{name}/skills/{name}/`, so Codex and Claude Code both load it; built in M9 |
+| [0007](adr/0007-layout-primitives-over-the-existing-tokens.md) | Layout primitives over the existing tokens — `Stack` and `Cluster` typed to the spacing scale, CSS layers, a one-way ratchet on hand-written spacing; no CSS framework or component library |
 
 ## Spikes
 
@@ -46,7 +47,7 @@ the spike stays as the reasoning behind it.
 
 | | |
 |---|---|
-| [a-better-way-to-manage-spacing.md](spikes/a-better-way-to-manage-spacing.md) | Tailwind, a component library, or layout primitives of our own instead of hand-written spacing? Two proofs measured on the numbered steps — [#310](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/310), awaiting rulings |
+| [a-better-way-to-manage-spacing.md](spikes/a-better-way-to-manage-spacing.md) | Tailwind, a component library, or layout primitives of our own instead of hand-written spacing? Two proofs measured on the numbered steps — [#310](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/310), ruled; see [ADR 0007](adr/0007-layout-primitives-over-the-existing-tokens.md) |
 | [the-using-the-exchange-page.md](spikes/the-using-the-exchange-page.md) | What goes on the "Using the Exchange" page, how other pages link to it, and which screenshots it needs: the design pass before the build — [#224](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/224), ruled; the rulings are recorded at the end |
 | [every-listing-in-the-agent-plugins-layout.md](spikes/every-listing-in-the-agent-plugins-layout.md) | How every single-skill listing moves to the Agent Plugins layout: the move, the reviews, the published zip and links, the validator, the submission page, and the order of work — [#241](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/241), ruled; see [ADR 0006](adr/0006-every-listing-in-the-agent-plugins-layout.md) |
 | [end-to-end-submission-and-install.md](spikes/end-to-end-submission-and-install.md) | Two simulated newcomers submit a skill and a plugin, and install both in Claude Code and Codex: what worked, what they tripped on, and recommendations — [#286](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/286), ruled; the fixes are #293–#303 |

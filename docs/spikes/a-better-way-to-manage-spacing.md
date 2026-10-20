@@ -1,7 +1,7 @@
 # A better way to manage spacing and alignment
 
 **Issue:** [#310](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/310)
-**Status:** analysis complete, awaiting rulings. Written 2026-10-20 against `65a78ca` (main, with #308 merged). The two proofs are local branches, measured and never pushed.
+**Status:** ruled 2026-10-20, all eight recommendations accepted; see [ADR 0007](../adr/0007-layout-primitives-over-the-existing-tokens.md) and the rulings at the end. Written against `65a78ca` (main, with #308 merged). The two proofs are local branches, measured and never pushed.
 
 ## The question
 
@@ -310,3 +310,18 @@ Using only its layout components would be a heavy way to get `Stack`.
 - **Migration counts.** They are counted by regex over the stylesheet and components. They estimate the scope; they are not an inventory.
 - **#309.** Its scope was read from the brief, not from the issue: there was no `gh` in this session.
 - **A list-semantics question, noticed in passing and outside this issue.** Safari is reported to drop list semantics from a list with `list-style: none`. The `.steps` comment relies on "3 of 4" being announced. Not checked here.
+
+## Rulings (owner, 2026-10-20)
+
+All eight recommendations were accepted as written: hand-written `Stack` and `Cluster` primitives over the existing tokens, with no framework and no component library. [ADR 0007](../adr/0007-layout-primitives-over-the-existing-tokens.md) records them.
+
+| Step | Issue |
+|---|---|
+| Foundation: layers, primitives, ratchet, the numbered steps | #316 |
+| Submit page, with the compact header and a primary button on every step | #309 |
+| Plugin submit page | #317 |
+| Skill and plugin pages | #318 |
+| Browse | #319 |
+| About | #320 |
+| Guide | #321 |
+
