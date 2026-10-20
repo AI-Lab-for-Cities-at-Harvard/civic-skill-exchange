@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { checkChangedLayout, checkNamespaceCollisions } from "./layout";
+import { checkChangedLayout, checkNamespaceCollisions, withoutDeletions } from "./layout";
 
 describe("checkChangedLayout", () => {
   it("accepts a skill in the right place", () => {
@@ -86,6 +86,32 @@ describe("checkChangedLayout", () => {
 
   it("tolerates blank lines, which a changed-file list carries", () => {
     expect(checkChangedLayout(["", "  ", "skills/a/b/skills/b/SKILL.md"])).toEqual([]);
+  });
+});
+
+/** validate.yml's changed-path list carries deletions, for L1 (#154), and the
+ *  --layout step reads the same list. A removal is not a misplacement: the
+ *  move to the nested layout (#276) deletes every flat SKILL.md, and those
+ *  paths are exactly what --layout now refuses. */
+describe("withoutDeletions", () => {
+  const present = new Set([
+    "skills/a/b/skills/b/SKILL.md", "stray/SKILL.md",
+  ]);
+  const exists = (path: string) => present.has(path);
+
+  it("drops a path that has left the tree, so the old flat SKILL.md of a move passes", () => {
+    const paths = ["skills/a/b/SKILL.md", "skills/a/b/skills/b/SKILL.md"];
+    expect(checkChangedLayout(paths)).toHaveLength(1);
+    expect(checkChangedLayout(withoutDeletions(paths, exists))).toEqual([]);
+  });
+
+  it("keeps a misplaced SKILL.md that is still there", () => {
+    expect(checkChangedLayout(withoutDeletions(["stray/SKILL.md"], exists))).toHaveLength(1);
+  });
+
+  it("asks about the path without its surrounding whitespace, and drops blank lines", () => {
+    expect(withoutDeletions(["  skills/a/b/skills/b/SKILL.md ", "", "  "], exists))
+      .toEqual(["skills/a/b/skills/b/SKILL.md"]);
   });
 });
 
