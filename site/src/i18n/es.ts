@@ -567,7 +567,8 @@ export const strings: Strings = {
         "Donde dice YOUR-USERNAME, escriba su usuario de GitHub, o pegue " +
         "arriba la dirección de su fork y se completa sola. Donde dice " +
         "/path/to/, escriba el lugar de su computadora donde está la carpeta " +
-        "que descargó, ya descomprimida.",
+        "que descargó, ya descomprimida. " +
+        "`npm ci` instala lo que necesita el verificador.",
       recipeAfter:
         "Cuando termine el push, git muestra un enlace para abrir el pull " +
         "request. Si no lo ve, abra su fork en GitHub y elija " +

@@ -429,6 +429,7 @@ export function recipe(r: RecipeInput): string {
     `git checkout -b ${r.branch}`,
     `mkdir -p ${parent}`,
     `cp -R ${r.folder} ${r.landing}`,
+    `npm ci`,
     `npx tsx validator/src/cli.ts ${r.listing}`,
     `git add ${r.listing}`,
     `git commit -m "Add ${r.listing}"`,

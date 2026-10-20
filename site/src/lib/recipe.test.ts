@@ -66,7 +66,7 @@ const refs = (repo: string) => git(root, "--git-dir", repo, "for-each-ref");
 const draft = { author: "CityOfX", name: "permit-status" };
 
 function run(text: string) {
-  const runnable = text.split("\n").filter((l) => !l.startsWith("npx ")).join("\n");
+  const runnable = text.split("\n").filter((l) => !l.startsWith("npx ") && l !== "npm ci").join("\n");
   execFileSync("bash", ["-ec", runnable], { cwd: work, env: ENV, stdio: "pipe" });
 }
 

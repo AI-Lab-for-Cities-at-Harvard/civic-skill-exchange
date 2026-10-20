@@ -637,7 +637,8 @@ export const en = {
         "registry itself, which only its maintainers can push to. Where it " +
         "says YOUR-USERNAME, put your GitHub username, or paste your fork's " +
         "address above and it fills in. Where it says /path/to/, put the " +
-        "place on your computer where the folder you downloaded is, unzipped.",
+        "place on your computer where the folder you downloaded is, unzipped. " +
+        "`npm ci` installs what the checker needs.",
       recipeAfter:
         "When the push finishes, git prints a link for opening the pull " +
         "request. If you miss it, open your fork on GitHub and choose " +

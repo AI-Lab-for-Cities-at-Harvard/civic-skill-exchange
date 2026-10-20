@@ -86,11 +86,12 @@ metadata:
   civic.human-review: "none"
   civic.deployment: "none"
 ---
-Or do it from the command lineFork the registry on GitHub first, then clone your fork — not the registry itself, which only its maintainers can push to. Where it says YOUR-USERNAME, put your GitHub username, or paste your fork's address above and it fills in. Where it says /path/to/, put the place on your computer where the folder you downloaded is, unzipped.git clone https://github.com/YOUR-USERNAME/repo.git
+Or do it from the command lineFork the registry on GitHub first, then clone your fork — not the registry itself, which only its maintainers can push to. Where it says YOUR-USERNAME, put your GitHub username, or paste your fork's address above and it fills in. Where it says /path/to/, put the place on your computer where the folder you downloaded is, unzipped. \`npm ci\` installs what the checker needs.git clone https://github.com/YOUR-USERNAME/repo.git
 cd repo
 git checkout -b add-your-skill
 mkdir -p skills///skills
 cp -R /path/to/your-skill skills///skills/
+npm ci
 npx tsx validator/src/cli.ts skills//
 git add skills//
 git commit -m "Add skills//"

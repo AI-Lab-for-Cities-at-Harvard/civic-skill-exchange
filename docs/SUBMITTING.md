@@ -195,6 +195,7 @@ cd civic-skill-exchange
 git checkout -b add-{skill-name}
 mkdir -p skills/{your-github-username}/{skill-name}/skills
 cp -R /path/to/{skill-name} skills/{your-github-username}/{skill-name}/skills/{skill-name}
+npm ci
 npx tsx validator/src/cli.ts skills/{your-github-username}/{skill-name}
 git add skills/{your-github-username}/{skill-name}
 git commit -m "Add skills/{your-github-username}/{skill-name}"
@@ -214,6 +215,7 @@ cd civic-skill-exchange
 git checkout -b add-{plugin-name}
 mkdir -p plugins/{your-github-username}
 cp -R /path/to/{plugin-name} plugins/{your-github-username}/{plugin-name}
+npm ci
 npx tsx validator/src/cli.ts plugins/{your-github-username}/{plugin-name}
 git add plugins/{your-github-username}/{plugin-name}
 git commit -m "Add plugins/{your-github-username}/{plugin-name}"
