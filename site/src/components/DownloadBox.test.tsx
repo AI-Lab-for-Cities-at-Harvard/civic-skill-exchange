@@ -192,3 +192,15 @@ describe("DownloadBox — both clients' marketplaces", () => {
     expect(screen.getByText("Claude Code: install it")).toBeInTheDocument();
   });
 });
+
+/* #289: the note under the commands said only Claude Code used the /plugin
+   lines and Codex took "a skill at a time". Since the layout move Codex
+   installs from its marketplace too; the download is for everything else. */
+describe("DownloadBox — the note under the commands", () => {
+  it("says both clients install from the lines above, and the rest use the download", () => {
+    render(<DownloadBox skill={detail()} />);
+    const box = screen.getByRole("region", { name: /use this skill/i });
+    expect(box.textContent).toMatch(/In Claude Code and Codex, the two marketplace lines are all you need/);
+    expect(box.textContent).not.toMatch(/Codex, Gemini, Copilot/);
+  });
+});

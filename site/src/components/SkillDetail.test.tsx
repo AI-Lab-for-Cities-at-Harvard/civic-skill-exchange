@@ -216,3 +216,15 @@ describe("the detail page says which models a listing was tested with", () => {
     expect(screen.queryByTestId("verified-models")).not.toBeInTheDocument();
   });
 });
+
+/* #289: since ADR 0006 (decision 5) a single skill has no server config, so
+   the caveat no longer tells a reader to look for its .mcp.json. */
+describe("the file list's caveat", () => {
+  it("names scripts/ and not a skill's .mcp.json, in both languages", async () => {
+    const { strings, setLocale, DEFAULT_LOCALE } = await import("../i18n/strings");
+    expect(strings().detail.structure.caveat).not.toMatch(/\.mcp\.json/);
+    await setLocale("es");
+    expect(strings().detail.structure.caveat).not.toMatch(/\.mcp\.json/);
+    await setLocale(DEFAULT_LOCALE);
+  });
+});
