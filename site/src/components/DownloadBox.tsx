@@ -31,8 +31,10 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
   const commands = [
     { id: "claude-marketplace", label: c.claudeMarketplace, value: lines.claudeMarketplace },
     { id: "claude-install", label: c.claudeInstall, value: lines.claudeInstall },
+    { id: "claude-check", label: c.claudeCheck, value: lines.claudeCheck },
     { id: "codex-marketplace", label: c.codexMarketplace, value: lines.codexMarketplace },
     { id: "codex-install", label: c.codexInstall, value: lines.codexInstall },
+    { id: "codex-check", label: c.codexCheck, value: lines.codexCheck },
     {
       id: "degit",
       label: s.download.commands.degit,

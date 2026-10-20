@@ -4,7 +4,7 @@
  *  component, so the page file exports nothing but the page. */
 
 import type { Strings } from "../i18n/strings";
-import { CLAUDE_MARKETPLACE, CODEX_MARKETPLACE, MARKETPLACE, REPO } from "./install";
+import { CLAUDE_CHECK, CLAUDE_MARKETPLACE, CODEX_MARKETPLACE, MARKETPLACE, REPO } from "./install";
 export const SECURITY = `https://github.com/${REPO}/blob/main/docs/SECURITY.md`;
 
 /** When every step on this page was last checked against the product it
@@ -50,6 +50,7 @@ export const COMMANDS: Partial<Record<`${Task}.${Product}`, string[]>> = {
   "install.claudeCode": [
     CLAUDE_MARKETPLACE,
     `/plugin install {namespace}-{skill-name}@${MARKETPLACE}`,
+    CLAUDE_CHECK,
   ],
   "marketplace.claudeCode": [
     CLAUDE_MARKETPLACE,

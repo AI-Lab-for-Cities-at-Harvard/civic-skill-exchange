@@ -212,7 +212,7 @@ describe("the guide page", () => {
       expect(t).toMatch(/dentro de Claude Code/);
       expect(t).toMatch(/\/plugin y claude plugin son el mismo comando/);
       expect(t).toContain("--scope");
-      expect(t).toMatch(/user.*default/);
+      expect(t).toMatch(/user.*predeterminado/);
       expect(text("marketplace-claude-code")).toContain("claude plugin list");
       expect(text("marketplace-codex")).toContain("codex plugin list");
     });
