@@ -524,8 +524,12 @@ wrapping row; `align` is `start | center | end | stretch | baseline`, default
 `center`). Both take `as` and a `gap`, and a `gap` is only a `Space`, a step of
 the token scale (`"0"`–`"6"`, `"sm"`–`"xl"`), so an off-scale value fails
 `npm run typecheck`. A primitive owns the space between its children and
-nothing else: it zeroes their margins, so a child never brings its own. Add a
-third primitive only when a page being migrated needs one.
+nothing else: it zeroes their margins (and the browser's indent on a `<dd>`),
+so a child never brings its own. Add a third primitive only when a page being
+migrated needs one. The skill and plugin pages (#318) needed no third: their
+rows are Stacks, a button in a column sits in a Cluster, and a gap the scale
+lacks (an off-scale 14px that came from a paragraph's `1em`) became the
+nearest step.
 
 **Who spaces what.** The rhythm block in `app.css` spaces sections and
 headings. Primitives space the parts within a section. Component CSS keeps a
