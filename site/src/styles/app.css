@@ -449,24 +449,21 @@ a:hover { color: var(--c-spot); }
 
 /* ---- skill detail -------------------------------------------------------- */
 .crumbs {
-  display: flex; gap: var(--gap-2); align-items: baseline;
   font-size: var(--t-sm); color: var(--c-text-lighter);
-  margin-bottom: var(--gap-4);
 }
 .crumbs a { color: var(--c-text-light); }
 
 .detail__head { border-bottom: 1px solid var(--c-border-light); }
 .detail__title {
-  margin: var(--gap-3) 0 var(--gap-3);
   font-family: var(--f-sans); font-weight: 700;
   font-size: var(--t-2xl); line-height: 1.1;
   letter-spacing: var(--track-display);
 }
 .detail__desc {
-  margin: 0 0 var(--gap-3); font-size: var(--t-lg);
+  font-size: var(--t-lg);
   color: var(--c-text-light); max-width: 60ch;
 }
-.detail__maintainer { margin: 0; font-size: var(--t-sm); color: var(--c-text-lighter); }
+.detail__maintainer { font-size: var(--t-sm); color: var(--c-text-lighter); }
 
 .detail__grid {
   display: grid; gap: var(--gap-6);
@@ -478,7 +475,7 @@ a:hover { color: var(--c-spot); }
   .detail__side { order: -1; }
 }
 .detail__main { min-width: 0; }
-.detail__side { display: grid; gap: var(--gap-5); position: sticky; top: var(--gap-4); }
+.detail__side { position: sticky; top: var(--gap-4); }
 @media (max-width: 1023px) { .detail__side { position: static; } }
 
 .detail__section { border-top: 1px solid var(--c-border-light); }
@@ -487,26 +484,24 @@ a:hover { color: var(--c-spot); }
 /* Fit — the submitter's own account of when the skill helps and when it does
    not. Rendered as text, never as markdown: the detail page publishes no
    submitter-authored markup, and these two fields do not change that. */
-.fit { margin: 0; display: grid; gap: var(--gap-4); }
 .fit__item {
-  display: grid; gap: var(--gap-2);
   padding: var(--gap-4) var(--gap-5);
   background: var(--c-bg-raised);
   border: 1px solid var(--c-border-light);
-  border-left: 3px solid var(--c-border);
+  border-inline-start: 3px solid var(--c-border);
   border-radius: var(--radius);
 }
-.fit__item--avoid { border-left-color: var(--c-warn-edge); }
+.fit__item--avoid { border-inline-start-color: var(--c-warn-edge); }
 .fit dt {
   font-size: var(--t-xs); text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--c-text-lighter);
 }
 .fit dd {
-  margin: 0; font-size: var(--t-base);
+  font-size: var(--t-base);
   line-height: 1.6; max-width: 62ch;
 }
 
-.tree { list-style: none; padding: 0; margin: 0 0 var(--gap-4); display: grid; gap: 1px; }
+.tree { list-style: none; padding: 0; display: grid; gap: 1px; }
 .tree__item {
   display: flex; align-items: baseline; gap: var(--gap-3);
   padding: var(--gap-2) var(--gap-3);
@@ -514,7 +509,7 @@ a:hover { color: var(--c-spot); }
   border: 1px solid var(--c-border-light);
   font-size: var(--t-sm);
 }
-.tree__item--exec { border-left: 3px solid var(--c-warn-edge); }
+.tree__item--exec { border-inline-start: 3px solid var(--c-warn-edge); }
 .tree__path { font-family: var(--f-mono); font-size: var(--t-xs); flex: 1; word-break: break-all; }
 .tree__tag {
   font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em;
@@ -526,7 +521,7 @@ a:hover { color: var(--c-spot); }
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 
-.tools { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: var(--gap-2); }
+.tools { list-style: none; padding: 0; }
 .tools li code {
   font-family: var(--f-mono); font-size: var(--t-sm);
   border: 1px solid var(--c-border); border-radius: var(--radius);
@@ -543,7 +538,7 @@ a:hover { color: var(--c-spot); }
 }
 .download__warn, .download__ok {
   font-size: var(--t-sm); line-height: 1.5;
-  padding: var(--gap-3); border-radius: var(--radius); margin: 0 0 var(--gap-4);
+  padding: var(--gap-3); border-radius: var(--radius);
 }
 .download__warn { background: var(--c-warn); color: var(--c-on-warn); }
 .download__ok { background: var(--c-ok); color: var(--c-on-ok); }
@@ -551,11 +546,10 @@ a:hover { color: var(--c-spot); }
 /* The archive leads the box. It is the only option that needs no tooling, so
    it gets the solid button and the command lines get the quiet treatment. */
 .download__archive {
-  display: grid; gap: var(--gap-2);
-  margin: 0 0 var(--gap-5); padding-bottom: var(--gap-5);
+  padding-bottom: var(--gap-5);
   border-bottom: 1px solid var(--c-border-light);
 }
-.download__get { justify-self: start; text-decoration: none; }
+.download__get { text-decoration: none; }
 .download__archive span {
   font-size: var(--t-xs); color: var(--c-text-lighter); line-height: 1.5;
 }
@@ -573,9 +567,8 @@ a:hover { color: var(--c-spot); }
      will not trust enough to paste. */
   white-space: pre-wrap; word-break: break-all;
 }
-.download__cmd .btn { justify-self: start; }
 .download__note {
-  margin: 0 0 var(--gap-2); font-size: var(--t-xs);
+  font-size: var(--t-xs);
   color: var(--c-text-lighter); line-height: 1.5;
 }
 
@@ -592,15 +585,13 @@ a:hover { color: var(--c-spot); }
 }
 
 .facts__note {
-  margin: 0 0 var(--gap-3); font-size: var(--t-xs); color: var(--c-text-lighter);
+  font-size: var(--t-xs); color: var(--c-text-lighter);
 }
-.facts dl { margin: 0; display: grid; gap: var(--gap-3); }
-.facts dl > div { display: grid; gap: var(--gap-1); }
 .facts dt {
   font-size: var(--t-xs); text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--c-text-lighter);
 }
-.facts dd { margin: 0; font-size: var(--t-sm); line-height: 1.45; }
+.facts dd { font-size: var(--t-sm); line-height: 1.45; }
 
 /* ---- themed bands -------------------------------------------------------
  * Full-bleed sections that carry their own palette. Until now this was an
@@ -967,7 +958,7 @@ a:hover { color: var(--c-spot); }
 .prose__block { padding-block: var(--space-section); }
 .prose > .prose__block:first-child { padding-top: 0; }
 .prose .prose__block > :last-child { margin-bottom: 0; }
-.detail__head { padding-bottom: var(--space-sm); margin-bottom: var(--space-section); }
+.detail__head { padding-bottom: var(--space-sm); }
 .detail__section { margin-top: var(--space-section); padding-top: var(--space-section); }
 /* The header's rule already opens the first section. A second rule under it,
    a section's height apart, read as an empty section. */
