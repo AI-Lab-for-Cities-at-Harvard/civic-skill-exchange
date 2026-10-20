@@ -154,6 +154,7 @@ describe("Submit — flow 2", () => {
   const listed = makeSkill({
     id: "cityofx/permit-status-explainer", namespace: "cityofx",
     name: "permit-status-explainer", path: "skills/cityofx/permit-status-explainer",
+    skill_path: "skills/cityofx/permit-status-explainer/skills/permit-status-explainer",
   });
 
   it("offers the listings that are missing the fit fields", () => {
@@ -161,21 +162,8 @@ describe("Submit — flow 2", () => {
     expect(screen.getByTestId("flow-two")).toHaveTextContent(listed.id);
   });
 
-  it("links into GitHub's editor for the chosen skill", () => {
+  it("links into GitHub's editor at {skill_path}/SKILL.md for the chosen skill", () => {
     render(<Submit repo={REPO} skills={[listed]} mode="update"
-        add="cityofx/permit-status-explainer" />);
-    expect(screen.getByTestId("edit-handoff").querySelector("a"))
-      .toHaveAttribute("href",
-        `https://github.com/${REPO}/edit/main/skills/cityofx/permit-status-explainer/SKILL.md`);
-  });
-
-  it("edits {skill_path}/SKILL.md when the index gives one", () => {
-    const nested = makeSkill({
-      id: "cityofx/permit-status-explainer", namespace: "cityofx",
-      name: "permit-status-explainer", path: "skills/cityofx/permit-status-explainer",
-      skill_path: "skills/cityofx/permit-status-explainer/skills/permit-status-explainer",
-    });
-    render(<Submit repo={REPO} skills={[nested]} mode="update"
         add="cityofx/permit-status-explainer" />);
     expect(screen.getByTestId("edit-handoff").querySelector("a"))
       .toHaveAttribute("href",

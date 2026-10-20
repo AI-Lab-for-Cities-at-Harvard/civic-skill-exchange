@@ -20,7 +20,8 @@ function skill(over: Partial<Skill> = {}): Skill {
     },
     tier: "community", reason: "no review attestation", sha: "abc",
     has_scripts: false, script_files: [],
-    path: "skills/ns/example", download: "https://example.test",
+    path: "skills/ns/example", skill_path: "skills/ns/example/skills/example",
+    download: "https://example.test",
     ...over,
   };
 }
