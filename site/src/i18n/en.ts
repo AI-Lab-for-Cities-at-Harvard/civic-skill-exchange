@@ -675,6 +675,11 @@ export const en = {
         `for it. If you are signed in to GitHub as \`${owner}\`, change the ` +
         `username to \`${owner}\`.`,
       /** The username box is empty, so no path can be given yet (#293, S-2). */
+      /** Why the folder download is held, on the skill route and the plugin
+       *  route alike (#302, S-15). */
+      downloadWhy: "Enter your GitHub username above, and the download is ready.",
+      /** The summary of a file shown whole, before it is uploaded. */
+      seeFile: (path: string) => `See all of ${path}`,
       usernameNeeded:
         "Type your GitHub username above first. It names the folder your " +
         "submission goes in, so the upload, the download and the commands " +
@@ -878,7 +883,11 @@ export const en = {
       versionHint:
         "Your own number for it, like `1.0` or `0.3.4`. Optional, and nothing " +
         "checks it.",
-      downloadWhy: "Enter your GitHub username above, and the download is ready.",
+      /** The plugin's own help for the username box (#302, S-15): the folder it
+       *  names is the plugin's, not a skill's. */
+      namespaceHint:
+        "This has to match your login exactly \u2014 your plugin goes in a folder of " +
+        "that name, and only you can write there.",
 
       nameLabel: "Plugin name",
       /** `manifestName` is `{namespace}-{name}`, which the page writes. */

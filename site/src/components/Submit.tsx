@@ -5,7 +5,7 @@ import { SKILL_LAYOUT, checkStructureCore } from "@civic-skill-exchange/validato
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   fitsInUrl, recipe, recipeInput, slugify, type Draft,
-  hasNamespace, usableFork,
+  hasNamespace, usableFork, folderReady,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
@@ -282,7 +282,7 @@ export function Submit(
   );
   const urlFits = useMemo(() => fitsInUrl(url), [url]);
   const badLogin = draft.author.trim() !== "" && !isGitHubLogin(draft.author.trim());
-  const ready = draft.author.trim() !== "" && !badLogin && draft.name.trim() !== "";
+  const ready = folderReady(draft);
 
   // The one thing that blocks. A path escape, a symlink, a blocked file type or
   // a size cap cannot be fixed by editing a field, and handing off would open a
@@ -875,6 +875,9 @@ export function Submit(
               <p className="submit__note" data-testid="multi-file-note">
                 {t.send.multiFileNote(source?.entries.length ?? 0)}
               </p>
+              {!ready && !blocked && (
+                <p className="submit__note" data-testid="download-why">{t.send.downloadWhy}</p>
+              )}
               <UploadSteps
                 repo={repo} reserved={reserved} tree="skills"
                 draft={draft} folderName={folderName}

@@ -30,7 +30,7 @@ import {
   type PluginDraft,
 } from "../lib/plugin";
 import {
-  slugify, recipe, recipeInput, type Draft, hasNamespace, usableFork,
+  slugify, recipe, recipeInput, type Draft, hasNamespace, usableFork, folderReady,
 } from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { isGitHubLogin } from "../lib/login";
@@ -83,6 +83,15 @@ function FindingList({ findings, testid, heading }: {
         ))}
       </ul>
     </div>
+  );
+}
+
+function FullFile({ path, text, summary }: { path: string; text: string; summary: string }) {
+  return (
+    <details className="disclosure" data-testid={`file-${path}`}>
+      <summary className="disclosure__summary">{summary}</summary>
+      <pre className="submit__yaml"><code>{text}</code></pre>
+    </details>
   );
 }
 
@@ -226,7 +235,7 @@ export function PluginSubmit(
   const folderName = draft.name.trim() || directoryName || "plugin";
   const ns = draft.author.trim().toLowerCase();
   const badLogin = ns !== "" && !isGitHubLogin(ns);
-  const ready = ns !== "" && !badLogin && draft.name.trim() !== "";
+  const ready = folderReady(draft);
 
   // What plugin.json already answered, named so a submitter who did not write
   // it sees whose name they are about to publish under.
@@ -431,7 +440,7 @@ export function PluginSubmit(
         {fromFile.length > 0 && (
           <p className="submit__ok" data-testid="plugin-from-file">{p.fromFile(fromFile.join(", "))}</p>
         )}
-        <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={f.namespaceHint}>
+        <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={p.namespaceHint}>
           <input id="namespace" className="input" value={draft.author}
             onChange={onInput("author")} autoComplete="off" />
           {reserved ? (
@@ -575,11 +584,25 @@ export function PluginSubmit(
             summary={p.addedSummary(path, lines.length)} />;
         })}
 
+        {/* The whole of each file as it will be uploaded, not only the lines
+            the page added: a diff shows what changed, and this shows what the
+            reviewer will read (#302, S-15). */}
+        <FullFile path={PLUGIN_MANIFEST} text={manifest.text} summary={t.send.seeFile(PLUGIN_MANIFEST)} />
+        {(conversion?.mcp ?? source.mcp) && (
+          <FullFile path={PLUGIN_MCP_CONFIG} text={(conversion?.mcp ?? source.mcp)!}
+            summary={t.send.seeFile(PLUGIN_MCP_CONFIG)} />
+        )}
+        {source.skills.map((sk) => {
+          const path = skillMdPath(sk.name);
+          return <FullFile key={path} path={path} text={skills[sk.name]!.skillMd}
+            summary={t.send.seeFile(path)} />;
+        })}
+
         <p className="submit__note" data-testid="multi-file-note">
           {p.multiFileNote(source.entries.length)}
         </p>
         {!ready && !blocked && (
-          <p className="submit__note" data-testid="download-why">{p.downloadWhy}</p>
+          <p className="submit__note" data-testid="download-why">{t.send.downloadWhy}</p>
         )}
         <UploadSteps
           repo={repo} reserved={reserved} tree="plugins"

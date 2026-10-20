@@ -598,6 +598,8 @@ export const strings: Strings = {
         "de usuario, y solo esa cuenta puede abrir el pull request para ella. " +
         `Si inició sesión en GitHub como \`${owner}\`, cambie el nombre de ` +
         `usuario a \`${owner}\`.`,
+      downloadWhy: "Escriba arriba su nombre de usuario de GitHub y la descarga estará lista.",
+      seeFile: (path: string) => `Ver todo ${path}`,
       usernameNeeded:
         "Primero escriba arriba su nombre de usuario de GitHub. Da nombre a la " +
         "carpeta donde va su propuesta, así que la subida, la descarga y los " +
@@ -784,7 +786,9 @@ export const strings: Strings = {
       deploymentLabel: "¿Lo ha usado?",
       versionHint:
         "Su propio número para él, como `1.0` o `0.3.4`. Es opcional y nada lo verifica.",
-      downloadWhy: "Escriba arriba su nombre de usuario de GitHub y la descarga estará lista.",
+      namespaceHint:
+        "Tiene que coincidir exactamente con su usuario: su plugin va en una " +
+        "carpeta con ese nombre, y solo usted puede escribir ahí.",
 
       nameLabel: "Nombre del plugin",
       nameHint: (manifestName: string) =>

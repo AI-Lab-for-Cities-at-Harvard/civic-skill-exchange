@@ -11,6 +11,7 @@
 import type { Frontmatter } from "@civic-skill-exchange/validator";
 import { en } from "../i18n/en";
 import { repoSlug } from "./repo";
+import { isGitHubLogin } from "./login";
 
 export interface Draft {
   /** GitHub login. The namespace, and what L1 checks the commit author against. */
@@ -543,6 +544,14 @@ export function recipeInput(
  *  empty each one reads `skills//…`. The page withholds them instead. */
 export function hasNamespace(draft: Pick<Draft, "author">): boolean {
   return namespaceOf(draft) !== "";
+}
+
+/** Whether the corrected folder can be handed back: a username GitHub would
+ *  allow, and a name for the folder. One rule for the skill route and the
+ *  plugin route (#302, S-15), so they cannot drift apart again. */
+export function folderReady(draft: { author: string; name: string }): boolean {
+  const login = draft.author.trim();
+  return login !== "" && isGitHubLogin(login) && draft.name.trim() !== "";
 }
 
 /** The account a pasted fork lives under, or null. */
