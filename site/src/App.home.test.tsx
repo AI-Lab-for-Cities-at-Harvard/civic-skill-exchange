@@ -6,6 +6,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 import { DEFAULT_LOCALE, setLocale } from "./i18n/strings";
 import { makeIndex, makeSkill } from "./test/fixtures";
+import { waitForLazyPage } from "./test/lazy";
 
 beforeEach(() => {
   Element.prototype.scrollIntoView ??= () => {};
@@ -36,6 +37,7 @@ describe("the home page's call to action", () => {
     window.location.hash = "#/guide";
     render(<App />);
     await screen.findByTestId("footer-meta");
+    await waitForLazyPage();
     expect(screen.queryByTestId("home-submit")).not.toBeInTheDocument();
   });
 

@@ -16,6 +16,7 @@ import App from "./App";
 import { DEFAULT_LOCALE, locales, setLocale, strings } from "./i18n/strings";
 import { findViolations, describeViolations } from "./test/axe";
 import { makeIndex, makeSkill } from "./test/fixtures";
+import { waitForLazyPage } from "./test/lazy";
 
 const INDEX = makeIndex([
   makeSkill(),
@@ -44,7 +45,8 @@ async function expectPageClean(ready?: () => Element | null) {
   const host = document.body.appendChild(document.createElement("div"));
   const { container } = render(<App />, { container: host });
   await waitFor(() => expect(screen.getByTestId("footer-meta")).toBeInTheDocument());
-  if (ready) await waitFor(() => expect(ready()).not.toBeNull());
+  // A page loaded on demand is checked once it has arrived, not its fallback.
+  await waitForLazyPage(ready);
   const violations = await findViolations(container);
   expect(violations, describeViolations(violations)).toEqual([]);
 }
@@ -68,7 +70,7 @@ describe.each(locales())("the whole page has no axe violations — %s", (tag) =>
 
   it("the guide", async () => {
     window.location.hash = "#/guide";
-    // Its own chunk: wait for the page itself, not just the chrome.
+    // Its own chunk: wait for the page itself, not just its fallback clearing.
     await expectPageClean(() => document.getElementById("glossary"));
   });
 });

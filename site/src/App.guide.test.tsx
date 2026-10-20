@@ -6,6 +6,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import App from "./App";
 import { DEFAULT_LOCALE, setLocale } from "./i18n/strings";
 import { makeIndex, makeSkill } from "./test/fixtures";
+import { waitForLazyPage } from "./test/lazy";
 
 beforeEach(() => {
   Element.prototype.scrollIntoView ??= () => {};
@@ -49,7 +50,8 @@ describe("the Guide header item", () => {
     render(<App />);
     await screen.findByTestId("footer-meta");
     // The page is its own chunk, so it arrives after the chrome.
-    expect(await screen.findByRole("heading", { level: 2, name: "Using the Exchange" }))
+    await waitForLazyPage();
+    expect(screen.getByRole("heading", { level: 2, name: "Using the Exchange" }))
       .toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Guide" })).toHaveAttribute("aria-current", "page");
   });
