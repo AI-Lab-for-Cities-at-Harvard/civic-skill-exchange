@@ -253,7 +253,7 @@ export function newFileUrl(repo: string, draft: Draft, yaml: string): string {
 }
 
 /** Flow 2, where `path` is the directory holding the skill's own `SKILL.md`:
- *  the index's `skill_path`, or `path` for a listing that is still flat.
+ *  the index's `skill_path`.
  *
  *  `value=` prefills new files only — GitHub offers no equivalent for
  *  editing an existing one, and the site could not supply the current contents

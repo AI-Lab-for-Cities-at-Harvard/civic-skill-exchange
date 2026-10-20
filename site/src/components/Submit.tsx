@@ -823,7 +823,7 @@ export function Submit(
             <pre className="submit__yaml"><code>{
 `  civic.use-when: "When this skill earns its place."
   civic.avoid-when: "When it does not."`}</code></pre>
-            <a className="btn btn--strong" href={editUrl(repo, listed.skill_path ?? listed.path)}>
+            <a className="btn btn--strong" href={editUrl(repo, listed.skill_path)}>
               {t.update.editCta(listed.id)}
             </a>
           </div>

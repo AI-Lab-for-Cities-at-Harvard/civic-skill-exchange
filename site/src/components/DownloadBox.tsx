@@ -45,7 +45,9 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
     {
       id: "degit",
       label: s.download.commands.degit,
-      value: `npx degit ${repo}/${skill.path} ${skill.name}`,
+      // The skill's own folder, not the listing around it (ADR 0006): what
+      // lands is {name}/SKILL.md, ready for a skills directory.
+      value: `npx degit ${repo}/${skill.skill_path} ${skill.name}`,
     },
     {
       id: "clone",
