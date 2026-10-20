@@ -39,6 +39,7 @@ import { useDraftSaver } from "../lib/useDraftSaver";
 import { DraftBar } from "./DraftBar";
 import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
+import { Stack, Cluster } from "./Layout";
 import { UploadSteps } from "./UploadSteps";
 import { AfterHandoff } from "./AfterHandoff";
 
@@ -71,9 +72,9 @@ function FindingList({ findings, testid, heading }: {
   const form = useStrings().submit.form;
   if (findings.length === 0) return null;
   return (
-    <div data-testid={testid}>
+    <Stack gap="4" data-testid={testid}>
       {heading && <p className="submit__note">{heading}</p>}
-      <ul className="submit__findings">
+      <Stack as="ul" gap="2" className="submit__findings">
         {findings.map((f) => (
           <li key={`${f.where}${f.message}`}><code>{
             /* The question, not the key it is stored under. A file path stays. */
@@ -81,8 +82,8 @@ function FindingList({ findings, testid, heading }: {
               ?? f.where
           }</code> {f.message}</li>
         ))}
-      </ul>
-    </div>
+      </Stack>
+    </Stack>
   );
 }
 
@@ -90,7 +91,7 @@ function FullFile({ path, text, summary }: { path: string; text: string; summary
   return (
     <details className="disclosure" data-testid={`file-${path}`}>
       <summary className="disclosure__summary">{summary}</summary>
-      <pre className="submit__yaml"><code>{text}</code></pre>
+      <Stack gap="3"><pre className="submit__yaml"><code>{text}</code></pre></Stack>
     </details>
   );
 }
@@ -100,7 +101,9 @@ function Added({ file, lines, summary }: { file: string; lines: string[]; summar
   return (
     <details className="disclosure" data-testid={`added-${file}`}>
       <summary className="disclosure__summary">{summary}</summary>
-      <pre className="submit__yaml"><code>{lines.map((l) => `+ ${l}`).join("\n")}</code></pre>
+      <Stack gap="3">
+        <pre className="submit__yaml"><code>{lines.map((l) => `+ ${l}`).join("\n")}</code></pre>
+      </Stack>
     </details>
   );
 }
@@ -362,7 +365,7 @@ export function PluginSubmit(
     return (
       <dl className="submit__answers" data-testid="skill-answers">
         {rows.filter(([, v]) => v).map(([k, v]) => (
-          <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+          <Cluster key={k} gap="2" align="start"><dt>{k}</dt><dd>{v}</dd></Cluster>
         ))}
       </dl>
     );
@@ -375,7 +378,7 @@ export function PluginSubmit(
         <DraftBar restored={restoredNow} notKept={addressesLost}
           unsaved={cannotSave} onStartOver={startOver} />
       )}
-      <section className="prose__block" data-testid="plugin-summary">
+      <Stack as="section" gap="4" className="prose__block" data-testid="plugin-summary">
         <h2 className="h2">{p.heading}</h2>
         {conversion && (
           <>
@@ -385,21 +388,21 @@ export function PluginSubmit(
               })}
             </p>
             {conversion.findings.length > 0 && (
-              <div data-testid="conversion-findings">
+              <Stack gap="4" data-testid="conversion-findings">
                 <p className="submit__note">{p.convertedFindings}</p>
-                <ul className="submit__findings">
+                <Stack as="ul" gap="2" className="submit__findings">
                   {conversion.findings.map((x) => (
                     <li key={`${x.where}${x.message}`}><code>{x.where}</code> {rich(x.message)}</li>
                   ))}
-                </ul>
-              </div>
+                </Stack>
+              </Stack>
             )}
-            {conversion.addressable.map((name) => {
+            {conversion.addressable.length > 0 && <Stack gap="5">{conversion.addressable.map((name) => {
               const boxId = `server-address-${name}:url`;
               const typed = addresses[name] ?? "";
               const refused = conversion.refused[name];
               return (
-                <div key={name} data-testid={`server-address-${name}`}>
+                <Stack key={name} gap="5" data-testid={`server-address-${name}`}>
                   <Field id={boxId} label={p.addressLabel(name)} hint={rich(p.addressHint)}
                     findings={refused ? [{ where: boxId, message: p.addressRefused(refused) }] : []}>
                     <input id={boxId} className="input" type="url" value={typed}
@@ -411,34 +414,40 @@ export function PluginSubmit(
                       </p>
                     )}
                   </Field>
-                </div>
+                </Stack>
               );
-            })}
+            })}</Stack>}
           </>
         )}
-        <p>{rich(p.summary(folderName, source.skills.length, servers.length))}</p>
-        <h3 className="h3">{p.skillsLabel}</h3>
-        <ul>
-          {source.skills.map((sk) => <li key={sk.name}><code>{sk.name}</code></li>)}
-        </ul>
-        {servers.length > 0 && (
-          <>
-            <h3 className="h3">{p.serversLabel}</h3>
+        {/* What was found: a lead-in, then the skills and the servers, each a
+            heading over its list. 32px between them, 16px within one. */}
+        <Stack gap="6">
+          <p>{rich(p.summary(folderName, source.skills.length, servers.length))}</p>
+          <Stack gap="4">
+            <h3 className="h3">{p.skillsLabel}</h3>
             <ul>
-              {servers.map((sv) => (
-                <li key={sv.name}>{rich(sv.type === "stdio"
-                  ? p.localServer(sv.name, sv.target)
-                  : p.remoteServer(sv.name, sv.target))}</li>
-              ))}
+              {source.skills.map((sk) => <li key={sk.name}><code>{sk.name}</code></li>)}
             </ul>
-          </>
-        )}
+          </Stack>
+          {servers.length > 0 && (
+            <Stack gap="4">
+              <h3 className="h3">{p.serversLabel}</h3>
+              <ul>
+                {servers.map((sv) => (
+                  <li key={sv.name}>{rich(sv.type === "stdio"
+                    ? p.localServer(sv.name, sv.target)
+                    : p.remoteServer(sv.name, sv.target))}</li>
+                ))}
+              </ul>
+            </Stack>
+          )}
+        </Stack>
         <p className="submit__warn">{p.reviewed}</p>
 
         {leftOut.length > 0 && (
-          <ul className="submit__findings" data-testid="left-out">
+          <Stack as="ul" gap="2" className="submit__findings" data-testid="left-out">
             {leftOut.map((m) => <li key={m}>{m}</li>)}
-          </ul>
+          </Stack>
         )}
         <FindingList findings={check.structural} testid="structural" />
         {blocked && (
@@ -447,12 +456,13 @@ export function PluginSubmit(
         {[...read.problems, ...manifest.problems].map((m) => (
           <p className="field__finding" key={m}>{m}</p>
         ))}
-      </section>
+      </Stack>
 
-      <section className="prose__block">
+      <Stack as="section" gap="4" className="prose__block">
         {fromFile.length > 0 && (
           <p className="submit__ok" data-testid="plugin-from-file">{p.fromFile(fromFile.join(", "))}</p>
         )}
+        <Stack gap="5">
         <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={p.namespaceHint}>
           <input id="namespace" className="input" value={draft.author}
             onChange={onInput("author")} autoComplete="off" />
@@ -518,7 +528,9 @@ export function PluginSubmit(
 
         <details className="disclosure">
           <summary className="h3 disclosure__summary">{t.optional.summary}</summary>
+          <Stack gap="4">
           <p className="field__hint">{p.fitHint}</p>
+          <Stack gap="5">
           <Field id={id("useWhen")} label={t.optional.useWhenLabel} findings={manifestFindings}>
             <textarea id={id("useWhen")} className="textarea" rows={2}
               value={draft.useWhen} onChange={onInput("useWhen")} />
@@ -546,17 +558,21 @@ export function PluginSubmit(
               onChange={onInput("deployedSince")}
               placeholder={t.optional.deployedSincePlaceholder} />
           </Field>
+          </Stack>
+          </Stack>
         </details>
+        </Stack>
 
         <FindingList findings={otherManifest} testid={`findings-${PLUGIN_MANIFEST}`}
           heading={p.fileFindings(PLUGIN_MANIFEST)} />
         <FindingList findings={check.mcp} testid={`findings-${PLUGIN_MCP_CONFIG}`}
           heading={p.fileFindings(PLUGIN_MCP_CONFIG)} />
-      </section>
+      </Stack>
 
-      <section className="prose__block">
+      <Stack as="section" gap="4" className="prose__block">
         <h2 className="h2">{p.skillsHeading}</h2>
         <p>{p.skillsLede}</p>
+        <Stack gap="2">
         {source.skills.map((sk) => {
           const findings = check.skills[sk.name] ?? [];
           const questions = asked[sk.name] ?? [];
@@ -573,21 +589,25 @@ export function PluginSubmit(
                   {findings.length === 0 ? p.skillComplete : p.skillOpen(findings.length)}
                 </span>
               </summary>
-              {questions.map((key) => question(sk.name, key, findings))}
-              {questions.length === 0 && answered(sk.name)}
-              <FindingList findings={other} testid={`findings-skills/${sk.name}`}
-                heading={p.skillOther} />
-              {skills[sk.name]!.problems.map((m) => (
-                <p className="field__finding" key={m}>{m}</p>
-              ))}
+              <Stack gap="5">
+                {questions.map((key) => question(sk.name, key, findings))}
+                {questions.length === 0 && answered(sk.name)}
+                <FindingList findings={other} testid={`findings-skills/${sk.name}`}
+                  heading={p.skillOther} />
+                {skills[sk.name]!.problems.map((m) => (
+                  <p className="field__finding" key={m}>{m}</p>
+                ))}
+              </Stack>
             </details>
           );
         })}
-      </section>
+        </Stack>
+      </Stack>
 
-      <section className="prose__block">
+      <Stack as="section" gap="4" className="prose__block">
         <h2 className="h2">{t.send.heading}</h2>
         <p className="submit__note">{t.send.addedNote}</p>
+        <Stack gap="3">
         <Added file={PLUGIN_MANIFEST} lines={manifestAdded}
           summary={p.addedSummary(PLUGIN_MANIFEST, manifestAdded.length)} />
         <Added file={PLUGIN_MCP_CONFIG} lines={mcpAdded}
@@ -612,6 +632,7 @@ export function PluginSubmit(
           return <FullFile key={path} path={path} text={skills[sk.name]!.skillMd}
             summary={t.send.seeFile(path)} />;
         })}
+        </Stack>
 
         {!attempted && waiting > 0 && (
           <p className="submit__note" data-testid="status">
@@ -642,20 +663,22 @@ export function PluginSubmit(
 
         <details className="disclosure">
           <summary className="disclosure__summary">{t.send.commandLine}</summary>
-          <p className="submit__note">{t.send.recipeIntro}</p>
-          {/* Withheld with the box empty: every line would name plugins//… (S-2). */}
-          {hasNamespace(draft) ? (
-            <pre className="submit__yaml" data-testid="command-line"><code>{
-              recipe(recipeInput(repo, usableFork(forkInput, repo), draft, "plugins", "your-plugin"))
-            }</code></pre>
-          ) : (
-            <p className="submit__note" data-testid="username-needed">
-              {t.send.usernameNeeded}
-            </p>
-          )}
-          <p className="submit__note">{t.send.recipeAfter}</p>
+          <Stack gap="4">
+            <p className="submit__note">{t.send.recipeIntro}</p>
+            {/* Withheld with the box empty: every line would name plugins//… (S-2). */}
+            {hasNamespace(draft) ? (
+              <pre className="submit__yaml" data-testid="command-line"><code>{
+                recipe(recipeInput(repo, usableFork(forkInput, repo), draft, "plugins", "your-plugin"))
+              }</code></pre>
+            ) : (
+              <p className="submit__note" data-testid="username-needed">
+                {t.send.usernameNeeded}
+              </p>
+            )}
+            <p className="submit__note">{t.send.recipeAfter}</p>
+          </Stack>
         </details>
-      </section>
+      </Stack>
     </div>
     </AttemptedProvider>
   );
