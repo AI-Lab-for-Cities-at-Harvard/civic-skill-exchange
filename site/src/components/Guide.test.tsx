@@ -69,10 +69,44 @@ describe("the guide page", () => {
       .toContain("A fork is your own copy of the exchange on GitHub");
   });
 
-  it("says Codex's marketplace is for plugins, and sends a single skill to the download", () => {
+  /* #276: every single skill is in the Agent Plugins layout (ADR 0006), so
+     Codex's marketplace installs one by name again, as Claude Code's does. */
+  it("installs any listing by name from Codex's marketplace", () => {
     const { container } = render(<Guide />);
-    expect(container.querySelector("#marketplace-codex")?.textContent).toMatch(/plugin/i);
+    const codex = container.querySelector("#marketplace-codex")?.textContent ?? "";
+    expect(codex).toContain("codex plugin add {namespace}-{name}@civic-skill-exchange");
+    expect(codex).not.toMatch(/does not load|not load yet/);
     expect(container.querySelector("#codex")?.textContent).toContain(".agents/skills/");
+    expect(container.querySelector("#codex")?.textContent).not.toMatch(/not single skills yet/);
+  });
+
+  it("sends a Codex reader of the install section to the marketplace", () => {
+    const { container } = render(<Guide />);
+    expect(container.querySelector('#codex a[href$="/marketplace-codex"]')).not.toBeNull();
+  });
+
+  /* ADR 0006, "Existing installs": a skill installed before the move updates
+     in place under the same id. */
+  it("tells a Claude Code user with an older install to run claude plugin update", () => {
+    const { container } = render(<Guide />);
+    expect(container.querySelector("#marketplace-claude-code")?.textContent)
+      .toContain("claude plugin update");
+  });
+
+  it("tells a Codex user that the marketplace upgrade picks it up", () => {
+    const { container } = render(<Guide />);
+    expect(container.querySelector("#marketplace-codex")?.textContent)
+      .toContain("codex plugin marketplace upgrade");
+  });
+
+  it("says the same in Spanish", async () => {
+    await setLocale("es");
+    const { container } = render(<Guide />);
+    expect(container.querySelector("#marketplace-claude-code")?.textContent)
+      .toContain("claude plugin update");
+    expect(container.querySelector("#marketplace-codex")?.textContent)
+      .toContain("codex plugin marketplace upgrade");
+    expect(container.querySelector('#codex a[href$="/marketplace-codex"]')).not.toBeNull();
   });
 
   it("gives the Claude Code marketplace command with --sparse", () => {

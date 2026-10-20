@@ -279,22 +279,19 @@ def test_review_md_says_what_earns_a_language_entry() -> None:
 
 
 # --------------------------------------------------------------------------- #
-# #240 (ruling 4 on #207): `codex plugin add` installs a single-skill listing
-# and loads nothing, so until every listing is a plugin (M9) the docs offer the
-# Codex marketplace for plugins only, and the download for a single skill.
+# #240 (ruling 4 on #207) took `codex plugin add` away from single skills,
+# because Codex installed a flat listing and loaded nothing. #276 (step 4 of
+# ADR 0006) moved every single skill into the Agent Plugins layout, so the docs
+# offer it again.
 
 # SUBMITTING.md points at the site's guide for installing since #258, so the
 # Codex lines are README's; the guide's own tests cover the page.
 CODEX_DOCS = ("README.md",)
 
 
-def test_no_doc_offers_codex_plugin_add_for_a_single_skill() -> None:
+def test_the_readme_offers_codex_plugin_add_for_a_single_skill() -> None:
     for doc in CODEX_DOCS:
-        for line in _text(doc).splitlines():
-            if "codex plugin add" in line:
-                assert "{skill-name}" not in line, (
-                    f"{doc} offers `codex plugin add` for a single skill, which "
-                    f"installs and loads nothing (#207): {line.strip()}")
+        assert "codex plugin add {namespace}-{skill-name}@civic-skill-exchange" in _text(doc), doc
 
 
 def test_the_codex_marketplace_is_still_offered_for_plugins() -> None:
@@ -302,14 +299,73 @@ def test_the_codex_marketplace_is_still_offered_for_plugins() -> None:
         assert "codex plugin add {namespace}-{plugin-name}@civic-skill-exchange" in _text(doc), doc
 
 
-def test_a_codex_user_with_a_single_skill_is_pointed_at_the_download() -> None:
-    for doc in CODEX_DOCS:
-        text = _text(doc)
-        assert ".agents/skills/" in text, doc
-        assert "#207" in text, f"{doc} does not say why single skills are not in Codex's marketplace yet"
+def test_no_doc_still_says_a_single_skill_does_not_load_in_codex() -> None:
+    for doc in ("README.md", "CONTRIBUTING.md", "docs/SUBMITTING.md", "docs/ARCHITECTURE.md"):
+        text = " ".join(_text(doc).split())
+        for stale in ("does not load yet", "for **plugins**, for now",
+                      "Until every listing takes the plugin layout"):
+            assert stale not in text, f"{doc}: {stale}"
 
 
 # --------------------------------------------------------------------------- #
+# #276: one layout for a single skill, skills/{ns}/{name}/skills/{name}/, and
+# the docs that own it describe that one, with no transition left in them.
+
+NESTED_PATH = re.compile(r"skills/\{[^}]+\}/\{[^}]+\}/skills/\{[^}]+\}")
+LAYOUT_DOCS = ("docs/ARCHITECTURE.md", "CONTRIBUTING.md", "docs/SUBMITTING.md",
+               "docs/SECURITY.md", "docs/LOCALIZATION.md")
+
+
+def test_the_layout_docs_describe_one_layout() -> None:
+    for doc in LAYOUT_DOCS:
+        text = " ".join(_text(doc).split())
+        for stale in ("either layout", "both layouts", "During the move", "during the move",
+                      "until the move", "flat today", "Every listing is flat",
+                      "while the move", "A flat listing", "a flat listing"):
+            assert stale not in text, f"{doc} still describes the transition: {stale!r}"
+
+
+def test_the_layout_docs_name_the_nested_path() -> None:
+    for doc in ("docs/ARCHITECTURE.md", "CONTRIBUTING.md", "docs/SUBMITTING.md",
+                "docs/SECURITY.md"):
+        assert NESTED_PATH.search(_text(doc)), f"{doc} does not name skills/{{ns}}/{{name}}/skills/{{name}}"
+
+
+def test_localization_md_points_at_the_contracts_where_they_are() -> None:
+    text = _text("docs/LOCALIZATION.md")
+    for skill in ("generalize-skill", "localize-skill"):
+        assert f"skills/civic-skills/{skill}/skills/{skill}/references/contract.md" in text
+
+
+def test_the_readme_copies_a_single_skill_from_its_own_folder() -> None:
+    """degit and cp -r of the listing would bring the generated manifests and
+    leave SKILL.md a folder too deep for a skills directory (ADR 0006,
+    decision 3)."""
+    text = _text("README.md")
+    assert ("npx degit AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/"
+            "skills/{namespace}/{skill-name}/skills/{skill-name} ./{skill-name}") in text
+    assert ("cp -r civic-skill-exchange/skills/{namespace}/{skill-name}/skills/{skill-name} "
+            "~/.claude/skills/") in text
+
+
+def test_the_readme_submits_into_the_nested_path() -> None:
+    assert "skills/{your-github-username}/{skill-name}/skills/{skill-name}/" in _text("README.md")
+
+
+def test_adr_0005_points_at_adr_0006_for_the_single_skill_layout() -> None:
+    head = _text("docs/adr/0005-plugins-are-a-second-listing-kind.md").split("\n## ", 1)[0]
+    assert "0006-every-listing-in-the-agent-plugins-layout.md" in head
+
+
+def test_architecture_cites_the_adr_not_the_spike() -> None:
+    assert "spikes/every-listing-in-the-agent-plugins-layout.md" not in _text("docs/ARCHITECTURE.md")
+
+
+def test_security_md_says_a_skill_with_a_server_is_a_plugin() -> None:
+    text = " ".join(_text("docs/SECURITY.md").split())
+    assert "a skill with an mcp server is a plugin" in text.lower()
+
+
 # #243 (ruling a): the page's pull request link compares the fork's `main`, so
 # the upload step tells a fork's submitter to commit straight to `main`.
 
