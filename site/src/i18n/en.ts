@@ -1177,9 +1177,9 @@ export const en = {
               "`~/.agents/skills/` to have it everywhere.",
           ],
           notes: [
-            "Codex's own marketplace installs **plugins** from the exchange, " +
-              "but not single skills yet — that is coming. Until then the " +
-              "download is the way in.",
+            "Codex can also install a skill by name from its own " +
+              "marketplace, as Claude Code does: [add the exchange](marketplaceCodex) " +
+              "once.",
             "Other tools: check where yours looks for skills. `.agents/skills/` " +
               "in your project also works for Gemini CLI and Antigravity, and " +
               "Claude Code reads `.claude/skills/`.",
@@ -1201,16 +1201,21 @@ export const en = {
           notes: [
             "Add the exchange, then install any skill or plugin by name. Each " +
               "listing's page shows its exact install line.",
+            "Installed a skill from here before it moved into the plugin " +
+              "layout? Your copy keeps working. `claude plugin update " +
+              "{namespace}-{skill-name}@civic-skill-exchange` brings it up to " +
+              "date; restart Claude Code to load it.",
           ],
         },
         codex: {
           heading: "In Codex",
           notes: [
-            "Add the exchange, then install a plugin by name. Each plugin's " +
-              "page shows its exact line. As in Claude Code, `--sparse` " +
-              "downloads only the listings.",
-            "For now this is for **plugins**. A single skill installs but does " +
-              "not load yet, so use [the download](codex) instead.",
+            "Add the exchange, then install any skill or plugin by name, the " +
+              "same name as in Claude Code. Each plugin's page shows its exact " +
+              "line. As in Claude Code, `--sparse` downloads only the listings.",
+            "Installed a skill from here before it moved into the plugin " +
+              "layout? `codex plugin marketplace upgrade` brings it up to date, " +
+              "under the same name.",
           ],
         },
       },

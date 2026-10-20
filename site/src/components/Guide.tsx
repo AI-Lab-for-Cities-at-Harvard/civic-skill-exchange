@@ -8,7 +8,7 @@ import {
 import { guideHref } from "../lib/route";
 
 /** Links a product's text may make to another section of this page. */
-const LINKS = { codex: guideHref("codex") };
+const LINKS = { codex: guideHref("codex"), marketplaceCodex: guideHref("marketplace-codex") };
 
 interface ProductText {
   heading: string;
