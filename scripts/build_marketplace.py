@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""Generate the Claude Code plugin marketplace manifest.
+"""Generate the Claude Code and Codex plugin marketplace manifests.
 
-Every skill in the registry is already a valid Agent Skill — a directory with
-SKILL.md at its top level — which is exactly what Claude Code loads as a
-single-skill plugin. So this file makes the registry installable without moving
-anything: each plugin entry names its own `source`, and a relative path resolves
+Every single-skill listing is a plugin in the Agent Plugins layout (ADR 0006):
+the author's skill is in `skills/{name}/` under the listing, which is where both
+Claude Code and Codex look for a plugin's skills by default. Each plugin entry
+names its own `source`, the listing directory, and a relative path resolves
 from the repository root, so the `{namespace}/` directory between `skills/` and
-the skill is invisible to the client. The namespace stays where it is, doing the
-ownership work rules.ts checks it for.
+the listing is invisible to the client. The namespace stays where it is, doing
+the ownership work rules.ts checks it for.
 
 **Why this is committed and not built.** `/plugin marketplace add owner/repo`
 reads the repository, not the published site. index.json can be a build output
@@ -97,7 +97,9 @@ def _assert_unique_plugin_names(entries: list[tuple[str, ...]]) -> None:
 #   - a marketplace is read from `.agents/plugins/marketplace.json`, and Codex
 #     does not read Claude's file — pointing it at this repository before this
 #     existed registered a marketplace that surfaced nothing;
-#   - a `SKILL.md` at the plugin root loads with `"skills": "./"`;
+#   - a plugin's skills are loaded from `skills/` under its root with no
+#     `skills` key, and a skills path of exactly `./` is refused, which is how
+#     every single skill once installed and loaded nothing (#207, ADR 0006);
 #   - `version` is optional. A manifest without one installs, landing under
 #     `local` rather than a version directory.
 #
@@ -160,10 +162,8 @@ def codex_plugin(listing: Path, labels: dict[str, str] | None = None) -> dict:
         **({"version": str(meta["version"])} if meta.get("version") else {}),
         "author": {"name": str(meta.get("civic.maintainer") or namespace)},
         "license": str(front.get("license") or ""),
-        # A flat listing has SKILL.md at its root, so Codex is told to look
-        # there. A nested one has it in skills/{name}/, which is where Codex
-        # looks without being told, and `"skills": "./"` would point it away.
-        **({"skills": "./"} if skill_dir == listing else {}),
+        # No `skills` key: SKILL.md is in skills/{name}/, which is where Codex
+        # looks without being told (ADR 0006).
         "interface": {
             "displayName": name.replace("-", " ").title(),
             "shortDescription": short(description),
@@ -206,12 +206,12 @@ def build_codex(root: Path = ROOT) -> dict:
 # --------------------------------------------------------------------------- #
 # Claude (#183).
 #
-# A plugin with a SKILL.md at its root, no `skills/` subdirectory and no
-# `skills` manifest field is loaded by Claude Code as a single-skill plugin —
-# documented, and the CLI installs this registry that way with no manifest at
-# all. The desktop app's plugin browser shows nothing from this marketplace and
-# reports no error, and the hypothesis under test here is that it wants
-# `.claude-plugin/plugin.json` in every plugin.
+# Claude Code loads a plugin's skills from `skills/` under its root, which is
+# where a single-skill listing keeps its skill (ADR 0006), and the CLI installs
+# this registry with no manifest at all. The desktop app's plugin browser
+# showed nothing from this marketplace and reported no error, and the
+# hypothesis under test here is that it wants `.claude-plugin/plugin.json` in
+# every plugin.
 #
 # Metadata only, and deliberately: `hooks`, `mcpServers`, `commands`, `agents`
 # and the rest are honoured by code rather than by a model, which is why L0
@@ -220,15 +220,12 @@ def build_codex(root: Path = ROOT) -> dict:
 # `build_marketplace.py --check` blocks a pull request whose copy differs, so
 # nothing an author writes here survives.
 #
-# No `skills` field. `"skills": "./"` is what the Codex manifest needs, and
-# setting it here would take away the very root-SKILL.md path that loads the
-# skill.
+# No `skills` field: the default, `skills/`, is where the skill is.
 
 
 def claude_plugin(listing: Path) -> dict:
-    """The `.claude-plugin/plugin.json` for one single-skill listing, the same
-    for a flat one and a nested one. Raises NoSkillMd when the listing's
-    SKILL.md can't be found."""
+    """The `.claude-plugin/plugin.json` for one single-skill listing. Raises
+    NoSkillMd when the listing's SKILL.md can't be found."""
     front = read_frontmatter(checked_skill_dir(listing) / "SKILL.md") or {}
     meta = front.get("metadata") or {}
     namespace, name = listing.parent.name, listing.name
@@ -464,17 +461,17 @@ def generated(root: Path) -> dict[Path, str]:
         root / CODEX_MANIFEST: render(build_codex(root)),
     }
     labels = category_labels(root)
-    # `skill_dir` (the listing) and these two output paths are read by the
-    # validator's discover.test.ts to learn what the generator writes.
-    for skill_dir in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
-        if not read_frontmatter(checked_skill_dir(skill_dir) / "SKILL.md"):
+    # The validator's discover.test.ts asks `--paths` for what this writes, so
+    # the exemption it holds to the generator follows this, not a copy of it.
+    for listing in sorted(p for p in (root / "skills").glob("*/*") if p.is_dir()):
+        if not read_frontmatter(checked_skill_dir(listing) / "SKILL.md"):
             continue
-        # At the listing root in both layouts: a nested listing's inner
-        # directory is the author's, and is what the archive is made from.
-        out[skill_dir / ".codex-plugin" / "plugin.json"] = render(
-            codex_plugin(skill_dir, labels))
-        out[skill_dir / ".claude-plugin" / "plugin.json"] = render(
-            claude_plugin(skill_dir))
+        # At the listing root: the inner directory is the author's, and is
+        # what the archive is made from.
+        out[listing / ".codex-plugin" / "plugin.json"] = render(
+            codex_plugin(listing, labels))
+        out[listing / ".claude-plugin" / "plugin.json"] = render(
+            claude_plugin(listing))
     for plugin_dir in plugin_dirs(root):
         out[plugin_dir / ".claude-plugin" / "plugin.json"] = render(
             claude_plugin_for_plugin(plugin_dir))

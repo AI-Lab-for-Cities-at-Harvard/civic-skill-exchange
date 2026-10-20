@@ -32,11 +32,9 @@ SKILLS_DIR = ROOT / "skills"
 
 FRONTMATTER_RE = re.compile(r"\A---\s*\n(.*?)\n---\s*(?:\n|\Z)", re.DOTALL)
 
-#: The MCP server declaration a client reads at the plugin root. Allowed in a
-#: skill by the ruling on #151 — an MCP server can be genuinely useful — and
-#: therefore published as executed: the skill directory *is* the Claude plugin
-#: root, so a client launches what this file names on install. Only the root
-#: copy is loaded; one under references/ is an example.
+#: The MCP server declaration Claude Code reads at a plugin's root, which the
+#: registry generates from the author's `mcp.json` (ADR 0005). A single skill
+#: has none: a skill with an MCP server is a plugin (ADR 0006, decision 5).
 MCP_CONFIG = ".mcp.json"
 
 REPO_URL = "https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange"
@@ -237,61 +235,64 @@ class NoSkillMd(ValueError):
     """A single-skill listing whose own SKILL.md can't be found."""
 
 
-def skill_dir_of(listing: Path) -> Path:
-    """The directory holding a single skill's own SKILL.md (ADR 0006).
+def nested_skill_md(listing: Path) -> str:
+    """Where a single skill's SKILL.md goes, relative to the repository."""
+    return f"skills/{listing.parent.name}/{listing.name}/skills/{listing.name}/SKILL.md"
 
-    Nested, it is `skills/{name}/` inside the listing; flat, the listing itself,
-    until the move retires that layout. Raises rather than returning None, so a
-    reader can't drop the listing without saying so.
+
+def skill_dir_of(listing: Path) -> Path:
+    """The directory holding a single skill's own SKILL.md: `skills/{name}/`
+    inside the listing (ADR 0006).
+
+    A SKILL.md at the listing root is the retired flat layout. No client loads
+    it, so it is refused with the path it belongs at rather than read. Raises
+    rather than returning None, so a reader can't drop the listing without
+    saying so.
     """
-    nested = listing / "skills" / listing.name
+    inner = listing / "skills" / listing.name
     # The index reads and archives what this returns before L0's symlink rule
     # runs, so a link on the way to SKILL.md must not lead outside the listing.
-    for path in (listing / "skills", nested, nested / "SKILL.md", listing / "SKILL.md"):
+    for path in (listing / "skills", inner, inner / "SKILL.md", listing / "SKILL.md"):
         if path.is_symlink():
             raise NoSkillMd(f"{path} is a symlink; a skill's own files must be in the listing.")
-    has_nested = (nested / "SKILL.md").is_file()
-    has_flat = (listing / "SKILL.md").is_file()
-    if has_nested and has_flat:
-        raise NoSkillMd(f"{listing} has a SKILL.md in both layouts: at its root and in skills/{listing.name}/.")
-    if has_nested:
-        return nested
-    if has_flat:
-        return listing
-    raise NoSkillMd(f"{listing} has no SKILL.md, at its root or in skills/{listing.name}/.")
+    if (listing / "SKILL.md").exists():
+        raise NoSkillMd(
+            f"{listing} has a SKILL.md at its root, where no client loads it. A "
+            f"single skill's files go one level down: move them to "
+            f"{nested_skill_md(listing).removesuffix('/SKILL.md')}/, so its "
+            f"SKILL.md is {nested_skill_md(listing)} (ADR 0006).")
+    if not (inner / "SKILL.md").is_file():
+        raise NoSkillMd(f"{listing} has no SKILL.md: it goes at {nested_skill_md(listing)}.")
+    return inner
 
 
 class StrayListingFile(ValueError):
-    """A nested listing holds a file that is neither the author's (inside
+    """A listing holds a file that is neither the author's (inside
     skills/{name}/) nor one the registry generates."""
 
 
-#: What build_marketplace.py writes at a nested listing's root.
+#: What build_marketplace.py writes at a single skill's listing root.
 LISTING_GENERATED = {".claude-plugin/plugin.json", ".codex-plugin/plugin.json"}
 
 
 def checked_skill_dir(listing: Path) -> Path:
-    """`skill_dir_of`, plus: a nested listing may hold nothing else.
+    """`skill_dir_of`, plus: the listing may hold nothing else.
 
     Everything the index and the archive publish is read from the inner
     directory, so a file beside it (a root `.mcp.json`, `hooks/`, `scripts/`)
     would be built into the listing and published with no "executed" signal.
-    L0 refuses such files; the build does not rely on that alone. A flat
-    listing is the listing itself and is unchanged.
+    L0 refuses such files; the build does not rely on that alone.
     """
     skill_dir = skill_dir_of(listing)
-    if skill_dir == listing:
-        return skill_dir
-    inner = listing / "skills" / listing.name
     for path in sorted(listing.rglob("*")):
         if path.is_dir() and not path.is_symlink():
             continue
-        if path == inner or inner in path.parents:
+        if path == skill_dir or skill_dir in path.parents:
             continue
         rel = path.relative_to(listing).as_posix()
         if rel not in LISTING_GENERATED:
             raise StrayListingFile(
-                f"{listing}: {rel} is in a nested listing but is neither in "
+                f"{listing}: {rel} is in the listing but is neither in "
                 f"skills/{listing.name}/ nor a file the registry generates.")
     return skill_dir
 
@@ -372,16 +373,17 @@ def models_tested_of(meta: dict) -> list[str] | None:
 def is_executed(rel: str) -> bool:
     """Does the agent run this file rather than read it?
 
-    Two answers, and they are the same question: `scripts/` is the skill's own
-    code, and `.mcp.json` launches servers on install. Both are published as
-    executed, and the detail page and the index derive their lists from this one
-    predicate so they cannot come to disagree about what a listing does.
+    `scripts/` is the skill's own code. The detail page and the index derive
+    their lists from this one predicate so they cannot come to disagree about
+    what a listing does. A server config is not on the list: no client reads
+    one inside a skill's own directory, and a skill with an MCP server is a
+    plugin (ADR 0006, decision 5).
     """
     parts = rel.split("/")
     # `skills/*/scripts/` is the same rule a plugin applies (below), for a path
     # taken relative to a listing rather than to the skill inside it.
     in_listed_skill = len(parts) > 3 and parts[0] == "skills" and parts[2] == "scripts"
-    return rel.startswith("scripts/") or in_listed_skill or rel == MCP_CONFIG
+    return rel.startswith("scripts/") or in_listed_skill
 
 
 def executed_files(skill_dir: Path) -> list[str]:
@@ -459,11 +461,10 @@ def resolve_tier(skill_id: str, sha: str | None, attestation: dict | None) -> di
 
 
 def skill_path_of(listing: Path) -> str:
-    """Where the author's files are, relative to the repository: `path` for a
-    flat listing, `skills/{ns}/{name}/skills/{name}` for a nested one."""
-    inner = skill_dir_of(listing)
-    return f"skills/{listing.parent.name}/{listing.name}" + (
-        "" if inner == listing else f"/skills/{listing.name}")
+    """Where the author's files are, relative to the repository:
+    `skills/{ns}/{name}/skills/{name}`. NoSkillMd when SKILL.md isn't there."""
+    skill_dir_of(listing)
+    return nested_skill_md(listing).removesuffix("/SKILL.md")
 
 
 def build_entry(listing: Path, attestations: dict, scans: dict) -> dict | None:
@@ -539,15 +540,14 @@ def build_entry(listing: Path, attestations: dict, scans: dict) -> dict | None:
         "source": source_of(meta),
         "sha": sha,
         "history": history(listing),
-        # What the agent runs: scripts/, and the MCP servers .mcp.json declares
-        # (#151). Both keys are derived from one list, so a listing whose only
-        # executed file is an MCP config is not published as one that runs
-        # nothing.
+        # What the agent runs: scripts/. Both keys are derived from one list,
+        # so they cannot disagree.
         "has_scripts": bool(runs),
         "script_files": runs,
         "path": f"skills/{namespace}/{name}",
-        # Where SKILL.md and the rest of the author's files are: the listing
-        # itself while a flat one exists, skills/{name}/ inside it when nested.
+        # Where SKILL.md and the rest of the author's files are: skills/{name}/
+        # inside the listing (ADR 0006). `path` stays the listing, which is
+        # what the marketplaces install and the attestation pins.
         "skill_path": skill_path_of(listing),
         "download": f"{REPO_URL}/tree/main/skills/{namespace}/{name}",
     }
@@ -581,9 +581,9 @@ def build_detail(listing: Path, entry: dict) -> dict:
     reading the actual code should read it on GitHub, where they get the real
     thing rather than our rendering of it.
 
-    Files are the author's, relative to `skill_path`. For a nested listing that
-    leaves out the manifests the registry generates beside the inner directory,
-    which the author did not write and which are not in the archive.
+    Files are the author's, relative to `skill_path`. That leaves out the
+    manifests the registry generates beside the inner directory, which the
+    author did not write and which are not in the archive.
     """
     skill_dir = checked_skill_dir(listing)
     files = []
@@ -592,7 +592,7 @@ def build_detail(listing: Path, entry: dict) -> dict:
         files.append({
             "path": rel,
             "size": path.stat().st_size,
-            # Run, not read — scripts/, and the MCP config. The page says so.
+            # Run, not read — scripts/. The page says so.
             "executed": is_executed(rel),
         })
 
@@ -780,7 +780,7 @@ ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
 def write_archive(skill_dir: Path, entry: dict, files: list[dict], target: Path) -> int:
     # `skill_dir` is the directory the file paths are relative to: the author's
-    # own, which for a nested listing is skills/{name}/ rather than the listing.
+    # own, which for a single skill is skills/{name}/ rather than the listing.
     """Write the downloadable archive and return its size in bytes.
 
     This exists for the person with a browser and nothing else — no git, no
@@ -821,8 +821,8 @@ def write_outputs(skill_dir: Path, entry: dict, out: Path) -> dict:
     detail = (build_plugin_detail(skill_dir, entry) if is_plugin
               else build_detail(skill_dir, entry))
     name = entry["name"]
-    # Rooted at the author's directory, so a nested listing unzips to the same
-    # {name}/SKILL.md a flat one does.
+    # Rooted at the author's directory, so a single skill unzips to
+    # {name}/SKILL.md, the plain skill folder every upload path expects.
     archive_root = skill_dir if is_plugin else checked_skill_dir(skill_dir)
     size = write_archive(archive_root, entry, detail["files"], directory / f"{name}.zip")
     detail["archive"] = {
