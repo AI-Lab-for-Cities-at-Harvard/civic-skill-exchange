@@ -45,9 +45,14 @@ describe("checkChangedLayout", () => {
       .toHaveLength(1);
   });
 
-  it("allows a template SKILL.md under references/, per #78", () => {
+  it("refuses a template SKILL.md under references/, reversing #78 (ADR 0006)", () => {
+    expect(checkChangedLayout(["skills/cityofx/generalize/references/SKILL.md"]))
+      .toHaveLength(1);
+  });
+
+  it("allows an example under another name", () => {
     expect(checkChangedLayout([
-      "skills/cityofx/generalize/references/SKILL.md",
+      "skills/cityofx/generalize/references/SKILL.example.md",
       "skills/cityofx/generalize/assets/example.SKILL.md",
     ])).toEqual([]);
   });

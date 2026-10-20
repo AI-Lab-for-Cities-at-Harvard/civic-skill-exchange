@@ -552,6 +552,55 @@ describe("Submit — left out versus blocked", () => {
       file("skill.zip", { "s/SKILL.md": SKILL_MD, "s/payload.exe": "MZ" }));
     expect(await screen.findByTestId("blocked")).toBeInTheDocument();
   });
+
+  /* ADR 0006: the folder lands in skills/{name}/, where CI refuses a server
+     config, because a skill with an MCP server is a plugin. The page refuses
+     it first, with CI's words. */
+  it.each([".mcp.json", "mcp.json"])(
+    "blocks a skill folder carrying %s, and points at plugins/", async (path) => {
+      const user = userEvent.setup();
+      render(<Submit repo={REPO} skills={[]} mode="new" />);
+      await fill(user);
+      await user.upload(screen.getByLabelText(/upload the skill folder/i),
+        file("skill.zip", {
+          "permit-status-explainer/SKILL.md": SKILL_MD,
+          [`permit-status-explainer/${path}`]: '{"mcpServers": {}}',
+        }));
+      expect(await screen.findByTestId("blocked")).toBeInTheDocument();
+      expect(screen.getByTestId("archive-result")).toHaveTextContent(/plugins\//);
+    });
+
+  /* A published zip carries the two manifests the registry generated, and
+     dropping one back on the page is the round trip. They are the registry's
+     to write, so they are left out and named, as a plugin's are — not copied
+     into skills/{name}/, where CI would refuse them. */
+  it("leaves out a published skill's generated manifests without blocking", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", {
+        "permit-status-explainer/SKILL.md": SKILL_MD,
+        "permit-status-explainer/.claude-plugin/plugin.json": "{}",
+        "permit-status-explainer/.codex-plugin/plugin.json": "{}",
+      }));
+    const left = await screen.findByTestId("left-out");
+    expect(left).toHaveTextContent(".claude-plugin/plugin.json");
+    expect(left).toHaveTextContent(".codex-plugin/plugin.json");
+    expect(screen.queryByTestId("blocked")).not.toBeInTheDocument();
+  });
+
+  it("still blocks anything else under .claude-plugin/", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await fill(user);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", {
+        "permit-status-explainer/SKILL.md": SKILL_MD,
+        "permit-status-explainer/.claude-plugin/marketplace.json": "{}",
+      }));
+    expect(await screen.findByTestId("blocked")).toBeInTheDocument();
+  });
 });
 
 /** #68: the reserved namespace is the one place the ownership rule does not
@@ -872,10 +921,11 @@ describe("Submit — one directory is one skill", () => {
     // `blocked` is the heading; the findings themselves are listed above it.
     expect(await screen.findByTestId("blocked")).toBeInTheDocument();
     expect(screen.getByTestId("archive-result"))
-      .toHaveTextContent(/one directory is one skill/i);
+      .toHaveTextContent(/SKILL\.example\.md/);
   });
 
-  it("accepts a template under references/, which is documentation", async () => {
+  // ADR 0006 reversed #78: Codex loads a SKILL.md under references/ too.
+  it("blocks a template SKILL.md under references/, which Codex would load", async () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await user.upload(
@@ -883,6 +933,19 @@ describe("Submit — one directory is one skill", () => {
       file("skill.zip", {
         "permit-status-explainer/SKILL.md": SKILL_MD,
         "permit-status-explainer/references/SKILL.md": SKILL_MD,
+      }),
+    );
+    expect(await screen.findByTestId("blocked")).toBeInTheDocument();
+  });
+
+  it("accepts a template renamed SKILL.example.md", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(
+      screen.getByLabelText(/upload the skill folder/i),
+      file("skill.zip", {
+        "permit-status-explainer/SKILL.md": SKILL_MD,
+        "permit-status-explainer/references/SKILL.example.md": SKILL_MD,
       }),
     );
     await screen.findByTestId("archive-result");

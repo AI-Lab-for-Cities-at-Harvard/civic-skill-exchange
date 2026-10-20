@@ -31,6 +31,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { renderReport, type ScanFindings } from "./report";
+import { describeScanFailure } from "./scan-run";
 import { discoverAll, isPluginDir, loadCategories, validateSkill } from "./skill";
 import { discoverAllPlugins, validatePlugin } from "./plugin";
 
@@ -111,11 +112,9 @@ function runScan(target: string): { findings: ScanFindings; passed: boolean } {
     // A scanner that could not run is not a scanner that found nothing. Say so
     // and stop, rather than rendering a clean report over an absent layer.
     if (run.error || run.status === null || !existsSync(out)) {
-      const why = run.error ? run.error.message : (run.stderr || "").trim();
-      console.error(
-        `\nCould not run the signature scan with '${python}'.\n${why}\n\n` +
-        "scan.py needs pyyaml. See docs/DEVELOPMENT.md — Setup. Set $PYTHON to " +
-        "choose a different interpreter.");
+      console.error(describeScanFailure({
+        python, status: run.status, stderr: run.stderr || "", error: run.error,
+      }));
       process.exit(2);
     }
 

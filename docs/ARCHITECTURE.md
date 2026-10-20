@@ -18,7 +18,7 @@ The tradeoff, taken deliberately: because we host the artifacts rather than poin
 civic-skills/
 ├── skills/
 │   └── {github-username}/              namespace = submitter, so ownership is checkable
-│       └── {skill-name}/
+│       └── {skill-name}/               flat today; nested accepted too (see "One directory is one skill")
 │           ├── SKILL.md
 │           ├── scripts/                executed by the agent, not read — scan as real code
 │           └── references/             read by the agent
@@ -225,22 +225,55 @@ of its own, is a different question and a much larger one. It is a spike:
 
 ## One directory is one skill
 
-`skills/{namespace}/{name}/` holds exactly one `SKILL.md`, at its root.
+`skills/{namespace}/{name}/` holds exactly one skill, with one `SKILL.md`.
+During the move to the Agent Plugins layout
+([ADR 0006](adr/0006-every-listing-in-the-agent-plugins-layout.md)), L0 and the
+scanner accept it in either of two places:
 
-This is load-bearing rather than conventional. `scripts/build_marketplace.py`
-emits one plugin per directory on that assumption, so a directory with a second
-`SKILL.md` installs as a plugin whose nested skill a client loads, while the
-index shows it as an ordinary file. The catalogue and the agent would then
+- **Flat**, at the listing root: `skills/{namespace}/{name}/SKILL.md`, with the
+  author's files beside it. Every listing is flat today; the move retires this
+  layout.
+- **Nested**, one level down: `skills/{namespace}/{name}/skills/{name}/SKILL.md`,
+  where the inner directory carries the listing's own name. The listing root
+  then holds only what the registry generates, `.codex-plugin/plugin.json` and
+  `.claude-plugin/plugin.json`, beside `skills/{name}/`. Anything else there is
+  refused with a message saying it goes in `skills/{name}/`, and a server
+  config there is refused because a skill with an MCP server is a plugin
+  (decision 5).
+
+A listing is read as nested when it has a `skills/` directory and no root
+`SKILL.md` (`isNestedSkillListing` in `validator/src/structure-core.ts`;
+`skill_dir_of` in `scripts/build_index.py` for the Python side). The inner
+directory gets `innerSkillLayout`: the flat skill's rules (`SKILL_LAYOUT`),
+plus a refusal of `.mcp.json`, `mcp.json` and either manifest directory, as a
+plugin's skill refuses them. The caps apply to the whole listing, generated
+manifests included. Its `SKILL.md` is still a single skill's, read with
+`inPlugin: false`, so its civic metadata stays in its own frontmatter.
+
+The submission page validates the flat folder an author brings with
+`innerSkillLayout` too, since that folder is what lands in `skills/{name}/`, so
+it and CI run the same rules on the same files. Its readers (`lib/zip.ts`,
+`lib/import.ts`) first leave out the two generated manifests, by name, so a
+published zip dropped back on the page still round-trips. A flat listing on
+disk keeps `SKILL_LAYOUT`, and with it #151's `.mcp.json`, until the move
+retires that layout.
+
+One skill per directory is load-bearing rather than conventional.
+`scripts/build_marketplace.py` emits one plugin per listing, so a listing with a
+second `SKILL.md` installs as a plugin whose extra skill a client loads, while
+the index shows it as an ordinary file. The catalogue and the agent would then
 disagree about what the listing contains, and nothing would say so — validating
 clean while producing two different answers is the wrong way to fail.
 
-`checkStructureCore` rejects a `SKILL.md` below the root, with one exemption:
-`references/` and `assets/`. Those are where the Agent Skills specification puts
-templates and reference material, no client loads a skill from either, and a
-skill about writing skills legitimately ships an example — likely rather than
-hypothetical in this registry's domain. `DOC_DIRECTORIES` is the single source
-of that list; `layout.ts` reads it for the changed-path check rather than
-restating it.
+So L0 refuses any `SKILL.md` below a skill's own, in single skills and in
+plugins, and suggests renaming an example to `SKILL.example.md`. There is no
+exemption for `references/` or `assets/`: #78 had one, and ADR 0006 (decision
+4) reversed it, because Codex loads every `SKILL.md` under a plugin's
+`skills/`, however deep. `checkStructureCore` applies the rule to a directory
+and `layout.ts` to the changed-path list, with one message
+(`deepSkillMessage`). The scanner reads the skill's own `SKILL.md` through
+`skill_dir_of`, and a listing whose `SKILL.md` it can't find stops the scan
+with exit code 2 rather than scanning without the frontmatter checks.
 
 The rule is about `skills/`. Work that is several skills sharing scripts and
 servers is a plugin, and lives in its own tree.

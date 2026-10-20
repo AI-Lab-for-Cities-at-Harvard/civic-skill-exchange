@@ -203,12 +203,11 @@ describe("isRepositoryFurniture", () => {
  *  load — the site and the client disagreeing about what the listing contains,
  *  with nothing saying so.
  *
- *  The line between "a client loads this" and "this is documentation" is the one
- *  layout.ts already draws for changed paths: `references/` and `assets/` are
- *  where the Agent Skills specification puts templates, and no client loads a
- *  skill from either. A skill about writing skills legitimately ships an
- *  example, and in this registry's domain that is likely rather than
- *  hypothetical.
+ *  #78 exempted `references/` and `assets/`, where the Agent Skills
+ *  specification puts templates. ADR 0006 (decision 4) reverses that: Codex
+ *  loads every SKILL.md under a plugin's `skills/`, however deep, so an
+ *  example there became a second skill. An example is renamed
+ *  `SKILL.example.md` instead.
  */
 describe("a second SKILL.md", () => {
   const nested = (path: string) => [
@@ -220,7 +219,7 @@ describe("a second SKILL.md", () => {
     const findings = checkStructureCore(nested("nested/SKILL.md"));
     expect(findings).toHaveLength(1);
     expect(findings[0]?.where).toBe("nested/SKILL.md");
-    expect(findings[0]?.message).toMatch(/one directory is one skill/i);
+    expect(findings[0]?.message).toContain("SKILL.example.md");
   });
 
   it("names the path, so the author does not have to hunt for it", () => {
@@ -229,8 +228,8 @@ describe("a second SKILL.md", () => {
   });
 
   it.each(["references/SKILL.md", "references/examples/SKILL.md", "assets/SKILL.md"])(
-    "%s is documentation and still validates", (path) => {
-      expect(checkStructureCore(nested(path))).toEqual([]);
+    "%s is refused too, since Codex loads it (ADR 0006)", (path) => {
+      expect(checkStructureCore(nested(path))).toHaveLength(1);
     });
 
   it("leaves the skill's own SKILL.md alone", () => {
@@ -246,14 +245,16 @@ describe("a second SKILL.md", () => {
 
 /** layout.ts draws the same line for changed paths. Two copies of a rule is how
  *  one of them goes stale, so this holds them to each other. */
-describe("the documentation exemption agrees with layout.ts", () => {
-  it.each(["references/SKILL.md", "assets/templates/SKILL.md"])(
-    "%s is exempt in both", (path) => {
+describe("the deep-SKILL.md rule agrees with layout.ts", () => {
+  it.each(["references/SKILL.example.md", "assets/templates/SKILL.example.md"])(
+    "%s is an example, and passes both", (path) => {
       expect(checkStructureCore([file("SKILL.md", "x"), file(path, "x")])).toEqual([]);
       expect(checkChangedLayout([`skills/ns/name/${path}`])).toEqual([]);
     });
 
-  it.each(["nested/SKILL.md", "scripts/SKILL.md"])("%s is rejected by both", (path) => {
+  it.each([
+    "nested/SKILL.md", "scripts/SKILL.md", "references/SKILL.md", "assets/templates/SKILL.md",
+  ])("%s is rejected by both", (path) => {
     expect(checkStructureCore([file("SKILL.md", "x"), file(path, "x")])).toHaveLength(1);
     expect(checkChangedLayout([`skills/ns/name/${path}`])).toHaveLength(1);
   });
@@ -363,8 +364,9 @@ describe("plugin-level files a skill may not ship", () => {
     "references/settings.json",
     "assets/settings.json",
   ])("%s is documentation — nothing loads it, so it stays", (path) => {
-    // The same line the second-SKILL.md rule draws. A skill about writing
-    // skills ships examples, and in this registry's domain that is likely.
+    // A skill about writing skills ships examples, and in this registry's
+    // domain that is likely. Only a SKILL.md is refused there, because Codex
+    // loads one at any depth (ADR 0006).
     expect(checkStructureCore(withRoot(path))).toEqual([]);
   });
 });

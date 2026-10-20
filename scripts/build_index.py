@@ -233,6 +233,34 @@ def read_frontmatter(skill_md: Path) -> dict | None:
     return front if isinstance(front, dict) else None
 
 
+class NoSkillMd(ValueError):
+    """A single-skill listing whose own SKILL.md can't be found."""
+
+
+def skill_dir_of(listing: Path) -> Path:
+    """The directory holding a single skill's own SKILL.md (ADR 0006).
+
+    Nested, it is `skills/{name}/` inside the listing; flat, the listing itself,
+    until the move retires that layout. Raises rather than returning None, so a
+    reader can't drop the listing without saying so.
+    """
+    nested = listing / "skills" / listing.name
+    # The index reads and archives what this returns before L0's symlink rule
+    # runs, so a link on the way to SKILL.md must not lead outside the listing.
+    for path in (listing / "skills", nested, nested / "SKILL.md", listing / "SKILL.md"):
+        if path.is_symlink():
+            raise NoSkillMd(f"{path} is a symlink; a skill's own files must be in the listing.")
+    has_nested = (nested / "SKILL.md").is_file()
+    has_flat = (listing / "SKILL.md").is_file()
+    if has_nested and has_flat:
+        raise NoSkillMd(f"{listing} has a SKILL.md in both layouts: at its root and in skills/{listing.name}/.")
+    if has_nested:
+        return nested
+    if has_flat:
+        return listing
+    raise NoSkillMd(f"{listing} has no SKILL.md, at its root or in skills/{listing.name}/.")
+
+
 def build_provenance(meta: dict) -> dict:
     """Self-reported deployment context, published as such.
 

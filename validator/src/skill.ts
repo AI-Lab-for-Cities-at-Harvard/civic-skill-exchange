@@ -4,7 +4,10 @@ import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { join, basename, dirname } from "node:path";
 import { parse } from "yaml";
 import { checkFrontmatter, quarantineExtensions, RESERVED_NAMESPACES } from "./rules";
-import { checkStructure, checkYamlSafety, splitFrontmatter } from "./structure";
+import { checkYamlSafety, readEntries, splitFrontmatter } from "./structure";
+import {
+  NESTED_SKILLS_DIRECTORY, checkStructureCore, isNestedSkillListing, skillLayoutFor,
+} from "./structure-core";
 import type { Finding, Frontmatter } from "./types";
 
 export interface SkillResult {
@@ -24,12 +27,27 @@ export function loadCategories(root: string): string[] {
 export function validateSkill(
   skillDir: string, categories: string[], author?: string,
 ): SkillResult {
-  const findings: Finding[] = [];
-  const notes: string[] = [];
+  const name = basename(skillDir);
+  const namespace = basename(dirname(skillDir));
+  const entries = readEntries(skillDir);
+  const findings = checkStructureCore(entries, skillLayoutFor(entries, name));
 
-  findings.push(...checkStructure(skillDir));
-  const skill = checkSkillFile(skillDir, basename(dirname(skillDir)), categories, author);
-  return { findings: [...findings, ...skill.findings], notes: [...notes, ...skill.notes] };
+  // Nested (ADR 0006): the frontmatter is the inner SKILL.md's, still read as
+  // a single skill's. inPlugin stays false, so its civic metadata stays in its
+  // own frontmatter rather than moving to a plugin.json it doesn't have.
+  // Findings carry the inner path, as a plugin's skills' do.
+  if (isNestedSkillListing(entries)) {
+    const rel = `${NESTED_SKILLS_DIRECTORY}/${name}`;
+    const skill = checkSkillFile(join(skillDir, rel), namespace, categories, author, false);
+    return {
+      findings: [...findings,
+        ...skill.findings.map((f) => ({ ...f, where: `${rel}: ${f.where}` }))],
+      notes: skill.notes.map((n) => `${rel}: ${n}`),
+    };
+  }
+
+  const skill = checkSkillFile(skillDir, namespace, categories, author);
+  return { findings: [...findings, ...skill.findings], notes: skill.notes };
 }
 
 /** The SKILL.md half of validating a skill: frontmatter and body.
