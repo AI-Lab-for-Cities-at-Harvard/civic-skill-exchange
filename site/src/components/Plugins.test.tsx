@@ -147,9 +147,10 @@ describe("search and counts on the browse page (#299)", () => {
     await screen.findByRole("region", { name: /plugins/i });
     const hero = () => document.querySelector(".topper__stats");
     const grid = () => document.querySelector(".results__count");
-    // The hero and the grid count skills, and say so; plugins are counted
-    // in their own words beside the skills, never folded into them.
-    expect(hero()).toHaveTextContent("2 skills·2 plugins·0 reviewed·2 community");
+    // The hero gives the catalogue's two totals and nothing else (owner,
+    // 2026-10-20): a reviewed or community count would have to say how many
+    // of each are skills and how many plugins.
+    expect(hero()).toHaveTextContent(/^2 skills·2 plugins$/);
     expect(grid()).toHaveTextContent(/^2 skills$/);
     expect(within(pluginSection()).getByText("2 plugins")).toBeInTheDocument();
     search("dashboards");
@@ -159,11 +160,11 @@ describe("search and counts on the browse page (#299)", () => {
     expect(hero()).toHaveTextContent("2 skills·2 plugins");
   });
 
-  it("leaves the hero without a plugin count when there are no plugins", async () => {
+  it("gives both totals even when there are no plugins, and no tier counts", async () => {
     serve({ "index.json": makeIndex([makeSkill()]) });
     render(<App />);
     await screen.findByText(/1 skill/i);
-    expect(document.querySelector(".topper__stats")).not.toHaveTextContent(/plugin/i);
+    expect(document.querySelector(".topper__stats")).toHaveTextContent(/^1 skill·0 plugins$/);
   });
 });
 
