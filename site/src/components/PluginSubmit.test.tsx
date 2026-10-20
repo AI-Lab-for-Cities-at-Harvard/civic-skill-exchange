@@ -432,6 +432,20 @@ describe("PluginSubmit — the hand-off", () => {
       .toHaveTextContent("plugins/sgarcese/housing-dashboards");
   });
 
+  it("gives a recipe that copies the folder in and pushes to the fork, unindented (S-7)", async () => {
+    const user = userEvent.setup();
+    await dropPlugin(user);
+    await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await user.type(screen.getByLabelText(/address of your copy/i), "sgarcese/my-copy");
+    const text = screen.getByTestId("command-line").textContent ?? "";
+    expect(text.split("\n")[0]).toBe("git clone https://github.com/sgarcese/my-copy.git");
+    expect(text).toContain(
+      "cp -R /path/to/housing-dashboards plugins/sgarcese/housing-dashboards");
+    expect(text).toContain("git add plugins/sgarcese/housing-dashboards\n");
+    expect(text).toContain("git push -u origin add-housing-dashboards");
+    for (const line of text.split("\n")) expect(line).toBe(line.trimStart());
+  });
+
   it("hands back every file, the patched plugin.json and SKILL.md, and no root SKILL.md", async () => {
     const user = userEvent.setup();
     let blob: Blob | undefined;
