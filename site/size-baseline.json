@@ -1,5 +1,5 @@
 {
-  "comment": "The English entry chunk in bytes, from `npm run build` on this branch. Re-record with `node scripts/size.mjs --record`, and say why in the commit.",
+  "comment": "What an English visitor downloads at startup, in bytes: the entry chunk and every chunk index.html preloads (#337). From `npm run build` on this branch. Re-record with `node scripts/size.mjs --record`, and say why in the commit.",
   "bytes": 304303,
   "marginPercent": 3
 }

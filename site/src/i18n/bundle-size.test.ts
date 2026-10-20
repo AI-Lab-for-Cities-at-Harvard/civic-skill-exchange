@@ -61,12 +61,19 @@ afterAll(() => {
 });
 
 const entry = () => chunks.find((c) => /^index-.*\.js$/.test(c.name))!;
+/** What index.html loads before anything is clicked: the entry and every chunk
+ *  it preloads (#337). A chunk Rollup splits out of the entry is still here. */
+const atStartup = () => {
+  const html = readFileSync(join(dist, "index.html"), "utf8");
+  const names = [...html.matchAll(/(?:src|href)="[^"]*\/assets\/([^"]+\.js)"/g)].map((m) => m[1]);
+  return chunks.filter((c) => names.includes(c.name));
+};
 const others = () => chunks.filter((c) => c !== entry());
 
 describe("the English entry chunk stays within its recorded baseline", () => {
   it("measures the build", () => {
     // Exits non-zero past the margin, and execFileSync throws on that.
-    expect(run("node", ["scripts/size.mjs", "--dist", dist])).toMatch(/^size: index-/);
+    expect(run("node", ["scripts/size.mjs", "--dist", dist])).toMatch(/^size: startup /);
   });
 
   it("records a margin small enough to notice a locale in the wrong chunk", () => {
@@ -99,13 +106,16 @@ describe("Spanish is bytes an English visitor never fetches", () => {
     );
   });
 
-  it("keeps Spanish strings out of the entry chunk", () => {
-    for (const sentence of spanish) {
-      expect(entry().text.includes(sentence), sentence.slice(0, 40)).toBe(false);
+  it("keeps Spanish strings out of everything loaded at startup", () => {
+    expect(atStartup()).toContain(entry());
+    for (const chunk of atStartup()) {
+      for (const sentence of spanish) {
+        expect(chunk.text.includes(sentence), `${chunk.name}: ${sentence.slice(0, 40)}`).toBe(false);
+      }
+      // The placeholder marker, while the table still carries it: a startup
+      // chunk with "[es] " in it is a locale in the wrong chunk.
+      expect(chunk.text, chunk.name).not.toContain("[es] ");
     }
-    // The placeholder marker, while the table still carries it: an entry chunk
-    // with "[es] " in it is a locale in the wrong chunk, whatever else is true.
-    expect(entry().text).not.toContain("[es] ");
   });
 
   it("puts them in exactly one chunk, which is the Spanish one", () => {
