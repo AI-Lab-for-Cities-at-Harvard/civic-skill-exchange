@@ -1,3 +1,4 @@
+import { Stack } from "./Layout";
 import { useStrings } from "../i18n/strings";
 import type { Tier } from "../lib/types";
 
@@ -17,22 +18,22 @@ export function ModelFacts({ modelsTested, verifiedModels, tier, reviewers }: {
   return (
     <>
       {modelsTested && modelsTested.length > 0 && (
-        <div data-testid="models-tested">
+        <Stack gap="1" data-testid="models-tested">
           <dt>{f.modelsTested}</dt>
           <dd>
             {modelsTested.join(", ")}
             <span className="facts__note">{" "}{f.modelsTestedNote}</span>
           </dd>
-        </div>
+        </Stack>
       )}
       {tier === "reviewed" && verifiedModels && verifiedModels.length > 0 && (
-        <div data-testid="verified-models">
+        <Stack gap="1" data-testid="verified-models">
           <dt>{f.verifiedModels}</dt>
           <dd>
             {verifiedModels.join(", ")}
             <span className="facts__note">{" "}{f.verifiedModelsNote(reviewers)}</span>
           </dd>
-        </div>
+        </Stack>
       )}
     </>
   );
