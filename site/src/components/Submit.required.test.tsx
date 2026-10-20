@@ -8,6 +8,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { zipSync, strToU8 } from "fflate";
 import { Submit } from "./Submit";
+import { settleUserLookup } from "../test/lookup";
 
 /* The username box is looked up on GitHub after a pause (useUserCheck). A
    test never reaches the network: on a slow runner the real lookup came back
@@ -27,6 +28,8 @@ const box = (id: string) => document.getElementById(id) as HTMLElement;
 /** Every answer but the organization, which only a team or an organization owes. */
 async function answerAllButOrganization(user: User, deployment = "team") {
   await user.type(box("namespace"), "cityofx");
+  // Before any select is chosen: a lookup answered mid-choice undoes it (#350).
+  await settleUserLookup();
   await user.type(box("name"), "permit-status-explainer");
   await user.type(box("description"),
     "Explains why a building permit is stuck, in plain language.");
