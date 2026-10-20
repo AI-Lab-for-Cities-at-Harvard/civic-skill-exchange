@@ -2,7 +2,7 @@
 
 **Issue:** [#208](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/208) — a compact catalogue view, with pagination
 **Issue:** [#209](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/209) — featured listings and curated collections
-**Status:** analysis complete, awaiting rulings
+**Status:** ruled, 2026-10-20; see [ADR 0008](../adr/0008-the-browse-page-compact-rows-and-collections.md)
 **Date:** 2026-10-20. Written against `0c015c7` (main, with #299, #306's ruling, #314 and ADR 0007 merged). The prototypes are local branches, measured and never pushed.
 
 The owner asked for the two to be designed together, because both change what a reader sees first on the browse page. This document designs them as one page.
@@ -331,6 +331,28 @@ What passed: axe with contrast, light and dark, on browse (each option), page 2 
 **12. The facets at a phone (raised by the measurements, not filed).** Recommend a **"Filters" disclosure below 1024 px**, showing the number of filters chosen, so the first listing (or the collections) is in the first screen instead of 3,024 px down. File it as its own issue under #319 if accepted.
 
 **13. Two fixes for #316, found here.** Recommend #316 carry **`.l-stack[hidden], .l-cluster[hidden] { display: none; }`** and an **`align` prop on `Cluster`**. Without the first, every disclosure built on a primitive ignores `hidden`; without the second, a page cannot stretch a row of tiles without fighting the layer order ADR 0007 set up.
+
+## Rulings (owner, 2026-10-20)
+
+The owner reviewed the collapsible rows with numbered pages live, then a second round of the same prototype with four changes. [ADR 0008](../adr/0008-the-browse-page-compact-rows-and-collections.md) records the decisions.
+
+| # | Ruling |
+|---|---|
+| 1 | **Accepted, amended.** Collapsible rows, the only layout. The Lab is a label on the row, not a section. A closed row shows the tier *word* only; its note moves into the open row and stays as visually hidden text on the closed one. This supersedes part of ADR 0002 decision 3. |
+| 2 | **Changed: numbered pages of 24 now,** not at about 100 skills. |
+| 3 | **Accepted,** with the section in the URL too (`show=plugins`). |
+| 4 | **Accepted.** |
+| 5 | **Accepted.** |
+| 6 | **Replaced: a Skills/Plugins toggle,** `Skills 48 \| Plugins 8`, with counts that follow the filters. Switching keeps the reader's place, and moves the page only to bring a toggle that has scrolled away back to just above it. |
+| 7 | **Accepted.** |
+| 8 | **Accepted.** |
+| 9 | **Accepted.** |
+| 10 | **Accepted, amended:** the tiles are an even grid, the same width and height, with their counts aligned along the bottom. |
+| 11 | **Accepted.** |
+| 12 | **Accepted:** the facets start closed below 1024 px, behind `Filters (N on)`; search stays open. |
+| 13 | **Accepted,** for #316. |
+
+The second-round prototype is the local branch `spike/208-209-iteration`, on top of `spike/209-collections`, and is not pushed.
 
 ## What this could not verify
 

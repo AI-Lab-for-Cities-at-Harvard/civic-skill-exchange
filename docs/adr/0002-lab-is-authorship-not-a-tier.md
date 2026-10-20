@@ -1,6 +1,6 @@
 # ADR 0002 — Lab is authorship, not a tier
 
-**Status:** accepted, 2026-08-30
+**Status:** accepted, 2026-08-30; decision 3 superseded in part by [ADR 0008](0008-the-browse-page-compact-rows-and-collections.md), 2026-10-20 — the note leaves the browse page's closed rows
 **Supersedes:** part of [ADR 0001](0001-reviewed-is-a-lab-attestation.md) ruling 5 — the 30-day waiting period, for the reserved namespace only
 **Analysis:** [spikes/lab-as-a-tier.md](../spikes/lab-as-a-tier.md)
 **Rulings:** [#53](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/53)
