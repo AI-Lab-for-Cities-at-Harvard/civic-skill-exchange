@@ -616,8 +616,10 @@ def test_the_check_notices_an_altered_claude_manifest(make_skill):
 
 
 # The install steps live on the site's guide since #258, and docs/SUBMITTING.md
-# points there; the command a reader copies is the one in the guide's source.
-GUIDE = Path("site") / "src" / "lib" / "guide.ts"
+# points there. Since #289 the commands the guide, a skill's page and a
+# plugin's page show are written once, in the site's install helper, so that is
+# the source a reader's command comes from.
+GUIDE = Path("site") / "src" / "lib" / "install.ts"
 
 
 def test_the_sparse_install_command_covers_every_claude_manifest():
@@ -966,30 +968,36 @@ def test_the_sparse_install_explanation_quotes_no_fixed_size():
         assert "60 KB" not in (root / doc).read_text(encoding="utf-8"), doc
 
 
-# #259: the install boxes on skill and plugin pages give the same `--sparse`
-# command as the guide, and the plugin box gives Codex's install line too.
+# #259, #289: the install boxes on skill and plugin pages, and the guide, give
+# the same commands because they read them from one helper rather than keeping
+# copies: a box that wrote its own `marketplace add` line could drift.
 INSTALL_BOXES = (Path("site") / "src" / "components" / "DownloadBox.tsx",
-                 Path("site") / "src" / "components" / "PluginDetail.tsx")
+                 Path("site") / "src" / "components" / "PluginDetail.tsx",
+                 Path("site") / "src" / "lib" / "guide.ts")
 
 
 @pytest.mark.parametrize("box", INSTALL_BOXES, ids=lambda p: p.name)
-def test_the_install_boxes_give_the_guides_sparse_install(box: Path):
-    root = build_marketplace.ROOT
-    assert _sparse_roots((root / box).read_text(encoding="utf-8")) == _sparse_roots(
-        (root / GUIDE).read_text(encoding="utf-8"))
+def test_the_install_boxes_read_the_one_helper(box: Path):
+    text = (build_marketplace.ROOT / box).read_text(encoding="utf-8")
+    assert '/install"' in text, f"{box.name} does not import the install helper"
+    assert "marketplace add" not in text, f"{box.name} writes its own marketplace line"
 
 
-def test_the_plugin_box_gives_codexs_install_line():
-    text = (build_marketplace.ROOT / INSTALL_BOXES[1]).read_text(encoding="utf-8")
-    assert "codex plugin add ${detail.namespace}-${detail.name}@${MARKETPLACE}" in text
+def test_the_helper_names_a_listing_as_the_generator_does():
+    """`{namespace}-{name}`, which plugin_name writes into both marketplaces;
+    and both clients' install lines use it."""
+    text = (build_marketplace.ROOT / GUIDE).read_text(encoding="utf-8")
+    assert build_marketplace.plugin_name("ns", "x") == "ns-x"
+    assert "`${namespace}-${name}`" in text
+    assert "codex plugin add ${id}" in text and "/plugin install ${id}" in text
 
 
 # --------------------------------------------------------------------------- #
 # #264: Codex takes one path per `--sparse`, repeated. The Codex marketplace
-# command in README, the guide and the plugin box gives the same paths, and
+# command in README and the site's install helper gives the same paths, and
 # they cover every generated file Codex reads, as the Claude check does above.
 
-CODEX_COMMAND_SOURCES = (Path("README.md"), GUIDE, INSTALL_BOXES[1])
+CODEX_COMMAND_SOURCES = (Path("README.md"), GUIDE)
 
 
 def _codex_sparse_roots(doc: str) -> list[str]:
