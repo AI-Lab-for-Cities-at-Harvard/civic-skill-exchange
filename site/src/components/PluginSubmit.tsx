@@ -10,7 +10,7 @@
  *  Loaded only when a plugin arrives, so the skill page does not carry it.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Entry, Finding } from "@civic-skill-exchange/validator";
 import { PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG, expectedPluginName, summarizeMcpServers } from "@civic-skill-exchange/validator/plugin-core";
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
@@ -166,6 +166,14 @@ export function PluginSubmit(
   const [forkInput, setForkInput] = useState(restore?.forkInput ?? "");
   // Empty required questions stay quiet until visited or asked for (#302).
   const [attempted, setAttempted] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  // Asking for what is missing opens every skill that has a waiting error, even
+  // one the submitter closed: a revealed error is never inside a closed section.
+  const showMissing = () => {
+    setAttempted(true);
+    root.current?.querySelectorAll<HTMLDetailsElement>("details[data-waiting='true']")
+      .forEach((d) => { d.open = true; });
+  };
 
   // What each skill is asked is fixed when the plugin arrives. Recomputed live,
   // a question would vanish the moment it was answered, under the cursor.
@@ -362,7 +370,7 @@ export function PluginSubmit(
 
   return (
     <AttemptedProvider value={attempted}>
-    <div data-testid="plugin-mode">
+    <div data-testid="plugin-mode" ref={root}>
       {(restoredNow || !blankForm) && (
         <DraftBar restored={restoredNow} notKept={addressesLost}
           unsaved={cannotSave} onStartOver={startOver} />
@@ -555,7 +563,9 @@ export function PluginSubmit(
           const other = findings.filter((x) => !questions.includes(x.where))
             .map((x) => plain(x, f));
           return (
-            <details key={sk.name} className="disclosure" open={questions.length > 0}
+            <details key={sk.name} className="disclosure"
+              open={questions.length > 0 || (attempted && findings.some(waits))}
+              data-waiting={findings.some(waits) ? "true" : undefined}
               data-testid={`skill-${sk.name}`}>
               <summary className="disclosure__summary">
                 <code>{sk.name}</code>{" — "}
@@ -606,7 +616,7 @@ export function PluginSubmit(
         {!attempted && waiting > 0 && (
           <p className="submit__note" data-testid="status">
             {t.send.statusWaiting(waiting)}{" "}
-            <button className="btn btn--subtle" onClick={() => setAttempted(true)}>
+            <button className="btn btn--subtle" onClick={showMissing}>
               {t.send.showMissing}
             </button>
           </p>

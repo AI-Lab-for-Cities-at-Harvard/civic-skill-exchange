@@ -3,7 +3,7 @@
  *  and I-6 in DownloadBox.test.tsx. */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { zipSync, strToU8 } from "fflate";
 import userEvent from "@testing-library/user-event";
 import { Submit } from "./Submit";
@@ -261,7 +261,7 @@ describe("S-13: only an empty required box waits", () => {
     }));
     await screen.findByTestId("archive-result");
     const field = screen.getByLabelText(/^Description/i).closest(".field")!;
-    expect(field).toHaveTextContent(/at least 40 characters/i);
+    await waitFor(() => expect(field).toHaveTextContent(/at least 40 characters/i));
   });
 
   it("keeps the empty required boxes of that same file waiting", async () => {
@@ -325,5 +325,21 @@ describe("the plugin form's waiting errors", () => {
     await user.click(within(plugin).getByRole("button", { name: /show what.s missing/i }));
     expect(plugin.querySelectorAll(".field__finding").length).toBeGreaterThan(0);
     expect(within(plugin).queryByRole("button", { name: /show what.s missing/i })).toBeNull();
+  });
+
+  it("opens a skill that was collapsed over a waiting error, and shows the error", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(archiveInput(), bareSkillPlugin());
+    const plugin = await screen.findByTestId("plugin-mode");
+    const skill = within(plugin).getByTestId("skill-bare") as HTMLDetailsElement;
+    // The submitter closes it, and the error behind it is still waiting.
+    await user.click(skill.querySelector("summary")!);
+    expect(skill.open).toBe(false);
+    await user.click(within(plugin).getByRole("button", { name: /show what.s missing/i }));
+    expect(skill.open).toBe(true);
+    const errors = [...skill.querySelectorAll(".field__finding")];
+    expect(errors.length).toBeGreaterThan(0);
+    for (const e of errors) expect(e.closest("details:not([open])")).toBeNull();
   });
 });
