@@ -2,9 +2,10 @@
  *  pin the two things that makes true: the link is a real download, and the
  *  tier disclaimer from #4 still sits beside it. */
 
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { DownloadBox } from "./DownloadBox";
+import { DEFAULT_LOCALE, setLocale } from "../i18n/strings";
 import { makeSkill } from "../test/fixtures";
 import { installCommands } from "../lib/install";
 import type { SkillDetail } from "../lib/types";
@@ -142,7 +143,7 @@ describe("DownloadBox — installing as a plugin", () => {
   it("puts the plugin path first, because it is the one that needs no tooling knowledge", () => {
     render(<DownloadBox skill={detail({ namespace: "cityofx", name: "permit-status" })} />);
     const labels = screen.getAllByText(/Just this skill|The whole registry|add the marketplace|install it/i);
-    expect(labels[0]).toHaveTextContent("Claude Code: add the marketplace, once");
+    expect(labels[0]).toHaveTextContent("Inside Claude Code: add the marketplace, once");
   });
 });
 
@@ -188,8 +189,8 @@ describe("DownloadBox — both clients' marketplaces", () => {
 
   it("labels each line with the client it is for", () => {
     render(<DownloadBox skill={detail()} />);
-    expect(screen.getByText("Codex: install it")).toBeInTheDocument();
-    expect(screen.getByText("Claude Code: install it")).toBeInTheDocument();
+    expect(screen.getByText("In a terminal, for Codex: install it")).toBeInTheDocument();
+    expect(screen.getByText("Inside Claude Code: install it")).toBeInTheDocument();
   });
 });
 
@@ -202,5 +203,55 @@ describe("DownloadBox — the note under the commands", () => {
     const box = screen.getByRole("region", { name: /use this skill/i });
     expect(box.textContent).toMatch(/In Claude Code and Codex, the two marketplace lines are all you need/);
     expect(box.textContent).not.toMatch(/Codex, Gemini, Copilot/);
+  });
+});
+
+/* #298 (I-2, I-3): a bare `/plugin install ...` pasted into a terminal fails
+   ("no such file or directory: /plugin"). Chosen: label the Claude Code lines
+   as typed inside Claude Code, rather than adding a shell form beside each.
+   The check lines are shell commands, so they say they are for a terminal.
+   Pinned in both locales on the skill page; Plugins.test.tsx does the plugin
+   page. */
+describe("DownloadBox — where each line is typed, and how to check", () => {
+  afterEach(async () => { await setLocale(DEFAULT_LOCALE); });
+
+  const label = (command: string) =>
+    (screen.getByText(command).closest(".download__cmd") as HTMLElement)
+      .querySelector(".download__cmd-label")?.textContent ?? "";
+
+  it("says the /plugin lines are typed inside Claude Code", () => {
+    const skill = detail();
+    render(<DownloadBox skill={skill} />);
+    const lines = installCommands(skill.namespace, skill.name);
+    expect(label(lines.claudeMarketplace)).toMatch(/^Inside Claude Code/);
+    expect(label(lines.claudeInstall)).toMatch(/^Inside Claude Code/);
+  });
+
+  it("says the Codex lines are typed in a terminal", () => {
+    const skill = detail();
+    render(<DownloadBox skill={skill} />);
+    const lines = installCommands(skill.namespace, skill.name);
+    expect(label(lines.codexMarketplace)).toMatch(/^In a terminal/);
+    expect(label(lines.codexInstall)).toMatch(/^In a terminal/);
+  });
+
+  it("gives each client a line to check the install, from the helper", () => {
+    const skill = detail();
+    render(<DownloadBox skill={skill} />);
+    const lines = installCommands(skill.namespace, skill.name);
+    expect(label(lines.claudeCheck)).toBe("In a terminal, for Claude Code: check it worked");
+    expect(label(lines.codexCheck)).toBe("In a terminal, for Codex: check it worked");
+  });
+
+  it("says the same in Spanish", async () => {
+    await setLocale("es");
+    const skill = detail();
+    render(<DownloadBox skill={skill} />);
+    const lines = installCommands(skill.namespace, skill.name);
+    expect(label(lines.claudeMarketplace)).toMatch(/^Dentro de Claude Code/);
+    expect(label(lines.claudeInstall)).toMatch(/^Dentro de Claude Code/);
+    expect(label(lines.codexInstall)).toMatch(/^En una terminal/);
+    expect(label(lines.claudeCheck)).toMatch(/^En una terminal, para Claude Code/);
+    expect(label(lines.codexCheck)).toMatch(/^En una terminal, para Codex/);
   });
 });

@@ -21,6 +21,16 @@ describe("installCommands", () => {
         "codex plugin marketplace add AI-Lab-for-Cities-at-Harvard/civic-skill-exchange " +
         "--sparse .agents --sparse skills --sparse plugins",
       codexInstall: "codex plugin add ns-example-skill@civic-skill-exchange",
+      claudeCheck: "claude plugin list",
+      codexCheck: "codex plugin list",
     });
+  });
+
+  /* #298: the check lines are what each CLI's own help documents (claude
+     2.1.302 and codex 0.163.0): `plugin list`, a shell command. */
+  it("gives each client's check as a shell command, not a slash command", () => {
+    const { claudeCheck, codexCheck } = installCommands("ns", "x");
+    expect(claudeCheck).toBe("claude plugin list");
+    expect(codexCheck).toBe("codex plugin list");
   });
 });
