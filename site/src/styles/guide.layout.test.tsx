@@ -101,6 +101,17 @@ describe("the guide uses the primitives", () => {
   });
 });
 
+describe("a Stack of figures", () => {
+  it("clears the indent a <figure> brings, as it does a <dd>'s", () => {
+    // The browser gives every <figure> 40px either side. The old rule zeroed
+    // it with `margin: 0`; the guide's screenshots are full width, so a figure
+    // in a Stack starts and ends where the Stack does (measured at 375px: the
+    // images were 247px wide, not 327, without this).
+    const layout = readFileSync(join(__dirname, "layout.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+    expect(layout).toMatch(/\.l-stack\s*>\s*figure\s*\{[^}]*margin-inline\s*:\s*0/);
+  });
+});
+
 describe("what is left of the guide's rules in app.css", () => {
   it("no longer spaces or lays out the steps, figures, glossary or commands", () => {
     for (const sel of [".guide__shots", ".guide__shot", ".guide__shot figcaption", ".guide__captured",

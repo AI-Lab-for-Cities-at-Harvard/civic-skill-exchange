@@ -562,7 +562,10 @@ subsection space) of its heading and lede, then its products; a product is a
 heading over a `Stack` of its steps, commands, notes and figures, so the
 heading's 12px and the parts' 16px are both kept. The steps, a command (the
 same `Stack` as the install box's), the figures and the glossary are Stacks,
-and the call to action is a `Cluster`. No third primitive was needed. The
+and the call to action is a `Cluster`. No third primitive was needed. A Stack also clears the 40px side
+margin a browser gives a `<figure>`, as it clears a `<dd>`'s indent (the first
+attempt left the screenshots 80px narrower at 375px; the browser measurement
+caught it). The
 rules they replaced are gone, including `.download__cmd`'s `display`, `gap` and
 `margin` (`DownloadBox` already laid itself out with a Stack), and
 `.guide__product`'s top margin in the rhythm block, which a Stack's gap now
