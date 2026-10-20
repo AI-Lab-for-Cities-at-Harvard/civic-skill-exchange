@@ -554,7 +554,6 @@ a:hover { color: var(--c-spot); }
   font-size: var(--t-xs); color: var(--c-text-lighter); line-height: 1.5;
 }
 
-.download__cmd { display: grid; gap: var(--gap-2); margin-bottom: var(--gap-4); }
 .download__cmd-label {
   font-size: var(--t-xs); text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--c-text-lighter);
@@ -792,8 +791,8 @@ a:hover { color: var(--c-spot); }
    pills follow, and it survives greyscale. */
 .toc__link--current {
   color: var(--c-text); font-weight: 600;
-  border-left: 2px solid var(--c-spot);
-  margin-left: -0.6rem; padding-left: 0.45rem;
+  border-inline-start: 2px solid var(--c-spot);
+  margin-inline-start: -0.6rem; padding-inline-start: 0.45rem;
 }
 
 /* The metadata reference. A description list, because that is what it is —
@@ -911,17 +910,15 @@ a:hover { color: var(--c-spot); }
 /* The guide (#258): a product under each task, the steps numbered, the
    glossary set as term and meaning. */
 .guide__checked { font-size: var(--t-sm); color: var(--c-text-light); }
-.guide__steps { margin: 0 0 var(--gap-4); padding-left: 1.4rem; display: grid; gap: var(--gap-2); max-width: 66ch; line-height: 1.6; }
+.guide__steps { padding-inline-start: 1.4rem; max-width: 66ch; line-height: 1.6; }
 .guide__steps li::marker { color: var(--c-spot); font-weight: 700; }
-.guide__glossary { margin: 0; display: grid; gap: var(--gap-4); max-width: 66ch; }
-.guide__glossary dt { font-weight: 700; margin-bottom: var(--gap-1); }
-.guide__glossary dd { margin: 0; line-height: 1.6; }
+.guide__glossary { max-width: 66ch; }
+.guide__glossary dt { font-weight: 700; }
+.guide__glossary dd { line-height: 1.6; }
 .steps__more { font-size: var(--t-sm); }
-.guide__shots { display: grid; gap: var(--gap-4); margin-top: var(--gap-4); }
-.guide__shot { margin: 0; }
 .guide__shot img { display: block; width: 100%; max-width: 720px; height: auto; border: 1px solid var(--c-border-light); border-radius: var(--radius); }
-.guide__shot figcaption { margin-top: var(--gap-2); font-size: var(--t-sm); color: var(--c-text-light); }
-.guide__captured { font-size: var(--t-sm); color: var(--c-text-light); margin: 0; }
+.guide__shot figcaption { font-size: var(--t-sm); color: var(--c-text-light); }
+.guide__captured { font-size: var(--t-sm); color: var(--c-text-light); }
 
 /* ---- rhythm (#287) -------------------------------------------------------
  * The one place the space between a page's blocks is decided. Every section
@@ -976,8 +973,7 @@ a:hover { color: var(--c-spot); }
 }
 
 /* Parts of a section. */
-.prose__block > .h3:not(:first-child),
-.guide__product { margin-top: var(--space-subsection); }
+.prose__block > .h3:not(:first-child) { margin-top: var(--space-subsection); }
 /* A disclosure that is the whole section is opened by the section's rule. A
    rule of its own as well is the double rule #286 found above "A few optional
    things". */
