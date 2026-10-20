@@ -14,7 +14,7 @@ import {
   toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl, repoSlug, slugify,
   URL_BUDGET,
   fitsInUrl,
-  forkUploadUrl, pullRequestUrl, registryUploadUrl, parseForkRef, skillPath, namespacePath,
+  forkUploadUrl, pullRequestUrl, pullRequestText, PR_URL_BUDGET, registryUploadUrl, parseForkRef, skillPath, namespacePath,
   uploadPath, landingPath, skillDirPath,
   EMPTY_DRAFT,
   type Draft,
@@ -464,5 +464,115 @@ describe("the version's place in the file (#239)", () => {
 
   it("is omitted when empty", () => {
     expect(toFrontmatter(draft({ version: "" })).metadata).not.toHaveProperty("version");
+  });
+});
+
+/** #300: the pull request opens with a title and a description, because
+ *  GitHub's own form has neither and the submitter has no way to know what
+ *  belongs there. The compare link carries them as query parameters
+ *  (`quick_pull`, `title`, `body`). They are English whatever language the page
+ *  is in: the maintainers who read them work in English, and the text is the
+ *  page's output, not something the submitter reads. */
+describe("pullRequestText", () => {
+  const base = { namespace: "cityofx", name: "permit-status", findings: [] };
+
+  it("titles a new skill, a new plugin and an update", () => {
+    expect(pullRequestText({ ...base, kind: "skill" }).title)
+      .toBe("Add skill cityofx/permit-status");
+    expect(pullRequestText({ ...base, kind: "plugin" }).title)
+      .toBe("Add plugin cityofx/permit-status");
+    expect(pullRequestText({ ...base, kind: "skill", update: true }).title)
+      .toBe("Update skill cityofx/permit-status");
+    expect(pullRequestText({ ...base, kind: "plugin", update: true }).title)
+      .toBe("Update plugin cityofx/permit-status");
+  });
+
+  it("names the listing, the namespace, and that no findings remained", () => {
+    const { body } = pullRequestText({ ...base, kind: "skill" });
+    expect(body).toContain("`skills/cityofx/permit-status`");
+    expect(body).toMatch(/namespace.*`cityofx`/i);
+    expect(body).toMatch(/checked in the browser/i);
+    expect(body).toMatch(/no findings/i);
+  });
+
+  it("points a plugin at plugins/, not skills/", () => {
+    expect(pullRequestText({ ...base, kind: "plugin" }).body)
+      .toContain("`plugins/cityofx/permit-status`");
+  });
+
+  it("lists the findings that remained, and says they were sent anyway", () => {
+    const { body } = pullRequestText({
+      ...base, kind: "skill",
+      findings: [{ where: "civic.scope", message: "scope is required" }],
+    });
+    expect(body).toMatch(/1 finding remained/i);
+    expect(body).toContain("- `civic.scope`: scope is required");
+    expect(body).not.toMatch(/no findings/i);
+  });
+
+  it("says the checks on the pull request are the authority", () => {
+    expect(pullRequestText({ ...base, kind: "skill" }).body)
+      .toMatch(/checks that count run on this pull request/i);
+  });
+});
+
+describe("pullRequestUrl with a title and a description", () => {
+  const text = { title: "Add skill a/b", body: "Line one.\n\nLine & two # three 100%" };
+
+  it("carries quick_pull, title and body, URL-encoded", () => {
+    const url = pullRequestUrl(REPO, "sgarcese-hbs/my-copy", text)!;
+    expect(url.startsWith(
+      `https://github.com/${REPO}/compare/main...sgarcese-hbs:my-copy:main?`)).toBe(true);
+    const q = new URL(url).searchParams;
+    expect(q.get("quick_pull")).toBe("1");
+    expect(q.get("title")).toBe(text.title);
+    expect(q.get("body")).toBe(text.body);
+    expect(url).not.toContain(" ");
+    expect(url).not.toContain("\n");
+  });
+
+  it("lists at most ten findings, and says how many more there were", () => {
+    const findings = Array.from({ length: 80 }, (_, i) => ({
+      where: `civic.field-${i}`, message: `message ${i} ` + "x".repeat(400),
+    }));
+    const { body } = pullRequestText({ kind: "skill", namespace: "cityofx", name: "p", findings });
+    expect(body).toMatch(/80 findings remained/);
+    expect(body).toContain("civic.field-9`");
+    expect(body).not.toContain("civic.field-10`");
+    expect(body).toContain("- and 70 more");
+    // One message is cut, with an ellipsis, rather than run on.
+    expect(body.split("\n").find((l) => l.includes("civic.field-0"))!.length).toBeLessThan(260);
+  });
+
+  it("keeps a long description under the budget, cut at a whole line", () => {
+    const lines = Array.from({ length: 80 }, (_, i) => `- \`civic.field-${i}\`: ${"x".repeat(150)}`);
+    const full = { title: "Add skill cityofx/p", body: ["Opening line.", "", ...lines].join("\n") };
+    const url = pullRequestUrl(REPO, "sgarcese-hbs/my-copy", full)!;
+    expect(url.length).toBeLessThanOrEqual(PR_URL_BUDGET);
+    const q = new URL(url).searchParams;
+    expect(q.get("title")).toBe("Add skill cityofx/p");
+    const body = q.get("body")!;
+    expect(body.startsWith("Opening line.")).toBe(true);
+    expect(body).toContain("civic.field-0`");
+    expect(body).not.toContain("civic.field-79`");
+    expect(body).toMatch(/left out so this link fits/i);
+    // Every line it kept is a whole line of the original, never half of one.
+    const kept = body.split("\n").filter((l) => l.startsWith("- `"));
+    expect(kept.length).toBeGreaterThan(10);
+    for (const l of kept) expect(lines).toContain(l);
+  });
+
+  it("never exceeds the budget even when one line alone is enormous", () => {
+    const url = pullRequestUrl(REPO, "a/b", { title: "T", body: "é".repeat(20000) })!;
+    expect(url.length).toBeLessThanOrEqual(PR_URL_BUDGET);
+  });
+
+  it("leaves a short description untouched", () => {
+    const url = pullRequestUrl(REPO, "a/b", text)!;
+    expect(new URL(url).searchParams.get("body")).toBe(text.body);
+  });
+
+  it("has no link without a fork, text or not", () => {
+    expect(pullRequestUrl(REPO, "", text)).toBeNull();
   });
 });

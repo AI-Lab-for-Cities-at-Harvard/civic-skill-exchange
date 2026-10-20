@@ -372,6 +372,12 @@ export const en = {
       noSuchUser: (login: string) =>
         `No GitHub user called ${login}. A submission whose folder does not ` +
         "match the account that opens the pull request is rejected.",
+      /** The lookup was rate limited or the network failed (#293). Not a
+       *  verdict, so it neither warns nor blocks. */
+      userUnchecked: (login: string) =>
+        `Couldn’t check ${login} with GitHub just now — it may be ` +
+        "busy, or you may be offline. You can carry on: the checks on the pull " +
+        "request will catch a username that is wrong.",
       /** `login` is what was typed. */
       badLogin: (login: string) =>
         `\u201c${login}\u201d is not a GitHub username. A username has only ` +
@@ -589,6 +595,24 @@ export const en = {
       forkUnparsed:
         "That does not look like a GitHub repository. It should be like " +
         "`github.com/you/civic-skill-exchange`.",
+      /** The registry's own address, pasted as the fork (#293, S-8). */
+      forkIsRegistry:
+        "That is the registry’s own address, not your copy. Fork it " +
+        "first with the button above, then paste the address of the copy " +
+        "GitHub makes for you — it has your username in it, like " +
+        "`github.com/you/civic-skill-exchange`.",
+      /** `owner` is the fork's account, `login` the typed username (#293, S-1). */
+      forkMismatch: (owner: string, login: string) =>
+        `Your copy is under \`${owner}\`, but the username above is ` +
+        `\`${login}\`. They should be the same account: the folder is named ` +
+        "for the username, and only that account can open the pull request " +
+        `for it. If you are signed in to GitHub as \`${owner}\`, change the ` +
+        `username to \`${owner}\`.`,
+      /** The username box is empty, so no path can be given yet (#293, S-2). */
+      usernameNeeded:
+        "Type your GitHub username above first. It names the folder your " +
+        "submission goes in, so the upload, the download and the commands " +
+        "wait for it.",
 
       uploadTitle: "Drag the folder in",
       /** `reserved` is a namespace CODEOWNERS gates rather than a person, whose
@@ -615,10 +639,54 @@ export const en = {
 
       pullRequestTitle: "Open the pull request",
       pullRequestBody:
-        "This button compares your copy with the registry and lets you open the " +
-        "pull request. The checks run on it, and a maintainer takes it from there.",
+        "This button compares your copy with the registry and opens the pull " +
+        "request form with a title and description already filled in. Check " +
+        "them, then choose \u201cCreate pull request\u201d. The checks run on it, " +
+        "and a maintainer takes it from there.",
       pullRequestCta: "Open the pull request",
       pullRequestMore: "What happens to a pull request?",
+
+      /** After the hand-off (#300): the page's answer to "now what?". Who is
+       *  asked to review comes from .github/CODEOWNERS, and the tests read that
+       *  file, so these cannot drift from it without failing. */
+      next: {
+        heading: "What happens next",
+        checks:
+          "The checks run on the pull request as soon as it is open, and report " +
+          "back in a comment on it. Then a maintainer reads it. Fix anything the " +
+          "checks flag by adding to the same pull request.",
+        /** `/skills/` has no CODEOWNER, so GitHub requests nobody — yet the
+         *  repository still requires one approving review. */
+        whoSkill:
+          "**Nobody is asked for you.** A skill in your own folder has no " +
+          "owner assigned, so GitHub does not request a reviewer, but the " +
+          "repository still needs one approving review before anything merges, " +
+          "and it has to come from a maintainer. If it has waited a while, a " +
+          "comment on the pull request is the way to ask.",
+        /** `/plugins/` is owned by the maintainers team. */
+        whoPlugin:
+          "**A maintainer is asked automatically.** GitHub requests the " +
+          "maintainers\u2019 review on every plugin pull request, because a " +
+          "plugin runs programs on the reader\u2019s computer. You do not need " +
+          "to ask.",
+        /** The reserved namespace is owned by the maintainers team. */
+        whoReserved:
+          "**A maintainer is asked automatically.** GitHub requests the " +
+          "maintainers\u2019 review on everything in the Lab\u2019s own " +
+          "namespace. You do not need to ask.",
+        english:
+          "The pull request\u2019s title and description are filled in for you, " +
+          "in English, because the maintainers who read them work in English. " +
+          "Change anything that is wrong before you create it.",
+        singleFile:
+          "GitHub\u2019s editor cannot pre-fill a title for a one-file skill, so " +
+          "give the pull request one: **Add skill** and the name.",
+        reviewed:
+          "Once it merges, it is listed in the Community tier. The Reviewed " +
+          "tier, where the Lab reads every line of one commit, is a **separate " +
+          "request**, made after it merges: [open a review request](request). " +
+          "[What a review checks](review).",
+      },
 
       handoff: "Continue on GitHub",
       urlTooLong:
@@ -682,6 +750,32 @@ export const en = {
       notFinding:
         "Not finding it? Only skills already in this catalog appear here. If " +
         "yours is not listed yet, [submit it as a new skill](new) first.",
+    },
+
+    /** Answers kept in this browser through the trip to GitHub and back (#294). */
+    draft: {
+      saved:
+        "Your answers are saved in this browser as you type, so you can go to " +
+        "GitHub and come back. The Start over button clears them.",
+      restored:
+        "We restored the answers you had typed here. They were kept in this " +
+        "browser; nothing was sent anywhere.",
+      notKept: "These could not be kept, so please add them again:",
+      zipNotKept: (name: string) =>
+        `The file you uploaded, ${name}. Choose it again.`,
+      repoNotKept: (name: string) =>
+        `The files read from ${name}. Read the repository again.`,
+      pasteNotKept:
+        "The SKILL.md you pasted was too long to keep. Paste it again.",
+      addressesNotKept:
+        "The server addresses you pasted. Paste them again.",
+      pluginPending: (name: string) =>
+        `You have a saved draft for the plugin ${name}. Drop that folder in ` +
+        "again and your answers will be filled in.",
+      unsaved:
+        "This browser is not letting the page save your answers, so they will " +
+        "be lost if you leave.",
+      startOver: "Start over",
     },
 
     /** A plugin dropped or imported instead of a skill (#213). The page switches

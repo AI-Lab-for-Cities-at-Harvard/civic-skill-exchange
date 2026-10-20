@@ -18,15 +18,16 @@ describe("checkGitHubUser", () => {
     expect(await checkGitHubUser("sgarcees")).toBe("missing");
   });
 
-  it("says nothing useful when rate limited, rather than warning wrongly", async () => {
-    // 60 requests an hour per address. A limit is not evidence of a bad name.
-    vi.stubGlobal("fetch", respond(403));
-    expect(await checkGitHubUser("sgarcese")).toBe("unknown");
+  it.each([403, 429])("could not check when rate limited (%i), rather than warning wrongly", async (status) => {
+    // 60 requests an hour per address. A limit is not evidence of a bad name,
+    // but it is not a confirmation either, so it is told apart from one (#293).
+    vi.stubGlobal("fetch", respond(status));
+    expect(await checkGitHubUser("sgarcese")).toBe("unavailable");
   });
 
-  it("stays quiet when the network fails", async () => {
+  it("could not check when the network fails", async () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
-    expect(await checkGitHubUser("sgarcese")).toBe("unknown");
+    expect(await checkGitHubUser("sgarcese")).toBe("unavailable");
   });
 
   it("spends no request on something that is not a login", async () => {

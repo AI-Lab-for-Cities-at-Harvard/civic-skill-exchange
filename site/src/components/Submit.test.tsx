@@ -528,13 +528,26 @@ describe("Submit — importing from a repository", () => {
     expect(yaml).toContain(`civic.source-commit: ${"c".repeat(40)}`);
   });
 
-  it("takes the username from the repository owner", async () => {
+  it("leaves the username to the submitter, not the repository's owner (S-6, #293)", async () => {
+    /* The owner of the repository a skill was written in is not the person
+       submitting it: an organization's repository filled the box with
+       `AI-Lab-for-Cities-at-Harvard`, which the page then flagged itself. */
     vi.stubGlobal("fetch", github());
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "AI-Lab-for-Cities-at-Harvard/Civic-Analytics");
+    await screen.findByTestId("imported");
+    expect(screen.getByLabelText(/GitHub username/i)).toHaveValue("");
+  });
+
+  it("keeps a username typed before the import (#293)", async () => {
+    vi.stubGlobal("fetch", github());
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "maria-lopez");
     await importInto(user, "sgarcese/Civic-Analytics");
     await screen.findByTestId("imported");
-    expect(screen.getByLabelText(/GitHub username/i)).toHaveValue("sgarcese");
+    expect(screen.getByLabelText(/GitHub username/i)).toHaveValue("maria-lopez");
   });
 
   it("runs the structural checks on the real file list", async () => {
@@ -1096,5 +1109,51 @@ describe("Submit — a username GitHub would not issue", () => {
     await user.type(screen.getByLabelText(/GitHub username/i), "maria-lopez");
     expect(screen.queryByTestId("bad-login")).not.toBeInTheDocument();
     expect(screen.getByTestId("handoff")).toHaveAttribute("aria-disabled", "false");
+  });
+});
+
+/** #300: the hand-off ends by saying what happens next, on both routes. */
+describe("Submit — after the hand-off", () => {
+  const MULTI = () => file("skill.zip", {
+    "permit-status-explainer/SKILL.md": SKILL_MD,
+    "permit-status-explainer/scripts/reading_level.py": "print(1)\n",
+  });
+
+  it("says what happens next on the one-file route", () => {
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    expect(screen.getByTestId("what-next")).toHaveTextContent(/Add skill/);
+    expect(screen.getByTestId("review-who")).toHaveTextContent(/nobody is asked for you/i);
+  });
+
+  it("says it on the multi-file route, and pre-fills the pull request", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.type(screen.getByLabelText(/address of your copy/i), "cityofx/my-copy");
+    expect(screen.getByTestId("what-next")).toHaveTextContent(/in English/);
+    const q = new URL(screen.getByTestId("step-pr").getAttribute("href")!).searchParams;
+    expect(q.get("title")).toMatch(/^Add skill cityofx\//);
+  });
+
+  it("titles the pull request Update when the listing is already in the registry", async () => {
+    const user = userEvent.setup();
+    const listed = makeSkill({ namespace: "cityofx", name: "permit-status-explainer" });
+    render(<Submit repo={REPO} skills={[listed]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.type(screen.getByLabelText(/address of your copy/i), "cityofx/my-copy");
+    const q = new URL(screen.getByTestId("step-pr").getAttribute("href")!).searchParams;
+    expect(q.get("title")).toBe("Update skill cityofx/permit-status-explainer");
+  });
+
+  it("step 4 says the form comes filled in", async () => {
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.upload(screen.getByLabelText(/upload the skill folder/i), MULTI());
+    await screen.findByTestId("archive-result");
+    expect(screen.getByText(/title and description already filled in/i)).toBeInTheDocument();
   });
 });

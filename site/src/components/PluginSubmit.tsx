@@ -10,14 +10,14 @@
  *  Loaded only when a plugin arrives, so the skill page does not carry it.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Entry, Finding } from "@civic-skill-exchange/validator";
 import { PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG, expectedPluginName, summarizeMcpServers } from "@civic-skill-exchange/validator/plugin-core";
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { en } from "../i18n/en";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
-import { checkGitHubUser, type UserCheck } from "../lib/github";
+import { useUserCheck } from "../lib/useUserCheck";
 import { convertClaudeCode, type Addresses } from "../lib/convert";
 import { buildFolderZip } from "../lib/folder";
 import { addedFrontmatterLines } from "../lib/patch";
@@ -26,12 +26,18 @@ import {
   pluginFieldId, readPluginSource, sharedSkillLicense, skillDraftFromFile, skillMdPath,
   type PluginDraft,
 } from "../lib/plugin";
-import { slugify, recipe, recipeInput, type Draft } from "../lib/submit";
+import {
+  slugify, recipe, recipeInput, type Draft, hasNamespace, usableFork,
+} from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { isGitHubLogin } from "../lib/login";
+import { draftKey, readDraft, clearDraft, onlyStrings, asString, isRecord } from "../lib/draftStore";
+import { useDraftSaver } from "../lib/useDraftSaver";
+import { DraftBar } from "./DraftBar";
 import { Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
+import { AfterHandoff } from "./AfterHandoff";
 
 const CATEGORIES = Object.keys(en.vocabulary.category);
 
@@ -110,16 +116,39 @@ export function PluginSubmit(
     [conversion, entries, directoryName]);
   const leftOut = conversion ? [...left, ...conversion.leftOut] : left;
   const [read] = useState(() => pluginDraftFromManifest(source.manifest, directoryName, ""));
-  // A license nobody has chosen is offered nothing (#296) — unless plugin.json
-  // is silent and every skill already declares the same one.
-  const [draft, setDraft] = useState<PluginDraft>(() => ({
+  // What the folder says on its own, which is what the form is "blank" at, and
+  // what Start over returns to (#294).
+  const [fresh] = useState<Record<string, Draft>>(() =>
+    Object.fromEntries(source.skills.map((sk) => [sk.name, skillDraftFromFile(sk.skillMd)])));
+  // Answers kept from the last visit to this same plugin. Another plugin's are
+  // left where they are and not shown.
+  const [restore] = useState(() => {
+    const saved = readDraft(draftKey({ route: "plugin" }));
+    const data = saved?.data ?? {};
+    if (!saved || data.directoryName !== directoryName) return null;
+    const stored = isRecord(data.skillDrafts) ? data.skillDrafts : {};
+    return {
+      draft: onlyStrings(read.draft, data.draft),
+      typedName: asString(data.typedName, read.draft.name),
+      skills: Object.fromEntries(Object.entries(fresh).map(
+        ([name, base]) => [name, onlyStrings(base, stored[name])])),
+      forkInput: asString(data.forkInput),
+      addressesTyped: typeof data.addressesTyped === "number" ? data.addressesTyped : 0,
+    };
+  });
+  const [restoredNow, setRestoredNow] = useState(restore !== null);
+  // The form as the folder leaves it: what it starts at, what counts as blank,
+  // and what Start over returns to. A license nobody has chosen is offered
+  // nothing (#296) — unless plugin.json is silent and every skill already
+  // declares the same one.
+  const [initial] = useState<PluginDraft>(() => ({
     ...read.draft, license: read.draft.license || sharedSkillLicense(source),
   }));
-  const [typedName, setTypedName] = useState(read.draft.name);
-  const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(() =>
-    Object.fromEntries(source.skills.map((sk) => [sk.name, skillDraftFromFile(sk.skillMd)])));
-  const [forkInput, setForkInput] = useState("");
-  const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
+  const [draft, setDraft] = useState<PluginDraft>(restore?.draft ?? initial);
+  const [typedName, setTypedName] = useState(restore?.typedName ?? read.draft.name);
+  const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(
+    () => restore?.skills ?? fresh);
+  const [forkInput, setForkInput] = useState(restore?.forkInput ?? "");
 
   // What each skill is asked is fixed when the plugin arrives. Recomputed live,
   // a question would vanish the moment it was answered, under the cursor.
@@ -131,6 +160,27 @@ export function PluginSubmit(
       [sk.name, gapsOf(initial.skills[sk.name] ?? [])]));
   });
 
+  // Saved as it is typed. Pasted server addresses are left out on purpose: an
+  // address can carry a key in its query string, and the page cannot tell.
+  const addressesTyped = Object.values(addresses).filter((a) => a.trim() !== "").length;
+  const toKeep = useMemo(() => ({
+    directoryName, draft, typedName, skillDrafts, forkInput,
+    addressesTyped: addressesTyped > 0 ? addressesTyped : restore?.addressesTyped ?? 0,
+  }), [directoryName, draft, typedName, skillDrafts, forkInput, addressesTyped, restore]);
+  const blankForm = JSON.stringify([draft, typedName, skillDrafts, forkInput, addressesTyped])
+    === JSON.stringify([initial, read.draft.name, fresh, "", 0]);
+  const { failed: cannotSave } = useDraftSaver(draftKey({ route: "plugin" }), toKeep, {
+    blank: blankForm,
+  });
+  const startOver = () => {
+    clearDraft(draftKey({ route: "plugin" }));
+    setDraft(initial); setTypedName(read.draft.name); setSkillDrafts(fresh);
+    setForkInput(""); setAddresses({});
+    setRestoredNow(false);
+  };
+  const addressesLost = restore && restore.addressesTyped > 0 && addressesTyped === 0
+    ? [t.draft.addressesNotKept] : [];
+
   const set = (key: keyof PluginDraft) => (value: string) =>
     setDraft((d) => ({ ...d, [key]: value }));
   const onInput = (key: keyof PluginDraft) =>
@@ -141,19 +191,9 @@ export function PluginSubmit(
   const reserved = RESERVED_NAMESPACES.has(draft.author.trim().toLowerCase());
 
   // The same debounced lookup as the skill form: 60 requests an hour per
-  // address, so never one per keystroke.
-  useEffect(() => {
-    const login = draft.author.trim();
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      if (!login || RESERVED_NAMESPACES.has(login.toLowerCase())) {
-        setUserCheck("unknown");
-        return;
-      }
-      checkGitHubUser(login, controller.signal).then(setUserCheck);
-    }, 500);
-    return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [draft.author]);
+  // address, so never one per keystroke, and none for a name GitHub would not
+  // allow.
+  const userCheck = useUserCheck(draft.author);
 
   const manifest = useMemo(() => patchPluginJson(source.manifest, draft), [source, draft]);
   const skills = useMemo(() => Object.fromEntries(source.skills.map((sk) =>
@@ -290,6 +330,10 @@ export function PluginSubmit(
 
   return (
     <div data-testid="plugin-mode">
+      {(restoredNow || !blankForm) && (
+        <DraftBar restored={restoredNow} notKept={addressesLost}
+          unsaved={cannotSave} onStartOver={startOver} />
+      )}
       <section className="prose__block" data-testid="plugin-summary">
         <h2 className="h2">{p.heading}</h2>
         {conversion && (
@@ -379,9 +423,13 @@ export function PluginSubmit(
             <p className="field__finding" data-testid="bad-login">
               {rich(f.badLogin(draft.author.trim()))}
             </p>
-          ) : userCheck === "missing" && draft.author.trim() !== "" && (
+          ) : userCheck === "missing" ? (
             <p className="field__finding" data-testid="no-such-user">
               {f.noSuchUser(draft.author.trim())}
+            </p>
+          ) : userCheck === "unavailable" && (
+            <p className="field__hint" data-testid="user-unchecked">
+              {f.userUnchecked(draft.author.trim())}
             </p>
           )}
         </Field>
@@ -521,14 +569,26 @@ export function PluginSubmit(
           draft={draft} folderName={folderName} folderBody={p.folderBody}
           forkInput={forkInput} onForkInput={setForkInput}
           onDownload={download} canDownload={ready && !blocked}
+          review={{
+            kind: "plugin", namespace: draft.author, name: draft.name,
+            findings: [...check.structural, ...check.manifest],
+          }}
         />
+        <AfterHandoff repo={repo} kind="plugin" reserved={reserved} />
 
         <details className="disclosure">
           <summary className="disclosure__summary">{t.send.commandLine}</summary>
           <p className="submit__note">{t.send.recipeIntro}</p>
-          <pre className="submit__yaml" data-testid="command-line"><code>{
-            recipe(recipeInput(repo, forkInput, draft, "plugins", "your-plugin"))
-          }</code></pre>
+          {/* Withheld with the box empty: every line would name plugins//… (S-2). */}
+          {hasNamespace(draft) ? (
+            <pre className="submit__yaml" data-testid="command-line"><code>{
+              recipe(recipeInput(repo, usableFork(forkInput, repo), draft, "plugins", "your-plugin"))
+            }</code></pre>
+          ) : (
+            <p className="submit__note" data-testid="username-needed">
+              {t.send.usernameNeeded}
+            </p>
+          )}
           <p className="submit__note">{t.send.recipeAfter}</p>
         </details>
       </section>

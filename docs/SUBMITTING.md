@@ -102,8 +102,29 @@ difference is.
 This part happens on GitHub, because a link can carry one new file but not a
 folder.
 
+**Your GitHub username comes first.** It names the folder your submission goes
+in, and the checks admit it only when the account that opens the pull request
+has that username. So the page checks it before it hands off, on the skill form
+and the plugin form alike:
+
+- **Until you type one**, the page gives no link, no download and no commands,
+  because every path would start `skills//` or `plugins//`. It says so instead.
+- **It asks GitHub whether the account exists**, using GitHub's public user
+  lookup, which needs no sign-in. It waits until you stop typing, and asks
+  nothing for a name GitHub would not allow. If GitHub is busy or you are
+  offline, the page says it couldn't check and lets you carry on.
+- **When you paste your fork's address**, the page compares the account the
+  fork is under with the username, and says so if they differ. It does not
+  change the username for you: if you are signed in to GitHub as the fork's
+  account, change the username to match.
+- **The registry's own address is refused** as the address of your copy. Fork
+  it first, then paste the address of the copy GitHub makes for you.
+- **Reading a skill from a repository does not fill the username in.** Whoever
+  owns that repository is not necessarily the person submitting it.
+
 **If your skill is one file**, the page opens GitHub's editor with the whole file
-already in it. Commit, and GitHub offers the pull request. You are done.
+already in it. Commit, and GitHub offers the pull request. GitHub's editor cannot
+carry a title, so give the pull request one yourself: **Add skill** and the name.
 
 **If it is more than one file**, four steps:
 
@@ -134,7 +155,17 @@ already in it. Commit, and GitHub offers the pull request. You are done.
    ![The commit box at the foot of the upload page, with Commit directly to the main branch selected. Leave it that way: the fork is your own copy.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-03-commit-box.png)
 
 4. **Open the pull request.** The button on the page compares your fork's `main`
-   with the registry and lets you open it.
+   with the registry and opens GitHub's pull request form with a **title and
+   description already filled in**: `Add skill {username}/{skill-name}` (or
+   `Update skill …` when the skill is already listed, and `plugin` for a plugin),
+   and a description naming the listing, your namespace and what the page
+   checked in your browser — the registry's own field rules, the same module CI
+   runs — including any findings still outstanding. They are in English whatever
+   language the page is in, because the maintainers who read them work in
+   English. Read them, change anything that is wrong, and choose **Create pull
+   request**. A very long list of findings is cut at a whole line so the link
+   stays within what GitHub accepts; the checks on the pull request list
+   everything.
 
 
 
@@ -145,8 +176,10 @@ a pull request* rather than committing to `main`.
 
 ### Step 5 — The checks run, and report back
 
-A comment appears on your pull request. It names anything blocking, anything
-flagged for a human, and which step failed if one did.
+The checks start as soon as the pull request is open, and a comment appears on it.
+It names anything blocking, anything flagged for a human, and which step failed
+if one did. Then a maintainer reads it. The page says the same thing after the
+hand-off.
 
 - **Blocking** stops the merge. Do not rewrite code to dodge a signature —
   explain what you are doing in a comment. There are legitimate reasons to need
@@ -157,6 +190,44 @@ flagged for a human, and which step failed if one did.
 What is checked, and what is deliberately not, is in
 [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
+**Who is asked to review.** It depends on where the pull request lands, and
+comes from [`.github/CODEOWNERS`](../.github/CODEOWNERS):
+
+| Your pull request touches | Who GitHub asks | What you do |
+|---|---|---|
+| `skills/{your-username}/` only | **Nobody.** The folder has no owner, so no reviewer is requested. The repository still needs one approving review before anything merges, and it has to come from a maintainer. | Nothing is required. If it has waited a while, comment on the pull request. |
+| `plugins/` (any plugin, even in your own namespace) | **The maintainers team, automatically.** | Nothing. |
+| `skills/civic-skills/` (the Lab's own namespace) | **The maintainers team, automatically.** | Nothing. |
+
+**The Reviewed tier is a separate request.** A merged skill lists in the
+Community tier. Reviewed means the Lab read every line of one commit
+([TIERS.md](TIERS.md), [REVIEW.md](REVIEW.md)), and nothing on the pull request
+asks for it. After the pull request merges, open an issue from the
+[review request template](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/new?template=review-request.yml).
+The page links it too.
+
+### If you leave the page and come back
+
+The page remembers your answers **in this browser**, as you type. Going to GitHub
+to fork and coming back, closing the tab, or reloading all leave them where they
+were, and the page says "We restored the answers you had typed here" when it
+has put them back. Nothing is sent anywhere to do this, and no password or
+token is stored: only what you typed into the form, which includes the address
+of your fork once you have pasted it.
+
+What a browser cannot keep is the files you gave it. The page names them when
+it restores your answers, and asks for them again: choose the `.zip` again, or
+read the repository again, and your answers stay as they were. A pasted
+`SKILL.md` is kept (it is text you typed), unless it is very long. A plugin is
+the same: drop its folder in again and its answers are filled back in. Server
+addresses you pasted for a plugin are not kept, because an address can carry a
+key in it; the page says so.
+
+To **start over**, press **Start over** near the top of the form. It empties the
+form and deletes what was saved. It is also the way to clear your answers from
+a shared computer. If the browser does not let the page save (a private window
+or blocked site data), the page tells you, and the form works as it always did.
+
 ### If it goes wrong
 
 | What you see | What it means |
@@ -165,6 +236,11 @@ What is checked, and what is deliberately not, is in
 | *a single skill's files go one level down* | Your files landed at `skills/{username}/{skill-name}/`, the listing's root, which holds only what the exchange generates. Move them, `SKILL.md` included, into `skills/{username}/{skill-name}/skills/{skill-name}/` and push again. |
 | *`SKILL.md` is missing* | Same cause, seen from the other side: `skills/{username}/{skill-name}/skills/{skill-name}/`, the directory the registry looks in, has no `SKILL.md`. |
 | *`civic.deployed-at` is required* | You said a team or an organization uses this. Name it, or change the answer to `personal` or `none` — personal use asks for nothing further. |
+| *Type your GitHub username above first* | The username box is empty. The page holds back the links, the download and the commands until it has a username, because every path it gives starts with it. |
+| *No GitHub user called …* | GitHub has no account with that username. Check the spelling against your github.com address. A folder that doesn't match the account opening the pull request is rejected. |
+| *Couldn't check … with GitHub just now* | GitHub's public lookup was busy or rate-limited, or you are offline. Nothing is wrong with the username as far as the page knows, so carry on. The checks on the pull request will catch a wrong one. |
+| *Your copy is under `…`, but the username above is `…`* | You forked into a different account from the username you typed. That is how a submission ends up in `skills/{one-account}/…` with commits from another, and fails the ownership check. Use the account you are signed in to GitHub as, in both places. |
+| *That is the registry's own address, not your copy* | You pasted the exchange's own address. Fork it first with the page's button, then paste your fork's address, which has your username in it. |
 | A field you never filled in | The page reports findings without blocking, on purpose. You can send a submission with them outstanding, and fix them on the pull request. |
 
 Nothing here is unrecoverable. A pull request can be pushed to again, and a

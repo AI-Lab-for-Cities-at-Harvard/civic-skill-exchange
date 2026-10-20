@@ -1,23 +1,30 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useRef, useState } from "react";
 import type { Finding, Entry } from "@civic-skill-exchange/validator";
 import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { SKILL_LAYOUT, checkStructureCore } from "@civic-skill-exchange/validator/structure-core";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   fitsInUrl, recipe, recipeInput, slugify, type Draft,
+  hasNamespace, usableFork,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
-import { checkGitHubUser, type UserCheck } from "../lib/github";
+import { useUserCheck } from "../lib/useUserCheck";
 import { isGitHubLogin } from "../lib/login";
 import { importFromRepo, failureMessages, type ImportResult } from "../lib/import";
+import {
+  draftKey, readDraft, clearDraft, onlyStrings, asString, isRecord,
+} from "../lib/draftStore";
+import { useDraftSaver } from "../lib/useDraftSaver";
+import { DraftBar, PluginPending } from "./DraftBar";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
+import { AfterHandoff } from "./AfterHandoff";
 import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
 import type { Skill } from "../lib/types";
@@ -44,6 +51,37 @@ const OFFERED_LANGUAGES = new Set(
   en.submit.form.languageChoices.map(([value]) => value),
 );
 
+/** Pasted text longer than this is not kept: a SKILL.md is a few kilobytes, and
+ *  a paste past this size is more likely a mistake than a skill. Named on
+ *  restore instead, so it is asked for again rather than lost quietly. */
+export const MAX_KEPT_PASTE = 50_000;
+
+/** What the skill route saved, read back as the shapes the page holds. Every
+ *  value is checked, because a draft is data from a place this page does not
+ *  control: an older version of itself, or another tab. */
+function restoreSkill() {
+  const saved = readDraft(draftKey({ route: "skill" }));
+  const data = saved?.data ?? {};
+  const kept = data.upload;
+  const upload = isRecord(kept) && (kept.kind === "zip" || kept.kind === "repo")
+    && typeof kept.name === "string"
+    ? { kind: kept.kind as "zip" | "repo", name: kept.name } : null;
+  return {
+    restored: saved !== null,
+    draft: onlyStrings(EMPTY_DRAFT, data.draft),
+    typedName: asString(data.typedName),
+    pasted: asString(data.pasted),
+    forkInput: asString(data.forkInput),
+    repoUrl: asString(data.repoUrl),
+    otherLanguage: data.otherLanguage === true,
+    upload,
+    pasteTooLong: data.pasteTooLong === true,
+  };
+}
+
+const isBlank = (d: Draft) =>
+  (Object.keys(EMPTY_DRAFT) as (keyof Draft)[]).every((k) => d[k] === EMPTY_DRAFT[k]);
+
 export function Submit(
   { repo, skills, mode, add }: {
     repo: string; skills: Skill[]; mode: SubmitMode; add?: string;
@@ -52,12 +90,14 @@ export function Submit(
   const s = useStrings();
   const t = s.submit;
   const f = t.form;
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  // Answers kept in this browser through the trip to GitHub and back (#294).
+  const [restore] = useState(restoreSkill);
+  const [draft, setDraft] = useState<Draft>(restore.draft);
   // What was typed, kept beside the slug it becomes. Rewriting the box under
   // the cursor would eat a hyphen the moment it is typed, so the conversion is
   // shown rather than imposed.
-  const [typedName, setTypedName] = useState("");
-  const [pasted, setPasted] = useState("");
+  const [typedName, setTypedName] = useState(restore.typedName);
+  const [pasted, setPasted] = useState(restore.pasted);
   const [archive, setArchive] = useState<{
     name: string; files: number; structural: Finding[]; left: string[];
   } | null>(null);
@@ -66,7 +106,15 @@ export function Submit(
   // a rebuilt file carries no body, and the form knows nothing of scripts/.
   const [source, setSource] = useState<
     { skillMd: string; entries: Entry[]; directoryName: string } | null
-  >(null);
+  >(() => restore.pasted.trim() === "" ? null : {
+    // Pasted text was typed, and small, so it comes back whole. An uploaded
+    // folder does not (see `gaps`), and the page asks for it again.
+    skillMd: restore.pasted,
+    entries: [{
+      path: "SKILL.md", kind: "file", bytes: new TextEncoder().encode(restore.pasted),
+    }],
+    directoryName: "",
+  });
   const [notes, setNotes] = useState<string[]>([]);
   // A folder with plugin.json at its root switches the page by itself (#213,
   // ruling 1), and so does a Claude Code export, which the plugin form
@@ -78,6 +126,7 @@ export function Submit(
   const enterPlugin = (
     entries: Entry[], directoryName: string, left: string[], claudeCode = false,
   ) => {
+    setPluginSaved(null);
     setArchive(null);
     setSource(null);
     setNotes([]);
@@ -85,19 +134,80 @@ export function Submit(
       entries, directoryName, left, claudeCode, key: (prev?.key ?? 0) + 1,
     }));
   };
-  const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
-  const [repoUrl, setRepoUrl] = useState("");
+  const [repoUrl, setRepoUrl] = useState(restore.repoUrl);
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<ImportResult | null>(null);
   const [copied, setCopied] = useState(false);
   // Asked for, never derived. #81: the page guessed this and was wrong two ways
   // — the owner is not the namespace for a reserved one, and the name is
   // whatever the submitter typed into GitHub's fork dialog.
-  const [forkInput, setForkInput] = useState("");
+  const [forkInput, setForkInput] = useState(restore.forkInput);
   // Whether the language question is being answered with a typed tag. Kept as
   // state rather than derived, because "other" chosen with nothing typed yet
   // looks exactly like "nothing chosen" in the draft.
-  const [otherLanguage, setOtherLanguage] = useState(false);
+  const [otherLanguage, setOtherLanguage] = useState(restore.otherLanguage);
+
+  // The draft: saved as it is typed, restored when the page comes back, and
+  // cleared by Start over (#294).
+  const [restoredNow, setRestoredNow] = useState(restore.restored);
+  // What the last visit had that browser storage cannot hold. Named on restore
+  // until the submitter brings it back.
+  const [gaps, setGaps] = useState(
+    { upload: restore.upload, pasteTooLong: restore.pasteTooLong });
+  // Answers carried over to the next file read, so choosing the zip again does
+  // not replace what was restored with what the file says.
+  const carried = useRef<Draft | null>(restore.upload ? restore.draft : null);
+  const [inputKey, setInputKey] = useState(0);
+  const [pluginSaved, setPluginSaved] =
+    useState(() => readDraft(draftKey({ route: "plugin" })));
+  const SKILL_KEY = draftKey({ route: "skill" });
+  const pasteTooLong = pasted.length > MAX_KEPT_PASTE;
+  const toKeep = useMemo(() => ({
+    draft, typedName, forkInput, repoUrl, otherLanguage,
+    pasted: pasteTooLong ? "" : pasted,
+    pasteTooLong: pasteTooLong || (gaps.pasteTooLong && pasted === ""),
+    upload: archive
+      ? { kind: imported ? "repo" as const : "zip" as const, name: archive.name }
+      : gaps.upload,
+  }), [draft, typedName, forkInput, repoUrl, otherLanguage, pasted, pasteTooLong, gaps,
+    archive, imported]);
+  const blankForm = isBlank(draft) && typedName === "" && pasted === "" && forkInput === ""
+    && repoUrl === "" && !otherLanguage && !archive && !gaps.upload;
+  const { failed: cannotSave } = useDraftSaver(SKILL_KEY, toKeep, {
+    blank: blankForm, enabled: mode === "new",
+  });
+  const missing = [
+    !archive && gaps.upload && (gaps.upload.kind === "repo"
+      ? t.draft.repoNotKept(gaps.upload.name) : t.draft.zipNotKept(gaps.upload.name)),
+    gaps.pasteTooLong && pasted === "" && t.draft.pasteNotKept,
+  ].filter((m): m is string => typeof m === "string");
+
+  const startOver = () => {
+    clearDraft(SKILL_KEY);
+    carried.current = null;
+    setDraft(EMPTY_DRAFT); setTypedName(""); setPasted(""); setForkInput("");
+    setRepoUrl(""); setOtherLanguage(false); setArchive(null); setSource(null);
+    setNotes([]); setImported(null);
+    setGaps({ upload: null, pasteTooLong: false });
+    setRestoredNow(false);
+    setInputKey((n) => n + 1);
+  };
+  const startOverPlugin = () => {
+    clearDraft(draftKey({ route: "plugin" }));
+    setPluginSaved(null);
+  };
+
+  /** A freshly read file's answers, with what was restored laid over them. */
+  const carry = (parsed: Draft): Draft => {
+    const kept = carried.current;
+    carried.current = null;
+    if (!kept) return parsed;
+    const merged = { ...parsed };
+    for (const k of Object.keys(EMPTY_DRAFT) as (keyof Draft)[]) {
+      if (kept[k].trim() !== "") merged[k] = kept[k];
+    }
+    return merged;
+  };
 
   // A pasted or imported SKILL.md may already carry a tag the select does not
   // offer, so the box reveals itself rather than the value disappearing.
@@ -121,21 +231,10 @@ export function Submit(
   // lookup would 404 on a name that is entirely correct.
   const reserved = RESERVED_NAMESPACES.has(draft.author.trim().toLowerCase());
 
-  // Debounced, and aborted when the value moves on. The rate limit is 60 an
-  // hour per address, so a request per keystroke would exhaust it inside one
-  // username.
-  useEffect(() => {
-    const login = draft.author.trim();
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      if (!login || !isGitHubLogin(login) || RESERVED_NAMESPACES.has(login.toLowerCase())) {
-        setUserCheck("unknown");
-        return;
-      }
-      checkGitHubUser(login, controller.signal).then(setUserCheck);
-    }, 500);
-    return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [draft.author]);
+  const userCheck = useUserCheck(draft.author);
+  // No username, no path: the hand-off, the download and the recipe all name
+  // `skills/{namespace}/…`, and wait for it rather than render `skills//` (S-2).
+  const named = hasNamespace(draft);
 
   const front = useMemo(() => toFrontmatter(draft), [draft]);
   const yaml = useMemo(() => toYaml(front), [front]);
@@ -193,8 +292,9 @@ export function Submit(
   ) => {
     const { draft: parsed, problems: readProblems } = draftFromSkillMd(text, draft.author);
     if (readProblems.length === 0) {
-      setDraft({ ...parsed, name: slugify(parsed.name) });
-      setTypedName(parsed.name);
+      const merged = carry(parsed);
+      setDraft({ ...merged, name: slugify(merged.name) });
+      if (merged.name === parsed.name) setTypedName(parsed.name);
     }
     setNotes([...problems, ...readProblems]);
     setSource(text.trim() === "" ? null : {
@@ -238,16 +338,23 @@ export function Submit(
       skillMd: out.skillMd, entries: out.entries, directoryName: out.directoryName,
     });
     // Fill from the file, then stamp on where this copy came from and the
-    // commit it was taken at.
-    const { draft: parsed, problems } = draftFromSkillMd(out.skillMd, out.ref.owner);
+    // commit it was taken at. The username stays whatever the submitter typed:
+    // the repository's owner is who wrote the skill, not who is submitting it,
+    // and an organization's name filled in here was flagged by this very page
+    // (S-6, #293).
+    const { draft: parsed, problems } = draftFromSkillMd(out.skillMd);
     if (problems.length === 0) {
-      setDraft({
-        ...parsed,
-        name: slugify(parsed.name),
+      // Restored answers are laid over the file once (#294); the username is
+      // the submitter's, never the repository owner's (#293, S-6).
+      const merged = carry(parsed);
+      setDraft((d) => ({
+        ...merged,
+        author: d.author || merged.author,
+        name: slugify(merged.name),
         sourceRepo: `${out.ref.owner}/${out.ref.repo}`,
         sourceCommit: out.commit,
-      });
-      setTypedName(parsed.name);
+      }));
+      if (merged.name === parsed.name) setTypedName(parsed.name);
     }
     setNotes(problems);
   };
@@ -366,6 +473,15 @@ export function Submit(
 
       {mode === "new" && (
         <>
+        {!plugin && pluginSaved && (
+          <PluginPending name={asString(pluginSaved.data.directoryName)}
+            onStartOver={startOverPlugin} />
+        )}
+        {!plugin && (restoredNow || !blankForm) && (
+          <DraftBar restored={restoredNow} notKept={missing}
+            unsaved={cannotSave} onStartOver={startOver} />
+        )}
+
         {/* Upload and paste first, because most people arrive with a skill
             already written and should not retype it. */}
         <section className="prose__block">
@@ -406,6 +522,7 @@ export function Submit(
 
           <Field id="archive" label={t.intake.archiveLabel} findings={[]} hint={t.intake.archiveHint}>
             <input
+              key={inputKey}
               id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
               onChange={(e) => onFile(e.target.files?.[0])}
             />
@@ -495,9 +612,13 @@ export function Submit(
               <p className="field__finding" data-testid="bad-login">
                 {rich(f.badLogin(draft.author.trim()))}
               </p>
-            ) : userCheck === "missing" && draft.author.trim() !== "" && (
+            ) : userCheck === "missing" ? (
               <p className="field__finding" data-testid="no-such-user">
                 {f.noSuchUser(draft.author.trim())}
+              </p>
+            ) : userCheck === "unavailable" && (
+              <p className="field__hint" data-testid="user-unchecked">
+                {f.userUnchecked(draft.author.trim())}
               </p>
             )}
           </Field>
@@ -728,9 +849,21 @@ export function Submit(
                 folderBody={t.send.folderBody}
                 forkInput={forkInput} onForkInput={setForkInput}
                 onDownload={download} canDownload={ready && !blocked}
+                review={{
+                  kind: "skill", namespace: draft.author, name: draft.name,
+                  update: skills.some((sk) => sk.namespace === draft.author.trim().toLowerCase()
+                    && sk.name === draft.name.trim()),
+                  findings,
+                }}
               />
             </>
           ) : (
+            <>
+            {!named && (
+              <p className="submit__note" data-testid="username-needed">
+                {t.send.usernameNeeded}
+              </p>
+            )}
             <p className="cta-row">
               {urlFits ? (
                 <a
@@ -750,7 +883,10 @@ export function Submit(
                 {copied ? t.send.copied : t.send.copy}
               </button>
             </p>
+            </>
           )}
+
+          <AfterHandoff repo={repo} kind="skill" reserved={reserved} singleFile={!multiFile} />
 
           {mailto ? (
             <p className="submit__note">
@@ -784,9 +920,15 @@ export function Submit(
           <details className="disclosure">
             <summary className="disclosure__summary">{t.send.commandLine}</summary>
             <p className="submit__note">{t.send.recipeIntro}</p>
-            <pre className="submit__yaml" data-testid="command-line"><code>{
-              recipe(recipeInput(repo, forkInput, draft, "skills", "your-skill"))
-            }</code></pre>
+            {named ? (
+              <pre className="submit__yaml" data-testid="command-line"><code>{
+                recipe(recipeInput(repo, usableFork(forkInput, repo), draft, "skills", "your-skill"))
+              }</code></pre>
+            ) : (
+              <p className="submit__note" data-testid="username-needed">
+                {t.send.usernameNeeded}
+              </p>
+            )}
             <p className="submit__note">{t.send.recipeAfter}</p>
           </details>
         </section>

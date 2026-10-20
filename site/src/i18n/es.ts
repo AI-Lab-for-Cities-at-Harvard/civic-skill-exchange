@@ -315,6 +315,10 @@ export const strings: Strings = {
       noSuchUser: (login: string) =>
         `No existe un usuario de GitHub llamado ${login}. Se rechaza toda ` +
         "propuesta cuya carpeta no coincida con la cuenta que abre el pull request.",
+      userUnchecked: (login: string) =>
+        `No se pudo comprobar ${login} con GitHub en este momento: puede que ` +
+        "esté ocupado o que usted no tenga conexión. Puede continuar: las " +
+        "verificaciones del pull request detectarán un nombre de usuario equivocado.",
       badLogin: (login: string) =>
         `\u201c${login}\u201d no es un nombre de usuario de GitHub. Un nombre de ` +
         "usuario solo tiene letras, números y guiones sueltos, como " +
@@ -521,6 +525,21 @@ export const strings: Strings = {
       forkUnparsed:
         "Eso no parece un repositorio de GitHub. Debería ser algo como " +
         "`github.com/usted/civic-skill-exchange`.",
+      forkIsRegistry:
+        "Esa es la dirección del propio registro, no la de su copia. Primero " +
+        "haga un fork con el botón de arriba y luego pegue la dirección de la " +
+        "copia que GitHub crea para usted: lleva su nombre de usuario, como " +
+        "`github.com/usted/civic-skill-exchange`.",
+      forkMismatch: (owner: string, login: string) =>
+        `Su copia está en \`${owner}\`, pero el nombre de usuario de arriba es ` +
+        `\`${login}\`. Deberían ser la misma cuenta: la carpeta lleva el nombre ` +
+        "de usuario, y solo esa cuenta puede abrir el pull request para ella. " +
+        `Si inició sesión en GitHub como \`${owner}\`, cambie el nombre de ` +
+        `usuario a \`${owner}\`.`,
+      usernameNeeded:
+        "Primero escriba arriba su nombre de usuario de GitHub. Da nombre a la " +
+        "carpeta donde va su propuesta, así que la subida, la descarga y los " +
+        "comandos lo esperan.",
 
       uploadTitle: "Arrastre la carpeta",
 
@@ -548,11 +567,52 @@ export const strings: Strings = {
 
       pullRequestTitle: "Abra el pull request",
       pullRequestBody:
-        "Este botón compara su copia con el registro y le deja abrir el pull " +
-        "request. Las verificaciones se ejecutan sobre él, y desde ahí sigue " +
-        "un mantenedor.",
+        "Este botón compara su copia con el registro y abre el formulario del " +
+        "pull request con el título y la descripción ya escritos. Revíselos y " +
+        "elija “Create pull request”. Las verificaciones se ejecutan sobre él, " +
+        "y desde ahí sigue un mantenedor.",
       pullRequestCta: "Abrir el pull request",
       pullRequestMore: "¿Qué pasa con un pull request?",
+
+      /** Después de la entrega (#300). Quién revisa sale de
+       *  .github/CODEOWNERS; las pruebas leen ese archivo. */
+      next: {
+        heading: "Qué pasa después",
+        checks:
+          "Las verificaciones se ejecutan sobre el pull request en cuanto se " +
+          "abre, y responden con un comentario en él. Después lo lee un " +
+          "mantenedor. Corrija lo que las verificaciones señalen agregando " +
+          "cambios al mismo pull request.",
+        whoSkill:
+          "**No se le pide a nadie por usted.** Una habilidad en su propia " +
+          "carpeta no tiene dueño asignado, así que GitHub no solicita un " +
+          "revisor, pero el repositorio igual exige una aprobación antes de " +
+          "publicar nada, y debe venir de un mantenedor. Si lleva tiempo " +
+          "esperando, un comentario en el pull request es la manera de pedirla.",
+        whoPlugin:
+          "**Se le pide a un mantenedor automáticamente.** GitHub solicita la " +
+          "revisión de los mantenedores en cada pull request de un plugin, " +
+          "porque un plugin ejecuta programas en el computador de quien lo " +
+          "usa. No necesita pedirla.",
+        whoReserved:
+          "**Se le pide a un mantenedor automáticamente.** GitHub solicita la " +
+          "revisión de los mantenedores para todo lo que esté en el espacio de " +
+          "nombres del Laboratorio. No necesita pedirla.",
+        english:
+          "El título y la descripción del pull request ya vienen escritos, en " +
+          "inglés, porque los mantenedores que los leen trabajan en inglés. " +
+          "Cambie lo que esté mal antes de crearlo.",
+        singleFile:
+          "El editor de GitHub no puede rellenar el título de una habilidad de " +
+          "un solo archivo, así que póngale uno al pull request: **Add skill** " +
+          "y el nombre.",
+        reviewed:
+          "Una vez publicada, queda en el nivel Comunidad. El nivel Revisada, " +
+          "en el que el Laboratorio lee cada línea de un commit, es una " +
+          "**solicitud aparte**, que se hace después de la publicación: " +
+          "[abra una solicitud de revisión](request). [Qué comprueba una " +
+          "revisión](review).",
+      },
 
       handoff: "Continuar en GitHub",
       urlTooLong:
@@ -611,6 +671,31 @@ export const strings: Strings = {
         "¿No la encuentra? Aquí solo aparecen habilidades que ya están en este " +
         "catálogo. Si la suya todavía no está publicada, [envíela primero como " +
         "habilidad nueva](new).",
+    },
+
+    draft: {
+      saved:
+        "Sus respuestas se guardan en este navegador mientras escribe, para " +
+        "que pueda ir a GitHub y volver. El botón Empezar de nuevo las borra.",
+      restored:
+        "Restauramos las respuestas que había escrito aquí. Estaban guardadas " +
+        "en este navegador; no se envió nada a ningún lado.",
+      notKept: "Esto no se pudo conservar, así que vuelva a agregarlo:",
+      zipNotKept: (name: string) =>
+        `El archivo que subió, ${name}. Elíjalo de nuevo.`,
+      repoNotKept: (name: string) =>
+        `Los archivos leídos de ${name}. Lea el repositorio de nuevo.`,
+      pasteNotKept:
+        "El SKILL.md que pegó era demasiado largo para conservarlo. Péguelo de nuevo.",
+      addressesNotKept:
+        "Las direcciones de servidores que pegó. Péguelas de nuevo.",
+      pluginPending: (name: string) =>
+        `Tiene un borrador guardado del plugin ${name}. Suelte esa carpeta ` +
+        "otra vez y sus respuestas se completarán.",
+      unsaved:
+        "Este navegador no deja que la página guarde sus respuestas, así que " +
+        "se perderán si sale de ella.",
+      startOver: "Empezar de nuevo",
     },
 
     plugin: {
