@@ -34,7 +34,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
-from build_index import ROOT, NoSkillMd, head_sha, skill_dir_of
+from build_index import (LISTING_GENERATED, PLUGIN_GENERATED, ROOT, NoSkillMd, head_sha,
+                         skill_dir_of)
 
 #: The attesting party, per ADR 0001. Overridable for when a second one exists.
 DEFAULT_REVIEWERS = ["AI Lab for Cities at Harvard"]
@@ -53,6 +54,9 @@ NOTES_PLACEHOLDER = (
 #: restated: a questionnaire that has drifted from the list a reviewer works is
 #: worse than none, because it looks authoritative.
 ITEM = re.compile(r"^### (\d+)\. (.+)$", re.MULTILINE)
+
+#: What a pin in registry/reviewed.yml is.
+FULL_SHA = re.compile(r"[0-9a-f]{40}")
 
 
 def questionnaire() -> str:
@@ -111,6 +115,39 @@ def _git(args: list[str], cwd: Path) -> str:
     out = subprocess.run(["git", *args], cwd=cwd, capture_output=True,
                          text=True, check=False)
     return out.stdout.strip()
+
+
+def repin_violations(root: Path, listing: str, old: str, new: str,
+                     plugin: bool = False) -> list[str]:
+    """What changed in a listing between two pins, other than a file moving.
+
+    A re-pin (ADR 0006, decision 7) is honest only when every file the author
+    wrote is byte-identical at the new pin, at most renamed. `-M100%` reports a
+    rename with any edit as a deletion plus an addition, so each one shows up
+    here. The registry's generated files are left out: no reviewer reads them,
+    and the build rewrites them. Each entry is "{status} {path}", for example
+    "M skills/ns/name/SKILL.md".
+    """
+    # The pins come from registry/reviewed.yml, which a pull request can edit:
+    # only a full SHA reaches git, and never where it could read as an option.
+    for pin in (old, new):
+        if not FULL_SHA.fullmatch(pin):
+            raise ValueError(f"{pin!r} is not a pin: a pin is a 40-character lowercase SHA.")
+    generated = PLUGIN_GENERATED if plugin else LISTING_GENERATED
+    out = subprocess.run(
+        ["git", "diff", "--name-status", "-M100%", "--end-of-options", old, new,
+         "--", listing],
+        cwd=root, capture_output=True, text=True, check=True).stdout
+    found = []
+    for line in out.splitlines():
+        status, *paths = line.split("\t")
+        if status == "R100":
+            continue
+        path = paths[-1]
+        if path.startswith(f"{listing}/") and path[len(listing) + 1:] in generated:
+            continue
+        found.append(f"{status[0]} {path}")
+    return found
 
 
 def check_clone(root: Path, skill: Path, plugin: bool = False) -> None:

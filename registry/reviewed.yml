@@ -34,8 +34,11 @@
 # ---------------------------------------------------------------------------
 
 attestations:
+ # Re-pinned 2026-10-20 after the layout move (#276): every author file renamed
+ # at 100% similarity, no content changed; the regenerated Codex manifest dropped
+ # "skills": "./". Only sha: below moved.
  - skill: "civic-skills/plain-language-notice-rewriter"
-   sha: "df5281504c45f435f11e3040fab7a490e41536af"
+   sha: "bce340f5adbe71001aeff6b08c1e7106e4a9fcd2"
    reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-09-12
    expires: 2027-09-12
@@ -73,8 +76,11 @@ attestations:
     .claude-plugin/plugin.json (#186). That registry-written file is the only
     change to the directory since 4bb255c; the skill's own content is
     unchanged since c43c4c1.
+ # Re-pinned 2026-10-20 after the layout move (#276): every author file renamed
+ # at 100% similarity, no content changed; the regenerated Codex manifest dropped
+ # "skills": "./". Only sha: below moved.
  - skill: "civic-skills/generalize-skill"
-   sha: "df5281504c45f435f11e3040fab7a490e41536af"
+   sha: "bce340f5adbe71001aeff6b08c1e7106e4a9fcd2"
    reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-09-12
    expires: 2027-09-12
@@ -85,8 +91,11 @@ attestations:
     2. There are no scripts in the skill. 3. Allowed tool list necessary to read skill. 
     4. NA, 5. NA, 6. No the skill is not deceitful, 7. The tool is appropriate. 8. License is appropriate
     9. Yes, the tool is general
+ # Re-pinned 2026-10-20 after the layout move (#276): every author file renamed
+ # at 100% similarity, no content changed; the regenerated Codex manifest dropped
+ # "skills": "./". Only sha: below moved.
  - skill: "civic-skills/localize-skill"
-   sha: "df5281504c45f435f11e3040fab7a490e41536af"
+   sha: "bce340f5adbe71001aeff6b08c1e7106e4a9fcd2"
    reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-10-18
    expires: 2027-10-18
@@ -109,8 +118,11 @@ attestations:
  # changed (it now opens "This is the original civic analytics workflow."), and the
  # first-line comment in context.template.yml. The owner reviewed the changed SKILL.md
  # on 2026-10-19, so reviewed: and expires: move to that date. The notes are unchanged.
+ # Re-pinned 2026-10-20 after the layout move (#276): every author file renamed
+ # at 100% similarity, no content changed; the regenerated Codex manifest dropped
+ # "skills": "./". Only sha: below moved.
  - skill: "sgarcese/deep-analysis-for-issues"
-   sha: "150a0fafa49bf64a6525ecf12b40d3de8516dfcf"
+   sha: "bce340f5adbe71001aeff6b08c1e7106e4a9fcd2"
    reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-10-19
    expires: 2027-10-19
@@ -130,8 +142,11 @@ attestations:
 
     Look here first if it goes wrong: the sub-guides are separate files, so a
     change to one that contradicts SKILL.md's routing is the drift to check.
+ # Re-pinned 2026-10-20 after the layout move (#276): every author file renamed
+ # at 100% similarity, no content changed; the regenerated Codex manifest dropped
+ # "skills": "./". Only sha: below moved.
  - skill: "sgarcese/planificador-de-arbolado"
-   sha: "70829eae016422d41415ef4e18cd9f7ba3d2f081"
+   sha: "bce340f5adbe71001aeff6b08c1e7106e4a9fcd2"
    reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-10-18
    expires: 2027-10-18
@@ -176,8 +191,11 @@ attestations:
     Look here first if it goes wrong: the five responsive.city hosts. They are
     the author's own servers, so a change in what they return, or who runs
     them, is the thing to re-check before re-attesting.
+ # Re-pinned 2026-10-20 after the layout move (#276): every author file renamed
+ # at 100% similarity, no content changed; the regenerated Codex manifest dropped
+ # "skills": "./". Only sha: below moved.
  - skill: "sgarcese/problem-identification-scan"
-   sha: "f7d2e81df25de57a289d7acc3bd473b3a2be88a0"
+   sha: "bce340f5adbe71001aeff6b08c1e7106e4a9fcd2"
    reviewers: ["AI Lab for Cities at Harvard"]
    reviewed: 2026-10-19
    expires: 2027-10-19
