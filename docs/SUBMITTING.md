@@ -118,7 +118,7 @@ already in it. Commit, and GitHub offers the pull request. You are done.
    directory the first time you commit, so it is fine that it doesn't exist yet. **Do not open
    the folder and drag its contents**, and do not rename it.
 
-   ![GitHub's upload page in your fork. Check the breadcrumb reads skills / your-username before you drop anything, and note that Commit directly to the main branch is selected by default.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-02-upload-page.png)
+   ![GitHub's upload page in your fork. Check the breadcrumb reads skills / your-username / skill-name / skills before you drop anything (the picture predates that path, so its breadcrumb is shorter), and note that Commit directly to the main branch is selected by default.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/github-02-upload-page.png)
 
    Then **Commit changes**, choosing **commit directly to the `main` branch**.
    It is your own copy, so nothing is affected until the pull request in the
