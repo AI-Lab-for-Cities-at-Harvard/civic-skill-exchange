@@ -1,0 +1,12 @@
+/* The site's one stylesheet entry (#316, ADR 0007).
+ *
+ * Cascade layers decide precedence, not source order or specificity: the
+ * hand-written stylesheet sits in `legacy`, and the layout primitives always
+ * beat it. Without this, `.prose p` (0,1,1) outranks `.l-stack > *` (0,1,0)
+ * and a paragraph inside a prose block keeps a margin the stack meant to clear.
+ */
+@layer legacy, layout;
+
+@import "./tokens.css" layer(legacy);
+@import "./app.css" layer(legacy);
+@import "./layout.css" layer(layout);
