@@ -109,7 +109,7 @@ describe("the language switcher", () => {
     await waitFor(() => expect(document.documentElement.lang).toBe("es"));
     // An English listing on the Spanish site. The page is Spanish; the
     // paragraph is not, and says so.
-    expect(container.querySelector(".card__desc")).toHaveAttribute("lang", "en");
+    expect(container.querySelector(".row__desc")).toHaveAttribute("lang", "en");
   });
 
   it("remembers the choice, so a reload does not undo it", async () => {

@@ -10,12 +10,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 import { Submit } from "./components/Submit";
 import { DEFAULT_LOCALE, locales, setLocale, strings } from "./i18n/strings";
-import { makeIndex, makeSkill } from "./test/fixtures";
+import { makeIndex, makePlugin, makeSkill } from "./test/fixtures";
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 const INDEX = makeIndex([makeSkill(), makeSkill({ id: "ns/other", name: "other" })]);
@@ -98,6 +98,71 @@ describe.each(locales())("the page can be driven from the keyboard — %s", (tag
     // onClick — which is invisible to the keyboard and to a screen reader.
     const clickable = document.querySelectorAll("[onclick]");
     expect(clickable).toHaveLength(0);
+  });
+});
+
+/** #208: the browse page's rows, pages and Skills/Plugins toggle, by keyboard
+ *  alone. Thirty skills, so there is a second page. */
+describe.each(locales())("the browse page can be driven from the keyboard — %s", (tag) => {
+  const BIG = {
+    ...makeIndex(Array.from({ length: 30 }, (_, i) =>
+      makeSkill({ id: `ns/s-${i + 1}`, name: `s-${i + 1}` }))),
+    plugins: [makePlugin()],
+  };
+  beforeEach(async () => {
+    await setLocale(tag);
+    Element.prototype.scrollIntoView ??= () => {};
+    vi.stubGlobal("scrollTo", () => {});
+    vi.stubGlobal("fetch", vi.fn(async (url: string) =>
+      /index\.json/.test(String(url))
+        ? { ok: true, status: 200, json: async () => BIG }
+        : { ok: false, status: 404, json: async () => ({}) }));
+  });
+  afterEach(() => { window.history.replaceState(null, "", "#/"); });
+
+  it("opens and closes a row's details with Enter and Space", async () => {
+    const user = userEvent.setup();
+    await loaded();
+    const details = screen.getByRole("button", { name: `${strings().browse.details} s-1` });
+    details.focus();
+    await user.keyboard("{Enter}");
+    expect(details).toHaveAttribute("aria-expanded", "true");
+    expect(document.getElementById(details.getAttribute("aria-controls")!)).toBeVisible();
+    await user.keyboard(" ");
+    expect(details).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("reaches a row's details from its name by tabbing", async () => {
+    const user = userEvent.setup();
+    await loaded();
+    screen.getByRole("link", { name: "s-1" }).focus();
+    await user.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: `${strings().browse.details} s-1` }));
+  });
+
+  it("turns the page with Enter, and lands on the count, with the new rows next", async () => {
+    const user = userEvent.setup();
+    await loaded();
+    const pager = screen.getByRole("navigation", { name: strings().browse.pager.label });
+    within(pager).getByRole("link", { name: strings().browse.pager.next }).focus();
+    await user.keyboard("{Enter}");
+    const count = document.querySelector(".results__count");
+    await waitFor(() => expect(document.activeElement).toBe(count));
+    await user.tab();
+    expect(document.activeElement).toBe(screen.getByRole("link", { name: "s-25" }));
+  });
+
+  it("switches to the plugins with Enter, and keeps focus on the toggle", async () => {
+    const user = userEvent.setup();
+    await loaded();
+    const nav = screen.getByRole("navigation", { name: strings().browse.show.label });
+    const plugins = within(nav).getByRole("link", { name: new RegExp(`^${strings().browse.show.plugins}`) });
+    plugins.focus();
+    await user.keyboard("{Enter}");
+    expect(plugins).toHaveAttribute("aria-current", "true");
+    expect(document.activeElement).toBe(plugins);
+    expect(screen.getByRole("link", { name: "housing-dashboards" })).toBeInTheDocument();
   });
 });
 

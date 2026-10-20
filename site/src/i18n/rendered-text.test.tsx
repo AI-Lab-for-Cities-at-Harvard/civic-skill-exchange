@@ -20,7 +20,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import App from "../App";
 import { SkillDetail } from "../components/SkillDetail";
-import { SkillCard } from "../components/SkillCard";
+import { SkillRow } from "../components/Rows";
 import { DownloadBox } from "../components/DownloadBox";
 import { History } from "../components/History";
 import { Facet } from "../components/Facets";
@@ -188,8 +188,8 @@ describe("the skill detail page says what it said", () => {
 });
 
 describe("the pieces say what they said", () => {
-  it("a card", () => {
-    const { container } = render(<SkillCard skill={SKILLS[1]!} />);
+  it("a row", () => {
+    const { container } = render(<ul><SkillRow skill={SKILLS[1]!} level={3} /></ul>);
     expect(surface(container)).toMatchSnapshot();
   });
 

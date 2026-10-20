@@ -13,7 +13,6 @@ import App from "../App";
 import { makeIndex, makePlugin, makeSkill } from "../test/fixtures";
 import { findViolations, describeViolations } from "../test/axe";
 import { parseRoute, pluginHref } from "../lib/route";
-import { PluginCard } from "./PluginCard";
 import { PluginDetail } from "./PluginDetail";
 import { installCommands } from "../lib/install";
 import { DEFAULT_LOCALE, setLocale } from "../i18n/strings";
@@ -68,18 +67,26 @@ describe("the browse page", () => {
     plugins: [makePlugin()],
   });
 
-  it("shows plugins in their own section, after the skills", async () => {
+  // ADR 0008 decision 5: a Skills/Plugins toggle, one click from the top of
+  // the list, in place of a section below every skill. Still apart from the
+  // skills (ADR 0005): never rows among them.
+  it("shows plugins in their own section, one click from the skills", async () => {
     serve({ "index.json": withPlugin() });
     render(<App />);
-    const section = await screen.findByRole("region", { name: /plugins/i });
+    const toPlugins = await screen.findByRole("link", { name: /^Plugins\b/ });
+    expect(screen.queryByRole("region", { name: /plugins/i })).toBeNull();
+    // The skills' count counts skills only.
+    expect(document.querySelector(".results__count")).toHaveTextContent(/^1 skill$/);
+    fireEvent.click(toPlugins);
+    const section = screen.getByRole("region", { name: /plugins/i });
     expect(within(section).getByRole("link", { name: "housing-dashboards" }))
       .toHaveAttribute("href", "#/plugin/ns/housing-dashboards");
-    // The skills grid still counts skills only.
-    expect(screen.getByText(/1 skill/i)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "example-skill" })).toBeNull();
   });
 
   it("does not list a plugin's skills as skills of their own", async () => {
     serve({ "index.json": withPlugin() });
+    window.history.replaceState(null, "", "#/?show=plugins");
     render(<App />);
     await screen.findByRole("region", { name: /plugins/i });
     expect(screen.queryByRole("link", { name: "housing-brief" })).toBeNull();
@@ -87,9 +94,11 @@ describe("the browse page", () => {
 
   it("has no plugins section when there are none, or the index predates them", async () => {
     serve({ "index.json": makeIndex([makeSkill()]) });
+    window.history.replaceState(null, "", "#/?show=plugins");
     render(<App />);
     await screen.findByText(/1 skill/i);
     expect(screen.queryByRole("region", { name: /plugins/i })).toBeNull();
+    expect(screen.queryByRole("link", { name: /^Plugins\b/ })).toBeNull();
   });
 });
 
@@ -108,6 +117,8 @@ describe("search and counts on the browse page (#299)", () => {
   const search = (q: string) =>
     fireEvent.change(screen.getByLabelText("Search"), { target: { value: q } });
   const pluginSection = () => screen.getByRole("region", { name: /plugins/i });
+  // The plugins side of the toggle (ADR 0008 decision 5).
+  beforeEach(() => { window.history.replaceState(null, "", "#/?show=plugins"); });
 
   it("narrows the plugins to those matching every word of the search", async () => {
     serve({ "index.json": two() });
@@ -125,9 +136,9 @@ describe("search and counts on the browse page (#299)", () => {
     search("housingzzqq");
     expect(within(pluginSection()).getByText(/no plugins match these filters/i))
       .toBeInTheDocument();
-    expect(within(pluginSection()).queryAllByRole("article")).toHaveLength(0);
+    expect(within(pluginSection()).queryAllByRole("listitem")).toHaveLength(0);
     fireEvent.click(within(pluginSection()).getByRole("button", { name: /clear them/i }));
-    expect(within(pluginSection()).getAllByRole("article")).toHaveLength(2);
+    expect(within(pluginSection()).getAllByRole("listitem")).toHaveLength(2);
   });
 
   it("applies a facet to plugins by the fields they have", async () => {
@@ -147,16 +158,22 @@ describe("search and counts on the browse page (#299)", () => {
     render(<App />);
     await screen.findByRole("region", { name: /plugins/i });
     const hero = () => document.querySelector(".topper__stats");
-    const grid = () => document.querySelector(".results__count");
+    const count = () => document.querySelector(".results__count");
+    const side = (name: RegExp) => screen.getByRole("link", { name });
     // The hero gives the catalogue's two totals and nothing else (owner,
     // 2026-10-20): a reviewed or community count would have to say how many
     // of each are skills and how many plugins.
     expect(hero()).toHaveTextContent(/^2 skills·2 plugins$/);
-    expect(grid()).toHaveTextContent(/^2 skills$/);
-    expect(within(pluginSection()).getByText("2 plugins")).toBeInTheDocument();
+    // The count says what the side shown counts; the toggle gives both.
+    expect(count()).toHaveTextContent(/^2 plugins$/);
+    expect(side(/^Skills\b/)).toHaveTextContent(/^Skills\s*2$/);
+    expect(side(/^Plugins\b/)).toHaveTextContent(/^Plugins\s*2$/);
     search("dashboards");
-    expect(grid()).toHaveTextContent(/^0 of 2 skills$/);
-    expect(within(pluginSection()).getByText("1 of 2 plugins")).toBeInTheDocument();
+    expect(count()).toHaveTextContent(/^1 of 2 plugins$/);
+    expect(side(/^Skills\b/)).toHaveTextContent(/^Skills\s*0$/);
+    expect(side(/^Plugins\b/)).toHaveTextContent(/^Plugins\s*1$/);
+    fireEvent.click(side(/^Skills\b/));
+    expect(count()).toHaveTextContent(/^0 of 2 skills$/);
     // The hero is the catalogue's size, not the search's.
     expect(hero()).toHaveTextContent("2 skills·2 plugins");
   });
@@ -169,18 +186,6 @@ describe("search and counts on the browse page (#299)", () => {
   });
 });
 
-describe("the plugin card", () => {
-  it("says how many skills and servers it carries", () => {
-    render(<PluginCard plugin={makePlugin()} />);
-    expect(screen.getByTestId("plugin-card-meta").textContent)
-      .toMatch(/2 skills.*1 MCP server/);
-  });
-
-  it("marks the description with its language", () => {
-    render(<PluginCard plugin={makePlugin({ languages: ["es"] })} />);
-    expect(screen.getByText(/Housing dashboards and briefs/)).toHaveAttribute("lang", "es");
-  });
-});
 
 describe("the plugin page", () => {
   it("lists every skill it installs, with what each does", async () => {

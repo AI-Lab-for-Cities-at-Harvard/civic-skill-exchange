@@ -1,7 +1,7 @@
 export type SubmitMode = "new" | "update";
 
 export type Route =
-  | { page: "browse" }
+  | { page: "browse"; query?: string }
   | { page: "about"; section?: string }
   | { page: "guide"; section?: string }
   | { page: "submit"; mode: SubmitMode; add?: string }
@@ -55,7 +55,10 @@ export function parseRoute(hash: string): Route {
   if (parts[0] === "plugin" && parts[1] && parts[2]) {
     return { page: "plugin", namespace: parts[1], name: parts[2] };
   }
-  return { page: "browse" };
+  // The browse page's own state is its query (#208), read by lib/browse.ts.
+  // Only the bare `#/?…` carries it: an unknown route falls back to the whole
+  // catalogue, not to a filtered page somebody did not ask for.
+  return parts.length === 0 && rawQuery ? { page: "browse", query: rawQuery } : { page: "browse" };
 }
 
 export function skillHref(namespace: string, name: string): string {

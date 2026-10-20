@@ -87,7 +87,7 @@ describe("the rhythm of a page", () => {
 
   it("spaces every kind of section from the same token", () => {
     const block = APP.slice(start, end);
-    for (const cls of [".prose__block", ".detail__section", ".plugins", ".band"]) {
+    for (const cls of [".prose__block", ".detail__section", ".band"]) {
       expect(block, `${cls} belongs to the rhythm block`).toContain(cls);
     }
     expect(block).toMatch(/var\(--space-section\)/);

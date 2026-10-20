@@ -1,4 +1,5 @@
 import { categoryCounts, facetCounts, scopeCounts } from "../lib/filter";
+import { Stack } from "./Layout";
 import { useStrings } from "../i18n/strings";
 import { label } from "../lib/labels";
 import type { Filters, Skill } from "../lib/types";
@@ -38,8 +39,11 @@ export function Facet({
   return (
     <fieldset className="facet">
       <legend className="facet__legend">{legend}</legend>
+      {/* The legend is not a flex item in any browser, so it keeps its own
+          space below; the note and the options are a Stack (#319). */}
+      <Stack gap="2">
       {note && <p className="facet__note">{note}</p>}
-      <div className="facet__options">
+      <Stack gap="0" className="facet__options">
         <label className="facet__option">
           <input
             type="radio"
@@ -61,7 +65,8 @@ export function Facet({
             <span className="facet__count">{counts[value]}</span>
           </label>
         ))}
-      </div>
+      </Stack>
+      </Stack>
     </fieldset>
   );
 }

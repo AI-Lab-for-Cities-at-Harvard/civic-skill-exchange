@@ -71,7 +71,7 @@ describe("the page adapts to the screen it is on", () => {
   });
 
   it("wraps rows rather than letting them overflow", () => {
-    for (const cls of [".cta-row", ".card__badges"]) {
+    for (const cls of [".cta-row"]) {
       const rule = new RegExp(`\\${cls}\\s*\\{[^}]*flex-wrap:\\s*wrap`);
       expect(APP, `${cls} should wrap`).toMatch(rule);
     }

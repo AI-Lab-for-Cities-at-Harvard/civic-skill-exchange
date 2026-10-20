@@ -15,15 +15,23 @@ import { render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 import { DEFAULT_LOCALE, locales, setLocale, strings } from "./i18n/strings";
 import { findViolations, describeViolations } from "./test/axe";
-import { makeIndex, makeSkill } from "./test/fixtures";
+import { makeIndex, makePlugin, makeSkill } from "./test/fixtures";
 import { waitForLazyPage } from "./test/lazy";
 
-const INDEX = makeIndex([
-  makeSkill(),
-  makeSkill({ id: "ns/other", name: "other", tier: "reviewed",
-    reviewed: { date: "2026-08-30", expires: "2027-08-30",
-                reviewers: ["AI Lab for Cities at Harvard"], notes: "" } }),
-]);
+/** Enough skills for a second page of 24 (#208), a Lab listing, and plugins
+ *  for the toggle's other side. */
+const INDEX = {
+  ...makeIndex([
+    makeSkill(),
+    makeSkill({ id: "ns/other", name: "other", tier: "reviewed",
+      reviewed: { date: "2026-08-30", expires: "2027-08-30",
+                  reviewers: ["AI Lab for Cities at Harvard"], notes: "" } }),
+    makeSkill({ id: "civic-skills/lab", name: "lab", namespace: "civic-skills" }),
+    ...Array.from({ length: 24 }, (_, i) =>
+      makeSkill({ id: `ns/more-${i}`, name: `more-${i}`, data_sensitivity: "pii" })),
+  ]),
+  plugins: [makePlugin(), makePlugin({ id: "ns/kit", name: "kit" })],
+};
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn(async (url: string) =>
@@ -56,6 +64,37 @@ describe.each(locales())("the whole page has no axe violations — %s", (tag) =>
 
   it("browsing the catalog", async () => {
     await expectPageClean();
+  });
+
+  /* #208: each state of the browse page, in either theme. jsdom has no
+     layout, so contrast is contrast.test.ts's; the theme still changes which
+     markup and attributes are on the page. */
+  describe.each(["light", "dark"])("the browse page's states — %s", (theme) => {
+    beforeEach(() => { localStorage.setItem("theme", theme); });
+    afterEach(() => { localStorage.removeItem("theme"); });
+
+    it("page 2", async () => {
+      window.history.replaceState(null, "", "#/?page=2");
+      await expectPageClean(() => document.querySelector(".pager [aria-current=page]"));
+    });
+
+    it("the plugins side", async () => {
+      window.history.replaceState(null, "", "#/?show=plugins");
+      await expectPageClean(() => document.querySelector("#results li.row"));
+    });
+
+    it("a row opened", async () => {
+      await expectPageClean(() => {
+        const button = document.querySelector<HTMLButtonElement>("li.row button[aria-expanded=false]");
+        button?.click();
+        return document.querySelector("li.row button[aria-expanded=true]");
+      });
+    });
+
+    it("a filter that matches nothing", async () => {
+      window.history.replaceState(null, "", "#/?q=nothing-matches-this");
+      await expectPageClean();
+    });
   });
 
   it("the about page", async () => {

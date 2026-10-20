@@ -48,11 +48,11 @@ const FILES = [
   "components/Guide.tsx",
   "components/History.tsx",
   "components/ModelFacts.tsx",
-  "components/PluginCard.tsx",
   "components/PluginDetail.tsx",
-  "components/SkillCard.tsx",
   "components/SkillDetail.tsx",
+  "components/Pager.tsx",
   "components/PluginSubmit.tsx",
+  "components/Rows.tsx",
   "components/Submit.tsx",
   "components/UploadSteps.tsx",
 ];

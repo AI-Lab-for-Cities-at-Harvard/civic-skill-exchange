@@ -17,7 +17,7 @@ import { About } from "./About";
 import { Submit } from "./Submit";
 import { PluginSubmit } from "./PluginSubmit";
 import { strToU8 } from "fflate";
-import { SkillCard } from "./SkillCard";
+import { SkillRow } from "./Rows";
 import { TierBand, ContributeBand } from "./Bands";
 import { DownloadBox } from "./DownloadBox";
 import type { SkillDetail } from "../lib/types";
@@ -44,17 +44,17 @@ describe.each(locales())("no axe violations — %s", (tag) => {
 
   it("About", async () => { await expectClean(<About skills={[]} />); });
 
-  it("a skill card", async () => {
-    await expectClean(<SkillCard skill={makeSkill()} />);
+  it("a browse row", async () => {
+    await expectClean(<ul><SkillRow skill={makeSkill()} level={3} /></ul>);
   });
 
-  it("a reviewed skill card, which renders more", async () => {
-    await expectClean(<SkillCard skill={makeSkill({
+  it("a reviewed Lab row, which renders more", async () => {
+    await expectClean(<ul><SkillRow level={3} skill={makeSkill({
       tier: "reviewed", namespace: "civic-skills", data_sensitivity: "protected",
       localization: "generalized",
       reviewed: { date: "2026-08-30", expires: "2027-08-30",
                   reviewers: ["AI Lab for Cities at Harvard"], notes: "" },
-    })} />);
+    })} /></ul>);
   });
 
   it("the tier band", async () => {

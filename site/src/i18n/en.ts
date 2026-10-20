@@ -244,7 +244,30 @@ export const en = {
     loading: "Loading the catalog…",
     all: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,
     some: (shown: number, total: number) => `${shown} of ${total} skills`,
+    /** When the skills take more than a page: which of them this page shows. */
+    range: (from: number, to: number, shown: number, total: number) =>
+      shown === total
+        ? `Skills ${from}–${to} of ${total}`
+        : `Skills ${from}–${to} of the ${shown} that match (${total} in all)`,
     empty: "No skills match these filters. [Clear them](clear) to see the whole catalog.",
+  },
+
+  /** The browse page's rows, its pages and its Skills/Plugins toggle (#208,
+   *  ADR 0008). */
+  browse: {
+    /** A row's button. The row's name follows it, visually hidden, so
+     *  twenty-four of them are twenty-four different buttons to a screen
+     *  reader. */
+    details: "Details",
+    hide: "Hide details",
+    skillCta: "View this skill",
+    /** Numbered pages of 24. `page` is read before each number, out of sight,
+     *  so a link is "Page 2" rather than "2". */
+    pager: { label: "Pages", page: "Page", previous: "Previous", next: "Next" },
+    /** The Skills/Plugins toggle, `Skills 48 | Plugins 8`; each side's count
+     *  follows the search and the filters. Its words are also the visually
+     *  hidden heading of the side it shows. */
+    show: { label: "Skills or plugins", skills: "Skills", plugins: "Plugins" },
   },
 
   /** The submission wizard.
@@ -1152,12 +1175,6 @@ export const en = {
     },
   },
 
-  /** A tease, not a summary: who vouched for it, what it is called, what it
-   *  does, and roughly where it belongs. */
-  card: {
-    cta: "View this skill",
-  },
-
   /** The filters down the side of the catalogue.
    *
    *  A facet's `note` is where the vocabulary gets explained, because the
@@ -2060,9 +2077,13 @@ export const en = {
     count: {
       all: (n: number) => `${n} plugin${n === 1 ? "" : "s"}`,
       some: (shown: number, total: number) => `${shown} of ${total} plugins`,
+      range: (from: number, to: number, shown: number, total: number) =>
+        shown === total
+          ? `Plugins ${from}–${to} of ${total}`
+          : `Plugins ${from}–${to} of the ${shown} that match (${total} in all)`,
     },
     empty: "No plugins match these filters. [Clear them](clear) to see every plugin.",
-    card: {
+    row: {
       cta: "View this plugin",
       skills: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,
       servers: (n: number) => `${n} MCP server${n === 1 ? "" : "s"}`,
