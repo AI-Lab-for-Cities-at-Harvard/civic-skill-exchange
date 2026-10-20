@@ -107,3 +107,38 @@ describe("the page's left and right are logical", () => {
     expect(body).not.toMatch(/(^|[;\s])padding\s*:[^;]*\S+\s+\S+\s+\S+\s+\S+/);
   });
 });
+
+describe("the phone's filters (#328)", () => {
+  const LAYOUT = readFileSync(join(__dirname, "layout.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+
+  /** Rule bodies for `selector` inside a media query whose text matches. */
+  const inMedia = (query: RegExp, selector: string) =>
+    [...APP.matchAll(/@media\s*([^{]*)\{((?:[^{}]*\{[^{}]*\})*)\s*\}/g)]
+      .filter((m) => query.test(m[1]!))
+      .flatMap((m) => [...m[2]!.matchAll(/([^{}]+)\{([^{}]*)\}/g)])
+      .filter((r) => r[1]!.split(/\s*,\s*/).map((x) => x.trim()).includes(selector))
+      .map((r) => r[2]!);
+
+  it("hides the button from 1024px up, and only there", () => {
+    expect(inMedia(/min-width\s*:\s*1024px/, ".filters__toggle").join(";"))
+      .toMatch(/display\s*:\s*none/);
+    const outside = bodies(".filters__toggle").length - inMedia(/min-width\s*:\s*1024px/, ".filters__toggle").length;
+    expect(outside).toBe(1);
+    expect(APP.replace(/@media[^{]*\{[^{}]*\{[^{}]*\}\s*\}/g, "")).not.toMatch(/\.filters__toggle[^{]*\{[^}]*display\s*:\s*none/);
+  });
+
+  it("is at least 44px tall", () => {
+    expect(bodies(".filters__toggle").join(";")).toMatch(/min-height\s*:\s*2\.75rem/);
+  });
+
+  it("lets the facets show whatever `hidden` says from 1024px up", () => {
+    const m = LAYOUT.match(/@media\s*\(min-width:\s*1024px\)\s*\{\s*([^{}]*)\{([^{}]*)\}/);
+    expect(m, "a min-width: 1024px rule in layout.css").not.toBeNull();
+    expect(m![1]).toMatch(/\.filters__facets\[hidden\]/);
+    expect(m![2]).toMatch(/display\s*:\s*flex/);
+  });
+
+  it("adds no spacing of its own to the facets panel", () => {
+    for (const b of bodies(".filters__facets")) expect(b).not.toMatch(SPACES);
+  });
+});

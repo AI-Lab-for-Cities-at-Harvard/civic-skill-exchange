@@ -1180,6 +1180,9 @@ export const en = {
    *  A facet's `note` is where the vocabulary gets explained, because the
    *  legend has room for two words and some of these need a sentence. */
   facets: {
+    /** The phone's button over the facets (#328). The count is the facets set;
+     *  the search is not one. */
+    toggle: (n: number) => (n === 0 ? "Filters" : `Filters (${n} on)`),
     label: "Filter skills",
     /** The option that clears one facet, as against the button that clears all. */
     any: "Any",

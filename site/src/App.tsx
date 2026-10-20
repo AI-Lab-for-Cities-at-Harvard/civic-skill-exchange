@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useState, type ReactNode } from "re
 import { About } from "./components/About";
 import { BetaBadge } from "./components/Beta";
 import { SkillDetail } from "./components/SkillDetail";
-import { Facet } from "./components/Facets";
+import { Facet, FacetPanel } from "./components/Facets";
 import { PluginRow, SkillRow } from "./components/Rows";
 import { Pager } from "./components/Pager";
 import { TierBand, ContributeBand } from "./components/Bands";
@@ -339,6 +339,7 @@ export default function App() {
             />
           </Stack>
 
+          <FacetPanel filters={filters}>
           <Facet legend={s.facets.tier.legend} field="tier" filterKey="tier"
             labels={s.vocabulary.tier}
             skills={skills} filters={filters} onChange={setFilter}
@@ -367,6 +368,7 @@ export default function App() {
               </button>
             </Cluster>
           )}
+          </FacetPanel>
         </Stack>
 
         <Stack as="section" gap="4" id="results" className="results">

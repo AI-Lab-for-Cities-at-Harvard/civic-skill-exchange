@@ -148,6 +148,8 @@ describe("search and counts on the browse page (#299)", () => {
     serve({ "index.json": idx });
     render(<App />);
     await screen.findByRole("region", { name: /plugins/i });
+    // The facets start closed behind the Filters button on a phone (#328).
+    fireEvent.click(screen.getByRole("button", { name: "Filters" }));
     fireEvent.click(screen.getByRole("radio", { name: /^Reviewed/ }));
     expect(within(pluginSection()).getByRole("link", { name: "notice-kit" })).toBeInTheDocument();
     expect(within(pluginSection()).queryByRole("link", { name: "housing-dashboards" })).toBeNull();

@@ -1014,6 +1014,7 @@ export const strings: Strings = {
   },
 
   facets: {
+    toggle: (n: number) => (n === 0 ? "Filtros" : `Filtros (${n} activos)`),
     label: "Filtrar habilidades",
 
     any: "Cualquiera",

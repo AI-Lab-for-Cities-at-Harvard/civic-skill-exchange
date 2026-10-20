@@ -180,7 +180,10 @@ describe("the filters in the URL", () => {
 
   it("clears them back to the bare #/", async () => {
     await open("#/?q=nothing-matches");
-    await userEvent.setup().click(screen.getByRole("button", { name: t().facets.clear }));
+    // The clear button is in the facets, which start closed on a phone (#328).
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: t().facets.toggle(0) }));
+    await user.click(screen.getByRole("button", { name: t().facets.clear }));
     expect(window.location.hash).toBe("#/");
     expect(rowNames()).toHaveLength(24);
   });

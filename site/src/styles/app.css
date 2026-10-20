@@ -168,6 +168,13 @@ a:hover { color: var(--c-spot); }
 .filters { position: sticky; top: var(--gap-4); }
 @media (max-width: 1023px) { .filters { position: static; } }
 
+/* The phone's Filters button (#328, ADR 0008 decision 6): shown only below
+ * 1024px, where it opens the facets (a Stack, `hidden` while closed; layout.css
+ * undoes that from 1024px up). A child of the aside's Stack, so it takes no
+ * margin of its own, and it keeps its width instead of stretching. */
+.filters__toggle { align-self: flex-start; min-height: 2.75rem; }
+@media (min-width: 1024px) { .filters__toggle { display: none; } }
+
 /* The filter rail was the last piece of the page still wearing the operating
    system's own controls — blue radio dots on a crimson-toppered page. The
    label treatment is shared with the facet legends so the whole rail reads as

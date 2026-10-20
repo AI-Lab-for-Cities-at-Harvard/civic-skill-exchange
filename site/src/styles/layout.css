@@ -29,6 +29,12 @@
  * not, so without this `display: flex` would beat it and `hidden` would show. */
 .l-stack[hidden], .l-cluster[hidden], .l-grid[hidden] { display: none; }
 
+/* The browse page's facets are `hidden` until the phone's Filters button opens
+ * them (#328). From 1024px up that button is gone, so they always show. */
+@media (min-width: 1024px) {
+  .l-stack.filters__facets[hidden] { display: flex; }
+}
+
 .l-align-start { align-items: flex-start; }
 .l-align-center { align-items: center; }
 .l-align-end { align-items: flex-end; }
