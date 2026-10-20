@@ -127,14 +127,80 @@ export function patchSkillMd(
  *  page knows both texts, so it can show what the download is *for* rather than
  *  asserting that it matters.
  *
- *  Line-level and deliberately crude. This is a "here is what changed" display,
- *  not a diff engine, and the frontmatter it compares is one key per line.
+ *  Counts what changed in meaning (#302, S-14). A description re-folded onto
+ *  one line, or a value that lost its quotes, is a different line and the same
+ *  value, and listing it made "what we added" bigger than what was added. So
+ *  the frontmatter is cut into one chunk per key (and per key under
+ *  `metadata:`), a chunk counts only if its parsed value differs, and within a
+ *  changed chunk the lines are the ones the original did not already have.
+ *
+ *  Crude on purpose. This is a "here is what changed" display, not a diff
+ *  engine; if either side cannot be parsed it falls back to comparing lines.
  */
 export function addedFrontmatterLines(original: string, patched: string): string[] {
-  const front = (text: string) => {
-    const m = /^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/.exec(text);
-    return (m?.[1] ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
-  };
-  const before = new Set(front(original));
-  return front(patched).filter((line) => !before.has(line));
+  const front = (text: string) => FENCE.exec(text)?.[1] ?? "";
+  const before = new Set(front(original).split(/\r?\n/).map((l) => l.trim()).filter(Boolean));
+  const fresh = (chunk: string[]) =>
+    chunk.map((l) => l.trim()).filter((l) => l && !before.has(l));
+
+  const was = valuesOf(front(original));
+  const now = valuesOf(front(patched));
+  if (!was || !now) return fresh(front(patched).split(/\r?\n/));
+
+  const out: string[] = [];
+  for (const { path, lines } of chunksOf(front(patched))) {
+    if (path in was && JSON.stringify(was[path]) === JSON.stringify(now[path])) continue;
+    out.push(...fresh(lines));
+  }
+  return out;
+}
+
+/** Parsed value at each key path: `name`, `metadata` (its map, whole) and
+ *  `metadata/civic.scope`. Null when the text is not valid YAML. */
+function valuesOf(raw: string): Record<string, unknown> | null {
+  const doc = parseDocument(raw, { merge: false });
+  if (doc.errors.length > 0) return null;
+  const root: unknown = doc.toJS();
+  if (root === null) return {};
+  if (typeof root !== "object" || Array.isArray(root)) return null;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(root as Record<string, unknown>)) {
+    out[k] = v;
+    if (k === "metadata" && v && typeof v === "object" && !Array.isArray(v)) {
+      for (const [mk, mv] of Object.entries(v as Record<string, unknown>)) {
+        out[`metadata/${mk}`] = mv;
+      }
+    }
+  }
+  return out;
+}
+
+const unquote = (key: string) => key.replace(/^["']|["']$/g, "");
+
+/** The text cut at each key: a line that starts in column 0 opens a chunk, and
+ *  so does each child of `metadata:` at its first child's indent. `metadata:`
+ *  itself is the chunk named `metadata` and holds only its own line. */
+function chunksOf(raw: string): { path: string; lines: string[] }[] {
+  const out: { path: string; lines: string[] }[] = [];
+  let top = "";
+  let childIndent: number | null = null;
+  for (const line of raw.split(/\r?\n/)) {
+    const key = /^([^\s#-][^:]*?):(?:\s|$)/.exec(line)?.[1];
+    if (key !== undefined) {
+      top = unquote(key);
+      childIndent = null;
+      out.push({ path: top, lines: [line] });
+      continue;
+    }
+    if (top === "metadata") {
+      const m = /^(\s+)([^\s#-][^:]*?):(?:\s|$)/.exec(line);
+      if (m && (childIndent === null || m[1]!.length === childIndent)) {
+        childIndent = m[1]!.length;
+        out.push({ path: `metadata/${unquote(m[2]!)}`, lines: [line] });
+        continue;
+      }
+    }
+    out.at(-1)?.lines.push(line);
+  }
+  return out;
 }
