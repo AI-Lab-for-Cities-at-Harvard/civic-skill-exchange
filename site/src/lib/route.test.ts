@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { parseRoute, skillHref, addFieldsHref, submitHref, aboutHref, guideHref } from "./route";
+import {
+  parseRoute, skillHref, addFieldsHref, submitHref, aboutHref, guideHref, collectionHref,
+} from "./route";
 
 describe("parseRoute", () => {
   it("defaults to browse", () => {
@@ -152,5 +154,32 @@ describe("parseRoute — the guide", () => {
   it("builds links to it", () => {
     expect(guideHref()).toBe("#/guide");
     expect(guideHref("codex")).toBe("#/guide/codex");
+  });
+});
+
+/* #209: a collection's own page. */
+describe("parseRoute — a collection", () => {
+  it("carries the slug", () => {
+    expect(parseRoute("#/collection/permits-start-to-finish"))
+      .toEqual({ page: "collection", slug: "permits-start-to-finish" });
+  });
+
+  it("keeps working with a query string after it", () => {
+    expect(parseRoute("#/collection/permits?x=1")).toEqual({ page: "collection", slug: "permits" });
+  });
+
+  it("is still the collection page, with no slug, when the slug is not one", () => {
+    // So the reader is told there is no collection there, rather than being
+    // dropped on the catalogue with no word about the link they followed.
+    for (const hash of ["#/collection/Permits", "#/collection/a_b", "#/collection/-a",
+      "#/collection/a--b", "#/collection"]) {
+      expect(parseRoute(hash)).toEqual({ page: "collection" });
+    }
+  });
+
+  it("builds the link a tile carries, which the parser round-trips", () => {
+    expect(collectionHref("permits-start-to-finish")).toBe("#/collection/permits-start-to-finish");
+    expect(parseRoute(collectionHref("permits-start-to-finish")))
+      .toEqual({ page: "collection", slug: "permits-start-to-finish" });
   });
 });

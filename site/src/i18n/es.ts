@@ -224,6 +224,15 @@ export const strings: Strings = {
     show: { label: "Habilidades o plugins", skills: "Habilidades", plugins: "Plugins" },
   },
 
+  collections: {
+    heading: "Colecciones",
+    count: (n: number) => `${n} publicaci${n === 1 ? "ón" : "ones"}`,
+    caveat:
+      "Elegidas por los mantenedores del Exchange porque funcionan juntas. " +
+      "Estar en una colección no es una revisión: el nivel de cada publicación indica si fue revisada.",
+    missing: "No hay ninguna colección en esta dirección.",
+  },
+
   submit: {
     heading: "Comparta una habilidad o plugin",
     lede:
@@ -1896,6 +1905,7 @@ export const strings: Strings = {
       skills: (n: number) => `${n} habilidad${n === 1 ? "" : "es"}`,
       servers: (n: number) => `${n} servidor${n === 1 ? "" : "es"} MCP`,
       noServers: "Sin servidores MCP",
+      kind: (n: number) => `Plugin · ${n} habilidad${n === 1 ? "" : "es"}`,
     },
     detail: {
       fit: {

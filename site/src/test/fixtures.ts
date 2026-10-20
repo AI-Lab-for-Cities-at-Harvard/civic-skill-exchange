@@ -6,7 +6,7 @@
  * the mix of tiers the browse page has to render.
  */
 
-import type { Index, Plugin, Skill } from "../lib/types";
+import type { Collection, Index, Plugin, Skill } from "../lib/types";
 
 export function makeSkill(over: Partial<Skill> = {}): Skill {
   return {
@@ -103,6 +103,23 @@ export function makePlugin(over: Partial<Plugin> = {}): Plugin {
     script_files: ["mcp.json"],
     path: "plugins/ns/housing-dashboards",
     download: "https://example.test/plugin",
+    ...over,
+  };
+}
+
+/** A featured collection (#209) of the default skill and the default plugin. */
+export function makeCollection(over: Partial<Collection> = {}): Collection {
+  return {
+    slug: "permits-start-to-finish",
+    title: "A permit, start to finish",
+    title_es: "Un permiso, de principio a fin",
+    note: "Explaining a permit's status, then the letter that goes with it.",
+    note_es: "Explicar el estado de un permiso y luego la carta que lo acompaña.",
+    featured: true,
+    listings: [
+      { kind: "skill", id: "ns/example-skill" },
+      { kind: "plugin", id: "ns/housing-dashboards" },
+    ],
     ...over,
   };
 }

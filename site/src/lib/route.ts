@@ -6,7 +6,10 @@ export type Route =
   | { page: "guide"; section?: string }
   | { page: "submit"; mode: SubmitMode; add?: string }
   | { page: "skill"; namespace: string; name: string }
-  | { page: "plugin"; namespace: string; name: string };
+  | { page: "plugin"; namespace: string; name: string }
+  /** No slug when the URL's was not one: the page then says there is no
+   *  collection there, as it does for a slug nobody has used. */
+  | { page: "collection"; slug?: string };
 
 /** A namespaced skill id, and nothing else. `add` becomes a path into GitHub's
  *  editor, so anything that is not exactly `{namespace}/{name}` is dropped
@@ -87,4 +90,9 @@ export function guideHref(section?: string): string {
 
 export function submitHref(mode: SubmitMode): string {
   return mode === "update" ? "#/submit?mode=update" : "#/submit";
+}
+
+/** A collection's page (#209). Not built yet. */
+export function collectionHref(_slug: string): string {
+  return "";
 }

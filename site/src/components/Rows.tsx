@@ -91,7 +91,9 @@ export function SkillRow({ skill, level }: { skill: Skill; level: Level }) {
   );
 }
 
-export function PluginRow({ plugin, level }: { plugin: Plugin; level: Level }) {
+export function PluginRow({ plugin, level }: {
+  plugin: Plugin; level: Level; marked?: boolean;
+}) {
   const s = useStrings();
   const p = s.plugins.row;
   const href = pluginHref(plugin.namespace, plugin.name);

@@ -15,7 +15,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 import { DEFAULT_LOCALE, locales, setLocale, strings } from "./i18n/strings";
 import { findViolations, describeViolations } from "./test/axe";
-import { makeIndex, makePlugin, makeSkill } from "./test/fixtures";
+import { makeCollection, makeIndex, makePlugin, makeSkill } from "./test/fixtures";
 import { waitForLazyPage } from "./test/lazy";
 
 /** Enough skills for a second page of 24 (#208), a Lab listing, and plugins
@@ -31,6 +31,16 @@ const INDEX = {
       makeSkill({ id: `ns/more-${i}`, name: `more-${i}`, data_sensitivity: "pii" })),
   ]),
   plugins: [makePlugin(), makePlugin({ id: "ns/kit", name: "kit" })],
+  /* #209: two featured, so the browse page has tiles, and one mixing a skill,
+     a Reviewed skill and a plugin, for its page. */
+  collections: [
+    makeCollection({ listings: [
+      { kind: "plugin", id: "ns/housing-dashboards" },
+      { kind: "skill", id: "ns/other" },
+      { kind: "skill", id: "civic-skills/lab" },
+    ] }),
+    makeCollection({ slug: "second", title: "A second", title_es: "Una segunda" }),
+  ],
 };
 
 beforeEach(() => {
@@ -102,6 +112,29 @@ describe.each(locales())("the whole page has no axe violations — %s", (tag) =>
 
     it("the phone's filters closed (#328)", async () => {
       await expectPageClean(() => document.querySelector("button[aria-controls=facets][aria-expanded=false]"));
+    });
+
+    it("the collection tiles", async () => {
+      await expectPageClean(() => document.querySelector(".tile"));
+    });
+
+    it("a collection's page", async () => {
+      window.history.replaceState(null, "", "#/collection/permits-start-to-finish");
+      await expectPageClean(() => document.querySelector("li.row"));
+    });
+
+    it("a collection's page with a row opened", async () => {
+      window.history.replaceState(null, "", "#/collection/permits-start-to-finish");
+      await expectPageClean(() => {
+        const button = document.querySelector<HTMLButtonElement>("li.row button[aria-expanded=false]");
+        button?.click();
+        return document.querySelector("li.row button[aria-expanded=true]");
+      });
+    });
+
+    it("an address with no collection at it", async () => {
+      window.history.replaceState(null, "", "#/collection/nobody-made-this");
+      await expectPageClean(() => document.querySelector(".page .notice"));
     });
 
     it("a filter that matches nothing", async () => {

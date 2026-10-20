@@ -204,3 +204,22 @@ describe("the row's layout", () => {
     expect(lab.parentElement).toHaveClass("l-cluster");
   });
 });
+
+/* #209: a collection mixes skills and plugins, so where they are mixed a
+   plugin's closed row says it is one, and how many skills it carries. */
+describe("a plugin row among skills", () => {
+  it("is marked as a plugin, with its number of skills, when asked", () => {
+    const { head } = row(<PluginRow level={2} plugin={makePlugin()} marked />);
+    expect(head).toHaveTextContent(strings().plugins.row.kind(2));
+  });
+
+  it("is not marked on the plugins side, where every row is one", () => {
+    const { head } = row(<PluginRow level={3} plugin={makePlugin()} />);
+    expect(head).not.toHaveTextContent(strings().plugins.row.kind(2));
+  });
+
+  it("takes its heading level from where it is placed", () => {
+    const { head } = row(<PluginRow level={2} plugin={makePlugin()} marked />);
+    expect(within(head).getByRole("heading", { level: 2 })).toHaveTextContent("housing-dashboards");
+  });
+});
