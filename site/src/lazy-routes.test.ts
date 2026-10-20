@@ -17,3 +17,15 @@ describe("routes loaded on demand", () => {
     });
   }
 });
+
+/* #329: a lazy page's own modules stay out of the entry chunk too. App.tsx
+   once imported one helper from lib/submit.ts, which put the whole submit
+   module back in what every browse reader downloads. */
+describe("modules only the lazy pages need", () => {
+  for (const mod of ["submit", "patch", "zip", "folder", "import"]) {
+    it(`App.tsx does not import lib/${mod}`, () => {
+      expect(APP).not.toMatch(new RegExp(`from "\\./lib/${mod}";`));
+    });
+  }
+});
+

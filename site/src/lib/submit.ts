@@ -10,6 +10,7 @@
 
 import type { Frontmatter } from "@civic-skill-exchange/validator";
 import { en } from "../i18n/en";
+import { repoSlug } from "./repo";
 
 export interface Draft {
   /** GitHub login. The namespace, and what L1 checks the commit author against. */
@@ -149,13 +150,6 @@ export function toYaml(front: ReturnType<typeof toFrontmatter>): string {
   }
   lines.push("---", "");
   return lines.join("\n");
-}
-
-/** The index publishes `repo` as a full URL; every GitHub handoff needs
- *  `owner/name`. Derived rather than hardcoded so a fork of this registry
- *  points its own submissions at itself. */
-export function repoSlug(repoUrl: string): string {
-  return repoUrl.replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, "");
 }
 
 /** Turn what somebody typed into a name the registry accepts.
