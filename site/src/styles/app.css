@@ -863,6 +863,13 @@ a:hover { color: var(--c-spot); }
   white-space: pre-wrap; overflow-wrap: anywhere;
   overflow-x: auto;
 }
+/* An outline, offset, rather than a border and padding: the spacing ratchet
+   counts padding, and the zone's own spacing is a <Stack>'s. */
+.dropzone {
+  outline: 2px dashed var(--c-border); outline-offset: var(--gap-2);
+  border-radius: var(--radius);
+}
+.dropzone[data-over="true"] { outline-style: solid; }
 .submit__archive { margin-top: var(--gap-4); font-size: var(--t-sm); }
 .submit__findings { margin: var(--gap-2) 0 0; padding-left: var(--gap-5); }
 .submit__findings li { margin-bottom: var(--gap-2); font-size: var(--t-xs); }

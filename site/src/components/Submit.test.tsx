@@ -258,6 +258,7 @@ describe("Submit — plain language", () => {
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
     await user.type(screen.getByLabelText(/GitHub username/i), "cityofx");
+    await user.click(screen.getByTestId("handoff"));
     const notes = screen.getAllByText(/is required/i, { selector: ".field__finding" });
     expect(notes.length).toBeGreaterThan(0);
     for (const note of notes) expect(note.textContent).not.toMatch(/civic\./);
@@ -1032,8 +1033,12 @@ describe("Submit — the language it asks for", () => {
     expect(screen.getByTestId("yaml").textContent).not.toContain("civic.language");
   });
 
-  it("reports the missing language against its own field", () => {
+  it("reports the missing language against its own field", async () => {
+    const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
+    // Said once the question has been visited (#302, S-13).
+    await user.click(screen.getByLabelText(/What language is it written in/i));
+    await user.tab();
     const field = screen.getByLabelText(/What language is it written in/i)
       .closest(".field");
     expect(field?.textContent).toMatch(/language/i);

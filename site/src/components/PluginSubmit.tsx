@@ -10,14 +10,14 @@
  *  Loaded only when a plugin arrives, so the skill page does not carry it.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Entry, Finding } from "@civic-skill-exchange/validator";
 import { PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG, expectedPluginName, summarizeMcpServers } from "@civic-skill-exchange/validator/plugin-core";
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { en } from "../i18n/en";
 import { rich } from "../i18n/rich";
 import { useStrings, type Strings } from "../i18n/strings";
-import { plainMessage, fieldKey } from "../lib/plain";
+import { plainMessage, fieldKey, waits } from "../lib/plain";
 
 type Form = Strings["submit"]["form"];
 import { useUserCheck } from "../lib/useUserCheck";
@@ -30,14 +30,14 @@ import {
   type PluginDraft,
 } from "../lib/plugin";
 import {
-  slugify, recipe, recipeInput, type Draft, hasNamespace, usableFork,
+  slugify, recipe, recipeInput, type Draft, hasNamespace, usableFork, folderReady,
 } from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { isGitHubLogin } from "../lib/login";
 import { draftKey, readDraft, clearDraft, onlyStrings, asString, isRecord } from "../lib/draftStore";
 import { useDraftSaver } from "../lib/useDraftSaver";
 import { DraftBar } from "./DraftBar";
-import { Choice, Field, type FieldNames } from "./Field";
+import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
 import { AfterHandoff } from "./AfterHandoff";
@@ -83,6 +83,15 @@ function FindingList({ findings, testid, heading }: {
         ))}
       </ul>
     </div>
+  );
+}
+
+function FullFile({ path, text, summary }: { path: string; text: string; summary: string }) {
+  return (
+    <details className="disclosure" data-testid={`file-${path}`}>
+      <summary className="disclosure__summary">{summary}</summary>
+      <pre className="submit__yaml"><code>{text}</code></pre>
+    </details>
   );
 }
 
@@ -155,6 +164,16 @@ export function PluginSubmit(
   const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(
     () => restore?.skills ?? fresh);
   const [forkInput, setForkInput] = useState(restore?.forkInput ?? "");
+  // Empty required questions stay quiet until visited or asked for (#302).
+  const [attempted, setAttempted] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  // Asking for what is missing opens every skill that has a waiting error, even
+  // one the submitter closed: a revealed error is never inside a closed section.
+  const showMissing = () => {
+    setAttempted(true);
+    root.current?.querySelectorAll<HTMLDetailsElement>("details[data-waiting='true']")
+      .forEach((d) => { d.open = true; });
+  };
 
   // What each skill is asked is fixed when the plugin arrives. Recomputed live,
   // a question would vanish the moment it was answered, under the cursor.
@@ -223,10 +242,12 @@ export function PluginSubmit(
   ].map((k) => pluginFieldId(k as keyof PluginDraft)));
   const otherManifest = manifestFindings.filter((x) => !fieldIds.has(x.where));
   const blocked = check.structural.length > 0;
+  const waiting = [...check.manifest, ...Object.values(check.skills).flat()]
+    .filter(waits).length;
   const folderName = draft.name.trim() || directoryName || "plugin";
   const ns = draft.author.trim().toLowerCase();
   const badLogin = ns !== "" && !isGitHubLogin(ns);
-  const ready = ns !== "" && !badLogin && draft.name.trim() !== "";
+  const ready = folderReady(draft);
 
   // What plugin.json already answered, named so a submitter who did not write
   // it sees whose name they are about to publish under.
@@ -348,7 +369,8 @@ export function PluginSubmit(
   };
 
   return (
-    <div data-testid="plugin-mode">
+    <AttemptedProvider value={attempted}>
+    <div data-testid="plugin-mode" ref={root}>
       {(restoredNow || !blankForm) && (
         <DraftBar restored={restoredNow} notKept={addressesLost}
           unsaved={cannotSave} onStartOver={startOver} />
@@ -431,7 +453,7 @@ export function PluginSubmit(
         {fromFile.length > 0 && (
           <p className="submit__ok" data-testid="plugin-from-file">{p.fromFile(fromFile.join(", "))}</p>
         )}
-        <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={f.namespaceHint}>
+        <Field id="namespace" label={f.namespaceLabel} findings={[]} hint={p.namespaceHint}>
           <input id="namespace" className="input" value={draft.author}
             onChange={onInput("author")} autoComplete="off" />
           {reserved ? (
@@ -541,7 +563,9 @@ export function PluginSubmit(
           const other = findings.filter((x) => !questions.includes(x.where))
             .map((x) => plain(x, f));
           return (
-            <details key={sk.name} className="disclosure" open={questions.length > 0}
+            <details key={sk.name} className="disclosure"
+              open={questions.length > 0 || (attempted && findings.some(waits))}
+              data-waiting={findings.some(waits) ? "true" : undefined}
               data-testid={`skill-${sk.name}`}>
               <summary className="disclosure__summary">
                 <code>{sk.name}</code>{" — "}
@@ -575,11 +599,34 @@ export function PluginSubmit(
             summary={p.addedSummary(path, lines.length)} />;
         })}
 
+        {/* The whole of each file as it will be uploaded, not only the lines
+            the page added: a diff shows what changed, and this shows what the
+            reviewer will read (#302, S-15). */}
+        <FullFile path={PLUGIN_MANIFEST} text={manifest.text} summary={t.send.seeFile(PLUGIN_MANIFEST)} />
+        {(conversion?.mcp ?? source.mcp) && (
+          <FullFile path={PLUGIN_MCP_CONFIG} text={(conversion?.mcp ?? source.mcp)!}
+            summary={t.send.seeFile(PLUGIN_MCP_CONFIG)} />
+        )}
+        {source.skills.map((sk) => {
+          const path = skillMdPath(sk.name);
+          return <FullFile key={path} path={path} text={skills[sk.name]!.skillMd}
+            summary={t.send.seeFile(path)} />;
+        })}
+
+        {!attempted && waiting > 0 && (
+          <p className="submit__note" data-testid="status">
+            {t.send.statusWaiting(waiting)}{" "}
+            <button className="btn btn--subtle" onClick={showMissing}>
+              {t.send.showMissing}
+            </button>
+          </p>
+        )}
+
         <p className="submit__note" data-testid="multi-file-note">
           {p.multiFileNote(source.entries.length)}
         </p>
         {!ready && !blocked && (
-          <p className="submit__note" data-testid="download-why">{p.downloadWhy}</p>
+          <p className="submit__note" data-testid="download-why">{t.send.downloadWhy}</p>
         )}
         <UploadSteps
           repo={repo} reserved={reserved} tree="plugins"
@@ -610,5 +657,6 @@ export function PluginSubmit(
         </details>
       </section>
     </div>
+    </AttemptedProvider>
   );
 }

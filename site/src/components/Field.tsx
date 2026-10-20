@@ -1,9 +1,10 @@
 /** The submission page's question boxes, shared by the skill form and the
  *  plugin form (#213). A finding is matched to its box by `where === id`. */
 
+import { createContext, useContext, useState } from "react";
 import { useStrings, type Strings } from "../i18n/strings";
 import type { Finding } from "@civic-skill-exchange/validator";
-import { plainMessage, fieldKey } from "../lib/plain";
+import { plainMessage, fieldKey, waits } from "../lib/plain";
 
 export type FieldNames = Strings["submit"]["form"]["fieldNames"];
 
@@ -12,6 +13,12 @@ export type FieldNames = Strings["submit"]["form"]["fieldNames"];
 const readable = (finding: Finding, form: Strings["submit"]["form"]) =>
   plainMessage(finding, fieldKey(finding.where, form.fieldNames), form);
 
+/** Whether a hand-off has been tried (#302, S-13). An empty required box on a
+ *  form nobody has touched reads as an accusation, so it says so only once it
+ *  has been visited, or once the submitter has tried to go on. */
+const Attempted = createContext(false);
+export const AttemptedProvider = Attempted.Provider;
+
 export function Field(
   { label, hint, id, findings, children }: {
     label: string; hint?: React.ReactNode; id: string; findings: Finding[];
@@ -19,9 +26,15 @@ export function Field(
   },
 ) {
   const form = useStrings().submit.form;
-  const mine = findings.filter((f) => f.where === id);
+  const attempted = useContext(Attempted);
+  const [touched, setTouched] = useState(false);
+  const mine = findings.filter((f) =>
+    f.where === id && (touched || attempted || !waits(f)));
   return (
-    <div className={`field${mine.length ? " field--flagged" : ""}`}>
+    // Visited means left or edited. Both events bubble, so one handler covers
+    // an input, a select and the license's "another" box alike.
+    <div className={`field${mine.length ? " field--flagged" : ""}`}
+      onBlur={() => setTouched(true)} onInput={() => setTouched(true)}>
       <label className="field__label" htmlFor={id}>{label}</label>
       {hint && <p className="field__hint">{hint}</p>}
       {children}

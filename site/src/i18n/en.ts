@@ -214,6 +214,8 @@ export const en = {
     lede:
       "A city that solves a problem once should be able to hand the solution " +
       "to the next hundred cities.",
+    /** Under the counts, on the home page only (#302, S-12). */
+    submitCta: "Submit a skill or plugin",
     /** The counts under the statement. The bold is on the number. */
     stats: {
       skills: (n: number) => `**${n}** skill${n === 1 ? "" : "s"}`,
@@ -278,9 +280,9 @@ export const en = {
     intake: {
       heading: "Submit a new skill or plugin",
       lede:
-        "Already have one? Drop it here and the rest of this page fills itself " +
-        "in. If your skill lives in its own repository, GitHub\u2019s **Code → " +
-        "Download ZIP** gives you the file to drop.",
+        "Already have one? Drop its .zip on the box below and the rest of this " +
+        "page fills itself in. If your skill lives in its own repository, " +
+        "GitHub\u2019s **Code → Download ZIP** gives you the file to drop.",
 
       repoLabel: "Your skill's GitHub repository",
       repoHint:
@@ -299,6 +301,9 @@ export const en = {
         (folder && branch ? ` (branch \`${branch}\`)` : "") + ` at \`${commit}\`.`,
 
       archiveLabel: "Or upload the skill folder as a .zip",
+      /** Inside the drop zone. A dropped folder cannot be read, so the zone
+       *  asks for a zip and says what to do with a folder. */
+      dropHint: "Drop a .zip here, or choose one. A folder? Zip it first.",
       archiveHint:
         "A plugin folder works too. Unpacked in your browser. It is not sent anywhere.",
 
@@ -437,7 +442,7 @@ export const en = {
         "name in your github.com address, not your full name or email.",
 
       nameLabel: "Skill name",
-      namePlaceholder: "Permit Status Explainer",
+      namePlaceholder: "e.g. Permit Status Explainer",
       nameHint: "Type it however you like; we will tidy the spacing and capitals.",
       /** What was typed, beside the slug it becomes. Rewriting the box under
        *  the cursor would eat a hyphen the moment it is typed, so the
@@ -467,7 +472,7 @@ export const en = {
         ["other", "Another license — I will give its SPDX identifier"],
       ] as Choices,
       licenseOtherLabel: "Its SPDX identifier",
-      licenseOtherPlaceholder: "BSD-3-Clause",
+      licenseOtherPlaceholder: "e.g. BSD-3-Clause",
       licenseOtherHint:
         "The short identifier from spdx.org/licenses, such as `BSD-3-Clause` " +
         "or `MPL-2.0`. Not the license’s name, and not a link.",
@@ -480,7 +485,7 @@ export const en = {
         "many skills belong in two places. Leave this alone if yours does not.",
 
       versionLabel: "Version, if you keep one",
-      versionPlaceholder: "1.0",
+      versionPlaceholder: "e.g. 1.0",
       versionHint:
         "Your own number for it, like `1.0` or `2.1.3`. Optional, and nothing " +
         "checks it — it is there so an adopter can tell this is not what they " +
@@ -501,7 +506,7 @@ export const en = {
       scopeSecondaryNone: "None — one level",
 
       jurisdictionLabel: "Is it written for one specific place?",
-      jurisdictionPlaceholder: "US-MA / Boston",
+      jurisdictionPlaceholder: "e.g. US-MA / Boston",
       jurisdictionHint:
         "Only if the skill carries that place\u2019s rules, forms or deadlines " +
         "— `US-VT`, `US-MA / Boston`, `CA-ON / Toronto`. Leave it blank " +
@@ -535,7 +540,7 @@ export const en = {
         "use the skill — a model reads a skill in one language and follows it " +
         "in another. It is so a reader knows what they are about to open.",
       languageOtherLabel: "Its language tag",
-      languageOtherPlaceholder: "pt-BR",
+      languageOtherPlaceholder: "e.g. pt-BR",
       languageOtherHint:
         "A BCP 47 tag, not the language\u2019s name: `pt-BR`, `fr`, `de`, " +
         "`es-419`.",
@@ -572,18 +577,18 @@ export const en = {
         "adopted faster.",
       /** #267: free text, so the hint carries the shape. */
       modelsTestedLabel: "Which AI models have you tried it with?",
-      modelsTestedPlaceholder: "Claude Sonnet 5, GPT-5",
+      modelsTestedPlaceholder: "e.g. Claude Sonnet 5, GPT-5",
       modelsTestedHint:
         "Optional, and your own claim. Comma-separated, as you would name them. " +
         "It helps a reader pick a model it is known to work with.",
       languagesTestedLabel: "What languages have you tried it in?",
-      languagesTestedPlaceholder: "en, es",
+      languagesTestedPlaceholder: "e.g. en, es",
       languagesTestedHint:
         "Comma-separated tags, including the one above — `en, es`. Your own " +
         "claim: nothing here checks it, and the page shows it as something you " +
         "said rather than something anybody verified.",
       toolsLabel: "Tools it needs",
-      toolsPlaceholder: "Read, Grep",
+      toolsPlaceholder: "e.g. Read, Grep",
       toolsHint:
         "Comma separated. These are granted without asking the person who runs " +
         "it, so list the least it needs.",
@@ -591,10 +596,10 @@ export const en = {
       deployedAtHint:
         "Leave this blank if it is just you — personal use names no organization.",
       deployedInLabel: "Where does that organization operate?",
-      deployedInPlaceholder: "US-MA / Boston",
+      deployedInPlaceholder: "e.g. US-MA / Boston",
       deployedInHint: "Like US-MA / Boston.",
       deployedSinceLabel: "Roughly since when?",
-      deployedSincePlaceholder: "2026-03",
+      deployedSincePlaceholder: "e.g. 2026-03",
     },
 
     send: {
@@ -616,6 +621,14 @@ export const en = {
 
       /** The one status line (#295). It agrees with the findings: a count while
        *  any remain, this once none do, and the block when a file cannot go. */
+      /** Before a hand-off is tried, while empty required questions are still
+       *  quiet (#302, S-13): they are not marked yet, so the line counts them
+       *  rather than pointing at them. */
+      statusWaiting: (n: number) =>
+        `${n} question${n === 1 ? "" : "s"} still to answer. You can send it ` +
+        "anyway \u2014 the checks that count run after you do, and you can fix " +
+        "things then.",
+      showMissing: "Show what\u2019s missing",
       allClear:
         "Nothing left to fill in. The checks that count run after you send it, " +
         "and you can fix things then.",
@@ -670,6 +683,11 @@ export const en = {
         `for it. If you are signed in to GitHub as \`${owner}\`, change the ` +
         `username to \`${owner}\`.`,
       /** The username box is empty, so no path can be given yet (#293, S-2). */
+      /** Why the folder download is held, on the skill route and the plugin
+       *  route alike (#302, S-15). */
+      downloadWhy: "Enter your GitHub username above, and the download is ready.",
+      /** The summary of a file shown whole, before it is uploaded. */
+      seeFile: (path: string) => `See all of ${path}`,
       usernameNeeded:
         "Type your GitHub username above first. It names the folder your " +
         "submission goes in, so the upload, the download and the commands " +
@@ -873,7 +891,11 @@ export const en = {
       versionHint:
         "Your own number for it, like `1.0` or `0.3.4`. Optional, and nothing " +
         "checks it.",
-      downloadWhy: "Enter your GitHub username above, and the download is ready.",
+      /** The plugin's own help for the username box (#302, S-15): the folder it
+       *  names is the plugin's, not a skill's. */
+      namespaceHint:
+        "This has to match your login exactly \u2014 your plugin goes in a folder of " +
+        "that name, and only you can write there.",
 
       nameLabel: "Plugin name",
       /** `manifestName` is `{namespace}-{name}`, which the page writes. */
@@ -2013,7 +2035,7 @@ export const en = {
       "Step by step: [Claude](claude) · [ChatGPT](chatgpt) · " +
       "[Gemini](gemini) · [Codex](codex)",
     formatNote:
-      "In Claude Code and Codex, the two marketplace lines are all you need " +
+      "In Claude Code and Codex, the two marketplace lines below are all you need " +
       "— [what these do](claudeCode). Skills here follow the open " +
       "[Agent Skills](spec) format, so they also work in ChatGPT, Gemini, " +
       "Copilot, Cursor and others — those take a skill at a time, so use the " +

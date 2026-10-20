@@ -99,6 +99,14 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
         })}
       </p>
 
+      {/* Before the commands (#302, I-6): it says two of them are all most
+          people need, and read after eight it said so too late. */}
+      <p className="download__note">
+        {rich(s.download.formatNote, {
+          spec: "https://agentskills.io", claudeCode: guideHref("claude-code"),
+        })}
+      </p>
+
       {commands.map((c) => (
         <div className="download__cmd" key={c.id}>
           <span className="download__cmd-label">{c.label}</span>
@@ -108,12 +116,6 @@ export function DownloadBox({ skill }: { skill: SkillDetail }) {
           </button>
         </div>
       ))}
-
-      <p className="download__note">
-        {rich(s.download.formatNote, {
-          spec: "https://agentskills.io", claudeCode: guideHref("claude-code"),
-        })}
-      </p>
 
       <p className="download__note">{rich(s.download.pathsNote)}</p>
 

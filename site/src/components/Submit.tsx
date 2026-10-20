@@ -5,7 +5,7 @@ import { SKILL_LAYOUT, checkStructureCore } from "@civic-skill-exchange/validato
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   fitsInUrl, recipe, recipeInput, slugify, type Draft,
-  hasNamespace, usableFork,
+  hasNamespace, usableFork, folderReady,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
@@ -21,9 +21,11 @@ import { useDraftSaver } from "../lib/useDraftSaver";
 import { DraftBar, PluginPending } from "./DraftBar";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
-import { Choice, Field, type FieldNames } from "./Field";
+import { AttemptedProvider, Choice, Field, type FieldNames } from "./Field";
+import { waits } from "../lib/plain";
 import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
+import { Stack } from "./Layout";
 import { AfterHandoff } from "./AfterHandoff";
 import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
@@ -138,6 +140,10 @@ export function Submit(
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<ImportResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  // Set by trying the hand-off, which is when every box that is wrong should
+  // say so (#302, S-13). Until then a box speaks once it has been visited.
+  const [attempted, setAttempted] = useState(false);
   // Asked for, never derived. #81: the page guessed this and was wrong two ways
   // — the owner is not the namespace for a reserved one, and the name is
   // whatever the submitter typed into GitHub's fork dialog.
@@ -278,7 +284,7 @@ export function Submit(
   );
   const urlFits = useMemo(() => fitsInUrl(url), [url]);
   const badLogin = draft.author.trim() !== "" && !isGitHubLogin(draft.author.trim());
-  const ready = draft.author.trim() !== "" && !badLogin && draft.name.trim() !== "";
+  const ready = folderReady(draft);
 
   // The one thing that blocks. A path escape, a symlink, a blocked file type or
   // a size cap cannot be fixed by editing a field, and handing off would open a
@@ -443,6 +449,7 @@ export function Submit(
   );
 
   return (
+    <AttemptedProvider value={attempted}>
     <article className="prose submit">
       <section className="prose__block">
         <h2 className="h2">{t.heading}</h2>
@@ -538,11 +545,27 @@ export function Submit(
           )}
 
           <Field id="archive" label={t.intake.archiveLabel} findings={[]} hint={t.intake.archiveHint}>
-            <input
-              key={inputKey}
-              id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
-              onChange={(e) => onFile(e.target.files?.[0])}
-            />
+            {/* A zip dropped here is read as if it had been chosen. A folder
+                cannot be: a drop hands over a directory entry, not bytes, and
+                the zip reader is the only one the page has. */}
+            <Stack
+              gap="2" className="dropzone" data-testid="dropzone"
+              data-over={dragging ? "true" : undefined}
+              onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                onFile(e.dataTransfer?.files?.[0]);
+              }}
+            >
+              <p>{t.intake.dropHint}</p>
+              <input
+                key={inputKey}
+                id="archive" type="file" accept=".zip,.plugin,application/zip" className="input"
+                onChange={(e) => onFile(e.target.files?.[0])}
+              />
+            </Stack>
           </Field>
 
           <Field id="paste" label={t.intake.pasteLabel} findings={[]}>
@@ -842,8 +865,19 @@ export function Submit(
           <p className={blocked || findings.length > 0 ? "submit__note" : "submit__ok"}
             data-testid="status">
             {blocked ? t.send.statusBlocked
-              : findings.length > 0 ? t.send.findingsNote(findings.length)
-              : t.send.allClear}
+              : findings.length === 0 ? t.send.allClear
+              // Empty required boxes are quiet until visited or the hand-off
+              // is tried (#302), so "marked above" would point at nothing.
+              : !attempted && findings.some(waits)
+                ? t.send.statusWaiting(findings.filter(waits).length)
+              : t.send.findingsNote(findings.length)}
+            {!blocked && !attempted && findings.some(waits) && (
+              <>{" "}
+                <button className="btn btn--subtle" onClick={() => setAttempted(true)}>
+                  {t.send.showMissing}
+                </button>
+              </>
+            )}
           </p>
 
           {multiFile ? (
@@ -854,6 +888,9 @@ export function Submit(
               <p className="submit__note" data-testid="multi-file-note">
                 {t.send.multiFileNote(source?.entries.length ?? 0)}
               </p>
+              {!ready && !blocked && (
+                <p className="submit__note" data-testid="download-why">{t.send.downloadWhy}</p>
+              )}
               <UploadSteps
                 repo={repo} reserved={reserved} tree="skills"
                 draft={draft} folderName={folderName}
@@ -881,6 +918,7 @@ export function Submit(
                   className={`btn btn--strong${!ready || blocked ? " btn--disabled" : ""}`}
                   href={ready && !blocked ? url : undefined}
                   aria-disabled={!ready || blocked}
+                  onClick={() => setAttempted(true)}
                   data-testid="handoff"
                 >
                   {t.send.handoff}
@@ -986,5 +1024,6 @@ export function Submit(
       </section>
       )}
     </article>
+    </AttemptedProvider>
   );
 }

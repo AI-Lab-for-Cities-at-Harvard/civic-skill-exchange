@@ -61,3 +61,9 @@ export function plainMessage(finding: Finding, key: string, f: Form): string {
   }
   return out.replaceAll(key, name).replace(/civic\.[a-z-]+/g, p.thisAnswer);
 }
+
+/** A finding that says an empty box is needed. Only these wait (#302, S-13): a
+ *  problem with a value that is there, typed or read from a file, is shown at
+ *  once. The validator gives findings no code, so this is the shape of its
+ *  "is required" wording, which plain.ts matches the same way. */
+export const waits = (f: Finding) => / is required(?: when |$)/.test(f.message);
