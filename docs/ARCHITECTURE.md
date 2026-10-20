@@ -27,6 +27,7 @@ civic-skills/
 │               └── references/         read by the agent
 ├── registry/
 │   ├── categories.yml                  closed vocabulary
+│   ├── collections.yml                 maintainers' groupings of listings (ADR 0008)
 │   └── reviewed.yml                    SHA-pinned review attestations
 ├── schema/
 │   └── skill.schema.json               the frontmatter contract, as documentation
@@ -526,11 +527,24 @@ sitting on disk in front of it.
 `build_index.py` walks `skills/`, joins each skill against `registry/reviewed.yml`, attaches the latest scan findings, and writes:
 
 ```
-/index.json                            all skills with tier, category, scan status
+/index.json                            all skills with tier, category, scan status;
+                                       the plugins; the collections
 /categories.json                       the vocabulary, for the site's facets
 /skills/{namespace}/{skill}.json       one skill's full metadata
 /skills/{namespace}/{skill}.zip        the same skill, downloadable
 ```
+
+**Collections** (#209, [ADR 0008](adr/0008-the-browse-page-compact-rows-and-collections.md)
+decisions 7 to 10) come from `registry/collections.yml`, read from beside the
+tree being built as `plugins/` is, and are published as `collections` in
+`index.json`, in the file's order: each with its `slug`, `title`, `title_es`,
+`note`, `note_es`, `featured`, and its `listings` as `{kind, id}` only, since
+the index already carries every listing. The build fails, naming the
+collection and the listing, on a member that is not in the registry, a member
+listed twice, a collection with no listings, a repeated or malformed slug, a
+missing field or language, or a field it does not know. A collection is not a
+review: any listing may be in one, and each keeps its own tier. The file ships
+with none; which collections exist is the maintainers' call, by pull request.
 
 The archive is written from the file list the detail payload already computed,
 so the two cannot disagree about what a skill contains — including about

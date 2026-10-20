@@ -1,0 +1,53 @@
+# Collections (#209, ADR 0008 decisions 7 to 10).
+#
+# A collection is listings a maintainer has grouped because they work together
+# on one task, with a note saying why. It is not a review and says nothing about
+# any listing's quality: each listing keeps its own tier, which only
+# registry/reviewed.yml can give it (ADR 0001). Any listing may be in one, and
+# the collection's page says so. Call them collections, never "featured",
+# "curated" or "recommended" (ADR 0002 decision 4).
+#
+# Maintainer-owned, through CODEOWNERS' /registry/ line. A collection is added,
+# changed or removed by pull request, reviewed like any other.
+#
+# scripts/build_index.py publishes this file as `collections` in index.json,
+# in this order, and FAILS THE BUILD, naming the collection and the listing,
+# when a collection lists a skill or plugin that is not in the registry, lists
+# one twice, has no listings, repeats or misspells a slug, leaves out a field
+# or a language, or carries a field it does not know. So a listing that is
+# removed takes its collections' edit with it, rather than leaving a hole.
+#
+# Each collection has every one of these fields:
+#
+#   slug:      its URL, #/collection/{slug}: lowercase letters, digits and
+#              single hyphens. Changing it breaks every link to the old one.
+#   title:     a few words naming the task, never a judgement
+#              ("A permit, start to finish", not "The best permit tools")
+#   title_es:  the same in Spanish. Both languages sit side by side, as in
+#              categories.yml (#150).
+#   note:      a sentence or two on why these listings belong together
+#   note_es:   the same in Spanish
+#   featured:  true shows it as a tile at the top of the browse page; false
+#              keeps it at its own URL only, for a workshop or one department
+#   listings:  {kind: skill or plugin, id: namespace/name}, in the order its
+#              page shows them. Skills and plugins may be mixed.
+#
+# An example, not a real collection:
+#
+#   - slug: permits-start-to-finish
+#     title: A permit, start to finish
+#     title_es: Un permiso, de principio a fin
+#     note: >
+#       Explaining a permit's status to a resident, then drafting the letter
+#       that goes with it.
+#     note_es: >
+#       Explicar a un residente el estado de su permiso y luego redactar la
+#       carta que lo acompaña.
+#     featured: true
+#     listings:
+#       - {kind: skill, id: cityofx/permit-status-explainer}
+#       - {kind: plugin, id: cityofx/permit-letters}
+#
+# Which collections exist is the owner's content. None yet.
+
+collections: []
