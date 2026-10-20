@@ -9,10 +9,11 @@
  *  Unauthenticated and public: api.github.com sends
  *  `access-control-allow-origin: *`, so this needs no token and no backend.
  *  The rate limit is 60 an hour per address, which is why a rate-limited or
- *  failed answer is "unknown" and says nothing rather than warning wrongly.
+ *  failed answer is "unavailable": the page says it could not check, and does
+ *  not warn wrongly or block (#293). "unknown" is a name nobody asked about.
  */
 
-export type UserCheck = "ok" | "missing" | "unknown";
+export type UserCheck = "ok" | "missing" | "unavailable" | "unknown";
 
 export async function checkGitHubUser(
   login: string,
@@ -29,8 +30,8 @@ export async function checkGitHubUser(
     });
     if (res.status === 404) return "missing";
     if (res.ok) return "ok";
-    return "unknown";  // rate limited, offline, GitHub having a bad day
+    return "unavailable";  // rate limited (403, 429), GitHub having a bad day
   } catch {
-    return "unknown";
+    return "unavailable";  // offline, or the request was aborted
   }
 }

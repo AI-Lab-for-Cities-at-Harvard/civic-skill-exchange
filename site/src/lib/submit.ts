@@ -455,3 +455,55 @@ export function recipeInput(
     landing: landingPath(draft, tree),
   };
 }
+
+/** Whether there is a username to build a path from (#293, S-2).
+ *
+ *  Every path the hand-off names starts `{tree}/{namespace}/`, so with the box
+ *  empty each one reads `skills//…`. The page withholds them instead. */
+export function hasNamespace(draft: Pick<Draft, "author">): boolean {
+  return namespaceOf(draft) !== "";
+}
+
+/** The account a pasted fork lives under, or null. */
+export function forkOwner(fork: string): string | null {
+  return parseForkRef(fork)?.split("/")[0] ?? null;
+}
+
+/** Whether the pasted address is the registry itself (S-8).
+ *
+ *  GitHub's owner and repository names are case-insensitive, so any spelling
+ *  is the registry. Pasting it gave a pull-request link comparing `main` with
+ *  itself, and an upload page the submitter cannot write to. */
+export function isRegistryFork(fork: string, repo: string): boolean {
+  const ref = parseForkRef(fork);
+  return ref !== null && ref.toLowerCase() === repoSlug(repo).toLowerCase();
+}
+
+/** The pasted address if it can stand for the submitter's copy, otherwise "".
+ *
+ *  For the callers that build a link or a recipe from it: an empty fork is the
+ *  "not known yet" they already handle. */
+export function usableFork(fork: string, repo: string): string {
+  return parseForkRef(fork) && !isRegistryFork(fork, repo) ? fork : "";
+}
+
+/** What the page says about the fork's address, in order of precedence. */
+export type ForkCheck = "empty" | "unparsed" | "registry" | "mismatch" | "ok";
+
+/** The fork's address against the registry and the typed username (S-1).
+ *
+ *  A fork under another account is a warning, not a refusal: an organization
+ *  can hold the fork while a person opens the pull request. What must not
+ *  happen is the two disagreeing silently, which is how files went to
+ *  `skills/sgarcese/…` from an account called `sgarcese-hbs`. With the box
+ *  empty there is nothing to disagree with, and the empty box is said instead. */
+export function checkFork(
+  fork: string, repo: string, draft: Pick<Draft, "author">,
+): ForkCheck {
+  if (fork.trim() === "") return "empty";
+  const owner = forkOwner(fork);
+  if (owner === null) return "unparsed";
+  if (isRegistryFork(fork, repo)) return "registry";
+  if (hasNamespace(draft) && owner.toLowerCase() !== namespaceOf(draft)) return "mismatch";
+  return "ok";
+}
