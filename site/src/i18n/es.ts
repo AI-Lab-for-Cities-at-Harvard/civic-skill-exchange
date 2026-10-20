@@ -334,6 +334,27 @@ export const strings: Strings = {
         "Lo que hace la habilidad, en un par de oraciones. Esto es lo que lee " +
         "un agente para decidir si la usa.",
 
+      licenseLabel: "Licencia",
+      licenseHint:
+        "Lo que otras personas pueden hacer con esto una vez publicado. Sin " +
+        "licencia no pueden reutilizarlo en absoluto, por más libremente que " +
+        "usted quisiera compartirlo. MIT y Apache-2.0 son comunes para " +
+        "instrucciones y código, y CC-BY-4.0 para textos; las tres permiten " +
+        "la reutilización siempre que se le dé crédito. La elección le " +
+        "corresponde a quien es dueño del trabajo, así que consulte a su " +
+        "organización si no es solo suyo.",
+      licenseChoices: [
+        ["MIT", "MIT — breve y permisiva"],
+        ["Apache-2.0", "Apache-2.0 — permisiva, con concesión de patentes"],
+        ["CC-BY-4.0", "CC-BY-4.0 — para textos; reutilización con crédito"],
+        ["other", "Otra licencia — yo daré su identificador SPDX"],
+      ] as Choices,
+      licenseOtherLabel: "Su identificador SPDX",
+      licenseOtherPlaceholder: "BSD-3-Clause",
+      licenseOtherHint:
+        "El identificador corto de spdx.org/licenses, como `BSD-3-Clause` o " +
+        "`MPL-2.0`. No el nombre de la licencia ni un enlace.",
+
       categoryLabel: "Categoría",
       categorySecondaryLabel: "Una segunda categoría, si encaja en otra",
       categorySecondaryNone: "Ninguna — pertenece a un solo lugar",
@@ -445,7 +466,6 @@ export const strings: Strings = {
       toolsHint:
         "Separadas por comas. Se conceden sin preguntarle a quien la ejecuta, " +
         "así que enumere lo mínimo que necesita.",
-      licenseLabel: "Licencia",
       deployedAtLabel: "¿Qué organización la usa?",
       deployedAtHint:
         "Déjelo en blanco si es solo usted: el uso personal no nombra ninguna organización.",

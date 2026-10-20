@@ -49,7 +49,7 @@ export interface Draft {
 }
 
 export const EMPTY_DRAFT: Draft = {
-  author: "", name: "", description: "", license: "MIT", compatibility: "",
+  author: "", name: "", description: "", license: "", compatibility: "",
   tools: "", category: "", categorySecondary: "", version: "",
   scope: "", scopeSecondary: "", jurisdiction: "", localization: "",
   language: "", languagesTested: "", modelsTested: "",

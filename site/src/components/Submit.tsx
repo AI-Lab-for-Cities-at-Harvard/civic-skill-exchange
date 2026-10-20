@@ -16,6 +16,7 @@ import { importFromRepo, failureMessages, type ImportResult } from "../lib/impor
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import { Choice, Field, type FieldNames } from "./Field";
+import { LicenseField } from "./LicenseField";
 import { UploadSteps } from "./UploadSteps";
 import { en } from "../i18n/en";
 import { submitHref, type SubmitMode } from "../lib/route";
@@ -524,6 +525,9 @@ export function Submit(
               value={draft.description} onChange={onInput("description")} />
           </Field>
 
+          <LicenseField id="license" value={draft.license} findings={findings}
+            onChange={set("license")} />
+
           <Choice id="civic.category" label={f.categoryLabel} value={draft.category}
             findings={findings} placeholder={f.choose}
             onChange={set("category")}
@@ -658,11 +662,6 @@ export function Submit(
             <Field id="allowed-tools" label={t.optional.toolsLabel} findings={findings} hint={t.optional.toolsHint}>
               <input id="allowed-tools" className="input" value={draft.tools}
                 onChange={onInput("tools")} placeholder={t.optional.toolsPlaceholder} />
-            </Field>
-
-            <Field id="license" label={t.optional.licenseLabel} findings={findings}>
-              <input id="license" className="input" value={draft.license}
-                onChange={onInput("license")} />
             </Field>
 
             <Field

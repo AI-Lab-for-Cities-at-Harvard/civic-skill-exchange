@@ -57,7 +57,7 @@ export function draftFromSkillMd(source: string, author = ""): ParsedSkill {
       author,
       name: text(front.name),
       description: text(front.description),
-      license: text(front.license) || EMPTY_DRAFT.license,
+      license: text(front.license),
       compatibility: text(front.compatibility),
       tools: Array.isArray(front["allowed-tools"])
         ? front["allowed-tools"].map(text).join(", ")
