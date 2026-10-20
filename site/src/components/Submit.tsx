@@ -625,7 +625,7 @@ export function Submit(
 
         <section className="prose__block">
           <details className="disclosure">
-            <summary className="h2 disclosure__summary">{t.optional.summary}</summary>
+            <summary className="h3 disclosure__summary">{t.optional.summary}</summary>
 
             <Field id="civic.use-when" label={t.optional.useWhenLabel}
               findings={findings}>

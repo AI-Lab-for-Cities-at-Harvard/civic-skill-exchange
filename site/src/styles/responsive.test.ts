@@ -51,7 +51,8 @@ describe("the page adapts to the screen it is on", () => {
     // .prose p holds text to 66ch. A box is not a line of text: held to the
     // same measure it stops short of the form beside it (#287).
     for (const cls of [".submit__prereq", ".submit__warn", ".submit__blocked"]) {
-      const rule = new RegExp(`\\${cls}[^{]*\\{[^}]*max-width:\\s*none`);
+      // Under .prose, or .prose p's measure outranks it and nothing changes.
+      const rule = new RegExp(`\\.prose [^{]*\\${cls}[^{]*\\{[^}]*max-width:\\s*none`);
       expect(APP, `${cls} should reach the column edge`).toMatch(rule);
     }
   });

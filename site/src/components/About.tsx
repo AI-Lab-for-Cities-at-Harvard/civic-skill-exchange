@@ -237,17 +237,17 @@ export function About(
         <p>{rich(a.submitting.installGuide, { guide: guideHref() })}</p>
         <p>{a.submitting.byHand}</p>
         <ol className="steps">
-          <li>
-            <h3 className="h3">{a.submitting.steps.namespaceTitle}</h3>
-            <p>{rich(a.submitting.steps.namespace)}</p>
+          <li className="steps__item">
+            <h3 className="steps__title">{a.submitting.steps.namespaceTitle}</h3>
+            <p className="steps__body">{rich(a.submitting.steps.namespace)}</p>
           </li>
-          <li>
-            <h3 className="h3">{a.submitting.steps.frontmatterTitle}</h3>
-            <p>{rich(a.submitting.steps.frontmatter)}</p>
+          <li className="steps__item">
+            <h3 className="steps__title">{a.submitting.steps.frontmatterTitle}</h3>
+            <p className="steps__body">{rich(a.submitting.steps.frontmatter)}</p>
           </li>
-          <li>
-            <h3 className="h3">{a.submitting.steps.pullRequestTitle}</h3>
-            <p>{a.submitting.steps.pullRequest}</p>
+          <li className="steps__item">
+            <h3 className="steps__title">{a.submitting.steps.pullRequestTitle}</h3>
+            <p className="steps__body">{a.submitting.steps.pullRequest}</p>
           </li>
         </ol>
         <p className="cta-row">
