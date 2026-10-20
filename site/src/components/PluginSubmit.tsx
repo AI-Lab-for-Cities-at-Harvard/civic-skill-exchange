@@ -10,14 +10,14 @@
  *  Loaded only when a plugin arrives, so the skill page does not carry it.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Entry, Finding } from "@civic-skill-exchange/validator";
 import { PLUGIN_MANIFEST, PLUGIN_MCP_CONFIG, expectedPluginName, summarizeMcpServers } from "@civic-skill-exchange/validator/plugin-core";
 import { RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { en } from "../i18n/en";
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
-import { checkGitHubUser, type UserCheck } from "../lib/github";
+import { useUserCheck } from "../lib/useUserCheck";
 import { convertClaudeCode, type Addresses } from "../lib/convert";
 import { buildFolderZip } from "../lib/folder";
 import { addedFrontmatterLines } from "../lib/patch";
@@ -26,7 +26,9 @@ import {
   pluginFieldId, readPluginSource, sharedSkillLicense, skillDraftFromFile, skillMdPath,
   type PluginDraft,
 } from "../lib/plugin";
-import { slugify, recipe, recipeInput, type Draft } from "../lib/submit";
+import {
+  slugify, recipe, recipeInput, type Draft, hasNamespace, usableFork,
+} from "../lib/submit";
 import { EXTENSION_FIELDS as EXTENSION_KEYS } from "../lib/plugin";
 import { isGitHubLogin } from "../lib/login";
 import { Choice, Field, type FieldNames } from "./Field";
@@ -119,7 +121,6 @@ export function PluginSubmit(
   const [skillDrafts, setSkillDrafts] = useState<Record<string, Draft>>(() =>
     Object.fromEntries(source.skills.map((sk) => [sk.name, skillDraftFromFile(sk.skillMd)])));
   const [forkInput, setForkInput] = useState("");
-  const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
 
   // What each skill is asked is fixed when the plugin arrives. Recomputed live,
   // a question would vanish the moment it was answered, under the cursor.
@@ -141,19 +142,9 @@ export function PluginSubmit(
   const reserved = RESERVED_NAMESPACES.has(draft.author.trim().toLowerCase());
 
   // The same debounced lookup as the skill form: 60 requests an hour per
-  // address, so never one per keystroke.
-  useEffect(() => {
-    const login = draft.author.trim();
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      if (!login || RESERVED_NAMESPACES.has(login.toLowerCase())) {
-        setUserCheck("unknown");
-        return;
-      }
-      checkGitHubUser(login, controller.signal).then(setUserCheck);
-    }, 500);
-    return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [draft.author]);
+  // address, so never one per keystroke, and none for a name GitHub would not
+  // allow.
+  const userCheck = useUserCheck(draft.author);
 
   const manifest = useMemo(() => patchPluginJson(source.manifest, draft), [source, draft]);
   const skills = useMemo(() => Object.fromEntries(source.skills.map((sk) =>
@@ -379,9 +370,13 @@ export function PluginSubmit(
             <p className="field__finding" data-testid="bad-login">
               {rich(f.badLogin(draft.author.trim()))}
             </p>
-          ) : userCheck === "missing" && draft.author.trim() !== "" && (
+          ) : userCheck === "missing" ? (
             <p className="field__finding" data-testid="no-such-user">
               {f.noSuchUser(draft.author.trim())}
+            </p>
+          ) : userCheck === "unavailable" && (
+            <p className="field__hint" data-testid="user-unchecked">
+              {f.userUnchecked(draft.author.trim())}
             </p>
           )}
         </Field>
@@ -526,9 +521,16 @@ export function PluginSubmit(
         <details className="disclosure">
           <summary className="disclosure__summary">{t.send.commandLine}</summary>
           <p className="submit__note">{t.send.recipeIntro}</p>
-          <pre className="submit__yaml" data-testid="command-line"><code>{
-            recipe(recipeInput(repo, forkInput, draft, "plugins", "your-plugin"))
-          }</code></pre>
+          {/* Withheld with the box empty: every line would name plugins//… (S-2). */}
+          {hasNamespace(draft) ? (
+            <pre className="submit__yaml" data-testid="command-line"><code>{
+              recipe(recipeInput(repo, usableFork(forkInput, repo), draft, "plugins", "your-plugin"))
+            }</code></pre>
+          ) : (
+            <p className="submit__note" data-testid="username-needed">
+              {t.send.usernameNeeded}
+            </p>
+          )}
           <p className="submit__note">{t.send.recipeAfter}</p>
         </details>
       </section>

@@ -315,6 +315,10 @@ export const strings: Strings = {
       noSuchUser: (login: string) =>
         `No existe un usuario de GitHub llamado ${login}. Se rechaza toda ` +
         "propuesta cuya carpeta no coincida con la cuenta que abre el pull request.",
+      userUnchecked: (login: string) =>
+        `No se pudo comprobar ${login} con GitHub en este momento: puede que ` +
+        "esté ocupado o que usted no tenga conexión. Puede continuar: las " +
+        "verificaciones del pull request detectarán un nombre de usuario equivocado.",
       badLogin: (login: string) =>
         `\u201c${login}\u201d no es un nombre de usuario de GitHub. Un nombre de ` +
         "usuario solo tiene letras, números y guiones sueltos, como " +
@@ -521,6 +525,21 @@ export const strings: Strings = {
       forkUnparsed:
         "Eso no parece un repositorio de GitHub. Debería ser algo como " +
         "`github.com/usted/civic-skill-exchange`.",
+      forkIsRegistry:
+        "Esa es la dirección del propio registro, no la de su copia. Primero " +
+        "haga un fork con el botón de arriba y luego pegue la dirección de la " +
+        "copia que GitHub crea para usted: lleva su nombre de usuario, como " +
+        "`github.com/usted/civic-skill-exchange`.",
+      forkMismatch: (owner: string, login: string) =>
+        `Su copia está en \`${owner}\`, pero el nombre de usuario de arriba es ` +
+        `\`${login}\`. Deberían ser la misma cuenta: la carpeta lleva el nombre ` +
+        "de usuario, y solo esa cuenta puede abrir el pull request para ella. " +
+        `Si inició sesión en GitHub como \`${owner}\`, cambie el nombre de ` +
+        `usuario a \`${owner}\`.`,
+      usernameNeeded:
+        "Primero escriba arriba su nombre de usuario de GitHub. Da nombre a la " +
+        "carpeta donde va su propuesta, así que la subida, la descarga y los " +
+        "comandos lo esperan.",
 
       uploadTitle: "Arrastre la carpeta",
 

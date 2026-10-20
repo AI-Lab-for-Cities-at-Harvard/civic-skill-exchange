@@ -102,6 +102,26 @@ difference is.
 This part happens on GitHub, because a link can carry one new file but not a
 folder.
 
+**Your GitHub username comes first.** It names the folder your submission goes
+in, and the checks admit it only when the account that opens the pull request
+has that username. So the page checks it before it hands off, on the skill form
+and the plugin form alike:
+
+- **Until you type one**, the page gives no link, no download and no commands,
+  because every path would start `skills//` or `plugins//`. It says so instead.
+- **It asks GitHub whether the account exists**, using GitHub's public user
+  lookup, which needs no sign-in. It waits until you stop typing, and asks
+  nothing for a name GitHub would not allow. If GitHub is busy or you are
+  offline, the page says it couldn't check and lets you carry on.
+- **When you paste your fork's address**, the page compares the account the
+  fork is under with the username, and says so if they differ. It does not
+  change the username for you: if you are signed in to GitHub as the fork's
+  account, change the username to match.
+- **The registry's own address is refused** as the address of your copy. Fork
+  it first, then paste the address of the copy GitHub makes for you.
+- **Reading a skill from a repository does not fill the username in.** Whoever
+  owns that repository is not necessarily the person submitting it.
+
 **If your skill is one file**, the page opens GitHub's editor with the whole file
 already in it. Commit, and GitHub offers the pull request. You are done.
 
@@ -165,6 +185,11 @@ What is checked, and what is deliberately not, is in
 | *a single skill's files go one level down* | Your files landed at `skills/{username}/{skill-name}/`, the listing's root, which holds only what the exchange generates. Move them, `SKILL.md` included, into `skills/{username}/{skill-name}/skills/{skill-name}/` and push again. |
 | *`SKILL.md` is missing* | Same cause, seen from the other side: `skills/{username}/{skill-name}/skills/{skill-name}/`, the directory the registry looks in, has no `SKILL.md`. |
 | *`civic.deployed-at` is required* | You said a team or an organization uses this. Name it, or change the answer to `personal` or `none` — personal use asks for nothing further. |
+| *Type your GitHub username above first* | The username box is empty. The page holds back the links, the download and the commands until it has a username, because every path it gives starts with it. |
+| *No GitHub user called …* | GitHub has no account with that username. Check the spelling against your github.com address. A folder that doesn't match the account opening the pull request is rejected. |
+| *Couldn't check … with GitHub just now* | GitHub's public lookup was busy or rate-limited, or you are offline. Nothing is wrong with the username as far as the page knows, so carry on. The checks on the pull request will catch a wrong one. |
+| *Your copy is under `…`, but the username above is `…`* | You forked into a different account from the username you typed. That is how a submission ends up in `skills/{one-account}/…` with commits from another, and fails the ownership check. Use the account you are signed in to GitHub as, in both places. |
+| *That is the registry's own address, not your copy* | You pasted the exchange's own address. Fork it first with the page's button, then paste your fork's address, which has your username in it. |
 | A field you never filled in | The page reports findings without blocking, on purpose. You can send a submission with them outstanding, and fix them on the pull request. |
 
 Nothing here is unrecoverable. A pull request can be pushed to again, and a

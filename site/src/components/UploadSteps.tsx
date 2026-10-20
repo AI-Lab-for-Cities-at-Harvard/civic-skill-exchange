@@ -7,8 +7,8 @@
 import { rich } from "../i18n/rich";
 import { useStrings } from "../i18n/strings";
 import {
-  forkUrl, forkUploadUrl, landingPath, parseForkRef, pullRequestUrl,
-  registryUploadUrl, uploadPath, type ListingTree,
+  checkFork, forkOwner, forkUrl, forkUploadUrl, hasNamespace, landingPath, namespaceOf,
+  pullRequestUrl, registryUploadUrl, uploadPath, usableFork, type ListingTree,
 } from "../lib/submit";
 import { guideHref } from "../lib/route";
 import { Field } from "./Field";
@@ -49,11 +49,16 @@ export function UploadSteps(
   // Asked for, never derived. #81: the page guessed this and was wrong two ways
   // — the owner is not the namespace for a reserved one, and the name is
   // whatever the submitter typed into GitHub's fork dialog.
-  const forkRef = parseForkRef(forkInput);
-  const uploadHref = reserved
+  const fork = checkFork(forkInput, repo, draft);
+  // The registry pasted as the fork is no fork at all (S-8), so it counts as
+  // not known yet rather than becoming a link.
+  const usable = usableFork(forkInput, repo);
+  // No username, no path: every one would read `{tree}//…` (#293, S-2).
+  const named = hasNamespace(draft);
+  const uploadHref = !named ? null : reserved
     ? registryUploadUrl(repo, draft, tree)
-    : forkUploadUrl(forkInput, draft, tree);
-  const prHref = reserved ? null : pullRequestUrl(repo, forkInput);
+    : forkUploadUrl(usable, draft, tree);
+  const prHref = reserved || !named ? null : pullRequestUrl(repo, usable);
 
   return (
     <ol className="steps" data-testid="manual-steps">
@@ -85,9 +90,22 @@ export function UploadSteps(
               placeholder={t.send.forkPlaceholder}
               onChange={(e) => onForkInput(e.target.value)}
             />
-            {forkInput.trim() !== "" && !forkRef && (
+            {fork === "unparsed" && (
               <p className="field__finding" data-testid="fork-unparsed">
                 {rich(t.send.forkUnparsed)}
+              </p>
+            )}
+            {fork === "registry" && (
+              <p className="field__finding" data-testid="fork-is-registry">
+                {rich(t.send.forkIsRegistry)}
+              </p>
+            )}
+            {/* Said, never filled in: an organization can hold the fork while a
+                person opens the pull request, and a box the page filled is the
+                page's guess (S-6). What must not happen is silence (S-1). */}
+            {fork === "mismatch" && (
+              <p className="field__finding" data-testid="fork-mismatch">
+                {rich(t.send.forkMismatch(forkOwner(forkInput)!, namespaceOf(draft)))}
               </p>
             )}
           </Field>
@@ -96,13 +114,19 @@ export function UploadSteps(
 
       <li className="steps__item">
         <h3 className="steps__title">{t.send.uploadTitle}</h3>
-        <p className="steps__body" data-testid="upload-step-body">
-          {rich(t.send.uploadBody(
-            folderName, reserved, uploadPath(draft, tree), landingPath(draft, tree),
-          ))}
-        </p>
+        {named ? (
+          <p className="steps__body" data-testid="upload-step-body">
+            {rich(t.send.uploadBody(
+              folderName, reserved, uploadPath(draft, tree), landingPath(draft, tree),
+            ))}
+          </p>
+        ) : (
+          <p className="submit__note" data-testid="username-needed">
+            {t.send.usernameNeeded}
+          </p>
+        )}
         <GlossaryLink word="commit" text={t.send.commitMore} />
-        {uploadHref ? (
+        {!named ? null : uploadHref ? (
           <a className="btn" href={uploadHref}
             data-testid="step-upload" target="_blank" rel="noreferrer">
             {t.send.uploadCta}

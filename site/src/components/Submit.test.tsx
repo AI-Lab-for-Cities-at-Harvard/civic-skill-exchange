@@ -528,13 +528,26 @@ describe("Submit — importing from a repository", () => {
     expect(yaml).toContain(`civic.source-commit: ${"c".repeat(40)}`);
   });
 
-  it("takes the username from the repository owner", async () => {
+  it("leaves the username to the submitter, not the repository's owner (S-6, #293)", async () => {
+    /* The owner of the repository a skill was written in is not the person
+       submitting it: an organization's repository filled the box with
+       `AI-Lab-for-Cities-at-Harvard`, which the page then flagged itself. */
     vi.stubGlobal("fetch", github());
     const user = userEvent.setup();
     render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await importInto(user, "AI-Lab-for-Cities-at-Harvard/Civic-Analytics");
+    await screen.findByTestId("imported");
+    expect(screen.getByLabelText(/GitHub username/i)).toHaveValue("");
+  });
+
+  it("keeps a username typed before the import (#293)", async () => {
+    vi.stubGlobal("fetch", github());
+    const user = userEvent.setup();
+    render(<Submit repo={REPO} skills={[]} mode="new" />);
+    await user.type(screen.getByLabelText(/GitHub username/i), "maria-lopez");
     await importInto(user, "sgarcese/Civic-Analytics");
     await screen.findByTestId("imported");
-    expect(screen.getByLabelText(/GitHub username/i)).toHaveValue("sgarcese");
+    expect(screen.getByLabelText(/GitHub username/i)).toHaveValue("maria-lopez");
   });
 
   it("runs the structural checks on the real file list", async () => {

@@ -1,16 +1,17 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useMemo, useState } from "react";
 import type { Finding, Entry } from "@civic-skill-exchange/validator";
 import { checkFrontmatter, RESERVED_NAMESPACES } from "@civic-skill-exchange/validator/rules";
 import { SKILL_LAYOUT, checkStructureCore } from "@civic-skill-exchange/validator/structure-core";
 import {
   EMPTY_DRAFT, toFields, toFrontmatter, toYaml, newFileUrl, editUrl, mailtoUrl,
   fitsInUrl, recipe, recipeInput, slugify, type Draft,
+  hasNamespace, usableFork,
 } from "../lib/submit";
 import { patchSkillMd, addedFrontmatterLines } from "../lib/patch";
 import { buildSkillZip } from "../lib/folder";
 import { readSkillZip } from "../lib/zip";
 import { draftFromSkillMd } from "../lib/parse";
-import { checkGitHubUser, type UserCheck } from "../lib/github";
+import { useUserCheck } from "../lib/useUserCheck";
 import { isGitHubLogin } from "../lib/login";
 import { importFromRepo, failureMessages, type ImportResult } from "../lib/import";
 import { rich } from "../i18n/rich";
@@ -85,7 +86,6 @@ export function Submit(
       entries, directoryName, left, claudeCode, key: (prev?.key ?? 0) + 1,
     }));
   };
-  const [userCheck, setUserCheck] = useState<UserCheck>("unknown");
   const [repoUrl, setRepoUrl] = useState("");
   const [importing, setImporting] = useState(false);
   const [imported, setImported] = useState<ImportResult | null>(null);
@@ -121,21 +121,10 @@ export function Submit(
   // lookup would 404 on a name that is entirely correct.
   const reserved = RESERVED_NAMESPACES.has(draft.author.trim().toLowerCase());
 
-  // Debounced, and aborted when the value moves on. The rate limit is 60 an
-  // hour per address, so a request per keystroke would exhaust it inside one
-  // username.
-  useEffect(() => {
-    const login = draft.author.trim();
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      if (!login || !isGitHubLogin(login) || RESERVED_NAMESPACES.has(login.toLowerCase())) {
-        setUserCheck("unknown");
-        return;
-      }
-      checkGitHubUser(login, controller.signal).then(setUserCheck);
-    }, 500);
-    return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [draft.author]);
+  const userCheck = useUserCheck(draft.author);
+  // No username, no path: the hand-off, the download and the recipe all name
+  // `skills/{namespace}/…`, and wait for it rather than render `skills//` (S-2).
+  const named = hasNamespace(draft);
 
   const front = useMemo(() => toFrontmatter(draft), [draft]);
   const yaml = useMemo(() => toYaml(front), [front]);
@@ -238,15 +227,19 @@ export function Submit(
       skillMd: out.skillMd, entries: out.entries, directoryName: out.directoryName,
     });
     // Fill from the file, then stamp on where this copy came from and the
-    // commit it was taken at.
-    const { draft: parsed, problems } = draftFromSkillMd(out.skillMd, out.ref.owner);
+    // commit it was taken at. The username stays whatever the submitter typed:
+    // the repository's owner is who wrote the skill, not who is submitting it,
+    // and an organization's name filled in here was flagged by this very page
+    // (S-6, #293).
+    const { draft: parsed, problems } = draftFromSkillMd(out.skillMd);
     if (problems.length === 0) {
-      setDraft({
+      setDraft((d) => ({
         ...parsed,
+        author: d.author,
         name: slugify(parsed.name),
         sourceRepo: `${out.ref.owner}/${out.ref.repo}`,
         sourceCommit: out.commit,
-      });
+      }));
       setTypedName(parsed.name);
     }
     setNotes(problems);
@@ -495,9 +488,13 @@ export function Submit(
               <p className="field__finding" data-testid="bad-login">
                 {rich(f.badLogin(draft.author.trim()))}
               </p>
-            ) : userCheck === "missing" && draft.author.trim() !== "" && (
+            ) : userCheck === "missing" ? (
               <p className="field__finding" data-testid="no-such-user">
                 {f.noSuchUser(draft.author.trim())}
+              </p>
+            ) : userCheck === "unavailable" && (
+              <p className="field__hint" data-testid="user-unchecked">
+                {f.userUnchecked(draft.author.trim())}
               </p>
             )}
           </Field>
@@ -731,6 +728,12 @@ export function Submit(
               />
             </>
           ) : (
+            <>
+            {!named && (
+              <p className="submit__note" data-testid="username-needed">
+                {t.send.usernameNeeded}
+              </p>
+            )}
             <p className="cta-row">
               {urlFits ? (
                 <a
@@ -750,6 +753,7 @@ export function Submit(
                 {copied ? t.send.copied : t.send.copy}
               </button>
             </p>
+            </>
           )}
 
           {mailto ? (
@@ -784,9 +788,15 @@ export function Submit(
           <details className="disclosure">
             <summary className="disclosure__summary">{t.send.commandLine}</summary>
             <p className="submit__note">{t.send.recipeIntro}</p>
-            <pre className="submit__yaml" data-testid="command-line"><code>{
-              recipe(recipeInput(repo, forkInput, draft, "skills", "your-skill"))
-            }</code></pre>
+            {named ? (
+              <pre className="submit__yaml" data-testid="command-line"><code>{
+                recipe(recipeInput(repo, usableFork(forkInput, repo), draft, "skills", "your-skill"))
+              }</code></pre>
+            ) : (
+              <p className="submit__note" data-testid="username-needed">
+                {t.send.usernameNeeded}
+              </p>
+            )}
             <p className="submit__note">{t.send.recipeAfter}</p>
           </details>
         </section>
