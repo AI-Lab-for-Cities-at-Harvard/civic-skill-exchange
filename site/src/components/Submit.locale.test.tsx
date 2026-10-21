@@ -14,10 +14,11 @@
  * reads the table.
  */
 
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Submit } from "./Submit";
+import { settleUserLookup, stubUserLookup } from "../test/lookup";
 import { en } from "../i18n/en";
 import { DEFAULT_LOCALE, setLocale, strings } from "../i18n/strings";
 import {
@@ -26,7 +27,7 @@ import {
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
-afterEach(async () => { await setLocale(DEFAULT_LOCALE); });
+afterEach(async () => { await setLocale(DEFAULT_LOCALE); vi.unstubAllGlobals(); });
 
 /** A draft with something in every field the form can set, so the comparison
  *  covers the enums as well as the free text. */
@@ -68,9 +69,11 @@ describe("what the wizard emits does not translate", () => {
 
   it("writes the same frontmatter from the form itself", async () => {
     const emitted = async () => {
+      stubUserLookup("cityofx");
       const user = userEvent.setup();
       const view = render(<Submit repo={REPO} skills={[]} mode="new" />);
       await user.type(screen.getByLabelText(strings().submit.form.namespaceLabel), "cityofx");
+      await settleUserLookup();
       // By id rather than by label: the labels are what the locale changes, and
       // the ids are the schema's field names, which it does not.
       const select = (id: string, value: string) =>

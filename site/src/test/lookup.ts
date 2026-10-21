@@ -13,6 +13,15 @@ import { expect, vi } from "vitest";
  *  loaded machine the half second is reached in the middle of the other
  *  answers. Settling the lookup before choosing anything leaves nothing
  *  pending to land in that gap. */
+/** Answers the username lookup as GitHub does for an account that exists, so
+ *  a test neither asks the real API nor depends on whether the name is taken
+ *  (#295). Pair it with settleUserLookup. */
+export function stubUserLookup(login: string): void {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+    ok: true, status: 200, json: () => Promise.resolve({ login }),
+  }));
+}
+
 export async function settleUserLookup(): Promise<void> {
   const ask = vi.mocked(fetch);
   await act(async () => {
