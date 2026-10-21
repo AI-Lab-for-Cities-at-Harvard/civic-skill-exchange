@@ -18,6 +18,7 @@ import { setLocale } from "../i18n/strings";
 import { en } from "../i18n/en";
 import { strings as es } from "../i18n/es";
 import { readSkillZip } from "../lib/zip";
+import { settleUserLookup, stubUserLookup } from "../test/lookup";
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
@@ -388,8 +389,10 @@ describe("PluginSubmit — one form, split by what each answer describes", () =>
 
   it("writes plugin-level answers into plugin.json and per-skill ones into SKILL.md", async () => {
     const user = userEvent.setup();
+    stubUserLookup("sgarcese");
     await dropPlugin(user);
     await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await settleUserLookup();
     await user.type(screen.getByLabelText(/who maintains it/i), "Santiago");
     const section = screen.getByTestId("skill-refresh-housing-dashboard");
     await user.selectOptions(
@@ -452,8 +455,10 @@ describe("PluginSubmit — the hand-off", () => {
     vi.spyOn(URL, "createObjectURL").mockImplementation((b) => { blob = b as Blob; return "blob:x"; });
     vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    stubUserLookup("sgarcese");
     await dropPlugin(user);
     await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await settleUserLookup();
     const section = screen.getByTestId("skill-refresh-housing-dashboard");
     await user.selectOptions(
       within(section).getByRole("combobox", { name: /category/i }), "policy");

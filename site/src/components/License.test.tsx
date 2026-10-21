@@ -7,6 +7,7 @@ import { zipSync, strToU8, strFromU8 } from "fflate";
 import { Submit } from "./Submit";
 import { setLocale } from "../i18n/strings";
 import { readSkillZip } from "../lib/zip";
+import { settleUserLookup, stubUserLookup } from "../test/lookup";
 
 const REPO = "AI-Lab-for-Cities-at-Harvard/civic-skill-exchange";
 
@@ -152,8 +153,10 @@ describe("the plugin route", () => {
     vi.spyOn(URL, "createObjectURL").mockImplementation((b) => { blob = b as Blob; return "blob:x"; });
     vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    stubUserLookup("sgarcese");
     await drop(user, plugin({ b: "Apache-2.0" }));
     await user.type(screen.getByLabelText(/GitHub username/i), "sgarcese");
+    await settleUserLookup();
     await user.selectOptions(licenseBox(), "CC-BY-4.0");
     await user.click(screen.getByTestId("download-folder"));
 
