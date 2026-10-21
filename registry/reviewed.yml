@@ -168,10 +168,10 @@ attestations:
     tree census on the portal the skill limits itself to the data inventory,
     as its avoid-when says.
  - plugin: "sgarcese/housing-dashboards"
-   sha: "2337f4302a9f96b140b2ac3c7c4972465cbd69ef"
+   sha: "e5047cb149ab199ede9c0ce022860eb9232baabf"
    reviewers: ["AI Lab for Cities at Harvard"]
-   reviewed: 2026-10-18
-   expires: 2027-10-18
+   reviewed: 2026-10-21
+   expires: 2027-10-21
    languages: ["en"]
    models: ["Claude Opus 5.5", "Claude Opus 5", "Claude Sonnet 5", "ChatGPT 5.6-Terra"]
    notes: >
@@ -191,6 +191,9 @@ attestations:
     Look here first if it goes wrong: the five responsive.city hosts. They are
     the author's own servers, so a change in what they return, or who runs
     them, is the thing to re-check before re-attesting.
+
+    Version 0.3.5 leverages the geo MCP server for improved local access to
+    federal data using Geocorr.
  # Re-pinned 2026-10-20 after the layout move (#276): every author file renamed
  # at 100% similarity, no content changed; the regenerated Codex manifest dropped
  # "skills": "./". Only sha: below moved.
