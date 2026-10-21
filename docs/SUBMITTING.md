@@ -89,7 +89,7 @@ marked in plain words beside its question, and one line above the buttons says
 how many are left, or that none are. Nothing blocks you: the checks that count
 run after you send it.
 
-![A note listing the fields read out of the uploaded file — the name, the description, the licence — so you are not asked for them twice.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-02-read-from-your-file.png)
+![A note listing the fields read out of the uploaded file — the name, the licence, the category, the data it touches and more — so you are not asked for them twice.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-02-read-from-your-file.png)
 
 **The license is yours to choose.** The page does not fill one in for you. It
 starts empty unless your files already declare one, and it explains what a
@@ -144,7 +144,7 @@ carry a title, so give the pull request one yourself: **Add skill** and the name
 
 **If it is more than one file**, four steps:
 
-![The four numbered steps on the page: download the corrected folder, fork the registry and paste its address back, drag the folder in, open the pull request.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-04-the-four-steps.png)
+![The four numbered steps on the page, each with its button: download the corrected folder, fork the registry and paste its address back, upload the folder, open the pull request.](https://raw.githubusercontent.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/guide-assets/guide/site-04-the-four-steps.png)
 
 1. **Download the corrected folder** and unzip it.
 2. **Fork the registry** — one button — then paste the address back into the
