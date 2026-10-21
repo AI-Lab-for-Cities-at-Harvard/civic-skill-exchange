@@ -1,7 +1,7 @@
 # An end-to-end walkthrough of submitting and installing
 
 **Issue:** [#286](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/286)
-**Status:** ruled 2026-10-20, all 13 recommendations accepted; see the rulings. Re-run 2026-10-20 to 21 (#303), with its own findings and recommendations at the end.
+**Status:** ruled 2026-10-20, all 13 recommendations accepted; see the rulings. Re-run 2026-10-20 to 21 (#303), with its own findings, recommendations and rulings at the end.
 
 **Run:** 2026-10-19, against the live site at `6e3e17d`, the first commit with every listing in the nested layout (ADR 0006).
 
@@ -268,3 +268,19 @@ These come from the clients, not this site:
    - the phone recipe and switch (S-23, S-25).
 8. **Question: bring the first input above the fold?** At 1280px the page stacks a heading, two notices and the Add/Update switch above it. My recommendation is to fold this into the next layout pass rather than file it alone.
 
+
+### Rulings on the re-run (owner, 2026-10-21)
+
+Recommendations 1 to 7 were accepted as written, and filed in M11. Question 8 hasn't been ruled on yet. The owner also asked for a spike on an optional guided tour.
+
+| Recommendation | Issue |
+|---|---|
+| 1. Hold the hand-off when the file is missing | #358 |
+| 2. Count the username in the status line | #359 |
+| 3. Plugin route pass | #360 |
+| 4. One-file route pass | #361 |
+| 5. Point to the other side of the toggle | #362 |
+| 6. Say what to look for after an install | #363 |
+| 7. Smaller fixes | #364 |
+| 8. The first input above the fold | not yet ruled |
+| A "Show me how" guided tour, raised after the re-run | spike, #365 |
