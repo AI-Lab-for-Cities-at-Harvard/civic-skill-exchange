@@ -5,8 +5,8 @@
 | role | count | what it is | notes |
 |---|---|---|---|
 | `focus` | 1 | the city (Census place) or county the dashboard is about | a city is `kind: place`, 7-digit id = state FIPS + place code (South Bend = `1871000`) |
-| `home_county` | 1 if focus is a place | the county containing most of the focus city | omit when the focus is a county. For cities split across counties use the one with most of the population |
-| `peer_place` | 0–3 | other principal cities in the region, ideally 25,000+ people | LAUS publishes city unemployment only for 25,000+; set `"laus_city": false` for smaller ones |
+| `home_county` | 1 if focus is a place | the county containing most of the focus city | omit when the focus is a county. For a city split across counties, use the county with the largest share in `geo_get_containment` |
+| `peer_place` | 0–3 | other principal cities in the region, ideally 25,000+ people | LAUS publishes city unemployment only for 25,000+; set `"laus_city": false` for smaller ones (`geo_resolve_place` flags them `below_threshold`) |
 | `ring_county` | 3–6 | counties that share a housing and labor market with the focus | adjacent counties sharing the commute-shed; cross state lines when the market does (Berrien Co., MI for South Bend) |
 | `state` | 1 | the focus's state | `id` = 2-digit FIPS |
 | `nation` | 1 | United States | `id` = `US` |
@@ -18,8 +18,20 @@
 - For a county focus, peer places are the county's principal cities and the ring is still adjacent counties.
 - State-level dashboards are not the target of this skill. If asked, use the state as the focus, neighboring states as the ring, and no places, and warn that HUD pulls get large.
 
+## Resolving with the geo server
+The `geo` server answers these questions from the Census Bureau's geographic reference files, so what would otherwise be a judgement is a lookup. Use it first. The Census and BLS resolvers are the fallback when it is not available.
+
+| question | tool | what to read |
+|---|---|---|
+| any geography's identifiers | `geo_resolve_place` with `kind` (`city`, `county`, `metro`, `state`) and `state` | `geoid` is the `id` in config.json; `ucgid` is what the other geo tools take. A status of `ambiguous` means narrow it with `kind` or `state` — never take the first candidate. |
+| a city's home county | `geo_get_containment` on the city's `ucgid` | the county edge with the largest `share`. Kansas City, MO: Jackson County 0.62, Clay 0.27, Platte 0.11, so Jackson. |
+| a county's metro | `geo_get_containment` on the county's `ucgid` | the metropolitan statistical area edge; its `geoid` is the CBSA code. St. Joseph County, IN → 43780. No metro edge means the county is outside any metro. |
+| whether a peer city has city unemployment | the `below_threshold` flag from `geo_resolve_place`, or `geo_list_availability` on its `ucgid` | `below_threshold`, or LAUS with `hasCode: false`, means `"laus_city": false` |
+
+Read the structured flags (`below_threshold`, `non_nesting`, `cdp`, `consolidated_city`) rather than the prose around them. A `cdp` is a census-designated place, not a city government: if one is the focus, say so in `notes`. Cite the geo server's answers as the Census Bureau's geographic reference files.
+
 ## Metros
-For each county in the config, find its CBSA with `bls_resolve_place` (or `census_resolve_place` with `kind: "metro"`). Add one `metros` entry per distinct metro:
+For each county in the config, find its CBSA with `geo_get_containment` (fallback: `bls_resolve_place`, or `census_resolve_place` with `kind: "metro"`). Add one `metros` entry per distinct metro:
 ```json
 {"cbsa": "43780", "name": "South Bend–Mishawaka MSA", "state": "18", "counties": ["18141"]}
 ```
