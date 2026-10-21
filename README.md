@@ -28,6 +28,14 @@ and plugins, names and avatars were masked before capture. Nothing was uploaded
 to any account. `github-03` now shows *Commit directly to the main branch*,
 which is what the submission page asks for since #243.
 
+**21 October 2026: `site-01` to `site-04` recaptured** (#341), from the live
+site at 1280px in light mode, after the compact header (#309) and a primary
+button on every hand-off step (#302). A headless Chrome script uploads the
+Lab's `generalize-skill` with its description and fit notes taken out, so the
+page has lines to add, and types the made-up namespace `cityofx`. That is not a
+GitHub account, so the script answers the page's user lookup for it as GitHub
+would for one that exists; nothing else is stubbed.
+
 **They will go stale.** GitHub redesigns, and a screenshot of an interface that
 no longer exists is worse than none — it makes a confused submitter doubt they
 are in the right place. Recapture, replace on this branch, and the guide picks
