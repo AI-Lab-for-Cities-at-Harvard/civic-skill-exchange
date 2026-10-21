@@ -1,7 +1,7 @@
 # An end-to-end walkthrough of submitting and installing
 
 **Issue:** [#286](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/issues/286)
-**Status:** ruled 2026-10-20, all 13 recommendations accepted; see the rulings at the end.
+**Status:** ruled 2026-10-20, all 13 recommendations accepted; see the rulings. Re-run 2026-10-20 to 21 (#303), with its own findings and recommendations at the end.
 
 **Run:** 2026-10-19, against the live site at `6e3e17d`, the first commit with every listing in the nested layout (ADR 0006).
 
@@ -159,4 +159,112 @@ All 13 recommendations were accepted as written.
 | 11. Layout observations | added to #287 |
 | 12. Install steps readable without a browser | noted; waits for a need |
 | 13. Re-run after the fixes | #303 |
+
+## Re-run after the fixes (2026-10-20 to 21, #303)
+
+The same two people and the same steps, run after #293 to #302 merged, as recommendation 13 asked.
+
+**Run:**
+- the live site at `8290086` to `12ea612`. #353 and #355 merged during the run and changed only tests and a guide picture;
+- Claude Code 2.1.304, Codex CLI 0.163.0, and headless Chrome 149 at 1280px and 375px.
+
+**What was different this time:**
+- **The GitHub half was real.** The owner played Marcus from a second account, `sgarcese-hbs`. He dropped the zip on the page's drop zone, then dragged the corrected two-file folder into GitHub's upload page by hand, committed, and opened [#356](https://github.com/AI-Lab-for-Cities-at-Harvard/civic-skill-exchange/pull/356).
+  - Its checks ran without waiting for approval, and passed. It was closed without merging.
+  - The account had forked the registry beforehand, under a name the owner chose (`civic-skill-exchange-upload`). The page took the fork's address as pasted.
+- **The rest was simulated as before.** Priya's installs used isolated client configs: an empty `CODEX_HOME`, and Claude Code at project scope in a scratch directory. Before and after, all four marketplace and plugin lists matched byte for byte.
+- **The site half of Marcus** was driven headless. GitHub's user lookup was not stubbed, so the made-up `marcus-county-health` got the page's real "no such user" answer.
+
+**One change of route.** A one-file skill no longer forks and drags. The page sends it to GitHub's new-file editor with the file filled in, so Marcus's skill was given a second file (`references/letter-outline.md`) to exercise the drag.
+
+### Earlier findings, now: installing (Priya)
+
+| # | Now | What was seen |
+|---|---|---|
+| I-1 | fixed | `plain language notice` gives "1 of 6 skills", and finds the skill. |
+| I-2 | fixed | The boxes say "INSIDE CLAUDE CODE: …" and "IN A TERMINAL, FOR CODEX: …". |
+| I-3 | half fixed | Each listing has a "CHECK IT WORKED" line for both clients. Nothing says whether an open session sees a first install without a restart. |
+| I-4 | fixed | "/plugin and claude plugin are the same command" |
+| I-5 | fixed in the guide | "The default is user, which is for you in every project." The listing pages don't mention scope. |
+| I-6 | fixed | The "all you need" line comes before every command box. |
+| I-7 | fixed, see I-11 | The hero reads "6 skills · 1 plugin". Search applies to both sides of the toggle. |
+| I-8 | fixed | "To refresh the exchange's catalogue at any time … `codex plugin marketplace upgrade`" |
+| I-9 | still there, this account only | The housing skills still load twice beside the claude.ai synced copy. The notice skill is now de-duplicated by Claude Code itself. |
+| I-10 | still there, as ruled | `curl` still gets an empty app shell of 1,182 bytes. |
+
+Both listings installed and loaded in both clients from the pages' own lines. All five MCP servers connected, and `codex debug prompt-input` listed all four skills. Codex's marketplace add took 1.5 seconds, against 19 in the first run.
+
+### Earlier findings, now: submitting (Marcus)
+
+| # | Now | What was seen |
+|---|---|---|
+| S-1 | fixed, warning only (S-16) | "No GitHub user called marcus-county-health. …" A fork under another owner is also flagged. On GitHub, the ownership check passed for `sgarcese-hbs` on #356. |
+| S-2 | fixed | No `skills//` paths. The hand-off waits: "Type your GitHub username above first." |
+| S-3 | fixed | The organization question appears beside "My team uses it". Its error names the question, not a `civic.*` key. |
+| S-4 | fixed | The license starts at "Choose…", with help text. A plugin's skills take the plugin's license. |
+| S-5 | fixed for answers (S-17) | The answers come back after a trip to GitHub, and the page asks for the file again. |
+| S-6 | fixed | The repository route leaves the username empty. |
+| S-7 | fixed | Both recipes ran green against a local stand-in for the fork. See S-21 for the one-file route. |
+| S-8 | fixed | "That is the registry's own address, not your copy." |
+| S-9 | fixed, new variant (S-18) | There is one status line now. |
+| S-10 | fixed | There is a dashed drop zone. The owner dropped the zip on it by hand, and it was read. |
+| S-11 | fixed | On #356, the title "Add skill sgarcese-hbs/immunization-reminder-letter" and the description arrived filled in. No reviewer was requested, as the page says. A one-file skill gets only a hint for the title. |
+| S-12 | fixed | The home page has "Submit a skill or plugin →". |
+| S-13 | fixed on the skill route | The plugin route still shows an error on an untouched field (S-19). |
+| S-14 | fixed on the zip route | The repository route still counts 8 re-folded lines as "added". |
+| S-15 | fixed | The plugin route has full-file previews and gates its download, and says "your plugin". |
+
+The layout observations are fixed, with three exceptions:
+- The repeated hero is gone, but the first input still sits at about 760px, below a 900px fold (1,097px at 375px wide).
+- The "What we added" block still offsets its first line, and drops the indentation under `metadata:`.
+- The phone switch is new, and is covered by S-25.
+
+### New findings
+
+| # | What happened | The text involved | Severity |
+|---|---|---|---|
+| S-17 | After a return from GitHub without re-adding the file, the page says nothing is left, and "Continue on GitHub" sends a `SKILL.md` with only the frontmatter. The skill's body is silently lost. | "Nothing left to fill in." beside a preview that ends at the closing `---` | major |
+| S-16 | The "no such user" warning blocks nothing. It sits about 2,400px above the hand-off, which says nothing is left. | "No GitHub user called …" / "Nothing left to fill in." | minor |
+| S-18 | With the username empty, the status line says nothing is left, directly above the line saying a username is needed first. | "Nothing left to fill in." / "Type your GitHub username above first." | minor |
+| S-19 | The plugin route shows a license error before the field is touched, with a doubled word. | "the the license is required — an SPDX identifier" | minor |
+| S-20 | On the plugin route, "Show what's missing" removes the status line, and nothing replaces it. | none | minor |
+| S-21 | The one-file route's command-line recipe mentions a fork-address field and a download, which that route doesn't have. | "…or paste your fork's address above and it fills in." | minor, command line only |
+| S-22 | The one-file route doesn't say what GitHub will show next, or what "Copy it" is for. | "Continue on GitHub" / "Copy it" | minor |
+| I-11 | A search that matches only the plugin says nothing matches, and suggests clearing the filters, which leads away from it. | "No skills match these filters. Clear them to see the whole catalog." while the toggle reads "Plugins 1" | minor |
+| I-12 | The Codex check doesn't say what to look for. `codex plugin list` prints every plugin in every marketplace, installed or not: 8,024 lines on this machine. | "To check it worked, run codex plugin list in a terminal." | minor |
+| S-23 | At 375px, recipe commands wrap mid-path, and the prose shows literal backticks. | "\`npm ci\` installs what the checker needs." | polish |
+| S-24 | "Copy it", and the link after a restore, quote every YAML value; the preview doesn't. | `name: "immunization-reminder-letter"` | polish |
+| S-25 | At 375px, the Add/Update switch wraps into two misaligned rows. | "Add a new skill" / "Update one you already listed" | polish |
+| S-26 | On the plugin route, one caption sits above four panels, two of which it doesn't describe. | "Written into the copy this page hands you." | polish |
+| I-13 | The plugin page uses skill-page wording, and tags `mcp.json` "EXECUTED" while saying only `scripts/` is executed. | "whether the skill is well maintained" / "mcp.json EXECUTED" | polish |
+
+These come from the clients, not this site:
+- a skill's version reads three ways: the page's commit, Claude Code's clone commit, and Codex's "local";
+- Codex's first upgrade reports "Upgraded 1" when nothing changed;
+- `codex mcp list` shows auth "Unsupported" for servers that need none;
+- Claude Code's uninstall leaves version folders in its cache, marked `.orphaned_at`.
+
+### Not observed this time
+
+- **The fork step itself.** The account had already forked the registry, so GitHub's fork dialog wasn't seen. For the same reason, the three `github-*` pictures in `SUBMITTING.md` were not re-captured.
+- **Checks held for a first-time contributor.** This account had contributed before.
+- A Codex model run. No login was copied into the empty home.
+- The interactive `/plugin` screens, and whether an open Claude Code session picks up a new install.
+- GitHub's side of the one-file route.
+- Dark mode and Spanish.
+
+### Recommendations from the re-run, for the owner's ruling
+
+1. **Hold the hand-off when the file is missing (S-17).** A restored draft without its file blocks "Continue on GitHub", and the status line counts the file as the thing still to do.
+2. **Count the username in the status line (S-16, S-18).** An empty or unknown username is one of the things left. Show it beside the hand-off, not only under the field.
+3. **Plugin route pass (S-19, S-20, S-26, I-13):** errors only after a field is touched; the doubled word; a status line that stays; one caption per panel; and wording for a plugin rather than a skill, with `mcp.json` marked for what it is.
+4. **One-file route pass (S-21, S-22):** a recipe that matches the route, and a sentence on what GitHub shows after "Continue on GitHub", and on what "Copy it" is for.
+5. **Point to the other side of the toggle when it has matches (I-11).** For example: "No skills match. 1 plugin does: show plugins."
+6. **Say what to look for after an install (I-12, I-3).** For Codex, the listing's row reading "installed, enabled". For both clients, whether to restart.
+7. **Smaller fixes in one pass:**
+   - re-folding not counted as "added" on the repository route (S-14);
+   - consistent quoting (S-24);
+   - the diff block's first-line offset and lost indentation;
+   - the phone recipe and switch (S-23, S-25).
+8. **Question: bring the first input above the fold?** At 1280px the page stacks a heading, two notices and the Add/Update switch above it. My recommendation is to fold this into the next layout pass rather than file it alone.
 
