@@ -27,6 +27,7 @@ civic-skills/
 │               └── references/         read by the agent
 ├── registry/
 │   ├── categories.yml                  closed vocabulary
+│   ├── collections.yml                 maintainers' groupings of listings (ADR 0008)
 │   └── reviewed.yml                    SHA-pinned review attestations
 ├── schema/
 │   └── skill.schema.json               the frontmatter contract, as documentation
@@ -526,11 +527,24 @@ sitting on disk in front of it.
 `build_index.py` walks `skills/`, joins each skill against `registry/reviewed.yml`, attaches the latest scan findings, and writes:
 
 ```
-/index.json                            all skills with tier, category, scan status
+/index.json                            all skills with tier, category, scan status;
+                                       the plugins; the collections
 /categories.json                       the vocabulary, for the site's facets
 /skills/{namespace}/{skill}.json       one skill's full metadata
 /skills/{namespace}/{skill}.zip        the same skill, downloadable
 ```
+
+**Collections** (#209, [ADR 0008](adr/0008-the-browse-page-compact-rows-and-collections.md)
+decisions 7 to 10) come from `registry/collections.yml`, read from beside the
+tree being built as `plugins/` is, and are published as `collections` in
+`index.json`, in the file's order: each with its `slug`, `title`, `title_es`,
+`note`, `note_es`, `featured`, and its `listings` as `{kind, id}` only, since
+the index already carries every listing. The build fails, naming the
+collection and the listing, on a member that is not in the registry, a member
+listed twice, a collection with no listings, a repeated or malformed slug, a
+missing field or language, or a field it does not know. A collection is not a
+review: any listing may be in one, and each keeps its own tier. The file ships
+with none; which collections exist is the maintainers' call, by pull request.
 
 The archive is written from the file list the detail payload already computed,
 so the two cannot disagree about what a skill contains — including about
@@ -650,7 +664,7 @@ Publishing scan status into the index matters: it lets the site show what was ch
 
 A static reader over `index.json`. It needs to do four things well and nothing else:
 
-1. **Browse and filter** by category, jurisdiction, data sensitivity, and tier. The browse page ([ADR 0008](adr/0008-the-browse-page-compact-rows-and-collections.md)) lists collapsible rows in numbered pages of 24, with a Skills/Plugins toggle, and keeps its whole state in its URL: `#/?q=…&category=…&tier=…&page=2&show=plugins`, read by `site/src/lib/browse.ts`.
+1. **Browse and filter** by category, jurisdiction, data sensitivity, and tier. The browse page ([ADR 0008](adr/0008-the-browse-page-compact-rows-and-collections.md)) lists collapsible rows in numbered pages of 24, with a Skills/Plugins toggle, and keeps its whole state in its URL: `#/?q=…&category=…&tier=…&page=2&show=plugins`, read by `site/src/lib/browse.ts`. Above the rows, on the unfiltered first page of skills only, a tile for each collection whose `featured` flag is set; each collection has its own page at `#/collection/{slug}`, loaded on demand, with its note, a notice that being in a collection is not a review, and its listings as the same rows.
 2. **Show the tier honestly.** A Community listing must carry its disclaimer on its browse row and on the detail page — at the point where someone is about to download, not buried in a footer. A closed row shows the tier word with its note as visually hidden text (ADR 0008 decision 2); the open row, the detail page and the download box show the note.
 3. **Describe the skill honestly without republishing it.** The page publishes structure, not content: the file tree with sizes, which files are executed rather than read, `allowed-tools` shown prominently, and the submitter's own `civic.use-when` / `civic.avoid-when` as plain text. It does **not** render `SKILL.md` or any file contents — submitter-authored markdown on our origin is a stored XSS surface, and describing a skill does not require it. Anyone reading the actual code reads it on GitHub, where they get the real thing rather than our rendering of it.
 4. **Make downloading obvious, without assuming tooling.** A `.zip` anyone can take with a browser alone, plus copyable `degit` and `clone` commands for people working in a terminal.

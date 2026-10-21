@@ -180,6 +180,20 @@ export interface PluginDetail extends Plugin {
   archive?: { path: string; size: number };
 }
 
+/** A maintainer's grouping of listings, from registry/collections.yml (#209,
+ *  ADR 0008 decision 7). Not a review: each member keeps its own tier. Its
+ *  members are named, not copied, since the index already has every listing. */
+export interface Collection {
+  slug: string;
+  title: string;
+  title_es: string;
+  note: string;
+  note_es: string;
+  /** Shown as a tile at the top of the browse page, or only at its own URL. */
+  featured: boolean;
+  listings: { kind: "skill" | "plugin"; id: string }[];
+}
+
 export interface Index {
   generated: string;
   repo: string;
@@ -188,6 +202,8 @@ export interface Index {
   skills: Skill[];
   /** Absent from an index built before plugins existed. */
   plugins?: Plugin[];
+  /** Absent from an index built before collections existed (#209). */
+  collections?: Collection[];
 }
 
 export interface Filters {

@@ -1311,3 +1311,208 @@ def test_the_archive_and_detail_never_include_a_path_that_resolves_outside(
     build_index.write_outputs(listing, entry, out)
     with zipfile.ZipFile(out / "skills" / "cityofx" / "example-skill.zip") as z:
         assert z.namelist() == ["example-skill/SKILL.md"]
+
+
+# --------------------------------------------------------------------------- #
+# Collections (#209, ADR 0008 decisions 7-9).
+#
+# registry/collections.yml is a maintainer's grouping of listings. The build
+# publishes it as `collections`, members as {kind, id} only, and fails rather
+# than publish a collection with a hole in it. It is read from beside the
+# registry being built, as plugins/ is, so a throwaway tree never picks up the
+# repository's real file.
+
+COLLECTION = {
+    "slug": "permits-start-to-finish",
+    "title": "A permit, start to finish",
+    "title_es": "Un permiso, de principio a fin",
+    "note": "The steps of one permit,\n  in order.\n",
+    "note_es": "Los pasos de un permiso,\n  en orden.\n",
+    "featured": True,
+    "listings": [
+        {"kind": "skill", "id": "testuser/example-skill"},
+        {"kind": "plugin", "id": "testuser/housing-dashboards"},
+    ],
+}
+
+KNOWN_SKILLS = [{"id": "testuser/example-skill"}]
+KNOWN_PLUGINS = [{"id": "testuser/housing-dashboards"}]
+
+
+def write_collections(root, doc):
+    import yaml
+
+    path = root / "registry" / "collections.yml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(doc if isinstance(doc, str) else yaml.safe_dump(doc, allow_unicode=True),
+                    encoding="utf-8")
+    return path
+
+
+def collection(**over) -> dict:
+    """COLLECTION with fields replaced; a field set to `...` is left out."""
+    out = {**COLLECTION, **over}
+    return {k: v for k, v in out.items() if v is not ...}
+
+
+def load(tmp_path, *entries):
+    path = write_collections(tmp_path, {"collections": list(entries)})
+    return build_index.load_collections(path, KNOWN_SKILLS, KNOWN_PLUGINS)
+
+
+def test_a_collection_is_published_with_its_members_as_kind_and_id(tmp_path):
+    assert load(tmp_path, collection()) == [{
+        "slug": "permits-start-to-finish",
+        "title": "A permit, start to finish",
+        "title_es": "Un permiso, de principio a fin",
+        "note": "The steps of one permit, in order.",
+        "note_es": "Los pasos de un permiso, en orden.",
+        "featured": True,
+        "listings": [
+            {"kind": "skill", "id": "testuser/example-skill"},
+            {"kind": "plugin", "id": "testuser/housing-dashboards"},
+        ],
+    }]
+
+
+def test_collections_keep_the_order_the_file_gives(tmp_path):
+    second = collection(slug="second", featured=False)
+    assert [c["slug"] for c in load(tmp_path, second, collection())] == [
+        "second", "permits-start-to-finish"]
+
+
+def test_an_empty_file_publishes_no_collections(tmp_path):
+    path = write_collections(tmp_path, "# nothing yet\ncollections: []\n")
+    assert build_index.load_collections(path, [], []) == []
+
+
+def test_no_file_publishes_no_collections(tmp_path):
+    missing = tmp_path / "registry" / "collections.yml"
+    assert build_index.load_collections(missing, [], []) == []
+
+
+def test_a_member_that_does_not_exist_fails_and_names_the_collection_and_listing(tmp_path):
+    gone = collection(listings=[{"kind": "skill", "id": "testuser/gone"}])
+    with pytest.raises(build_index.BadCollections,
+                       match=r"permits-start-to-finish.*skill testuser/gone"):
+        load(tmp_path, gone)
+
+
+def test_a_skill_id_does_not_answer_for_a_plugin_of_the_same_name(tmp_path):
+    """The kinds are kept apart, as an attestation's are."""
+    wrong = collection(listings=[{"kind": "plugin", "id": "testuser/example-skill"}])
+    with pytest.raises(build_index.BadCollections, match=r"plugin testuser/example-skill"):
+        load(tmp_path, wrong)
+
+
+def test_a_kind_that_is_neither_skill_nor_plugin_fails(tmp_path):
+    odd = collection(listings=[{"kind": "bundle", "id": "testuser/example-skill"}])
+    with pytest.raises(build_index.BadCollections, match=r"permits-start-to-finish.*bundle"):
+        load(tmp_path, odd)
+
+
+def test_a_member_listed_twice_fails(tmp_path):
+    twice = collection(listings=[{"kind": "skill", "id": "testuser/example-skill"}] * 2)
+    with pytest.raises(build_index.BadCollections,
+                       match=r"permits-start-to-finish.*skill testuser/example-skill.*twice"):
+        load(tmp_path, twice)
+
+
+def test_a_collection_with_no_listings_fails(tmp_path):
+    with pytest.raises(build_index.BadCollections, match=r"permits-start-to-finish.*listings"):
+        load(tmp_path, collection(listings=[]))
+
+
+def test_a_duplicated_slug_fails_and_names_it(tmp_path):
+    with pytest.raises(build_index.BadCollections,
+                       match=r"permits-start-to-finish.*more than once"):
+        load(tmp_path, collection(), collection(featured=False))
+
+
+@pytest.mark.parametrize("slug", ["Permits", "permits_start", "-permits", "permits-",
+                                  "permits--start", "", "permits/start", 7])
+def test_a_malformed_slug_fails_and_names_it(tmp_path, slug):
+    with pytest.raises(build_index.BadCollections, match=r"slug"):
+        load(tmp_path, collection(slug=slug))
+
+
+@pytest.mark.parametrize("field", ["slug", "title", "title_es", "note", "note_es",
+                                   "featured", "listings"])
+def test_a_missing_field_fails_and_names_it(tmp_path, field):
+    with pytest.raises(build_index.BadCollections, match=rf"`{field}`"):
+        load(tmp_path, collection(**{field: ...}))
+
+
+@pytest.mark.parametrize("field", ["title_es", "note_es"])
+def test_a_blank_translation_fails_rather_than_publishing_english_alone(tmp_path, field):
+    with pytest.raises(build_index.BadCollections,
+                       match=rf"permits-start-to-finish.*`{field}`"):
+        load(tmp_path, collection(**{field: "  "}))
+
+
+def test_featured_must_be_true_or_false(tmp_path):
+    with pytest.raises(build_index.BadCollections, match=r"`featured`"):
+        load(tmp_path, collection(featured="yes please"))
+
+
+def test_an_unknown_field_fails_so_a_typo_is_not_silently_dropped(tmp_path):
+    with pytest.raises(build_index.BadCollections, match=r"`titel_es`"):
+        load(tmp_path, collection(titel_es="Un permiso"))
+
+
+@pytest.mark.parametrize("doc", ["collections:[]\n", "- slug: x\n",
+                                 "collections: {slug: x}\n",
+                                 "collections:\n  - just a string\n"])
+def test_a_malformed_file_fails_and_names_it(tmp_path, doc):
+    path = write_collections(tmp_path, doc)
+    with pytest.raises(build_index.BadCollections, match=r"registry/collections\.yml"):
+        build_index.load_collections(path, [], [])
+
+
+def test_the_index_carries_the_collections_read_from_beside_the_tree(
+        make_skill, make_plugin, tmp_path, monkeypatch):
+    make_skill()
+    make_plugin()
+    write_collections(tmp_path, {"collections": [collection()]})
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
+
+    out = tmp_path / "out"
+    assert build_index.main_with(out) == 0
+    index = json.loads((out / "index.json").read_text(encoding="utf-8"))
+    assert [c["slug"] for c in index["collections"]] == ["permits-start-to-finish"]
+    assert index["collections"][0]["listings"][1] == {
+        "kind": "plugin", "id": "testuser/housing-dashboards"}
+
+
+def test_a_tree_with_no_collections_file_publishes_an_empty_list(tmp_path, monkeypatch):
+    """The key is always there: a key that comes and goes makes every consumer
+    defensive. And the repository's real file is not read for a throwaway tree."""
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
+    out = tmp_path / "out"
+    build_index.main_with(out)
+    index = json.loads((out / "index.json").read_text(encoding="utf-8"))
+    assert index["collections"] == []
+
+
+def test_the_build_fails_on_a_stale_member_with_a_message_not_a_traceback(
+        make_skill, tmp_path, monkeypatch, capsys):
+    make_skill()
+    write_collections(tmp_path, {"collections": [collection()]})  # its plugin is not there
+    monkeypatch.setattr(build_index, "SKILLS_DIR", tmp_path / "skills")
+    monkeypatch.setattr("sys.argv", ["build_index.py", "--out", str(tmp_path / "out")])
+
+    assert build_index.main() == 1
+    err = capsys.readouterr().err
+    assert "registry/collections.yml" in err
+    assert "permits-start-to-finish" in err and "plugin testuser/housing-dashboards" in err
+    assert not (tmp_path / "out" / "index.json").exists()
+
+
+def test_the_repositorys_own_file_is_a_list_of_collections():
+    """Shipped empty (#209): which collections exist is the owner's content.
+    Whatever it comes to hold, it parses into the shape the loader reads."""
+    import yaml
+
+    doc = yaml.safe_load((build_index.ROOT / "registry" / "collections.yml")
+                         .read_text(encoding="utf-8"))
+    assert isinstance(doc, dict) and isinstance(doc.get("collections"), list)

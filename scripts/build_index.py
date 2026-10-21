@@ -223,6 +223,117 @@ def load_categories() -> list[dict]:
     return doc.get("categories", [])
 
 
+class BadCollections(ValueError):
+    """registry/collections.yml names something that is not there, or is not
+    in the shape the site reads."""
+
+
+#: A collection's URL is `#/collection/{slug}`.
+COLLECTION_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+#: Every field a collection has, and all of them required: a title or a note
+#: in one language only would leave the other locale's page half-written.
+COLLECTION_TEXT = ("title", "title_es", "note", "note_es")
+COLLECTION_FIELDS = ("slug", *COLLECTION_TEXT, "featured", "listings")
+LISTING_KINDS = ("skill", "plugin")
+
+
+def load_collections(path: Path, skills: list[dict], plugins: list[dict]) -> list[dict]:
+    """A maintainer's groupings of listings (#209, ADR 0008 decision 7),
+    checked against what this build found.
+
+    Raises rather than publishing a collection with a hole in it, the posture
+    `load_attestations` takes with a malformed ledger: a listing that is removed
+    must take its collections' pull request with it, not leave a gap on the
+    page. Members are published as kind and id only, since the index already
+    carries every listing. No file at all is no collections, so a throwaway
+    tree in a test builds without one.
+    """
+    if not path.is_file():
+        return []
+    shown = _shown(path)
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    entries = doc.get("collections") if isinstance(doc, dict) else None
+    if not isinstance(entries, list):
+        raise BadCollections(
+            f"{shown} must be a mapping whose `collections` is a list. The usual "
+            f"cause is a missing space after a colon: `collections:[]` is one "
+            f"string, `collections: []` is an empty list.")
+
+    known = {("skill", s["id"]) for s in skills} | {("plugin", p["id"]) for p in plugins}
+    out: list[dict] = []
+    slugs: set[str] = set()
+    for n, entry in enumerate(entries, start=1):
+        if not isinstance(entry, dict):
+            raise BadCollections(f"{shown}: collection {n} is not a mapping of fields.")
+        slug = entry.get("slug")
+        name = f'collection "{slug}"' if isinstance(slug, str) and slug else f"collection {n}"
+        missing = [f for f in COLLECTION_FIELDS if f not in entry]
+        if missing:
+            raise BadCollections(
+                f"{shown}: {name} has no " + ", ".join(f"`{f}`" for f in missing) + ".")
+        unknown = sorted(set(entry) - set(COLLECTION_FIELDS))
+        if unknown:
+            raise BadCollections(
+                f"{shown}: {name} has " + ", ".join(f"`{f}`" for f in unknown)
+                + ", which is not a collection's field. The fields are "
+                + ", ".join(f"`{f}`" for f in COLLECTION_FIELDS) + ".")
+        if not isinstance(slug, str) or not COLLECTION_SLUG.match(slug):
+            raise BadCollections(
+                f"{shown}: the slug of {name} is not lowercase letters, digits and "
+                f"single hyphens. It is the collection's URL, #/collection/{{slug}}.")
+        if slug in slugs:
+            raise BadCollections(f'{shown}: the slug "{slug}" is used more than once.')
+        slugs.add(slug)
+        for field in COLLECTION_TEXT:
+            if not isinstance(entry[field], str) or not entry[field].strip():
+                raise BadCollections(f"{shown}: {name} has an empty `{field}`.")
+        if not isinstance(entry["featured"], bool):
+            raise BadCollections(
+                f"{shown}: `featured` must be true or false in {name}, "
+                f"not {entry['featured']!r}.")
+
+        listings = entry["listings"]
+        if not isinstance(listings, list) or not listings:
+            raise BadCollections(f"{shown}: {name} has no `listings`.")
+        members: list[dict] = []
+        for item in listings:
+            kind = item.get("kind") if isinstance(item, dict) else None
+            lid = item.get("id") if isinstance(item, dict) else None
+            if kind not in LISTING_KINDS or not isinstance(lid, str):
+                raise BadCollections(
+                    f"{shown}: {name} lists {item!r}; a listing is "
+                    f"{{kind: skill or plugin, id: namespace/name}}.")
+            member = {"kind": kind, "id": lid}
+            if (kind, lid) not in known:
+                raise BadCollections(
+                    f"{shown}: {name} lists {kind} {lid}, which is not in the "
+                    f"registry. Remove it from the collection, or check its kind and id.")
+            if member in members:
+                raise BadCollections(f"{shown}: {name} lists {kind} {lid} twice.")
+            members.append(member)
+
+        out.append({
+            "slug": slug,
+            # A folded `>` note keeps its line breaks' spaces and a trailing
+            # newline; what is published is the sentence.
+            **{field: " ".join(entry[field].split()) for field in COLLECTION_TEXT},
+            "featured": entry["featured"],
+            "listings": members,
+        })
+    return out
+
+
+def _shown(path: Path) -> str:
+    """A path as a message should print it: from the registry's root, which is
+    the repository's or a test's throwaway tree."""
+    for base in (SKILLS_DIR.parent, ROOT):
+        try:
+            return str(path.relative_to(base))
+        except ValueError:
+            continue
+    return str(path)
+
+
 def read_frontmatter(skill_md: Path) -> dict | None:
     m = FRONTMATTER_RE.match(skill_md.read_text(encoding="utf-8"))
     if not m:
@@ -890,6 +1001,11 @@ def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = 
             print(f"warn  skipped {plugin_dir.relative_to(ROOT)}: unreadable plugin.json "
                   "or no readable skill", file=sys.stderr)
 
+    # Beside the tree too, for the same reason; and before anything is written,
+    # so a stale member stops the build rather than leaving a half-built out/.
+    collections = load_collections(SKILLS_DIR.parent / "registry" / "collections.yml",
+                                   entries, plugins)
+
     drifted = [e for e in [*entries, *plugins] if e.get("drift")]
     reviewed = [e for e in entries if e["tier"] == "reviewed"]
 
@@ -912,6 +1028,8 @@ def main_with(out: Path, findings: Path | None = None, drift_out: Path | None = 
         ),
         "skills": sorted(entries, key=lambda e: e["id"]),
         "plugins": sorted(plugins, key=lambda e: e["id"]),
+        # In the file's order, which is the order the browse page shows them.
+        "collections": collections,
     }
 
     out.mkdir(parents=True, exist_ok=True)
@@ -957,7 +1075,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         return main_with(args.out, args.findings, args.drift_out)
-    except (NoSkillMd, StrayListingFile) as missing:
+    except (NoSkillMd, StrayListingFile, BadCollections) as missing:
         print(f"error {missing}", file=sys.stderr)
         return 1
 

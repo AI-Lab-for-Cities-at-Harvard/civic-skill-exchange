@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 const APP = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "App.tsx"), "utf8");
 
 describe("routes loaded on demand", () => {
-  for (const page of ["Submit", "PluginDetail", "Guide"]) {
+  for (const page of ["Submit", "PluginDetail", "Guide", "CollectionPage"]) {
     it(`loads ${page} with lazy(), not a static import`, () => {
       expect(APP).not.toMatch(new RegExp(`^import[^;]*from "\\./components/${page}";`, "m"));
       expect(APP).toMatch(new RegExp(`lazy\\(\\(\\) =>\\s*import\\("\\./components/${page}"\\)`));

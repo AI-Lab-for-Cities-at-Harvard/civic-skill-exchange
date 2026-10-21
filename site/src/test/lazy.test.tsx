@@ -50,7 +50,7 @@ describe("every test that opens a lazy page waits with waitForLazyPage", () => {
    *  route string: an href, a parse, an expected value. Routes are often kept
    *  in a table and assigned to the hash from a variable, so the assignment
    *  itself is not what to look for. */
-  const LAZY = /["'`]#\/(submit|guide|plugin\/)/;
+  const LAZY = /["'`]#\/(submit|guide|plugin\/|collection\/)/;
   const CHECKS = /parseRoute|Href\(|toBe\(|toHaveAttribute|toEqual|toMatch/;
   const opensLazy = { test: (text: string) =>
     text.split("\n").some((line) => LAZY.test(line) && !CHECKS.test(line)) };

@@ -270,6 +270,24 @@ export const en = {
     show: { label: "Skills or plugins", skills: "Skills", plugins: "Plugins" },
   },
 
+  /** Collections (#209, ADR 0008 decisions 8 to 10): listings a maintainer
+   *  grouped for one task. Called collections and nothing else: "featured",
+   *  "curated" and "recommended" imply a standard nobody has defined (ADR 0002
+   *  decision 4), and collection-words.test.ts holds both tables to that. A
+   *  collection's own title and note are not here: they are written per
+   *  collection, in both languages, in registry/collections.yml. */
+  collections: {
+    /** Above the tiles on the browse page, and the crumb on a collection's. */
+    heading: "Collections",
+    count: (n: number) => `${n} listing${n === 1 ? "" : "s"}`,
+    /** The disclaimer on a collection's page, in a `.notice` (#101 ruling 6).
+     *  Any listing may be in a collection, so it says what membership is not. */
+    caveat:
+      "Chosen by the Exchange's maintainers because they work together. " +
+      "Being in a collection is not a review: each listing's own tier says whether it was reviewed.",
+    missing: "There is no collection at this address.",
+  },
+
   /** The submission wizard.
    *
    *  Two modes, one page each: adding a listing and updating one. The wording
@@ -2091,6 +2109,9 @@ export const en = {
       skills: (n: number) => `${n} skill${n === 1 ? "" : "s"}`,
       servers: (n: number) => `${n} MCP server${n === 1 ? "" : "s"}`,
       noServers: "No MCP servers",
+      /** On a plugin's closed row where skills and plugins are mixed, as on a
+       *  collection's page (#209), so a plugin is not taken for a skill. */
+      kind: (n: number) => `Plugin · ${n} skill${n === 1 ? "" : "s"}`,
     },
     detail: {
       /** The skill page's caveat says "skill"; this is the plugin's (#230). */

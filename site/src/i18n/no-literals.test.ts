@@ -40,6 +40,8 @@ const FILES = [
   "components/Badges.tsx",
   "components/Bands.tsx",
   "components/Beta.tsx",
+  "components/CollectionPage.tsx",
+  "components/Collections.tsx",
   "components/DocLink.tsx",
   "components/DraftBar.tsx",
   "components/DownloadBox.tsx",
