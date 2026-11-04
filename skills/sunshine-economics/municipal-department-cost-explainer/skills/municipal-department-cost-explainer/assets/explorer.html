@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Follow the Money · Sunshine Economics</title>
+  <style>/* EXPLORER_CSS */</style>
+</head>
+<body>
+  <a id="skip-details" class="skip" href="#detail">Skip to department evidence</a>
+  <header class="masthead"><div class="brand">Sunshine <span>Economics</span></div><div class="eyebrow">CIVIC TOOLS / BUDGETS</div></header>
+  <main>
+    <section class="intro"><p class="eyebrow">FOLLOW THE MONEY</p><h1>One budget line.<br>A clearer cost picture.</h1><p class="lede">Explore a department’s reported budget, the costs behind it, and how it is funded. Every amount keeps its source.</p></section>
+    <div class="notice"><strong>Draft evidence explorer.</strong> Fixed examples for learning, not live budgets or city rankings. A reconciled subtotal does not establish full cost.</div>
+    <div class="toolbar"><label for="case-select">Choose a budget example <select id="case-select"></select></label><div class="actions"><button id="download" type="button">Download evidence CSV</button><button id="print" type="button">Print / save report</button></div></div>
+    <p id="selection-status" class="sr-only" role="status"></p>
+    <section class="headline-section" aria-labelledby="headline-heading"><div><p class="eyebrow">START WITH THE REPORTED FIGURE</p><h2 id="headline-heading"></h2><p id="period"></p></div><button id="headline" class="headline-button" type="button" aria-expanded="false" aria-controls="detail"><span id="headline-label"></span><strong id="headline-value"></strong><span class="track" aria-hidden="true"><span id="headline-bar"></span></span><span id="headline-action">Open the cost and funding detail ↓</span></button><p class="small">Bar length shows the absolute headline relative to the reconciled subtotal within this example only. Signed values appear in text.</p></section>
+    <section id="detail" hidden aria-labelledby="detail-heading"><h2 id="detail-heading" tabindex="-1">The cost and funding detail</h2><p id="scope" class="scope"></p><p id="summary" class="summary"></p><div id="metrics" class="metrics"></div>
+      <section aria-labelledby="bridge-heading"><p class="eyebrow">01 / RECONCILE</p><h3 id="bridge-heading">How the figures connect</h3><p class="small">Each row starts at zero on a common scale. Reversing an allocation changes presentation; it does not create a new expense.</p><div id="bridge" class="bridge"></div><p id="equation" class="equation"></p></section>
+      <section aria-labelledby="ledger-heading"><p class="eyebrow">02 / INSPECT</p><h3 id="ledger-heading">Evidence ledger</h3><p>Components are already included. Revenue and transfers are kept outside the cost calculation.</p><div class="table-wrap"><table><caption>Reported amounts and their treatment. All figures are USD whole dollars.</caption><thead><tr><th scope="col">Item / fund</th><th scope="col">Amount</th><th scope="col">Treatment</th><th scope="col">Reason / source</th></tr></thead><tbody id="ledger"></tbody></table></div></section>
+      <section aria-labelledby="funding-heading"><p class="eyebrow">03 / FUNDING</p><h3 id="funding-heading">What pays for it?</h3><div id="funding"></div></section>
+      <section aria-labelledby="checks-heading"><p class="eyebrow">04 / CHECK</p><h3 id="checks-heading">Arithmetic and evidence coverage</h3><div id="checks"></div><h4>What remains unknown</h4><ul id="limits"></ul><h4>Questions for Finance</h4><ol id="questions"></ol></section>
+      <section aria-labelledby="source-heading"><p class="eyebrow">05 / TRACE</p><h3 id="source-heading">Sources and scope</h3><p id="provenance"></p><ul id="sources"></ul></section>
+    </section>
+    <footer><strong>Draft explanation of documented budget figures, not an audit or a certification of full cost.</strong> A municipal finance professional should review it before publication or use in a budget decision.<p>Created by Jennifer Schoeneck, CEcD · Sunshine Economics · MIT licensed. No Harvard affiliation or endorsement is implied.</p></footer>
+  </main>
+  <noscript><p>This interactive view requires JavaScript. Use the accompanying worked examples and output template for a text version.</p></noscript>
+  <script id="budget-data" type="application/json">EXPLORER_DATA</script>
+  <script>/* EXPLORER_JS */</script>
+</body>
+</html>

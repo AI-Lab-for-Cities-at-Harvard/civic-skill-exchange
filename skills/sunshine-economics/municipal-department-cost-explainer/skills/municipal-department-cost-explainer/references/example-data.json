@@ -1,0 +1,700 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "escondido",
+      "city": "Escondido",
+      "department": "City Attorney",
+      "period": "FY2026/27",
+      "status": "final",
+      "synthetic": false,
+      "currency": "USD",
+      "unit": "whole dollars",
+      "basis": "Source budgetary presentation; accounting basis not established here",
+      "startDate": "2026-07-01",
+      "endDate": "2027-06-30",
+      "snapshotDate": "2026-10-22",
+      "scope": "Fund 1001 City Attorney operating costs plus two documented Fund 1002 salary lines. Not a complete all-fund cost.",
+      "headlineLabel": "General Fund net appropriation",
+      "resultLabel": "Documented subtotal",
+      "summary": "The General Fund headline is net of allocations to other funds. Reversing those allocations restores the gross subtotal; two separately budgeted Measure I salaries then add to the documented scope.",
+      "limits": [
+        "Department-specific benefits for the Measure I salaries are not identified in the pooled Fund 1002 overhead.",
+        "Other citywide legal, settlement, capital and debt costs are outside this established scope.",
+        "Allocations distribute existing costs and cannot be added again from recipient funds."
+      ],
+      "questions": [
+        "Can Finance provide the department-specific Measure I benefits and overhead?",
+        "Which other schedules contain legal costs outside this department, and do any overlap?"
+      ],
+      "sources": [
+        {
+          "id": "E1",
+          "publisher": "City of Escondido",
+          "title": "FY2026/27 Final Operating Budget — City Attorney and Measure I line-item detail",
+          "url": "https://www.escondido.gov/DocumentCenter/View/9773/FY2027-Operating-Budget-Final-PDF"
+        }
+      ],
+      "rows": [
+        {
+          "id": "e-net",
+          "label": "Net City Attorney headline",
+          "amount": 192030,
+          "treatment": "headline",
+          "fund": "1001 — General Fund",
+          "location": "Printed p.54 / PDF p.54",
+          "column": "2026/27 BUDGET",
+          "reason": "Reported total after allocations out.",
+          "verified": true,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "e-personnel",
+          "label": "Personnel services",
+          "amount": 2778270,
+          "treatment": "component",
+          "fund": "1001 — General Fund",
+          "location": "Printed p.52 / PDF p.52",
+          "column": "2026/27 BUDGET",
+          "reason": "Already included in the gross subtotal; not added again.",
+          "verified": true,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "e-operations",
+          "label": "Maintenance and operations",
+          "amount": 144500,
+          "treatment": "component",
+          "fund": "1001 — General Fund",
+          "location": "Printed p.53 / PDF p.53",
+          "column": "2026/27 BUDGET",
+          "reason": "Already included in the gross subtotal.",
+          "verified": true,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "e-internal",
+          "label": "Internal service charges",
+          "amount": 277770,
+          "treatment": "component",
+          "fund": "1001 — General Fund",
+          "location": "Printed p.54 / PDF p.54",
+          "column": "2026/27 BUDGET",
+          "reason": "Retained in the department appropriation; not removed as a duplicate.",
+          "verified": true,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "e-allocated",
+          "label": "Allocated out",
+          "amount": -3008510,
+          "treatment": "allocation_out",
+          "fund": "1001 — General Fund",
+          "location": "Printed p.54 / PDF p.54",
+          "column": "2026/27 BUDGET",
+          "reason": "Reverse this documented negative offset to restore gross costs. Recipient allocations are not new expenses.",
+          "verified": true,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here",
+          "scopeConfirmed": true
+        },
+        {
+          "id": "e-deputy",
+          "label": "Deputy City Attorney salary",
+          "amount": 102940,
+          "treatment": "addition",
+          "fund": "1002 — Measure I",
+          "location": "Printed p.181 / PDF p.181",
+          "column": "2026/27 BUDGET",
+          "reason": "Separate salary line; Fund 1001 marks this position as Measure I funded with zero salary there.",
+          "verified": true,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here",
+          "scopeConfirmed": true
+        },
+        {
+          "id": "e-assistant",
+          "label": "Legal Assistant salary",
+          "amount": 82770,
+          "treatment": "addition",
+          "fund": "1002 — Measure I",
+          "location": "Printed p.181 / PDF p.181",
+          "column": "2026/27 BUDGET",
+          "reason": "Separate salary line; Fund 1001 marks the additional Measure I position with zero salary there.",
+          "verified": true,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here",
+          "scopeConfirmed": true
+        },
+        {
+          "id": "e-benefits",
+          "label": "Measure I department benefits",
+          "amount": null,
+          "treatment": "unresolved",
+          "fund": "1002 — Measure I",
+          "location": "Printed p.182 / PDF p.182",
+          "column": "2026/27 BUDGET",
+          "reason": "Pooled employee overhead is not department-specific; no allocation is guessed.",
+          "verified": false,
+          "sourceId": "E1",
+          "period": "FY2026/27",
+          "status": "final",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        }
+      ],
+      "checks": [
+        {
+          "label": "Fund 1001 gross subtotal",
+          "rowIds": [
+            "e-personnel",
+            "e-operations",
+            "e-internal"
+          ],
+          "reported": 3200540,
+          "location": "E1: printed / PDF p.54, SUBTOTAL, CITY ATTORNEY; 2026/27 BUDGET."
+        },
+        {
+          "label": "Fund 1001 net headline",
+          "rowIds": [
+            "e-personnel",
+            "e-operations",
+            "e-internal",
+            "e-allocated"
+          ],
+          "reported": 192030,
+          "location": "E1: printed / PDF p.54, TOTAL, CITY ATTORNEY; 2026/27 BUDGET."
+        }
+      ],
+      "netFunding": null,
+      "provenance": "Fixed illustration from the submitted worked examples. Public aggregate budget data; AI-assisted source and arithmetic checks, without municipal finance practitioner sign-off. This is not a live data feed."
+    },
+    {
+      "id": "san-diego",
+      "city": "San Diego",
+      "department": "City Attorney",
+      "period": "FY2026",
+      "status": "adopted",
+      "synthetic": false,
+      "currency": "USD",
+      "unit": "whole dollars",
+      "basis": "Source budgetary presentation; accounting basis not established here",
+      "startDate": "2025-07-01",
+      "endDate": "2026-06-30",
+      "snapshotDate": "2026-10-22",
+      "scope": "City Attorney General Fund department expenditure budget and separately reported department revenue; includes any capital line already within the reported total.",
+      "headlineLabel": "Reported department budget",
+      "resultLabel": "Department expenditures",
+      "summary": "Personnel and nonpersonnel costs sum to the reported department budget. Revenue is shown separately; repeated division totals and adopted-budget changes are not extra expenses.",
+      "limits": [
+        "The chapter alone does not establish all citywide litigation, settlement or capital-related legal costs.",
+        "The expense–revenue difference is not a certified citywide taxpayer-cost measure."
+      ],
+      "questions": [
+        "Can Finance identify separately budgeted legal costs and confirm any overlap?",
+        "Can Finance verify the restrictions and intended uses of each departmental revenue category?"
+      ],
+      "sources": [
+        {
+          "id": "S1",
+          "publisher": "City of San Diego",
+          "title": "FY2026 Adopted Budget — City Attorney",
+          "url": "https://www.sandiego.gov/sites/default/files/2025-08/fy26ab_v2cityattorney.pdf"
+        }
+      ],
+      "rows": [
+        {
+          "id": "s-total",
+          "label": "Department expenditures",
+          "amount": 95815935,
+          "treatment": "headline",
+          "fund": "Department chapter",
+          "location": "Printed p.17 / PDF p.6",
+          "column": "FY2026 Adopted",
+          "reason": "Reported department expenditure total; the source includes a $3,000 capital-expenditure component within nonpersonnel on printed p.19 / PDF p.8.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-personnel",
+          "label": "Personnel",
+          "amount": 89215833,
+          "treatment": "component",
+          "fund": "Department chapter",
+          "location": "Printed p.17 / PDF p.6",
+          "column": "FY2026 Adopted",
+          "reason": "Component of the reported total.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-nonpersonnel",
+          "label": "Nonpersonnel",
+          "amount": 6600102,
+          "treatment": "component",
+          "fund": "Department chapter",
+          "location": "Printed p.17 / PDF p.6",
+          "column": "FY2026 Adopted",
+          "reason": "Component of the reported total.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-revenue",
+          "label": "Department revenue",
+          "amount": 9350965,
+          "treatment": "excluded",
+          "fund": "Department chapter",
+          "location": "Printed p.17 / PDF p.6",
+          "column": "FY2026 Adopted",
+          "reason": "Reported funding total; the four revenue categories below provide its detail. Do not count both this total and its components.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-repeated",
+          "label": "Repeated division-table total",
+          "amount": 95815935,
+          "treatment": "excluded",
+          "fund": "Department chapter",
+          "location": "Printed p.17 / PDF p.6",
+          "column": "FY2026 Adopted",
+          "reason": "Same expenditure total in a different breakdown. Not a second cost and not a deduction from the starting figure.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-services",
+          "label": "Charges for services",
+          "amount": 8949465,
+          "treatment": "revenue",
+          "fund": "General Fund",
+          "location": "Printed p.19 / PDF p.8",
+          "column": "FY2026 Adopted",
+          "reason": "Category within reported department revenue; counted once as funding, never as cost.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-fines",
+          "label": "Fines, forfeitures and penalties",
+          "amount": 348000,
+          "treatment": "revenue",
+          "fund": "General Fund",
+          "location": "Printed p.19 / PDF p.8",
+          "column": "FY2026 Adopted",
+          "reason": "Category within reported department revenue; counted once as funding, never as cost.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-licenses",
+          "label": "Licenses and permits",
+          "amount": 3500,
+          "treatment": "revenue",
+          "fund": "General Fund",
+          "location": "Printed p.19 / PDF p.8",
+          "column": "FY2026 Adopted",
+          "reason": "Category within reported department revenue; counted once as funding, never as cost.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "s-agencies",
+          "label": "Revenue from other agencies",
+          "amount": 50000,
+          "treatment": "revenue",
+          "fund": "General Fund",
+          "location": "Printed p.19 / PDF p.8",
+          "column": "FY2026 Adopted",
+          "reason": "Category within reported department revenue; counted once as funding, never as cost.",
+          "verified": true,
+          "sourceId": "S1",
+          "period": "FY2026",
+          "status": "adopted",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        }
+      ],
+      "checks": [
+        {
+          "label": "Department expenditure components",
+          "rowIds": [
+            "s-personnel",
+            "s-nonpersonnel"
+          ],
+          "reported": 95815935,
+          "location": "S1: printed p.17 / PDF p.6, Department Summary; FY2026 Adopted."
+        },
+        {
+          "label": "Department revenue categories",
+          "rowIds": [
+            "s-services",
+            "s-fines",
+            "s-licenses",
+            "s-agencies"
+          ],
+          "reported": 9350965,
+          "location": "S1: printed p.19 / PDF p.8, Revenues by Category; FY2026 Adopted."
+        }
+      ],
+      "netFunding": {
+        "label": "Expenses less reported departmental revenue",
+        "revenueIds": [
+          "s-services",
+          "s-fines",
+          "s-licenses",
+          "s-agencies"
+        ],
+        "scopeConfirmed": true,
+        "reason": "Arithmetic difference between the same chapter’s reported expense and revenue totals. This does not establish all-fund taxpayer cost or legal funding restrictions."
+      },
+      "provenance": "Fixed illustration from the submitted worked examples. Public aggregate budget data; AI-assisted source and arithmetic checks, without municipal finance practitioner sign-off. This is not a live data feed."
+    },
+    {
+      "id": "boston",
+      "city": "Boston",
+      "department": "Law Department",
+      "period": "FY2026",
+      "status": "recommended",
+      "synthetic": false,
+      "currency": "USD",
+      "unit": "whole dollars",
+      "basis": "Source budgetary presentation; accounting basis not established here",
+      "startDate": "2025-07-01",
+      "endDate": "2026-06-30",
+      "snapshotDate": "2026-10-22",
+      "scope": "Ordinary Law Department operating budget plus separately shown external-fund spending; April 2025 recommended snapshot.",
+      "headlineLabel": "Reported department budget",
+      "resultLabel": "Documented subtotal",
+      "summary": "The ordinary budget and the separately shown external spending can be reconciled within these schedules. The personnel detail differs from its published subtotal by one dollar; the published figure is preserved.",
+      "limits": [
+        "This is a recommended budget, not an adopted budget or actual expenditure.",
+        "External spending concerns third-party property-damage repairs; it is not all lawyer compensation.",
+        "These schedules do not establish complete citywide economic cost."
+      ],
+      "questions": [
+        "Can Finance clarify the one-dollar personnel subtotal difference?",
+        "What additional central or separately budgeted costs belong within an all-fund scope?"
+      ],
+      "sources": [
+        {
+          "id": "B1",
+          "publisher": "City of Boston",
+          "title": "FY2026 Recommended Budget — Mayor’s Office Cabinet, Law Department, April 2025",
+          "url": "https://www.boston.gov/sites/default/files/file/2025/04/V2%2001-%2026%20A%20Mayors-Office-Cabinet.pdf"
+        }
+      ],
+      "rows": [
+        {
+          "id": "b-total",
+          "label": "Ordinary operating budget",
+          "amount": 10942503,
+          "treatment": "headline",
+          "fund": "Ordinary departmental budget",
+          "location": "Printed p.27 / PDF p.23",
+          "column": "Budget ’26",
+          "reason": "Reported department operating total.",
+          "verified": true,
+          "sourceId": "B1",
+          "period": "FY2026",
+          "status": "recommended",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "b-personnel",
+          "label": "Reported personnel subtotal",
+          "amount": 8593503,
+          "treatment": "component",
+          "fund": "Ordinary departmental budget",
+          "location": "Printed pp.27,29 / PDF pp.23,25",
+          "column": "Budget ’26 / FY26 Recommended",
+          "reason": "Keep the published amount; the detailed components show a one-dollar discrepancy.",
+          "verified": true,
+          "sourceId": "B1",
+          "period": "FY2026",
+          "status": "recommended",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "b-nonpersonnel",
+          "label": "Nonpersonnel",
+          "amount": 2349000,
+          "treatment": "component",
+          "fund": "Ordinary departmental budget",
+          "location": "Printed p.27 / PDF p.23",
+          "column": "Budget ’26",
+          "reason": "Included in the ordinary operating total.",
+          "verified": true,
+          "sourceId": "B1",
+          "period": "FY2026",
+          "status": "recommended",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "b-external",
+          "label": "External-fund spending",
+          "amount": 300000,
+          "treatment": "addition",
+          "fund": "External funds",
+          "location": "Printed pp.27,31 / PDF pp.23,27",
+          "column": "Budget ’26",
+          "reason": "Separate expenditure schedule, not revenue. Purpose described on printed p.35 / PDF p.31.",
+          "verified": true,
+          "sourceId": "B1",
+          "period": "FY2026",
+          "status": "recommended",
+          "basis": "Source budgetary presentation; accounting basis not established here",
+          "scopeConfirmed": true
+        },
+        {
+          "id": "b-permanent",
+          "label": "Department personnel salary total",
+          "amount": 8828603,
+          "treatment": "component",
+          "fund": "Ordinary departmental budget",
+          "location": "Printed p.30 / PDF p.26",
+          "column": "FY26 Salary / Adjustments / FY26 Total Request",
+          "reason": "Detail within personnel; not added to the total again.",
+          "verified": true,
+          "sourceId": "B1",
+          "period": "FY2026",
+          "status": "recommended",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "b-other",
+          "label": "Other personnel adjustments",
+          "amount": 139441,
+          "treatment": "component",
+          "fund": "Ordinary departmental budget",
+          "location": "Printed p.30 / PDF p.26",
+          "column": "FY26 Salary / Adjustments / FY26 Total Request",
+          "reason": "Detail within personnel; not added to the total again.",
+          "verified": true,
+          "sourceId": "B1",
+          "period": "FY2026",
+          "status": "recommended",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "b-savings",
+          "label": "Salary savings",
+          "amount": -374542,
+          "treatment": "component",
+          "fund": "Ordinary departmental budget",
+          "location": "Printed p.30 / PDF p.26",
+          "column": "FY26 Salary / Adjustments / FY26 Total Request",
+          "reason": "Negative component already reflected in the reported personnel subtotal.",
+          "verified": true,
+          "sourceId": "B1",
+          "period": "FY2026",
+          "status": "recommended",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        }
+      ],
+      "checks": [
+        {
+          "label": "Ordinary operating components",
+          "rowIds": [
+            "b-personnel",
+            "b-nonpersonnel"
+          ],
+          "reported": 10942503,
+          "location": "B1: printed p.27 / PDF p.23, Operating Budget; Budget ’26."
+        },
+        {
+          "label": "Personnel detail",
+          "rowIds": [
+            "b-permanent",
+            "b-other",
+            "b-savings"
+          ],
+          "reported": 8593503,
+          "location": "B1: printed p.30 / PDF p.26, Department Personnel, FY26 Salary and Adjustments. Preserve the published FY26 Total Request and request clarification."
+        }
+      ],
+      "netFunding": null,
+      "provenance": "Fixed illustration from the submitted worked examples. Public aggregate budget data; AI-assisted source and arithmetic checks, without municipal finance practitioner sign-off. This is not a live data feed."
+    },
+    {
+      "id": "fictional",
+      "city": "Fictional city",
+      "department": "Example department",
+      "period": "FY2026/27",
+      "status": "synthetic",
+      "synthetic": true,
+      "currency": "USD",
+      "unit": "whole dollars",
+      "basis": "Source budgetary presentation; accounting basis not established here",
+      "startDate": "2026-07-01",
+      "endDate": "2027-06-30",
+      "snapshotDate": "2026-10-22",
+      "scope": "Synthetic departmental appropriation example. Unattributed contract remains outside the documented subtotal.",
+      "headlineLabel": "Net departmental appropriation",
+      "resultLabel": "Documented subtotal",
+      "summary": "The net headline plus reversal of its allocation equals the gross department budget. A matching recipient allocation and a funding transfer are not added. The separate contract remains unresolved.",
+      "limits": [
+        "The beneficiary and overlap of the separate contract are unknown.",
+        "The documented subtotal cannot be called complete or a lower bound."
+      ],
+      "questions": [
+        "Which department benefits from the separate contract, and does it overlap with the headline?"
+      ],
+      "sources": [
+        {
+          "id": "F1",
+          "publisher": "Sunshine Economics",
+          "title": "Fictional incomplete-record example",
+          "url": null
+        }
+      ],
+      "rows": [
+        {
+          "id": "f-net",
+          "label": "Net headline",
+          "amount": 700000,
+          "treatment": "headline",
+          "fund": "General Fund",
+          "location": "Fictional prompt",
+          "column": "Synthetic budget",
+          "reason": "Gross budget less allocation out.",
+          "verified": true,
+          "sourceId": "F1",
+          "period": "FY2026/27",
+          "status": "synthetic",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "f-allocation",
+          "label": "Allocation to Water",
+          "amount": -300000,
+          "treatment": "allocation_out",
+          "fund": "General Fund",
+          "location": "Fictional prompt",
+          "column": "Synthetic budget",
+          "reason": "Reverse the negative allocation to restore the department’s gross appropriation.",
+          "verified": true,
+          "sourceId": "F1",
+          "period": "FY2026/27",
+          "status": "synthetic",
+          "basis": "Source budgetary presentation; accounting basis not established here",
+          "scopeConfirmed": true
+        },
+        {
+          "id": "f-it",
+          "label": "Internal IT charge",
+          "amount": 50000,
+          "treatment": "component",
+          "fund": "General Fund",
+          "location": "Fictional prompt",
+          "column": "Synthetic budget",
+          "reason": "Already included. Retain it in departmental appropriation.",
+          "verified": true,
+          "sourceId": "F1",
+          "period": "FY2026/27",
+          "status": "synthetic",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "f-water",
+          "label": "Matching Water allocation",
+          "amount": 300000,
+          "treatment": "excluded",
+          "fund": "Water Fund",
+          "location": "Fictional prompt",
+          "column": "Synthetic budget",
+          "reason": "Matching counterpart to the allocation out; not additional underlying cost.",
+          "verified": true,
+          "sourceId": "F1",
+          "period": "FY2026/27",
+          "status": "synthetic",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "f-contract",
+          "label": "Contract with unknown beneficiary",
+          "amount": 120000,
+          "treatment": "unresolved",
+          "fund": "Other fund",
+          "location": "Fictional prompt",
+          "column": "Synthetic budget",
+          "reason": "Scope and overlap unconfirmed; excluded from calculation.",
+          "verified": false,
+          "sourceId": "F1",
+          "period": "FY2026/27",
+          "status": "synthetic",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        },
+        {
+          "id": "f-transfer",
+          "label": "Funding transfer",
+          "amount": 120000,
+          "treatment": "transfer",
+          "fund": "Other fund",
+          "location": "Fictional prompt",
+          "column": "Synthetic budget",
+          "reason": "Financing only; does not prove a new service cost or eligible revenue offset.",
+          "verified": true,
+          "sourceId": "F1",
+          "period": "FY2026/27",
+          "status": "synthetic",
+          "basis": "Source budgetary presentation; accounting basis not established here"
+        }
+      ],
+      "checks": [
+        {
+          "label": "Restored gross appropriation",
+          "rowIds": [
+            "f-net",
+            "f-water"
+          ],
+          "reported": 1000000,
+          "location": "Synthetic arithmetic check only: matching Water allocation equals the reversed offset; not added twice."
+        }
+      ],
+      "netFunding": null,
+      "provenance": "Entirely synthetic training data. No claim about any actual municipality."
+    }
+  ]
+}
