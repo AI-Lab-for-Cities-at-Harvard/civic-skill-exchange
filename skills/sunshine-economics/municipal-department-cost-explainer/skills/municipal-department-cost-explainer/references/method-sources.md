@@ -22,3 +22,8 @@ is asserted. No Harvard affiliation, partnership or endorsement is claimed.
 Original prose and templates are MIT licensed. Third-party documents retain their
 own terms; they are linked, not redistributed. Numerical examples cite municipal
 publications. Source snapshots are examples, not current financial advice.
+
+The optional visualization follows W3C WAI guidance to accompany charts with
+visible textual explanations and tabular values. Keyboard-native controls and
+print output are provided; this is not a WCAG conformance certification.
+https://www.w3.org/WAI/tutorials/images/complex/

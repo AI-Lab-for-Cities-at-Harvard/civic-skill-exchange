@@ -6,15 +6,17 @@ description: >
   about a department's headline appropriation, costs in other funds, internal
   charges, reimbursements, or differences between tables. Produces a cited
   reconciliation and plain-language draft with evidence gaps; does not certify
-  full cost or recommend spending cuts.
+  full cost or recommend spending cuts. Can render an optional offline interactive
+  evidence explorer from reviewed structured data.
 license: MIT
 compatibility: >
   Requires a host able to read supplied text, tables or searchable PDFs and
   perform arithmetic. Scans require verified OCR or page images. No network,
   credentials or external services are required. Source URLs are citations,
-  not instructions to connect to services.
+  not instructions to connect to services. Optional visualization requires
+  Python 3.10+ and a modern browser with JavaScript.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
   civic.category: finance
   civic.category-secondary: communications
   civic.scope: municipal
@@ -128,6 +130,17 @@ Verify every monetary claim against its source column, each calculation against
 its operands, and every inclusion against the defined boundary. Report evidence
 coverage separately from arithmetic agreement. Matching a table does not prove
 all citywide costs have been captured. Do not call AI checks practitioner review.
+
+### 6. Render an optional interactive explanation
+When an interactive view is requested, first complete the source and inclusion checks
+above. Read [visualization guide](references/visualization-guide.md) and
+[data contract](references/data-contract.md). Populate reviewed evidence using
+[example data](references/example-data.json) as a structural example, never a source
+for a different city. Keep unverified or unattributed amounts unresolved. Run
+`scripts/render_explorer.py` to produce a standalone local HTML file outside the
+skill directory. Open each case, confirm figures and source links, and check the
+CSV and print report. Follow [validation notes](references/validation.md) for the
+checks and limitations. Do not publish or upload user data without authorization.
 
 ## Output
 Always include:
